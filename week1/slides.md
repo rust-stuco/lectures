@@ -5,24 +5,31 @@ class: invert
 paginate: true
 ---
 
+
 # Intro to Rust
 
 Benjamin Owad, David Rudo, and Connor Tsui
 
 ![bg right:35% 65%](../images/ferris.svg)
 
+
 ---
+
 
 # Why Rust?
 
 TODO A few slides about this...
 
+
 ---
+
 
 # Rust seems awesome!
 ### But how do I actually use Rust?
 
+
 ---
+
 
 # Hello World!
 
@@ -38,13 +45,15 @@ fn main() {
 
 <br>
 
-To compile `main.rs`, run this in the terminal:
+To compile `main.rs`, use `rustc`.
 
 ```sh
 $ rustc main.rs
 ```
 
+
 ---
+
 
 # Cargo
 
@@ -53,11 +62,13 @@ Rust has its own build system and package manager called **Cargo**.
 * Cargo is built into Rust, so no `make` files or third-party build systems
 * Manages packages similar to `pip` for `python` or `npm` for `node.js`
 
+
 ---
+
 
 # Creating a new project with `cargo new`
 
-To create a new cargo project called `hello_cargo`, run this in the terminal:
+To create a new cargo project called `hello_cargo`, use `cargo new`.
 
 ```sh
 $ cargo new hello_cargo
@@ -68,13 +79,15 @@ $ cd hello_cargo
     * `src/main.rs`
     * `Cargo.toml`
     * `.git` repository and `.gitignore`
-* We will come back to those last two in the future
+* We will come back `Cargo.toml` in future weeks
+
 
 ---
 
+
 # Building your new project with `cargo build`
 
-To build your project:
+To build your project use `cargo build`.
 ```
 $ cargo build
    Compiling hello_cargo v0.1.0 (<path>/hello_cargo)
@@ -86,7 +99,9 @@ $ cargo build
 * What if we want to actually run this executable?
     * Can run `./target/debug/hello_cargo --`, but this is verbose
 
+
 ---
+
 
 # Running your new project with `cargo run`
 
@@ -102,7 +117,9 @@ Hello, world!
 * Note that if you compiled with `cargo build` right before, you wouldn't see the `Compiling hello_cargo ...` message
 * To run in release, run `cargo run --release`
 
+
 ---
+
 
 # Check if your project is okay with `cargo check`
 
@@ -116,7 +133,9 @@ $ cargo check
 * Must faster than `cargo build` since it doesn't build the executable
 * Useful when programming to check if your code still compiles!
 
+
 ---
+
 
 # Cargo recap
 
@@ -126,7 +145,9 @@ $ cargo check
 * We can check a project for errors using `cargo check`
 * Cargo stores our executable in the `target/debug` directory
 
+
 ---
+
 
 
 # Variables
@@ -140,7 +161,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Immutability
 
@@ -159,7 +182,9 @@ fn main() {
 
 * What happens when we try to compile this?
 
+
 ---
+
 
 # Immutability
 
@@ -183,7 +208,9 @@ error[E0384]: cannot assign twice to immutable variable `x`
 
 * Let's follow the compiler's advice!
 
+
 ---
+
 
 # Mutability
 
@@ -207,7 +234,9 @@ The value of x is: 5
 The value of x is: 6
 ```
 
+
 ---
+
 
 # Const variables
 
@@ -220,7 +249,9 @@ const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;
 * Constants cannot be `mut`
 * Constants must have an explicit type
 
+
 ---
+
 
 # Scopes and Shadowing
 
@@ -243,7 +274,9 @@ fn main() {
 
 * Let's dissect this!
 
+
 ---
+
 
 
 ```rust
@@ -264,7 +297,9 @@ println!("The value of x is: {x}");
 * The inner scope ends with the closing curly brace `}`
 * `x` returns to being 6 again
 
+
 ---
+
 
 
 ```rust
@@ -287,7 +322,9 @@ The value of x in the inner scope is: 12
 The value of x is: 6
 ```
 
+
 ---
+
 
 
 # Shadowing vs Mutability
@@ -296,7 +333,9 @@ The value of x is: 6
 * Using `let` multiple times allows a few transformations on a value but keep it immutable
 * Shadowing effectively creates a new variable, so it can change type
 
+
 ---
+
 
 # Shadowing vs Mutability
 
@@ -313,7 +352,9 @@ spaces = spaces.len();
 ```
 * The second one does not compile!
 
+
 ---
+
 
 # Data Types
 
@@ -329,14 +370,34 @@ Like most langauges, there are two main types of Types.
     - Arrays
 
 
+
 ---
+
 
 # Integers
 
 Rust has similar integer types you would expect to see in C.
 
 | Length  | Signed  | Unsigned |
-|---------|---------|----------|
+|
+---
+
+---
+
+---
+|
+---
+
+---
+
+---
+|
+---
+
+---
+
+---
+-|
 | 8-bit   | `i8`    | `u8`     |
 | 16-bit  | `i16`   | `u16`    |
 | 32-bit  | `i32`   | `u32`    |
@@ -345,7 +406,9 @@ Rust has similar integer types you would expect to see in C.
 | arch    | `isize` | `usize`  |
 
 
+
 ---
+
 
 
 # Floating-Points
@@ -360,7 +423,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Numeric Operations
 
@@ -384,7 +449,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Booleans
 
@@ -398,7 +465,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Characters
 
@@ -414,7 +483,9 @@ fn main() {
 * We will talk more about this and UTF-8 in the future
 
 
+
 ---
+
 
 # Tuples
 
@@ -426,7 +497,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Tuples
 
@@ -442,7 +515,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Tuples
 
@@ -459,7 +534,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Arrays
 
@@ -477,7 +554,9 @@ fn main() {
 * The number of elements is always fixed (stack allocated)
     * If you want a collection that grows and shrinks, use a vector (lecture 4)
 
+
 ---
+
 
 # Arrays
 
@@ -495,7 +574,9 @@ let a = [3; 5];
 // let a = [3, 3, 3, 3, 3];
 ```
 
+
 ---
+
 
 # Arrays
 
@@ -514,7 +595,9 @@ fn main() {
    * This is _not_ done in C/C++
 
 
+
 ---
+
 
 # Functions
 
@@ -537,7 +620,9 @@ Hello, world!
 Another function.
 ```
 
+
 ---
+
 
 # Functions
 
@@ -557,7 +642,9 @@ $ cargo run
 The measurement is: 5h
 ```
 
+
 ---
+
 
 # Statements and Expressions
 
@@ -573,7 +660,9 @@ All functions are a series of statements optionally ending in an expression
         * This implies scopes return values!
 * If you add a semicolon to an expression, it turns into a statement
 
+
 ---
+
 
 # Statements and Expressions
 
@@ -593,7 +682,9 @@ fn main() {
 * Scopes return the value of their last expression
 * Since functions are scopes, they can also return values!
 
+
 ---
+
 
 # Return values
 
@@ -615,7 +706,9 @@ fn plus_one(x: i32) -> i32 {
     * No return type is equivalent to the unit type `()`
 * Notice again that there is no semicolon after `x + 1`
 
+
 ---
+
 
 Suppose we did add a semicolon:
 ```rust
@@ -630,14 +723,20 @@ error[E0308]: mismatched types
  --> src/main.rs:7:24
   |
 7 | fn plus_one(x: i32) -> i32 {
-  |    --------            ^^^ expected `i32`, found `()`
+  |    
+---
+
+---
+--            ^^^ expected `i32`, found `()`
   |    |
   |    implicitly returns `()` as its body has no tail or `return` expression
 8 |     x + 1;
   |          - help: remove this semicolon to return this value
 ```
 
+
 ---
+
 
 # `if` Expressions
 
@@ -655,7 +754,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # `if` Expressions
 
@@ -680,7 +781,9 @@ error[E0308]: mismatched types
   |        ^^^^^^ expected `bool`, found integer
 ```
 
+
 ---
+
 
 # `else if` Branching
 
@@ -702,7 +805,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # `if`s are Expressions!
 
@@ -718,7 +823,9 @@ fn main() {
 ```
 * `if` expressions must always return the same type in all branches
 
+
 ---
+
 
 # Loops
 
@@ -728,7 +835,9 @@ There are 3 kinds of loops in Rust:
 - `for`
 
 
+
 ---
+
 
 
 # `loop` loops
@@ -754,7 +863,9 @@ fn main() {
 * `break` and `continue` apply to the innnermost loop where they are called
 
 
+
 ---
+
 
 # `loop`s are Expressions
 
@@ -776,11 +887,15 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 Do we talk about loop lables
 
+
 ---
+
 
 # `while` loops
 
@@ -800,7 +915,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # `for` loops
 
@@ -816,7 +933,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # `for` loops and ranges
 
@@ -831,7 +950,9 @@ fn main() {
 }
 ```
 
+
 ---
+
 
 # Recap
 * Variables
@@ -839,13 +960,17 @@ fn main() {
 * Functions
 * Control Flow
 
+
 ---
+
 
 # Course logistics
 
 TODO
 
+
 ---
+
 
 # Installing Rust
 
