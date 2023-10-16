@@ -876,7 +876,54 @@ fn main() {
 ---
 
 
-TODO loop labels
+# Loop Labels
+
+You can label loops to use with `break` and `continue` to specify which loop it applies to.
+
+```rust
+fn main() {
+    'outer: loop {
+        println!("Entered the outer loop");
+
+        'inner: loop {
+            println!("Entered the inner loop");
+            // break; // <-- This would break only the inner loop
+
+            // This breaks the outer loop
+            break 'outer;
+        }
+
+        println!("This point will never be reached");
+    }
+    println!("Exited the outer loop");
+}
+```
+
+
+---
+
+
+```rust
+fn main() {
+    'outer: loop {
+        println!("Entered the outer loop");
+        'inner: loop {
+            println!("Entered the inner loop");
+            break 'outer;
+        }
+        println!("This point will never be reached");
+    }
+    println!("Exited the outer loop");
+}
+```
+
+```
+Entered the outer loop
+Entered the inner loop
+Exited the outer loop
+```
+
+* Applies to `while` and `for` loops too
 
 
 ---
