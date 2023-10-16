@@ -66,7 +66,7 @@ Rust has its own build system and package manager called **Cargo**.
 ---
 
 
-# Creating a new project with `cargo new`
+# Creating a new project
 
 To create a new cargo project called `hello_cargo`, use `cargo new`.
 
@@ -76,18 +76,19 @@ $ cd hello_cargo
 ```
 
 * You will find a few important things
-    * `src/main.rs`
-    * `Cargo.toml`
     * `.git` repository and `.gitignore`
+    * `Cargo.toml`
+    * `src/main.rs`
 * We will come back `Cargo.toml` in future weeks
 
 
 ---
 
 
-# Building your new project with `cargo build`
+# Building your project
 
-To build your project use `cargo build`.
+To build your project, use `cargo build`.
+
 ```
 $ cargo build
    Compiling hello_cargo v0.1.0 (<path>/hello_cargo)
@@ -95,17 +96,18 @@ $ cargo build
 ```
 
 * This creates an executable file at `target/debug/hello_cargo`
-* To build for release, run `cargo build --release`
+<!-- * To build for release, run `cargo build --release` -->
 * What if we want to actually run this executable?
-    * Can run `./target/debug/hello_cargo --`, but this is verbose
+    * We could run `./target/debug/hello_cargo ...`, but this is verbose...
 
 
 ---
 
 
-# Running your new project with `cargo run`
+# Running your project
 
-To run your project:
+To run your project, use `cargo run`.
+
 ```
 $ cargo run
    Compiling hello_cargo v0.1.0 (file:///projects/hello_cargo)
@@ -114,16 +116,17 @@ $ cargo run
 Hello, world!
 ```
 
-* Note that if you compiled with `cargo build` right before, you wouldn't see the `Compiling hello_cargo ...` message
-* To run in release, run `cargo run --release`
+* Note that if you compiled with `cargo build` right before, you wouldn't see the `Compiling hello_cargo ...` line
+<!-- * To run in release, run `cargo run --release` -->
 
 
 ---
 
 
-# Check if your project is okay with `cargo check`
+# Check if your project compiles
 
-To check if your code compiles:
+To check if your code compiles, use `cargo check`
+
 ```
 $ cargo check
    Checking hello_cargo v0.1.0 (file:///projects/hello_cargo)
@@ -226,7 +229,9 @@ fn main() {
     println!("The value of x is: {}", x);
 }
 ```
+
 When we run the program now, we now get this:
+
 ```
 $ cargo run
     <-- snip -->
@@ -238,9 +243,9 @@ The value of x is: 6
 ---
 
 
-# Const variables
+# Constants
 
-Like immutable variables, _constants_ are values bound to a name
+Like immutable variables, constants are values bound to a name.
 
 ```rust
 const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;
@@ -248,6 +253,7 @@ const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;
 
 * Constants cannot be `mut`
 * Constants must have an explicit type
+    * We will talk about types like `u32` in a few slides
 
 
 ---
@@ -255,7 +261,7 @@ const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;
 
 # Scopes and Shadowing
 
-You can create nested scopes within functions.
+You can create nested scopes within functions with curly braces `{}`.
 
 ```rust
 fn main() {
@@ -265,10 +271,10 @@ fn main() {
 
     {
         let x = x * 2;
-        println!("The value of x in the inner scope is: {x}");
+        println!("The value of x in the inner scope is: {}", x);
     }
 
-    println!("The value of x is: {x}");
+    println!("The value of x is: {}", x);
 }
 ```
 
@@ -278,15 +284,14 @@ fn main() {
 ---
 
 
-
 ```rust
 let x = 5;
 let x = x + 1;
 {
     let x = x * 2;
-    println!("The value of x in the inner scope is: {x}");
+    println!("The value of x in the inner scope is: {}", x);
 }
-println!("The value of x is: {x}");
+println!("The value of x is: {}", x);
 ```
 
 * `x` is bound to `5` first
@@ -301,15 +306,14 @@ println!("The value of x is: {x}");
 ---
 
 
-
 ```rust
 let x = 5;
 let x = x + 1;
 {
     let x = x * 2;
-    println!("The value of x in the inner scope is: {x}");
+    println!("The value of x in the inner scope is: {}", x);
 }
-println!("The value of x is: {x}");
+println!("The value of x is: {}", x);
 ```
 
 <br>
@@ -326,18 +330,17 @@ The value of x is: 6
 ---
 
 
-
-# Shadowing vs Mutability
+# Aside: Shadowing vs Mutability
 
 * We get a compile time error if we try to modify a non-`mut` variable
 * Using `let` multiple times allows a few transformations on a value but keep it immutable
-* Shadowing effectively creates a new variable, so it can change type
+* Shadowing effectively creates a new variable, so it can change types
 
 
 ---
 
 
-# Shadowing vs Mutability
+# Example: Shadowing vs Mutability
 
 Shadowing:
 ```rust
@@ -356,9 +359,9 @@ spaces = spaces.len();
 ---
 
 
-# Data Types
+# Types
 
-Like most langauges, there are two main types of Types.
+Like most langauges, there are two main types of Data Types.
 
 - Scalar Types
     - Integers
@@ -370,7 +373,6 @@ Like most langauges, there are two main types of Types.
     - Arrays
 
 
-
 ---
 
 
@@ -379,25 +381,7 @@ Like most langauges, there are two main types of Types.
 Rust has similar integer types you would expect to see in C.
 
 | Length  | Signed  | Unsigned |
-|
----
-
----
-
----
-|
----
-
----
-
----
-|
----
-
----
-
----
--|
+|---------|---------|----------|
 | 8-bit   | `i8`    | `u8`     |
 | 16-bit  | `i16`   | `u16`    |
 | 32-bit  | `i32`   | `u32`    |
@@ -406,9 +390,7 @@ Rust has similar integer types you would expect to see in C.
 | arch    | `isize` | `usize`  |
 
 
-
 ---
-
 
 
 # Floating-Points
@@ -480,7 +462,7 @@ fn main() {
     let heart_eyed_cat = '😻';
 }
 ```
-* We will talk more about this and UTF-8 in the future
+* We will talk more about this and UTF-8 in the future!
 
 
 
@@ -570,7 +552,6 @@ We can also initialize the array such that every element has the same value.
 
 ```rust
 let a = [3; 5];
-// Same as writing
 // let a = [3, 3, 3, 3, 3];
 ```
 
@@ -591,9 +572,8 @@ fn main() {
 }
 ```
 
-* Rust will check if the index is in bounds at runtime
+* Rust will check if the index is within bounds at runtime
    * This is _not_ done in C/C++
-
 
 
 ---
@@ -613,6 +593,7 @@ fn another_function() {
     println!("Another function.");
 }
 ```
+
 ```
 $ cargo run
     <-- snip -->
@@ -636,6 +617,7 @@ fn print_labeled_measurement(value: i32, unit_label: char) {
     println!("The measurement is: {}{}", value, unit_label);
 }
 ```
+
 ```
 $ cargo run
     <-- snip -->
@@ -652,13 +634,13 @@ All functions are a series of statements optionally ending in an expression
 
 * **Statements** are instructions that do some action and don't return a value
     * `let y = 6;` is a statement and does not return a value
-    * You cannot write `x = y = 6`
-* **Expressions** evaluate to a resultant value
+    * You _cannot_ write `x = y = 6`
+* **Expressions** evaluate / return to a resultant value
     * `2 + 2` is an expression
     * Calling a function is an expression
     * A scope is an expression
-        * This implies scopes return values!
 * If you add a semicolon to an expression, it turns into a statement
+* If a scope is an expression, can scopes return values?
 
 
 ---
@@ -678,9 +660,10 @@ fn main() {
     println!("The value of y is: {y}");
 }
 ```
+
 * Notice that there is no semicolon after `x + 1`
 * Scopes return the value of their last expression
-* Since functions are scopes, they can also return values!
+* Since functions are scopes, they also return values!
 
 
 ---
@@ -711,6 +694,7 @@ fn plus_one(x: i32) -> i32 {
 
 
 Suppose we did add a semicolon:
+
 ```rust
 fn plus_one(x: i32) -> i32 {
     x + 1;
@@ -718,12 +702,13 @@ fn plus_one(x: i32) -> i32 {
 ```
 
 We get this error:
+
 ```
 error[E0308]: mismatched types
  --> src/main.rs:7:24
   |
 7 | fn plus_one(x: i32) -> i32 {
-  |    
+  |
 ---
 
 ---
@@ -773,6 +758,7 @@ fn main() {
     }
 }
 ```
+
 ```
 error[E0308]: mismatched types
  --> src/main.rs:4:8
@@ -821,6 +807,7 @@ fn main() {
     println!("The value of number is: {number}");
 }
 ```
+
 * `if` expressions must always return the same type in all branches
 
 
@@ -833,7 +820,6 @@ There are 3 kinds of loops in Rust:
 - `loop`
 - `while`
 - `for`
-
 
 
 ---
@@ -863,7 +849,6 @@ fn main() {
 * `break` and `continue` apply to the innnermost loop where they are called
 
 
-
 ---
 
 
@@ -891,7 +876,7 @@ fn main() {
 ---
 
 
-Do we talk about loop lables
+TODO loop labels
 
 
 ---
