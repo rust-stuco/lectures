@@ -18,14 +18,24 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Why Rust?
 
-TODO A few slides about this...
+* TODO A few slides about this...
+* Explain the benefits of Rust
+* Explain the downsides or Rust
+    * Steep learning curve of Rust is one of these downsides
+    * Which is why we are teaching this...
 
 
 ---
 
 
-# Rust seems awesome!
-### But how do I actually use Rust?
+# Course Goals
+
+By the end of the semester, we want you all to:
+
+* Be able to read, write, and reason about Rust code
+* Have proficiency with Rust equal to that of any other language you know
+* Understand why Rust is such an important language
+* TODO
 
 
 ---
@@ -98,7 +108,7 @@ $ cargo build
 * This creates an executable file at `target/debug/hello_cargo`
 <!-- * To build for release, run `cargo build --release` -->
 * What if we want to actually run this executable?
-    * We could run `./target/debug/hello_cargo ...`, but this is verbose...
+    * We could run `./target/debug/hello_cargo`, but this is a lot to type...
 
 
 ---
@@ -361,7 +371,7 @@ spaces = spaces.len();
 
 # Types
 
-Like most langauges, there are two main types of Data Types.
+Like most langauges, there are two main categories of Data Types.
 
 - Scalar Types
     - Integers
@@ -532,9 +542,10 @@ fn main() {
 }
 ```
 
-* Unlike tuples, all elements must be the same type.
-* The number of elements is always fixed (stack allocated)
+* Unlike tuples, all elements must be the same type
+* The number of elements is always fixed at compile time
     * If you want a collection that grows and shrinks, use a vector (lecture 4)
+* Similar to stack-allocated arrays you would see in `C`
 
 
 ---
@@ -572,6 +583,10 @@ fn main() {
 }
 ```
 
+<!--
+Note that Rust might not explicitly check at runtime since the compiler could optimize the check away
+-->
+
 * Rust will check if the index is within bounds at runtime
    * This is _not_ done in C/C++
 
@@ -581,7 +596,7 @@ fn main() {
 
 # Functions
 
-Like all languages, Rust has functions.
+Like most programming languages, Rust has functions.
 
 ```rust
 fn main() {
@@ -685,6 +700,11 @@ fn plus_one(x: i32) -> i32 {
 }
 ```
 
+<!--
+Note that in C, no return type is the `void` type.
+Rust aligns much more with type theory and thus uses the unit type `()` instead!
+-->
+
 * Functions must have a specific return value or none at all
     * No return type is equivalent to the unit type `()`
 * Notice again that there is no semicolon after `x + 1`
@@ -747,7 +767,7 @@ fn main() {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-`if` expressions must take a boolean.
+`if` expressions must condition on a boolean expression.
 
 ```rust
 fn main() {
@@ -982,6 +1002,10 @@ fn main() {
 }
 ```
 
+<!--
+There are no C-style for loops in Rust
+-->
+
 
 ---
 
@@ -996,9 +1020,43 @@ fn main() {
 ---
 
 
-# Course logistics
+# Course Logistics: Grading
 
-TODO
+* Attendance is 50% of your grade
+    * We have to take attendance every lecture
+    * You only get 2 unexcused absences
+* Programming assignements are the other 50%
+* You need 60% to pass this course
+
+
+---
+
+
+# Course Logistics: Communication
+
+* Discord
+* Email
+* Talk to us!
+    * If you can't make it to lecture, tell us beforehand
+    * If you have any sort of concern, let us know!
+
+
+---
+
+
+# Course Logistics: Homework
+
+* Homeworks are designed to take 30-45 minutes per week
+* If you are spending more than an hour, please let us know!
+* Autograded assignments through Gradescope
+* 7 late days
+    * Can use them any time in the semester
+    * Can use at most 7 late days for a specific assignment
+    * _You can ask us for more late days if you ask in advance..._
+
+<!--
+We may or may not give late days out like candy :D
+-->
 
 
 ---
@@ -1006,4 +1064,12 @@ TODO
 
 # Installing Rust
 
-TODO
+* TODO
+
+
+---
+
+
+# Homework 1
+
+* TODO
