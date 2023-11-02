@@ -463,7 +463,7 @@ fn main() {
 
 # Characters
 
-Rust has a UTF-8 character type `char`. Use `char` with single quotes. Due to `char` being UTF-8, a `char` is at least 1 byte and up to 4 bytes in length.
+Rust has a UTF-8 character type `char`. Use `char` with single quotes. Due to `char` being UTF-8, a `char` is always 4 bytes in length.
 
 ```rust
 fn main() {
