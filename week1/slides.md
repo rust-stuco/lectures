@@ -16,6 +16,12 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
+# **Why Rust?**
+
+
+---
+
+
 # Why Rust?
 
 * TODO A few slides about this...
@@ -36,6 +42,12 @@ By the end of the semester, we want you all to:
 * Have proficiency with Rust equal to that of any other language you know
 * Understand why Rust is such an important language
 * TODO
+
+
+---
+
+
+# **Cargo Basics**
 
 
 ---
@@ -161,6 +173,11 @@ $ cargo check
 
 ---
 
+
+# **Variables and Mutability**
+
+
+---
 
 
 # Variables
@@ -328,7 +345,8 @@ println!("The value of x is: {}", x);
 
 <br>
 
-Let's run this now:
+Let's run this now!
+
 ```
 $ cargo run
     <-- snip -->
@@ -342,28 +360,59 @@ The value of x is: 6
 
 # Aside: Shadowing vs Mutability
 
-* We get a compile time error if we try to modify a non-`mut` variable
-* Using `let` multiple times allows a few transformations on a value but keep it immutable
-* Shadowing effectively creates a new variable, so it can change types
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Mutability:
+
+```rust
+let mut spaces = "   ";
+spaces = spaces.len();
+```
+
+```
+  |
+2 |     let mut spaces = "   ";
+  |                      ----- expected due to this value
+3 |     spaces = spaces.len();
+  |              ^^^^^^^^^^^^ expected `&str`, found `usize`
+  |
+```
+
+* Expected one _type_, got something else
+    * We'll talk about types in a few slides!
+
+
+---
+
+# Aside: Shadowing vs Mutability
+
+![bg right:25% 80%](../images/ferris_happy.svg)
+
+Shadowing:
+
+```rust
+let spaces = "   ";
+let spaces = spaces.len();
+```
+- Even though the types are different, the `let` keyword allows us to redefine the `spaces` variable
 
 
 ---
 
 
-# Example: Shadowing vs Mutability
+# Shadowing vs Mutability
 
-Shadowing:
-```rust
-let spaces = "   ";
-let spaces = spaces.len();
-```
+* Mutability lets us change the value of a variable
+    * We get a compile time error if we try to modify a non-`mut` variable
+* Shadowing allows us to change what a variable logically represents
+    * In addition to changing the value, so it can also change types
+* **What are types though?**
 
-Mutability:
-```rust
-let mut spaces = "   ";
-spaces = spaces.len();
-```
-* The second one does not compile!
+
+---
+
+
+# **Types**
 
 
 ---
@@ -447,7 +496,7 @@ fn main() {
 
 # Booleans
 
-A _boolean_ in Rust has two values `true` and `false` (as in most other languages). Booleans are always 1 byte in size.
+A _boolean_ in Rust has two values `true` and `false` (as in most other languages). 
 
 ```rust
 fn main() {
@@ -457,13 +506,14 @@ fn main() {
 }
 ```
 
+* Booleans are always 1 byte in size
 
 ---
 
 
 # Characters
 
-Rust has a UTF-8 character type `char`. Use `char` with single quotes. Due to `char` being UTF-8, a `char` is always 4 bytes in length.
+Rust has a UTF-8 character type `char`. 
 
 ```rust
 fn main() {
@@ -472,6 +522,9 @@ fn main() {
     let heart_eyed_cat = '😻';
 }
 ```
+
+* Use `char` with single quotes (`'a'` vs. `"a"`)
+* Due to `char` being UTF-8, a `char` is always **4 bytes in length**
 * We will talk more about this and UTF-8 in the future!
 
 
@@ -513,7 +566,8 @@ fn main() {
 
 # Tuples
 
-You can also access specific elements in the tuples:
+You can also access specific elements in the tuples like so:
+
 ```rust
 fn main() {
     let x: (i32, f64, u8) = (500, 6.4, 1);
@@ -545,7 +599,7 @@ fn main() {
 * Unlike tuples, all elements must be the same type
 * The number of elements is always fixed at compile time
     * If you want a collection that grows and shrinks, use a vector (lecture 4)
-* Similar to stack-allocated arrays you would see in `C`
+* Similar to stack-allocated arrays you would see in C
 
 
 ---
@@ -585,10 +639,18 @@ fn main() {
 
 <!--
 Note that Rust might not explicitly check at runtime since the compiler could optimize the check away
+The reason why that is important is no buffer overflows!
 -->
 
-* Rust will check if the index is within bounds at runtime
+* Rust will ensure that the index is within bounds at runtime
    * This is _not_ done in C/C++
+
+
+---
+
+
+# **Functions, Statements, and Expressions**
+
 
 
 ---
@@ -623,6 +685,7 @@ Another function.
 # Functions
 
 All parameters / arguments to functions must be given an explicit type.
+
 ```rust
 fn main() {
     print_labeled_measurement(5, 'h');
@@ -643,17 +706,84 @@ The measurement is: 5h
 ---
 
 
+# Returning from Functions
+
+You can return values back to the caller of a function with the `return` keyword.
+
+```rust
+fn main() {
+    let x = plus_one(5);
+    println!("The value of x is: {}", x);
+}
+
+fn plus_one(x: i32) -> i32 {
+    return x + 1;
+}
+```
+
+```
+$ cargo run
+    <-- snip -->
+The value of x is: 6
+```
+
+
+---
+
+# Returning from Functions
+
+You can also sometimes omit the `return` keyword.
+
+```rust
+fn plus_one(x: i32) -> i32 {
+    x + 1
+}
+```
+
+```
+$ cargo run
+    <-- snip -->
+The value of x is: 6
+```
+
+<!--
+Is this just syntactic sugar for programmers who are too lazy to write the `return` keyword?
+-->
+
+* Why are we allowed do this?
+
+
+---
+
+
 # Statements and Expressions
 
-All functions are a series of statements optionally ending in an expression
+All functions are a series of statements optionally ending in an expression.
 
+```rust
+fn main() {
+    let x = 6; // Statement
+    let y = 2 + 2; // Statement resulting from the expression "2 + 2"
+    2 + 2; // Expression ending in a semicolon,
+           // which turns the expression into a statement with no effect
+}
+```
 * **Statements** are instructions that do some action and don't return a value
+* **Expressions** evaluate / return to a resultant value
+
+
+---
+
+
+# Statements and Expressions
+
+- Statements
     * `let y = 6;` is a statement and does not return a value
     * You _cannot_ write `x = y = 6`
-* **Expressions** evaluate / return to a resultant value
+* Expressions
     * `2 + 2` is an expression
     * Calling a function is an expression
-    * A scope is an expression
+    * A scope is also an expression
 * If you add a semicolon to an expression, it turns into a statement
 * If a scope is an expression, can scopes return values?
 
@@ -663,7 +793,7 @@ All functions are a series of statements optionally ending in an expression
 
 # Statements and Expressions
 
-Observe the following code:
+Observe the following code where a scope returns a value.
 
 ```rust
 fn main() {
@@ -672,27 +802,26 @@ fn main() {
         x + 1
     };
 
-    println!("The value of y is: {y}");
+    println!("The value of y is: {}", y);
 }
 ```
 
 * Notice that there is no semicolon after `x + 1`
 * Scopes return the value of their last expression
-* Since functions are scopes, they also return values!
+* Since functions are scopes, they also can return values in this way!
 
 
 ---
 
 
-# Return values
+# Function Return Types
 
-Functions can return values back to the callers.
+Let's revisit this code snippet.
 
 ```rust
 fn main() {
     let x = plus_one(5);
-
-    println!("The value of x is: {x}");
+    println!("The value of x is: {}", x);
 }
 
 fn plus_one(x: i32) -> i32 {
@@ -743,9 +872,15 @@ error[E0308]: mismatched types
 ---
 
 
+# **Control Flow**
+
+
+---
+
+
 # `if` Expressions
 
-We can define runtime control flow with `if`:
+We can define runtime control flow with `if`.
 
 ```rust
 fn main() {
@@ -836,7 +971,7 @@ fn main() {
 
 # Loops
 
-There are 3 kinds of loops in Rust:
+There are 3 kinds of loops in Rust.
 - `loop`
 - `while`
 - `for`
@@ -1011,10 +1146,16 @@ There are no C-style for loops in Rust
 
 
 # Recap
-* Variables
+* Variables and Mutability
 * Scalar and Compound Data Types
-* Functions
+* Functions, Statements, and Expressions
 * Control Flow
+
+
+---
+
+
+# **Course Logistics**
 
 
 ---
@@ -1056,6 +1197,8 @@ There are no C-style for loops in Rust
 
 <!--
 We may or may not give late days out like candy :D
+Still doesn't change the fact that assignments need to be turned in
+no more than a week after they were officialy due
 -->
 
 
