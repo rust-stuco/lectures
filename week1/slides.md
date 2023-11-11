@@ -16,7 +16,31 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
+# **Welcome!**
+
+<!--
+Introductions here
+Talk a bit about ourselves
+-->
+
+
+---
+
+
+# Meet Ferris!
+
+![bg right:50% 80%](../images/ferris_happy.svg)
+
+* Ferris is Rust's mascot
+* Ferris will be our friend throughout this semester
+
+
+---
+
+
 # **Why Rust?**
+
+<!-- Why are you all here? -->
 
 
 ---
@@ -24,11 +48,171 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Why Rust?
 
-* TODO A few slides about this...
-* Explain the benefits of Rust
-* Explain the downsides or Rust
-    * Steep learning curve of Rust is one of these downsides
-    * Which is why we are teaching this...
+<!--
+This section is heavily influenced by Jon Gjengset's talk about Considering Rust:
+https://www.youtube.com/watch?v=DnT-LUQgc7s
+-->
+
+* What is Rust?
+* How does Rust compare to other languages?
+* What are Rust's primary features?
+* What are Rust's primary pitfalls?
+* Who is Rust for?
+
+
+---
+
+
+# What is Rust?
+
+Developed originally by Mozilla for "systems programming," now community-driven and open-source.
+
+According to the offical rust [website](rust-lang.org), Rust is:
+
+* Fast
+* Reliable
+* Productive
+
+<!-- There is a saying: Fast, reliable, or productive - pick three! -->
+
+
+<!-- * "is blazingly fast and memory-efficient" (**_fast_**)
+* "enabl[es] you to eliminate many classes of bugs at compile-time" (**_reliable_**)
+* "has great documentation, a friendly compiler with useful error messages, and top-notch tooling" (**_productive_**)
+* "[is] A language empowering everyone to build reliable and efficient software" -->
+
+
+---
+
+
+# What is Rust?
+
+* Compiled language
+* No runtime (no garbage collector)
+* Imperative, but with functional features
+* Strong static typing
+
+
+---
+
+
+# Rust vs Python
+
+* Significantly faster
+* Much lower memory use
+* Multi-threaded
+* Comprehensive type system
+
+
+---
+
+
+# Rust vs Java
+
+* No runtime overhead from the JVM or a garbage collector
+* Much lower memory use
+* Zero-cost abstractions
+* Unified build system and dependency management
+
+
+---
+
+
+# Rust vs C/C++
+
+* No segfaults!
+* No null pointers!
+* No buffer overflows!
+* No data races!
+* Powerful type system
+* Unified build system and dependency management
+
+
+---
+
+
+# Feature: Memory Safe
+
+* Difficult to shoot yourself in the foot
+* Pointers checked at compile-time
+* Thread safety from a powerful type system
+* No hidden state
+
+
+---
+
+
+# Feature: Low-level
+
+* No runtime (no garbage collector)
+* Controllable memory allocation
+* Controllable dispatch
+* Can write and wrap low-level code
+* Zero-overhead FFI
+
+
+---
+
+
+# Feature: Modern Language
+
+* Rust is only 8 years old
+* Algebraic and generic data types
+* Modern developer tooling <!-- Built-in unit testing and documentation, friendly errors -->
+* Included build system and dependency management
+* Macros / metaprogramming support
+
+
+---
+
+
+# Pitfall: Learning curve
+
+* Writing Rust _feels_ different
+* The borrow checker can get in your way
+* No Object Oriented Programming
+* **This is why we are teaching this course!**
+
+<!--
+The borrow checker can feel "unfair" and hard
+Requires thinking a lot up front before you write down code
+-->
+
+
+---
+
+
+# Pitfall: Ecosystem
+
+* Rust is only 8 years old
+* Much smaller ecosystem compared to older langauges
+* _Gaining adoption quickly_
+
+
+---
+
+
+# Other pitfalls
+
+* Compile time is slow
+* Vendor support for large C++ libraries
+* Windows support
+
+
+---
+
+
+# Who is Rust for?
+
+<br>
+
+Rust is for those who benefit from the features, and do not suffer from the pitfalls.
+
+<br>
+
+**Which means Rust is _not_ for everyone.**
+
+<!-- Rust is not a magic bullet to solve everyone's problems -->
 
 
 ---
@@ -39,9 +223,9 @@ Benjamin Owad, David Rudo, and Connor Tsui
 By the end of the semester, we want you all to:
 
 * Be able to read, write, and reason about Rust code
-* Have proficiency with Rust equal to that of any other language you know
-* Understand why Rust is such an important language
-* TODO
+* Become intermediate to advanced Rust developers
+* Understand why Rust is an important language
+* Finish this course being confident you can write Rust wherever you go!
 
 
 ---
@@ -79,9 +263,15 @@ $ rustc main.rs
 
 # Cargo
 
+
+<!--
+Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmake
+-->
+
+
 Rust has its own build system and package manager called **Cargo**.
 
-* Cargo is built into Rust, so no `make` files or third-party build systems
+* Cargo is included with all Rust distributions, so no `make` files or third-party build systems
 * Manages packages similar to `pip` for `python` or `npm` for `node.js`
 
 
@@ -147,7 +337,7 @@ Hello, world!
 
 # Check if your project compiles
 
-To check if your code compiles, use `cargo check`
+To check your code for syntax and type errors, use `cargo check`
 
 ```
 $ cargo check
@@ -404,9 +594,12 @@ let spaces = spaces.len();
 
 * Mutability lets us change the value of a variable
     * We get a compile time error if we try to modify a non-`mut` variable
-* Shadowing allows us to change what a variable logically represents
-    * In addition to changing the value, so it can also change types
-* **What are types though?**
+* Shadowing allows us to change what a variable's name refers to
+    * In addition to changing the value, it can also change types
+
+<!--
+So what are types then?
+-->
 
 
 ---
@@ -732,7 +925,7 @@ The value of x is: 6
 
 # Returning from Functions
 
-You can also sometimes omit the `return` keyword.
+You can also omit the `return` keyword.
 
 ```rust
 fn plus_one(x: i32) -> i32 {
@@ -754,6 +947,11 @@ Is this just syntactic sugar for programmers who are too lazy to write the `retu
 
 
 ---
+
+
+<!--
+TODO be more precise: https://doc.rust-lang.org/beta/reference/statements-and-expressions.html
+-->
 
 
 # Statements and Expressions
@@ -834,8 +1032,8 @@ Note that in C, no return type is the `void` type.
 Rust aligns much more with type theory and thus uses the unit type `()` instead!
 -->
 
-* Functions must have a specific return value or none at all
-    * No return type is equivalent to the unit type `()`
+* Functions must have a specific return value, or return nothing
+    * No return type is equivalent to returning the unit type `()`
 * Notice again that there is no semicolon after `x + 1`
 
 
@@ -983,7 +1181,11 @@ There are 3 kinds of loops in Rust.
 
 # `loop` loops
 
-`loop` will keep looping until you tell it to stop with `break`.
+`loop` will loop forever until you tell it to stop with `break`.
+
+<!--
+Like `while (true)` in other languages
+-->
 
 ```rust
 fn main() {
@@ -1130,15 +1332,17 @@ To loop over a range, use the `..` syntax to create a range.
 
 ```rust
 fn main() {
-    for number in (1..4).rev() {
-        println!("{number}!");
+    for number in 1..4 {
+        println!("{}...", number);
     }
-    println!("LIFTOFF!!!");
+    println!("SURPRISE!!!");
 }
 ```
 
 <!--
 There are no C-style for loops in Rust
+`while` and `for` loops are specific syntactic sugar, and `for` loops in particular have some
+certain nuances that we will talk about in future weeks.
 -->
 
 
@@ -1179,7 +1383,9 @@ There are no C-style for loops in Rust
 * Email
 * Talk to us!
     * If you can't make it to lecture, tell us beforehand
-    * If you have any sort of concern, let us know!
+    * If you have feedback for us, feel free to tell us!
+    * Let us know of any ideas you have for this or future semesters!
+    * If you have any sort of concern, talk to us!
 
 
 ---
@@ -1187,8 +1393,8 @@ There are no C-style for loops in Rust
 
 # Course Logistics: Homework
 
-* Homeworks are designed to take 30-45 minutes per week
-* If you are spending more than an hour, please let us know!
+* Homeworks are designed to take less than an hour per week
+* If you are spending more than that, please let us know!
 * Autograded assignments through Gradescope
 * 7 late days
     * Can use them any time in the semester
@@ -1207,7 +1413,9 @@ no more than a week after they were officialy due
 
 # Installing Rust
 
-* TODO
+* Go to [rust-lang.org/tools/install](rust-lang.org/tools/install)
+* Read and follow the instructions for intsalling `rustup`
+* Let us know if you run into trouble!
 
 
 ---
@@ -1215,4 +1423,15 @@ no more than a week after they were officialy due
 
 # Homework 1
 
-* TODO
+* This first homework consists of 8 small puzzles and 4 simple function implementations
+* The goal is to get comfortable with Rust syntax and looking at error messages
+* Read the `README.md` for instructions
+* Let us know if you have any questions!
+
+
+---
+
+
+# **Next Lecture: Ownership**
+
+
