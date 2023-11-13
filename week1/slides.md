@@ -5,8 +5,7 @@ class: invert
 paginate: true
 ---
 
-
-# Intro to Rust
+# Intro to Rust Lang
 
 Benjamin Owad, David Rudo, and Connor Tsui
 
@@ -31,8 +30,8 @@ Talk a bit about ourselves
 
 ![bg right:50% 80%](../images/ferris_happy.svg)
 
-* Ferris is Rust's mascot
-* Ferris will be our friend throughout this semester
+* Ferris is Rust's mascot, and ours too!
+* Ferris will appropriately express joy and anguish throughout this semester
 
 
 ---
@@ -55,8 +54,8 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 * What is Rust?
 * How does Rust compare to other languages?
-* What are Rust's primary features?
-* What are Rust's primary pitfalls?
+* What are the biggest advantages of Rust?
+* What are the pitfalls of Rust?
 * Who is Rust for?
 
 
@@ -65,9 +64,9 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # What is Rust?
 
-Developed originally by Mozilla for "systems programming," now community-driven and open-source.
+Developed originally by Mozilla to replace C++ code in Firefox, now community-driven and open-source.
 
-According to the offical rust [website](rust-lang.org), Rust is:
+From the official rust [website](rust-lang.org) itself, Rust is:
 
 * Fast
 * Reliable
@@ -112,7 +111,7 @@ According to the offical rust [website](rust-lang.org), Rust is:
 * No runtime overhead from the JVM or a garbage collector
 * Much lower memory use
 * Zero-cost abstractions
-* Unified build system and dependency management
+* First-class support for modern paradigms
 
 
 ---
@@ -124,40 +123,43 @@ According to the offical rust [website](rust-lang.org), Rust is:
 * No null pointers!
 * No buffer overflows!
 * No data races!
-* Powerful type system
+* Memory safety as a guarantee at the type checker
+* Robust type system with functional paradigms
 * Unified build system and dependency management
 
 
 ---
 
 
-# Feature: Memory Safe
+# Rust Is Memory Safe
 
-* Difficult to shoot yourself in the foot
-* Pointers checked at compile-time
-* Thread safety from a powerful type system
-* No hidden state
+* "C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"
+* Safety by default makes it much harder to shoot yourself in the foot
+* Memory accesses checked at compile-time
+* Powerful type system supports thread safety
+
 
 
 ---
 
+# Rust Is Low-Level
 
-# Feature: Low-level
-
+* Compiles to machine code
 * No runtime (no garbage collector)
-* Controllable memory allocation
-* Controllable dispatch
-* Can write and wrap low-level code
+* Memory can be allocated deliberately
+* Support for raw pointers
+* Support for inline assembly
 * Zero-overhead FFI
 
 
 ---
 
 
-# Feature: Modern Language
+# Rust Is Modern
 
 * Rust is only 8 years old
 * Algebraic and generic data types
+* Affine type system
 * Modern developer tooling <!-- Built-in unit testing and documentation, friendly errors -->
 * Included build system and dependency management
 * Macros / metaprogramming support
@@ -168,10 +170,10 @@ According to the offical rust [website](rust-lang.org), Rust is:
 
 # Pitfall: Learning curve
 
-* Writing Rust _feels_ different
+* Writing Rust _feels_ very different
 * The borrow checker can get in your way
-* No Object Oriented Programming
-* **This is why we are teaching this course!**
+* No object oriented programming
+* **That is what we are here for!**
 
 <!--
 The borrow checker can feel "unfair" and hard
@@ -185,8 +187,8 @@ Requires thinking a lot up front before you write down code
 # Pitfall: Ecosystem
 
 * Rust is only 8 years old
-* Much smaller ecosystem compared to older langauges
-* _Gaining adoption quickly_
+* Smaller/less mature ecosystem compared to some older langauges
+* _There is a lot of momentum here_
 
 
 ---
@@ -195,9 +197,8 @@ Requires thinking a lot up front before you write down code
 # Other pitfalls
 
 * Compile time is slow
-* Vendor support for large C++ libraries
-* Windows support
-
+* Using established C++ libraries requires complicated bindings
+* Writing code in a systems language still takes more time than in a higher-level language
 
 ---
 
@@ -223,9 +224,9 @@ Rust is for those who benefit from the features, and do not suffer from the pitf
 By the end of the semester, we want you all to:
 
 * Be able to read, write, and reason about Rust code
-* Become intermediate to advanced Rust developers
-* Understand why Rust is an important language
-* Finish this course being confident you can write Rust wherever you go!
+* Become an intermediate to advanced Rust developer 
+* Understand the importance of the Rust language
+* Be confident that you can use Rust going forward!
 
 
 ---
@@ -345,8 +346,8 @@ $ cargo check
     Finished dev [unoptimized + debuginfo] target(s) in 0.42s
 ```
 
-* Must faster than `cargo build` since it doesn't build the executable
-* Useful when programming to check if your code still compiles!
+* Much faster than `cargo build` since it doesn't build the executable
+* Useful when programming to check if your code still compiles
 
 
 ---
@@ -512,7 +513,7 @@ println!("The value of x is: {}", x);
 ```
 
 * `x` is bound to `5` first
-* A new variable `x` is created and bound to `x + 1 = 6`
+* A new variable `x` is created and bound to `x + 1`, i.e. `6`
 * An inner scope is created with the opening curly brace `{`
 * The third `let` statement shadows `x`
 * The shadowed `x` is set to `x * 2 = 12`
@@ -678,7 +679,7 @@ fn main() {
     let quotient = 56.7 / 32.2;
     let truncated = -5 / 3; // Results in -1
 
-    // remainder
+    // remainder/modulo
     let remainder = 43 % 5;
 }
 ```
@@ -1414,7 +1415,7 @@ no more than a week after they were officialy due
 # Installing Rust
 
 * Go to [rust-lang.org/tools/install](rust-lang.org/tools/install)
-* Read and follow the instructions for intsalling `rustup`
+* Read and follow the instructions for installing `rustup`
 * Let us know if you run into trouble!
 
 
@@ -1424,14 +1425,16 @@ no more than a week after they were officialy due
 # Homework 1
 
 * This first homework consists of 8 small puzzles and 4 simple function implementations
-* The goal is to get comfortable with Rust syntax and looking at error messages
-* Read the `README.md` for instructions
-* Let us know if you have any questions!
+* The objective is to build confidence with Rust syntax and experience interpreting error messages
+* Refer to `README.md` for further instructions
+* Please let us know if you have any questions!
 
 
 ---
 
 
+![bg right:30% 80%](../images/ferris_happy.svg)
 # **Next Lecture: Ownership**
 
+Thanks for coming!
 
