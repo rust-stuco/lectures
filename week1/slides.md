@@ -64,13 +64,14 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # What is Rust?
 
-Developed originally by Mozilla to replace C++ code in Firefox, now community-driven and open-source.
+* Rust started as a personal project of Graydon Hoare, a Mozilla Research employee, in 2006
+* Mozilla sponsored the project in 2009, and released the source code in 2010
+* The first stable release, Rust 1.0, was announced in 2015
 
-From the official rust [website](rust-lang.org) itself, Rust is:
-
-* Fast
-* Reliable
-* Productive
+* From the official rust [website](rust-lang.org), Rust is:
+    * Fast
+    * Reliable
+    * Productive
 
 <!-- There is a saying: Fast, reliable, or productive - pick three! -->
 
