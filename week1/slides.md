@@ -199,6 +199,7 @@ Requires thinking a lot up front before you write down code
 * Using established C++ libraries requires complicated bindings
 * Writing code in a systems language still takes more time than in a higher-level language
 
+
 ---
 
 
@@ -223,7 +224,7 @@ Rust is for those who benefit from the features, and do not suffer from the pitf
 By the end of the semester, we want you all to:
 
 * Be able to read, write, and reason about Rust code
-* Become an intermediate to advanced Rust developer 
+* Become an intermediate to advanced Rust developer
 * Understand the importance of the Rust language
 * Be confident that you can use Rust going forward!
 
@@ -689,7 +690,7 @@ fn main() {
 
 # Booleans
 
-A _boolean_ in Rust has two values `true` and `false` (as in most other languages). 
+A _boolean_ in Rust has two values `true` and `false` (as in most other languages).
 
 ```rust
 fn main() {
@@ -706,7 +707,7 @@ fn main() {
 
 # Characters
 
-Rust has a UTF-8 character type `char`. 
+Rust has a UTF-8 character type `char`.
 
 ```rust
 fn main() {
