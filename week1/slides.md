@@ -124,8 +124,8 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * No null pointers!
 * No buffer overflows!
 * No data races!
-* Memory safety as a guarantee at the type checker
-* Robust type system with functional paradigms
+* Memory safety as a guarantee through the type checker
+* Robust type system with functional patterns
 * Unified build system and dependency management
 
 
@@ -134,7 +134,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust Is Memory Safe
 
-* "C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"
+* _"C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"_ - Bjarne Stroustrup, creator of C++
 * Safety by default makes it much harder to shoot yourself in the foot
 * Memory accesses checked at compile-time
 * Powerful type system supports thread safety
@@ -188,7 +188,7 @@ Requires thinking a lot up front before you write down code
 
 * Rust is only 8 years old
 * Smaller and less mature ecosystem compared to some older langauges
-* _There is a lot of momentum here_
+    * _There is a lot of momentum here_
 
 
 ---
@@ -198,7 +198,7 @@ Requires thinking a lot up front before you write down code
 
 * Compile time is slow
 * Using established C++ libraries requires complicated bindings
-* Writing code in a systems language still takes more time than in a higher-level language
+* Programming in a systems language still takes more time than in a higher-level language
 
 
 ---
@@ -206,13 +206,8 @@ Requires thinking a lot up front before you write down code
 
 # Who is Rust for?
 
-<br>
-
-Rust is for those who benefit from the features, and do not suffer from the pitfalls.
-
-<br>
-
-**Which means Rust is _not_ for everyone.**
+* Rust is for those who benefit from its great features, and do not suffer from its pitfalls
+* **Which means Rust is _not_ for everyone.**
 
 <!-- Rust is not a magic bullet to solve everyone's problems -->
 
@@ -680,7 +675,7 @@ fn main() {
     let quotient = 56.7 / 32.2;
     let truncated = -5 / 3; // Results in -1
 
-    // remainder/modulo
+    // remainder / modulo
     let remainder = 43 % 5;
 }
 ```
@@ -751,7 +746,7 @@ fn main() {
 
     let (x, y, z) = tup;
 
-    println!("The value of y is: {y}");
+    println!("The value of y is: {}", y);
 }
 ```
 
@@ -1135,13 +1130,13 @@ fn main() {
     let number = 6;
 
     if number % 4 == 0 {
-        println!("number is divisible by 4");
+        println!("divisible by 4");
     } else if number % 3 == 0 {
-        println!("number is divisible by 3");
+        println!("divisible by 3");
     } else if number % 2 == 0 {
-        println!("number is divisible by 2");
+        println!("divisible by 2");
     } else {
-        println!("number is not divisible by 4, 3, or 2");
+        println!("not divisible by 4, 3, or 2");
     }
 }
 ```
@@ -1152,14 +1147,14 @@ fn main() {
 
 # `if`s are Expressions!
 
-Since `if` expressions are expressions, we can bind the result of an if expression to a variable.
+Since `if` expressions are expressions, we can bind the result of an `if` expression to a variable.
 
 ```rust
 fn main() {
     let condition = true;
     let number = if condition { 5 } else { 6 };
 
-    println!("The value of number is: {number}");
+    println!("The value of number is: {}", number);
 }
 ```
 
@@ -1201,7 +1196,7 @@ fn main() {
         }
     }
 
-    println!("The counter is {counter}");
+    println!("The counter is {}", counter);
 }
 ```
 
@@ -1227,7 +1222,7 @@ fn main() {
         }
     };
 
-    println!("The result is {result}");
+    println!("The result is {}", result);
 }
 ```
 
@@ -1297,7 +1292,7 @@ fn main() {
     let mut number = 3;
 
     while number != 0 {
-        println!("{number}!");
+        println!("{}!", number);
 
         number -= 1;
     }
@@ -1319,7 +1314,7 @@ fn main() {
     let a = [10, 20, 30, 40, 50];
 
     for element in a {
-        println!("the value is: {element}");
+        println!("the value is: {}", element);
     }
 }
 ```
@@ -1381,7 +1376,7 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Communication
 
-* Discord
+* [Discord](https://discord.gg/hKSYvnvD)
 * Email
 * Talk to us!
     * If you can't make it to lecture, tell us beforehand
