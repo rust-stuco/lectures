@@ -30,8 +30,8 @@ Talk a bit about ourselves
 
 ![bg right:50% 80%](../images/ferris_happy.svg)
 
-* Ferris is Rust's mascot, and ours too!
-* Ferris will appropriately express joy and anguish throughout this semester
+* Ferris is Rust's mascot,
+and ours too!
 
 
 ---
@@ -159,7 +159,6 @@ From the official rust [website](rust-lang.org) itself, Rust is:
 
 * Rust is only 8 years old
 * Algebraic and generic data types
-* Affine type system
 * Modern developer tooling <!-- Built-in unit testing and documentation, friendly errors -->
 * Included build system and dependency management
 * Macros / metaprogramming support
@@ -187,7 +186,7 @@ Requires thinking a lot up front before you write down code
 # Pitfall: Ecosystem
 
 * Rust is only 8 years old
-* Smaller/less mature ecosystem compared to some older langauges
+* Smaller and less mature ecosystem compared to some older langauges
 * _There is a lot of momentum here_
 
 
