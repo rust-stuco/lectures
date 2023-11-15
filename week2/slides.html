@@ -675,7 +675,15 @@ help: consider using the `'static` lifetime
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="52" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="52" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56">
 <h1 id="slices"><strong>Slices</strong></h1>
 </section>
-</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="53" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="53" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56"></section>
+</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="53" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="53" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56">
+<h1 id="slices-1">Slices</h1>
+<p>Suppose we have a <code>String</code>, and we want to tell the first few characters in the <code>String</code>. We can use slices for this!</p>
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">s</span> = <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;hello world&quot;</span>);
+
+<span class="hljs-keyword">let</span> <span class="hljs-variable">hello</span> = &amp;s[<span class="hljs-number">0</span>..<span class="hljs-number">5</span>];
+<span class="hljs-keyword">let</span> <span class="hljs-variable">world</span> = &amp;s[<span class="hljs-number">6</span>..<span class="hljs-number">11</span>];
+</code></pre>
+</section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="54" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="54" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56"></section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="55" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="55" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56"></section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="56" data-class="invert" data-paginate="true" data-theme="default" lang="C" class="invert" data-marpit-pagination="56" style="--class:invert;--paginate:true;--theme:default;" data-marpit-pagination-total="56"></section>

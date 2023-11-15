@@ -900,11 +900,19 @@ Focus on this line:
 
 
 
-
-
 ---
 
 
+# Slices
+
+Suppose we have a `String`, and we want to tell the first few characters in the `String`. We can use slices for this!
+
+```rust
+let s = String::from("hello world");
+
+let hello = &s[0..5];
+let world = &s[6..11];
+```
 
 
 
