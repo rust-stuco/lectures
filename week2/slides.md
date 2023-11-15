@@ -457,17 +457,12 @@ Passing a `String`:
 ```rust
 fn main() {
     let s = String::from("hello");
-
     takes_ownership(s);
-
     // println!("{} is invalid now!", s);
-
 } // Because `s`'s value was moved, `s` is not dropped
 
 fn takes_ownership(some_string: String) { // `some_string` comes into scope
-
     println!("{} is mine now!", some_string);
-
 } // Here, `some_string` goes out of scope and `drop` is called.
   // The backing memory is freed.
 ```
@@ -502,17 +497,13 @@ Returning values can also transfer ownership.
 ```rust
 fn main() {
     let s1 = gives_ownership();
-
     let s2 = String::from("hello");
-
     let s3 = takes_and_gives_back(s2);
-
 } // Here, `s3` goes out of scope and is dropped. `s2` was moved, so nothing
   // happens. s1 goes out of scope and is dropped.
 
 fn gives_ownership() -> String {
     let some_string = String::from("yours");
-
     some_string // `some_string` is returned and moves out to the calling function
 }
 
@@ -527,10 +518,28 @@ fn takes_and_gives_back(a_string: String) -> String {
 
 # Moving is somewhat tedious
 
+```rust
+fn main() {
+    let s1 = String::from("hello");
+    let (s2, len) = calculate_length(s1);
+    println!("The length of '{}' is {}.", s2, len);
+}
+
+fn calculate_length(s: String) -> (String, usize) {
+    let length = s.len(); // len() returns the length of a String
+    (s, length)
+}
+```
 
 * If we want to give a function some data, it seems we need to _move_ the data into the function
 * To get it back, it seems we need to also return the data back every time
-* What if we want to let a function use a value but not take ownership?
+* _What if we want to let a function use a value but not take ownership?_
+
+
+---
+
+
+# **References and Borrowing**
 
 
 ---
@@ -546,18 +555,356 @@ So Rust has a feature specifically for using a value without transferring owners
 ---
 
 
-# References and Borrowing Section
+# Reference with `&`
 
-* Probably around 15-20 pages
+Instead of moving a value into a function, we can provide a _reference_ to the value.
+
+We use `&` to define a reference to a value.
+
+```rust
+fn main() {
+    let s1 = String::from("hello");
+
+    let len = calculate_length(&s1);
+
+    println!("The length of '{}' is {}.", s1, len);
+}
+
+fn calculate_length(s: &String) -> usize {
+    s.len()
+}
+```
+
+* Let's break this down!
+
+
+---
+
+
+# Reference with `&`
+
+```rust
+fn main() {
+    let s1 = String::from("hello");
+
+    let len = calculate_length(&s1);
+
+    println!("The length of '{}' is {}.", s1, len);
+}
+```
+
+* The `&s1` syntax lets us create a varibale that _refers_ to the value of `s1`
+* We do not own `s1` if we just have `&s1`
+* This means `s1` will not be dropped when we stop using `&s1`
+
+
+---
+
+
+# References as Function Arguments
+
+```rust
+fn calculate_length(s: &String) -> usize { // `s` is a reference to a String
+    s.len()
+} // Here, `s` goes out of scope
+```
+
+* Because `s` does not have ownership of what it refers to, the contents of `s1` are not dropped
+* We call this _borrowing_
+
+
+---
+
+
+# Reference Data Layout
+
+![bg right:55% 85%](../images/String_reference.svg)
+
+* In memory, references are just pointers
+* But they have several constraints that make them different...
+
+
+---
+
+
+# Mutating a Reference
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+What if we want to modify the value of something we've borrowed through a reference?
+
+```rust
+fn main() {
+    let s = String::from("hello");
+
+    change(&s);
+}
+
+fn change(some_string: &String) {
+    some_string.push_str(", world");
+}
+```
+
+---
+
+
+# Modifying a Reference
+
+We get an error if we try to modify a reference.
+
+```
+error[E0596]: cannot borrow `*some_string` as mutable,
+              as it is behind a `&` reference
+
+ --> src/main.rs:8:5
+  |
+7 | fn change(some_string: &String) {
+  |                        ------- help: consider changing this
+                                   to be a mutable reference: `&mut String`
+8 |     some_string.push_str(", world");
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `some_string` is a `&` reference,
+                                         so the data it refers to cannot
+                                         be borrowed as mutable
+```
+
+* Just like variables, references are immutable by default
+
+
+---
+
+
+# Mutable References
+
+If we want to modify the value that we've borrowed, we must use a mutable reference, denoted `&mut val`.
+
+```rust
+fn main() {
+    let mut s = String::from("hello");
+
+    change(&mut s);
+}
+
+fn change(some_string: &mut String) {
+    some_string.push_str(", world");
+}
+```
+
+
+---
+
+
+# Mutable References are Exclusive
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+If you have a mutable reference to a value, you can have no other references to that value.
+
+```rust
+let mut s = String::from("hello");
+
+let r1 = &mut s;
+let r2 = &mut s;
+
+println!("{}, {}", r1, r2);
+```
+
+
+---
+
+
+# Mutable References are Exclusive
+
+```rust
+let mut s = String::from("hello");
+let r1 = &mut s;
+let r2 = &mut s;
+println!("{}, {}", r1, r2);
+```
+
+```
+error[E0499]: cannot borrow `s` as mutable more than once at a time
+ --> src/main.rs:5:14
+  |
+4 |     let r1 = &mut s;
+  |              ------ first mutable borrow occurs here
+5 |     let r2 = &mut s;
+  |              ^^^^^^ second mutable borrow occurs here
+6 |
+7 |     println!("{}, {}", r1, r2);
+  |                        -- first borrow later used here
+```
+
+---
+
+
+# Mutable References are Exclusive
+
+* Sometimes people will refer to mutable references as exclusive references
+* This restrction allows for controlled mutation
+* Most languages will let you mutate whenever you want
+* Rust instead prevents data races at compile time!
+
+
+---
+
+
+# Multiple Mutable References
+
+![bg right:25% 80%](../images/ferris_happy.svg)
+
+We are allowed to have multiple mutable references, just not _simultaneously_.
+
+```rust
+let mut s = String::from("hello");
+
+{
+    let r1 = &mut s;
+} // r1 goes out of scope here, so we can
+  // make a new reference with no problems.
+
+let r2 = &mut s;
+```
+
+---
+
+
+# Mutable and Immutable References
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+We cannot have both an immutable and mutable reference to the same value.
+
+```rust
+let mut s = String::from("hello");
+
+let r1 = &s; // no problem
+let r2 = &s; // no problem
+let r3 = &mut s; // BIG PROBLEM
+
+println!("{}, {}, and {}", r1, r2, r3);
+```
+
+---
+
+
+# Mutable and Immutable References
+
+```rust
+let mut s = String::from("hello");
+let r1 = &s; // no problem
+let r2 = &s; // no problem
+let r3 = &mut s; // BIG PROBLEM
+println!("{}, {}, and {}", r1, r2, r3);
+```
+
+```
+error[E0502]: cannot borrow `s` as mutable because
+              it is also borrowed as immutable
+ --> src/main.rs:6:14
+  |
+4 |     let r1 = &s; // no problem
+  |              -- immutable borrow occurs here
+5 |     let r2 = &s; // no problem
+6 |     let r3 = &mut s; // BIG PROBLEM
+  |              ^^^^^^ mutable borrow occurs here
+7 |
+8 |     println!("{}, {}, and {}", r1, r2, r3);
+  |                                -- immutable borrow later used here
+```
+
+
+---
+
+
+# Mutable and Immutable References
+
+Note that these rules only apply for references whose scopes overlap.
+
+```rust
+let mut s = String::from("hello");
+
+let r1 = &s; // no problem
+let r2 = &s; // no problem
+println!("{} and {}", r1, r2);
+// variables r1 and r2 will not be used after this point
+
+let r3 = &mut s; // no problem
+println!("{}", r3);
+```
+
+* The scope of a reference starts when it is intialized
+* The scope of a reference **ends at the last point it is used**
+* The specific term for reference scopes are _lifetimes_
+    * We'll talk about lifetimes in lecture 7!
+
+
+---
+
+
+# Dangling References
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+The Rust compiler guarantees that references will never be invalid, which means it will not dangling references.
+
+```rust
+fn main() {
+    let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String {
+    let s = String::from("hello");
+
+    &s
+}
+```
+
+
+---
+
+# Dangling References
+
+```
+error[E0106]: missing lifetime specifier
+ --> src/main.rs:5:16
+  |
+5 | fn dangle() -> &String {
+  |                ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value,
+    but there is no value for it to be borrowed from
+help: consider using the `'static` lifetime
+<-- snip -->
+```
+
+Focus on this line:
+> this function's return type contains a borrowed value, but there is no value for it to be borrowed from
+
+* Again, this relies on lifetimes, so just keep this in mind!
+
+
+---
+
+
+# Reference Rules
+
+* At any given time, you can have either one mutable reference or any number of immutable references
+    * Think many readers of a book, but a single writer (read-write lock)
+* References must always be valid
+
+
+---
+
+
+# **Slices**
+
+
 
 
 
 ---
 
 
-# Slices section
-
-* Probably around 5-10 pages
 
 
 
@@ -567,16 +914,7 @@ So Rust has a feature specifically for using a value without transferring owners
 
 
 
-
 ---
-
-
-
-
-
-
----
-
 
 
 
@@ -589,14 +927,7 @@ So Rust has a feature specifically for using a value without transferring owners
 
 
 
----
 
-
-
-
-
-
----
 
 
 
