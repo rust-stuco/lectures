@@ -1429,8 +1429,10 @@ no more than a week after they were officialy due
 ---
 
 
-![bg right:30% 80%](../images/ferris_happy.svg)
+
 # **Next Lecture: Ownership**
+
+![bg right:30% 80%](../images/ferris_happy.svg)
 
 Thanks for coming!
 
