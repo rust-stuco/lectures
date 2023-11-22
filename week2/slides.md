@@ -36,9 +36,21 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# String literals
+# String Literals
 
-* TODO should this be at the beginning of this lecture or in the previous lecture?
+We didn't explicitly talk about this last week, but every time you see a text like `"Hello, World!"` surrounded by double quotes, that is a _string literal_.
+
+```rust
+fn main() {
+    println!("Hello, world!"); // Print a string literal
+
+    let s = "Ferris is our friend"; // Another string literal
+}
+```
+
+String literals live inside in the program binary.
+
+<!-- Like C/C++ -->
 
 
 ---
@@ -49,7 +61,8 @@ Benjamin Owad, David Rudo, and Connor Tsui
 Recall scopes in Rust.
 ```rust
 
-    {                      // s is not valid here, it’s not yet declared
+                           // s is not valid here, it’s not yet declared
+    {
         let s = "hello";   // s is valid from this point forward
 
         // do stuff with s
@@ -60,16 +73,6 @@ Recall scopes in Rust.
 * There are two important points in time here:
     * When `s` comes _into_ scope, it is valid
     * It remains valid until it goes _out_ of scope.
-
-
----
-
-
-# The Stack and the Heap
-
-Recall that programs have access to the _stack_ and the _heap_.
-
-* TODO not sure if we need to actually explain these things again, everyone _should_ know this
 
 
 ---
@@ -87,7 +90,7 @@ From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-unders
 
 > Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
 
-* Today we'll introduce Ownership, as well as several related features.
+* Today we'll introduce Ownership, as well as several related features
 
 
 ---
@@ -98,8 +101,8 @@ From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-unders
 
 _Ownership_ is a set of rules that govern how a Rust program manages memory.
 
-* Some languages have garbage collecction to manage memory
-* Other languages require you to explicity allocate and free memory
+* Some languages have garbage collection to manage memory
+* Other languages require you to explicitly allocate and free memory
 * Rust has a third approach: memory is managed through a set of rules
 
 <!-- None of the features of ownership will slow down your program when it's running -->
@@ -118,20 +121,19 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 ---
 
 
-# Problem: String literals are immutable
+# Problem: String Literals are Immutable
 
 * Recall that we can use string literals like `"hello"` or `"world"`
 * Literals are hardcoded into programs, so they can't be mutated
 * What if we want to take user input and store it?
-
+* We need a way to store a collection of characters with a dynamic size
 
 ---
 
 
 # The `String` type
 
-In addition to string literals, Rust has a second string type, `String`.
-
+* In addition to string literals, Rust has another string type, `String`.
 * `String` manages data allocated on the heap
 * Dynamically stores an amount of text that is unknown at compile time
 
@@ -207,8 +209,8 @@ Memory is returned once the variable that owns it goes out of scope
         let s = String::from("hello"); // s is valid from this point forward
 
         // do stuff with s
-    }                                  // this scope is now over, and s is no
-                                       // longer valid
+    }                                  // this scope is now over,
+                                       // and s is no longer valid
 ```
 
 * When `s` comes into scope, it gets memory from the allocator
@@ -269,12 +271,12 @@ What is this code doing?
 let s1 = String::from("hello");
 ```
 
-* A `String` is made up of 3 parts:
-    * A pointer to the memory that holds text
+* A `String` is made up of 3 fields:
+    * A pointer to text somewhere in memory
     * A length
     * A capacity
-* Left data is on the stack
-* Right data is on the heap
+* Left diagram is on the stack
+* Right diagram is on the heap
 
 
 ---
@@ -306,10 +308,9 @@ let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-Suppose this was how Rust actually handled this code.
-
+- Suppose this was how Rust actually handled this code.
 * What would happen if we tried to drop both `s1` and `s2`?
-    * Double free!!!
+    * Double free! 🪦
 
 
 ---
@@ -326,7 +327,7 @@ let s1 = String::from("hello");
 let s2 = s1; // s1 is no longer valid
 ```
 
-_Grayed out portion is no longer accessible to the program_
+* _Grayed out portion is no longer accessible to the program_
 
 
 ---
@@ -390,7 +391,7 @@ println!("s1 = {}, s2 = {}", s1, s2);
 s1 = hello, s2 = hello
 ```
 
-* This copies all of the text contained in `s1`
+* This copies _all_ of the data contained in `s1`
 * We'll talk more about methods next week!
 
 
@@ -438,10 +439,10 @@ Why does this work?
 Rust annotates certain types with a `Copy` trait, and these types allow variables that use it to be valid even after copying it to another variable.
 
 Here are some of the types that are `Copy`:
-- All number types, including integers and floating points
-- Boolean type, `bool`
-- Character type, `char`
-- Tuples, if they only contain types that are `Copy`
+* All number types, including integers and floating points
+* Boolean type, `bool`
+* Character type, `char`
+* Tuples, if they only contain types that are `Copy`
     - `(i32, i32)` is `Copy`, but `(i32, String)` is not
 
 
@@ -547,9 +548,8 @@ fn calculate_length(s: String) -> (String, usize) {
 
 # References
 
-Moving and return data is a lot of work for a conecpt that should be common.
-
-So Rust has a feature specifically for using a value without transferring ownership called _references_.
+* Moving and return data is a lot of work for a concept that should be common.
+* So Rust has a feature specifically for using a value without transferring ownership called _references_.
 
 
 ---
@@ -593,7 +593,7 @@ fn main() {
 }
 ```
 
-* The `&s1` syntax lets us create a varibale that _refers_ to the value of `s1`
+* The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
 * We do not own `s1` if we just have `&s1`
 * This means `s1` will not be dropped when we stop using `&s1`
 
@@ -740,7 +740,7 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
 # Mutable References are Exclusive
 
 * Sometimes people will refer to mutable references as exclusive references
-* This restrction allows for controlled mutation
+* This restriction allows for controlled mutation
 * Most languages will let you mutate whenever you want
 * Rust instead prevents data races at compile time!
 
@@ -832,10 +832,10 @@ let r3 = &mut s; // no problem
 println!("{}", r3);
 ```
 
-* The scope of a reference starts when it is intialized
+* The scope of a reference starts when it is initialized
 * The scope of a reference **ends at the last point it is used**
 * The specific term for reference scopes are _lifetimes_
-    * We'll talk about lifetimes in lecture 7!
+    * We'll talk about lifetimes in week 7!
 
 
 ---
@@ -892,6 +892,8 @@ Focus on this line:
     * Think many readers of a book, but a single writer (read-write lock)
 * References must always be valid
 
+<!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
+
 
 ---
 
@@ -905,7 +907,38 @@ Focus on this line:
 
 # Slices
 
-Suppose we have a `String`, and we want to tell the first few characters in the `String`. We can use slices for this!
+_Slices_ let you reference a contiguous sequence of elements in a collection rather than the whole collection.
+
+A slice is similar to a reference, so it does not have ownership
+
+
+---
+
+
+# Slices
+
+
+Suppose we want to write this function:
+
+```rust
+fn first_word(s: &String) -> ?
+```
+
+* Find the first space and return all the characters before it
+* What type should we return?
+
+<!--
+Could return an index, but that is boring,
+and what would happen if we wanted to return the second word? Two indices?
+-->
+
+
+---
+
+
+# String Slices
+
+A _string slice_ is a reference to part of a `String`, and it looks like this:
 
 ```rust
 let s = String::from("hello world");
@@ -914,30 +947,179 @@ let hello = &s[0..5];
 let world = &s[6..11];
 ```
 
-
-
----
-
-
+* `hello` contains the first 5 characters of `s`
+* `world` contains the 5 characters starting at the 6th index of `s`
 
 
 
 ---
 
 
+# String Slices
 
+![bg right:50% 80%](../images/str_slice.svg)
+
+```rust
+let s = String::from("hello world");
+
+let hello = &s[0..5];
+let world = &s[6..11];
+```
+
+* A string slice stores a pointer to memory and a length
 
 
 ---
 
 
+# String Slices
+
+You can shorthand ranges with the `..` syntax.
+
+```rust
+let s = String::from("hello");
+
+let slice = &s[0..2];
+let slice = &s[..2];
+
+let len = s.len();
+let slice = &s[3..len];
+let slice = &s[3..];
+
+let slice = &s[0..len];
+let slice = &s[..];
+```
 
 
+---
 
 
+# String Literals are Slices
+
+Recall that we talked about string literals being stored inside the binary. Now that we know about slices, we can properly understand string literals:
+
+```rust
+let s = "Hello, world!";
+```
+
+* The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
+* Question: Why are string literals immutable?
+  * `&str` is an immutable reference!
 
 
+---
 
 
+# Owned Types
+
+* String slices and string literals are immutable because they are a special type of immutable reference, and so we can't mutate them
+* String is an owned type, so we can do whatever we want with it
+* What are some other owned types?
 
 
+---
+
+
+# `Vec`
+
+`Vec`, also known as _vectors_, allow you to store a collection of values of the same type contiguously in memory. Internally, it is a dynamically sized array stored on the heap.
+
+You can create an vector like this:
+
+```rust
+let v: Vec<i32> = Vec::new();
+```
+
+* The `<i32>` just means that the vector stores `i32` values. We'll talk more about this syntax in the Week 4!
+
+
+---
+
+
+# Updating a `Vec`
+
+To add elements to a `Vec`, we can use the `push` method.
+
+```rust
+let mut v = Vec::new();
+
+v.push(5);
+v.push(6);
+v.push(7);
+v.push(8);
+
+println!("{:?}", v);
+```
+
+```
+[5, 6, 7, 8]
+```
+
+---
+
+
+# `Vec` Macro
+
+Rust provides a _macro_ to create vectors easily in your programs.
+
+```rust
+let v = vec![1, 2, 3];
+
+println!("{:?}", v);
+```
+
+```
+[1, 2, 3]
+```
+
+* We'll talk about macros in Week 12!
+
+
+---
+
+
+# Reading Elements of Vectors
+
+You can index into a vector to retrieve a reference to an element.
+
+```rust
+let v = vec![1, 2, 3, 4, 5];
+
+let third: &i32 = &v[2];
+println!("The third element is {}", third);
+```
+
+* Note that Rust will panic if you try to index out of the bounds of the `Vec`
+
+<!-- There is also a get method, but we will talk about that more in week 4 -->
+
+
+---
+
+
+# More `Vec<T>` to come...
+
+We will talk more about `String` and `Vec<T>` in Week 4!
+
+
+---
+
+
+# Homework 2
+
+* The second homework consists entirely of 10 small puzzles
+  * Refer to the `README.md` for further instructions
+  * Always follow the compiler's advice!
+* We **_HIGHLY_** recommend reading the Rust Book chapter on [Ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
+  * Ownership is a very tricky concept that affects almost every aspect of Rust, so understating it is key to writing more complex Rust code
+* Try your best to understand Ownership _before_ attempting the homework
+
+
+---
+
+
+# Next Lecture: Structs and Enums
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for showing up!
