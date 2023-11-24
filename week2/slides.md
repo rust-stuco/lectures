@@ -1133,11 +1133,11 @@ let s = "Hello, world!";
 ---
 
 
-# `Vec`
+# Vectors
 
-`Vec`, also known as _vectors_, allow you to store a collection of values of the same type contiguously in memory. Internally, it is a dynamically sized array stored on the heap.
+_Vectors_ allow you to store a collection of values of the same type contiguously in memory. Internally, it is a dynamically sized array stored on the heap.
 
-You can create an vector like this:
+You can create an vector with the method `new`:
 
 ```rust
 let v: Vec<i32> = Vec::new();
@@ -1171,7 +1171,7 @@ println!("{:?}", v);
 ---
 
 
-# `Vec` Macro
+# `vec!` Macro
 
 Rust provides a _macro_ to create vectors easily in your programs.
 
