@@ -1012,8 +1012,22 @@ Focus on this line:
 ---
 
 
-# **Slices**
+# The Borrow Checker
 
+The Borrow Checker enforces the rules of ownership and borrowing by checking:
+
+* That all variables are initialized before they are used
+* That you can't move the same value twice
+* That you can't move a value while it is borrowed
+* That you can't access a place while it is mutably borrowed (except through the mutable reference)
+* That you can't mutate a place while it is immutably borrowed
+* and more...
+
+
+---
+
+
+# **Slices**
 
 
 ---
