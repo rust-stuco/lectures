@@ -24,7 +24,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * Homework 1 due today
 * You can use 7 late days over the whole semester
 * If you spent over an hour on the assignment, please let us know!
-* TODO other announcements?
+* Other announcements (TODO)
 
 
 ---
@@ -133,7 +133,7 @@ username = input("Tell me your name!")
 
 # The `String` type
 
-* In addition to string literals, Rust has another string type, `String`.
+* In addition to string literals, Rust has another string type, `String`
 * `String` manages data allocated on the heap
 * Dynamically stores an amount of text that is unknown at compile time
 
@@ -221,7 +221,7 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
 
 # The Rust approach to memory
 
-Memory is returned once the variable that owns it goes out of scope
+Memory is returned once the variable that owns it goes out of scope.
 
 ```rust
 
@@ -235,7 +235,7 @@ Memory is returned once the variable that owns it goes out of scope
 
 * When `s` comes into scope, it gets memory from the allocator
 * When `s` goes out of scope, it frees all of its memory
-    * Rust calls a function called `drop` automatically at the closing bracket
+    * Rust calls a function called `drop` on `s` automatically once the program reaches the closing bracket
 
 <!-- This is the RAII pattern in C++ -->
 <!-- This might seem simple, but it has profound implication on the way we write code in Rust -->
@@ -249,8 +249,10 @@ Memory is returned once the variable that owns it goes out of scope
 Multiple variables can interact with the same data in different ways in Rust.
 
 ```rust
-let x = 5;
-let y = x;
+let s1 = String::from("hello");
+let s2 = s1.clone();
+
+println!("s1 = {}, s2 = {}", s1, s2);
 ```
 
 Can we guess what this is doing?
@@ -378,7 +380,8 @@ println!("{}, world!", s1);
 error[E0382]: borrow of moved value: `s1`
   |
 2 |     let s1 = String::from("hello");
-  |         -- move occurs because `s1` has type `String`, which does not implement the `Copy` trait
+  |         -- move occurs because `s1` has type `String`,
+               which does not implement the `Copy` trait
 3 |     let s2 = s1;
   |              -- value moved here
 4 |
@@ -402,7 +405,7 @@ let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-* Rust calls this shallow copy plus invalidation a _move_
+- Rust calls this shallow copy plus invalidation a _move_
 * We _moved_ `s1` into `s2`
 * This is a very intentional design choice in Rust
   * Rust will never create a "deep" copy of your data
@@ -503,7 +506,8 @@ fn main() {
     // println!("{} is invalid now!", s);
 } // Because `s`'s value was moved, `s` is not dropped
 
-fn takes_ownership(some_string: String) { // `some_string` comes into scope
+               // `some_string` comes into scope
+fn takes_ownership(some_string: String) {
     println!("{} is mine now!", some_string);
 } // Here, `some_string` goes out of scope and `drop` is called.
   // The backing memory is freed.
@@ -546,7 +550,7 @@ fn main() {
     println!("Here is {} again!", x);
 }
 
-fn makes_copy(some_integer: i32) { // `some_integer` comes into scope
+fn makes_copy(some_integer: i32) {
     println!("{} just got copied", some_integer);
 }
 ```
@@ -554,7 +558,7 @@ fn makes_copy(some_integer: i32) { // `some_integer` comes into scope
 ---
 
 
-# Return values and Scope
+# Return Values and Scope
 
 Returning values can also transfer ownership.
 
@@ -566,7 +570,9 @@ fn main() {
 
 fn gives_ownership() -> String {
     let some_string = String::from("yours");
-    some_string // `some_string` is returned and moves out to the calling function
+
+    some_string // `some_string` is returned and
+                // moves out to the calling function
 }
 ```
 
@@ -574,7 +580,7 @@ fn gives_ownership() -> String {
 ---
 
 
-# Return values and Scope
+# Return Values and Scope
 
 Another example of taking and giving back ownership:
 
@@ -587,9 +593,24 @@ fn main() {
   // `s2` was moved, so nothing happens to `s2`.
 
 fn takes_and_gives_back(a_string: String) -> String {
-    a_string  // a_string is returned and moves out to the calling function
+    a_string  // a_string is returned and
+              // moves out to the calling function
 }
 ```
+
+
+---
+
+
+# Recap: Ownership
+
+* Ownership rules:
+  * Each value in Rust has an _owner_
+  * There can only be one owner at a time
+  * When the owner goes out of scope, the value will be _dropped_
+* With just ownership, we can either move, copy, or clone
+  * Moving and copying has no overhead
+  * Cloning is expensive
 
 
 ---
@@ -605,7 +626,7 @@ fn main() {
 }
 
 fn calculate_length(s: String) -> (String, usize) {
-    let length = s.len(); // len() returns the length of a String
+    let length = s.len();
     (s, length)
 }
 ```
@@ -825,12 +846,12 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
 
 # Mutable References are Exclusive
 
-* This restriction allows for explicit mutation
 * Most languages will let you mutate anything, whenever you want
-* Rust instead prevents data races at compile time!
+* If data can be written to from multiple places, the value can become unpredictable
+* Making mutable references exclusive prevents data races at compile time!
 
 <!--
-Sometimes people will refer to mutable references as exclusive references
+Sometimes people will refer to mutable references as exclusive references, and normal references as shared
 Other languages let you mutate values, pointers, variables, etc.
 The data races happen when we introduce concurrency, which we'll talk about in the future!
 -->
@@ -1000,9 +1021,8 @@ Focus on this line:
 
 # Slices
 
-_Slices_ let you reference a contiguous sequence of elements in a collection rather than the whole collection.
-
-A slice is similar to a reference, so it does not have ownership
+- _Slices_ let you reference a contiguous sequence of elements in a collection rather than the whole collection
+* A slice is similar to a reference, so it does not have ownership
 
 
 ---
@@ -1031,7 +1051,7 @@ and what would happen if we wanted to return the second word? Two indices?
 
 # String Slices
 
-A _string slice_ is a reference to part of a `String`, and it looks like this:
+A _string slice_ is sometimes a reference to part of a `String`, and it looks like this:
 
 ```rust
 let s = String::from("hello world");
@@ -1184,7 +1204,10 @@ println!("The third element is {}", third);
 
 * Note that Rust will panic if you try to index out of the bounds of the `Vec`
 
-<!-- There is also a get method, but we will talk about that more in week 4 -->
+<!--
+There is also a get method, but we will talk about that more in week 4
+Also note that we don't technically need the & here because i32 is Copy
+-->
 
 
 ---
@@ -1203,7 +1226,7 @@ We will talk more about `String` and `Vec<T>` in Week 4!
 * The second homework consists entirely of 10 small puzzles
   * Refer to the `README.md` for further instructions
   * Always follow the compiler's advice!
-* We **_HIGHLY_** recommend reading the Rust Book chapter on [ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
+* We **_highly_** recommend reading the Rust Book chapter on [ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
   * Ownership is a very tricky concept that affects almost every aspect of Rust, so understanding it is key to writing more complex Rust code
 * Try your best to understand Ownership _before_ attempting the homework
 
