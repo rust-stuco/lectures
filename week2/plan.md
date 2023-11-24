@@ -1,10 +1,10 @@
 ## Week 2: Ownership
 
 ### Lecture
-- Review (2 min)
-    - Scopes
-    - String literals
-- Ownership (24 min)
+- Ownership (26 min)
+    - Review
+        - Scopes
+        - String literals
     - Ownership Rules
     - `String` type
     - Memory and Allocation
