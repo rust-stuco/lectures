@@ -1,7 +1,7 @@
 ## Week 4: Standard Collections and Generics
 
 ### Lecture
-- Vectors (4 min)
+- Vectors (5 min)
     - Go through common methods
         - TODO
 - Strings (10 min)
@@ -11,7 +11,7 @@
 - Maps (15 min)
     - Focus on `HashMap` and `HashSet` (if time available `BTreeMap`)
     - `Entry` API
-- Generics basics (21 min)
+- Generics basics (20 min)
     - Metaprogramming
     - Structs, Enums, Function definitions
     - Monomorphization vs. Polymorphism
