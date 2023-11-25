@@ -187,7 +187,7 @@ Requires thinking a lot up front before you write down code
 # Pitfall: Ecosystem
 
 * Rust is only 8 years old
-* Smaller and less mature ecosystem compared to some older langauges
+* Smaller and less mature ecosystem compared to some older languages
     * _There is a lot of momentum here_
 
 
@@ -610,7 +610,7 @@ So what are types then?
 
 # Types
 
-Like most langauges, there are two main categories of Data Types.
+Like most languages, there are two main categories of Data Types.
 
 - Scalar Types
     - Integers
@@ -1367,7 +1367,7 @@ certain nuances that we will talk about in future weeks.
 * Attendance is 50% of your grade
     * We have to take attendance every lecture
     * You only get 2 unexcused absences
-* Programming assignements are the other 50%
+* Programming assignments are the other 50%
 * You need 60% to pass this course
 
 
@@ -1401,7 +1401,7 @@ certain nuances that we will talk about in future weeks.
 <!--
 We may or may not give late days out like candy :D
 Still doesn't change the fact that assignments need to be turned in
-no more than a week after they were officialy due
+no more than a week after they were officially due
 -->
 
 
