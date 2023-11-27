@@ -50,9 +50,9 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 
 
 ## Week 4: Standard Collections and Generics
-- The `Vec<T>` type
-- The `String` type
-- The `HashMap<K, V>` type
+- The `Vec<T>` Type
+- The `String` Type
+- The `HashMap<K, V>` Type
 - Generics
 
 
