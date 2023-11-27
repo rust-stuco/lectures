@@ -239,7 +239,7 @@ fn init_connor(grade: u8, stress_level: u64, att_vec: Vec<bool>) -> Student {
     let mut connor = Student {
         andrew_id: "cjtsui",
         attendance: att_vec,
-        grade, // Skip assignment if variable has the same name
+        grade, // Shorter syntax if variable has the same name
         stress_level,
     };
 
@@ -283,6 +283,196 @@ fn main() {
 * Sometimes useful for cool wizardry
 * Rarely useful for normal stuff
 ---
+# Can we store references in a struct?
+```rust
+struct Borrower {
+    borrowed_num: &i32,
+}
+```
+---
+# Not quite...
+```
+error[E0106]: missing lifetime specifier
+ --> cool_example.rs:2:19
+  |
+2 |     borrowed_num: &i32,
+  |                   ^ expected named lifetime parameter
+  |
+help: consider introducing a named lifetime parameter
+  |
+1 ~ struct Borrower<'a> {
+2 ~     borrowed_num: &'a i32,
+  |
+```
+* We don't know how long the reference will last!
+* What if we store a reference to a variable and then it is freed?
+* Lifetimes solve this problem (Lecture 7)!
+---
+# Quick Struct Example
+```rust
+fn draw_rectangle(x: u32, y: u32, width: u32, height: u32) {}
+```
+
+```rust
+fn draw_rectangle(rect_tuple: (u32, u32, u32, u32)) {}
+```
+
+```rust
+struct Rectangle {
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+}
+
+fn draw_rectangle(rect: Rectangle) {}
+```
+* Which do you prefer?
+---
+# **Struct Methods**
+---
+# Struct Methods
+* Functions defined within the context of a struct
+```rust
+struct Rectangle {
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+```
+* Similar to object-oriented design patterns in other languages
+---
+# Calling a method
+```rust
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+
+fn main() {
+    let rect = Rectangle { x: 0, y: 0, width: 42, height: 2691/39 };
+    println!("Area: {}", rect.area());
+}
+```
+---
+# What's this "self"? 
+```rust
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+```
+* `self` refers to the context of the current struct
+* This context is the main difference between functions and methods
+* The `&` indicates we are taking an immutable reference to the struct
+* Same borrowing rules as before
+---
+# Function equivalent of a method
+```rust
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+```
+```rust
+fn area(rect: &Rectangle) -> u32 {
+    rect.width * rect.height
+}
+```
+* We borrow the same reasons in both cases.
+---
+# What if we didn't borrow?
+```rust
+impl Rectangle {
+    fn area(self) -> u32 {
+        self.width * self.height
+    }
+}
+```
+```rust
+fn area(rect: Rectangle) -> u32 {
+    rect.width * rect.height
+}
+```
+---
+# The `area` function "consumes" the `Rectangle`
+```rust
+fn main() {
+    let rect = Rectangle { width: 42, height: 2691/39 };
+    println!("Area: {}", rect.area());
+    println!("Width: {}", rect.width); // <-- error: can't use `rect` anymore
+}
+```
+* Same behavior in the equivalent function
+* Sometimes, you might want this!
+---
+# Another Method Example
+```rust
+impl Rectangle {
+    fn copy_width(&mut self, other: &Rectangle) {
+        self.width = other.width;
+    }
+}
+
+fn main() {
+    let mut rect = Rectangle { x: 0, y: 0, width: 42, height: 2691/39 };
+    let rect2 = Rectangle { width: 99, ..rect };
+    println!("Width before: {}", rect.width); // immutable borrow
+    rect.copy_width(&rect2); // mutable borrow rect, immutable borrow rect2
+    println!("Width after: {}", rect.width); // immutable borrow
+}
+```
+* Mutable references work as expected
+---
+# Associated Functions
+* Also known as static methods in other languages
+* Functions that don't take in a `self`
+    * Don't refer to an instance of the struct
+* Often used for "constructors" that return a new instance of the struct
+---
+# Associated Function Example
+```rust
+impl Rectangle {
+    fn new_square(x: u32, y: u32, side_length: u32) -> Rectangle {
+        Rectangle {
+            x,
+            y,
+            width: side_length,
+            height: side_length,
+        }
+    }
+}
+
+fn main() {
+    // Call associated function with struct name rather than an instance
+    let sq = Rectangle::new_square(0, 0, 213);
+}
+```
+---
+# **Enums**
+---
+# Enums
+* Allow us to encode/enumerate different possibilities
+* Alternative to passing in a boolean or number with implicit 
+* Similar to C enums, but much more powerful (more akin to a tagged union)
+---
+# Enum Definition
+```rust
+enum IpAddrKind {
+    V4,
+    V6,
+}
+```
 
 
 <!-- TODO: Double check it all compiles -->
