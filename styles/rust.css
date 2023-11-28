@@ -2,12 +2,18 @@
 
 @import 'default';
 
+@font-face {
+    font-family: 'Nikkyou Sans';
+    src: url('https://rust-stuco.github.io/assets/fonts/NikkyouSans-mLKax.ttf');
+}
+
 section.communism h2, section.communism h1 {
-    font-family: 'Nikkyou Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', serif !important;
+    font-family:'Nikkyou Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
     color: #D84A39;
     font-size: 2rem;
     text-shadow: 3px 3px 0 #000;
     line-height: 0;
+    max-width: 75%;
 }
 
 section.communism h1 {
