@@ -6,7 +6,7 @@ paginate: true
 ---
 <!-- _class: communism invert  -->
 
-## INTRO TO RUST LANG
+## Intro to Rust Lang
 # Structs and Enums
 
 <br>
@@ -51,7 +51,7 @@ fn helper_guy(some_string: String) {
 ```
 * Does this compile?
 ---
-# Compilation failed :-(
+# Compilation failed!
 
 ```
 error[E0382]: borrow of moved value: `s`
@@ -65,7 +65,7 @@ error[E0382]: borrow of moved value: `s`
    |                                          ^ value borrowed here after move
    |
 ```
-* No luck for the `cool_guy` function.
+* Looks like `cool_guy` doesn't still own `s`, after all.
 ---
 # Possible solutions?
 ```
@@ -108,13 +108,13 @@ error: aborting due to previous error
 # Review: Ownership Example 2
 ```rust
 fn cool_guy() {
-    let s = String::from("yo");
-    helper_guy(s);
-    println!("I *totally* still own {}", s);
+    let favorite_computers = Vec::new();
+    add_to_list(favorite_computers, String::from("Framework Laptop"));
 }
 
-fn helper_guy(some_string: String) {
-    println!("{} is mine now
+fn add_to_list(fav_items: Vec<String>, item: String) {
+    fav_items.push(item);
+}
 ```
 * Does this compile?
 ---
@@ -159,7 +159,8 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* Nope, same issue as before
+* `favorite_computers` was moved in the `add_to_list` call.
+* Same problem as before
 ---
 # Let's try a mutable reference
 ```rust
@@ -173,10 +174,10 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* Works now!
+* Does this compile?
+* Yes, it does!
 ---
 # Exclusive references save lives
-* Prevent data races and weird circumstances
 ```rust
 fn main() {
     let mut v = vec![1, 2, 3, 4];
@@ -185,6 +186,7 @@ fn main() {
     println!("{}", x); // What is `x`?
 }
 ```
+* Prevent data races and weird circumstances
 * What should this print?
 ---
 # Compiler doesn't allow this!
@@ -207,8 +209,6 @@ error: aborting due to previous error
 # **Structs**
 ---
 # Structs
-* Like tuples, we can "package" data together
-* Very similar to C at first glance
 ```rust
 struct Student {
     andrew_id: String,
@@ -217,6 +217,8 @@ struct Student {
     stress_level: u64,
 }
 ```
+* Like tuples, we can "package" data together
+* Very similar to C at first glance
 ---
 # Struct Instantiation
 ```rust
@@ -259,7 +261,7 @@ fn relax_connor(prev_connor: Student) -> Student {
 }
 ```
 ---
-# Also, Tuple Structs Exist
+# Tuple Structs
 ```rust
 struct Color(i32, i32, i32);
 struct Point(i32, i32, i32);
@@ -272,7 +274,7 @@ fn main() {
 * The same as structs, except without named fields
 * The same as tuples, except with a type (...and more)
 ---
-# Also, Unit Structs Exist
+# Unit Structs
 ```rust
 struct AlwaysEqual;
 
@@ -280,8 +282,11 @@ fn main() {
     let subject = AlwaysEqual;
 }
 ```
-* Sometimes useful for cool wizardry
-* Rarely useful for normal stuff
+* Structs that have no fields
+* You will see why these may be useful later...
+
+<!-- Only reasonable/common use I know of is implementing a trait for a unit struct (e.g. different implementations of an algorithm) -->
+
 ---
 # Can we store references in a struct?
 ```rust
@@ -332,7 +337,6 @@ fn draw_rectangle(rect: Rectangle) {}
 # **Struct Methods**
 ---
 # Struct Methods
-* Functions defined within the context of a struct
 ```rust
 struct Rectangle {
     x: u32,
@@ -347,6 +351,7 @@ impl Rectangle {
     }
 }
 ```
+* Functions defined within the context of a struct
 * Similar to object-oriented design patterns in other languages
 ---
 # Calling a method
@@ -389,7 +394,7 @@ fn area(rect: &Rectangle) -> u32 {
     rect.width * rect.height
 }
 ```
-* We borrow the same reasons in both cases.
+* We borrow for the same reasons in both cases.
 ---
 # What if we didn't borrow?
 ```rust
@@ -463,8 +468,8 @@ fn main() {
 ---
 # Enums
 * Allow us to encode/enumerate different possibilities
-* Alternative to passing in a boolean or number with implicit 
-* Similar to C enums, but much more powerful (more akin to a tagged union)
+* Similar to C enums, but much more powerful 
+    * More akin to a tagged union
 ---
 # Enum Definition
 ```rust
@@ -473,7 +478,291 @@ enum IpAddrKind {
     V6,
 }
 ```
+* IP Addresses can be either IPv4 or IPv6, but not both at the same time.
+* We can express this concept in code with an enum consisting of V4 and V6 variants.
+---
+# Enum Values
+We can make a value of type `IpAddrKind` as such:
+```rust
+let four = IpAddrKind::V4;
+let six = IpAddrKind::V6;
+```
+* The `::` operator represents a _namespace_
+    * `V4` is in the namespace of `IpAddrKind`
+---
+# Enum Example
+```rust
+enum IpAddrKind {
+    V4,
+    V6,
+}
 
+struct IpAddr {
+    kind: IpAddrKind,
+    address: String,
+}
+```
+* IPv4 addresses look like `8.8.8.8`
+* IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
+* When we have an `IpAddr` struct, can check the `kind` field to determine how to interpret the `address` field.
+---
+# Enum Associated Data
+Enum variants can hold fields:
+```rust
+enum IpAddr {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
 
+let home = IpAddr::V4(127, 0, 0, 1);
+```
+---
+# Futher Enum Example
+```rust
+enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+    Write(String),
+    ChangeColor(i32, i32, i32),
+}
+```
+* The `Move` variant has named fields.
+    * Seem familiar?
+* Can we do this equivalently with structs?
+---
+# Struct Equivalent
+```rust
+struct QuitMessage; // unit struct
+struct MoveMessage {
+    x: i32,
+    y: i32,
+}
+struct WriteMessage(String); // tuple struct
+struct ChangeColorMessage(i32, i32, i32); // tuple struct
+```
+* Each of these structs has a separate type—we couldn't easily define a function to take any of these.
+* Enums seem to have a lot in common with structs...
+---
+# Enum Methods
+```rust
+struct Message {
+    Write(string),
+    // --snip--
+}
+impl Message {
+    fn call(&self) {
+        // --snip--
+    }
+}
+
+let m = Message::Write(String::from("hello"));
+m.call();
+```
+* `self` holds the value of the enum
+* Same borrowing semantics as before
+---
+# **Option Types**
+---
+# Option Types
+> I call it my billion-dollar mistake. At that time, I was designing the first comprehensive type system for references in an object-oriented language. My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
+
+—Tony Hoare, "inventer of null", 2009
+* This is why references always point to valid memory, and are never `NULL`!
+* But then how can we return _nothing_?
+
+---
+# Option Types
+The standard library defines an enum `Option<T>`:
+```rust
+enum Option<T> {
+    None,
+    Some(T),
+}
+```
+* We can return either `None` or `Some`, where `Some` contains a value
+* The `<T>` is a generic type parameter—more on this next week
+
+---
+# Option Types Example
+```rust
+fn identity_theft() {
+    let result: Option<u32> = steal_david_ssn(); // might fail
+    if (result.is_none()) {
+        // Guess we failed
+    } else if (result.is_some()) {
+        // We have successfully stolen David's social security number
+    }
+}
+```
+* There is a better syntax for this...
+---
+# **Pattern Matching** 
+
+---
+# Pattern Matching
+```rust
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter,
+}
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => 1,
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter => 25,
+    }
+}
+```
+* Allows us to execute code conditionally based on the variant of an enum using `match`
+
+---
+# Pattern Matching
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    let res = match coin {
+        Coin::Penny => {
+            println!("Lucky penny!");
+            1
+        }
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter => 25,
+    };
+    res
+}
+```
+* Every `match` arm is an expression
+* `match` itself is also an expression, evaluating to the expression at the relevant arm
+* We can use block expressions here, too!
+---
+# Patterns That Bind to Values
+```rust
+fn identity_theft() {
+    let result: Option<u32> = steal_david_ssn(); // might fail
+    match result {
+        None => println!("Theft failed"),
+        Some(ssn) => println!("David Rudo's SSN is {}", ssn),
+    }
+}
+```
+* Clean, and we can access the value in the `Some` variant easily.
+
+---
+# Another Option Pattern Matching Example
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        None => None,
+        Some(i) => Some(i + 1),
+    }
+}
+```
+* Takes in an option, and returns an option
+* Binds to the value `i` and constructs a new enum variant using it
+
+---
+# Matches Are Exhaustive
+Continuing with the theme of Rust failing early, `match` must cover all of the possibilities—in our case, all of the variants of an enum.
+
+---
+# Matches Are Exhaustive
+```rust
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        Some(i) => Some(i + 1),
+    }
+}
+```
+* This does not compile: `non-exhaustive patterns: None not covered`
+* Prevents us from forgetting to explicitly handle the `None` case.
+* Protecting us from the billion-dollar mistake!
+
+---
+# Catch-all Pattern
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    let res = match coin {
+        Coin::Penny => {
+            println!("Lucky penny!");
+            1
+        }
+        other_coin => { // matches anything
+            println!("Not a penny—don't care");
+            less_opinionated_value_in_cents(other_coin)
+        }
+    };
+    res
+}
+```
+* Matches anything not covered in previous cases
+
+---
+# Placeholder for Unused Values
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    let res = match coin {
+        Coin::Penny => {
+            println!("Lucky penny!");
+            1
+        }
+        _ => { // matches anything
+            println!("Not a penny—don't care");
+            0
+        }
+    };
+    res
+}
+```
+* `_` matches anything as well, but no variable is assigned
+
+---
+# `if let` shorthand
+```rust
+fn value_in_cents(coin: Coin) -> u8 {
+    if let res = Coin::Penny {
+        println!("Lucky penny!");
+        return 1;
+    };
+    println!("Not a penny—don't care");
+    0
+}
+```
+
+* If there are only one or two cases, it might be cleaner to use `if let`
+* Works with `else` and `else if`, also
+
+---
+# Pattern Matching Is Really Powerful
+```rust
+fn judge_number(num: Option<u8>) -> u8 { // returns rating from 0-5 stars
+    match num {
+        Some(13) => 1 // unlucky
+        Some(8) => 4 // lucky
+        Some(7) => 5 // very lucky
+        Some(4) => 0 // very unlucky
+        Some(x) => x % 5 // idk just act important
+        _ => 0 // Anything else (only None left) is a 0
+    }
+}
+```
+* We can pattern match on numbers
+* We can pattern match within other structures
+    * And we can use catch-all here, too!
+---
+# Pattern Matching
+* Pattern matching lets you quickly and cleanly case on structures
+    * Commonly used in compilers and parsers
+    * Very useful in general
+
+---
+# Next Lecture: Standard Collections and Generics
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for coming!
+
+<!-- TODO: Add ferrises -->
 <!-- TODO: Double check it all compiles -->
-<!-- TODO: Chaotic evil alignment enum example -->

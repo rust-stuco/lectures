@@ -3,7 +3,7 @@
 @import 'default';
 
 section.communism h2, section.communism h1 {
-    font-family: 'Nikkyou Sans', serif !important;
+    font-family: 'Nikkyou Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', serif !important;
     color: #D84A39;
     font-size: 2rem;
     text-shadow: 3px 3px 0 #000;
