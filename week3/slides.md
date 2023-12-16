@@ -4,6 +4,8 @@ theme: rust
 class: invert
 paginate: true
 ---
+
+
 <!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
@@ -17,26 +19,32 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 
 ---
-# Reminders:
-* Homework 2 due today
-* Homework 3 out today, due next week
-* The pattern continues...
 
----
+
 # Review: Ownership
 
 * Manual memory management is tricky
     * Prone to memory leaks or double frees
 * Garbage collection is slow and unpredictable
-* What if the compiler decided when to generate allocations and frees for us?
+* What if the compiler generated allocations and frees for us?
+
+
 ---
+
+
 # Review: Ownership Rules
 
 * Each value in Rust has an _owner_
 * There can only be one owner at a time
 * When the owner goes out of scope, the value will be _dropped_
+
+
 ---
+
+
 # Review: Ownership Example
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```rust
 fn cool_guy() {
@@ -49,16 +57,20 @@ fn helper_guy(some_string: String) {
     println!("{} is mine now!", some_string);
 }
 ```
-* Does this compile?
+
+
 ---
-# Compilation failed!
+
+
+# Ownership Example
 
 ```
 error[E0382]: borrow of moved value: `s`
   --> cool_example.rs:8:42
    |
 6  |     let s = String::from("yo");
-   |         - move occurs because `s` has type `String`, which does not implement the `Copy` trait
+   |         - move occurs because `s` has type `String`, which does not
+                   implement the `Copy` trait
 7  |     helper_guy(s);
    |                - value moved here
 8  |     println!("I *totally* still own {}", s);
@@ -66,8 +78,12 @@ error[E0382]: borrow of moved value: `s`
    |
 ```
 * Looks like `cool_guy` doesn't still own `s`, after all.
+
+
 ---
-# Possible solutions?
+
+
+# Ownership Example
 ```
 note: consider changing this parameter type in function `helper_guy`
  to borrow instead if owning the value isn't necessary
@@ -78,14 +94,18 @@ note: consider changing this parameter type in function `helper_guy`
   |    |
   |    in this function
 ```
-* Suggestion from the compiler: rewrite `helper_guy` to use a reference instead.
+* Suggestion from the compiler: rewrite `helper_guy` to borrow `some_string`.
 * Is it necessary for `helper_guy` to own the value?
+
+
 ---
-# Let `helper_guy` borrow it
+
+
+# Solution with References
 ```rust
 fn cool_guy() {
     let s = String::from("yo");
-    helper_guy(&s);                // <-- Change to pass by reference
+    helper_guy(&s);                // <-- Change to pass a reference
     println!("I *totally* still own {}", s);
 }
 
@@ -93,8 +113,13 @@ fn helper_guy(some_string: &String) { // <-- Change to expect a reference
     println!("{} is mine now!", some_string);
 }
 ```
+* Let `helper_guy` borrow the value instead of moving it and transferring ownership.
+
+
 ---
-# Another suggestion from `rustc`...
+
+
+# Alternative Solution
 ```
 help: consider cloning the value if the performance cost is acceptable
    |
@@ -103,22 +128,34 @@ help: consider cloning the value if the performance cost is acceptable
 
 error: aborting due to previous error
 ```
-* If we make a deep copy, it will compile, but copying a `String` is not free.
+* If we make a deep copy, it does compile
+    * But if `s` is large, cloning it will be expensive.
+
+
 ---
+
+
 # Review: Ownership Example 2
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
-    add_to_list(favorite_computers, String::from("Framework Laptop"));
+    add_to_list(favorite_computers, 
+        String::from("Framework Laptop"));
 }
 
 fn add_to_list(fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* Does this compile?
+
+
 ---
-# Not quite...
+
+
+# Ownership Example 2
 ```
 error[E0596]: cannot borrow `fav_items` as mutable, as it is not declared as mutable
   --> cool_example.rs:11:5
@@ -134,8 +171,13 @@ help: consider changing this to be mutable
 error: aborting due to previous error
 
 ```
+* Missing one `mut` annotation.
+
+
 ---
-# Okay, now it compiles
+
+
+# Ownership Example 2
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
@@ -146,8 +188,12 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
+
+
 ---
-# What if I want to print my list?
+
+
+# Ownership Example 2
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
@@ -159,9 +205,14 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
+* What if I now want to print my list?
 * `favorite_computers` was moved in the `add_to_list` call.
 * Same problem as before
+
+
 ---
+
+
 # Let's try a mutable reference
 ```rust
 fn cool_guy() {
@@ -174,9 +225,12 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* Does this compile?
-* Yes, it does!
+* This works as expected!
+
+
 ---
+
+
 # Exclusive references save lives
 ```rust
 fn main() {
@@ -188,26 +242,39 @@ fn main() {
 ```
 * Prevent data races and weird circumstances
 * What should this print?
+
+
 ---
+
+
 # Compiler doesn't allow this!
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> example.rs:4:5
+ --> cool_example.rs:5:5
   |
 3 |     let x = &v[3];
   |              - immutable borrow occurs here
-4 |     v.pop(); // Removes last element in `vec`
-  |     ^^^^^^^ mutable borrow occurs here
-5 |     println!("{}", x); // What is `x`?
+4 |     // What if this is happening in another function? Another *thread*?
+5 |     v[3] = 5;
+  |     ^ mutable borrow occurs here
+6 |     println!("{}", x); // What is `x`?
   |                    - immutable borrow later used here
 
 error: aborting due to previous error
 ```
 * We failed early!
-* Debugging session prevented!
+* Potential debugging session prevented!
+
+
 ---
+
+
 # **Structs**
+
+
 ---
+
+
 # Structs
 ```rust
 struct Student {
@@ -219,13 +286,17 @@ struct Student {
 ```
 * Like tuples, we can "package" data together
 * Very similar to C at first glance
+
+
 ---
+
+
 # Struct Instantiation
 ```rust
 fn init_connor() -> Student {
     let mut connor = Student {
         andrew_id: "cjtsui",
-        attendance: Vec::from([true, false, false, false, false, false, false]),
+        attendance: vec![true, false, false, false, false, false, false],
         grade: 11,
         stress_level: u64::MAX,
     };
@@ -234,12 +305,17 @@ fn init_connor() -> Student {
     connor // return cjtsui
 }
 ```
+
+
 ---
+
+
 # Field Init Shorthand
 ```rust
-fn init_connor(grade: u8, stress_level: u64, att_vec: Vec<bool>) -> Student {
+fn init_student(andrew: String, grade: u8, stress_level: u64, 
+        att_vec: Vec<bool>) -> Student {
     let mut connor = Student {
-        andrew_id: "cjtsui",
+        andrew_id: andrew,
         attendance: att_vec,
         grade, // Shorter syntax if variable has the same name
         stress_level,
@@ -249,18 +325,26 @@ fn init_connor(grade: u8, stress_level: u64, att_vec: Vec<bool>) -> Student {
     connor // return cjtsui
 }
 ```
+
+
 ---
+
+
 # Field Init Shorthand
 ```rust
-fn relax_connor(prev_connor: Student) -> Student {
-    let new_connor = Student {
+fn relax_student(prev_student: Student) -> Student {
+    let new_student = Student {
         stress_level: 0,
-        ..prev_connor
+        ..prev_student
     };
-    new_connor
+    new_student
 }
 ```
+
+
 ---
+
+
 # Tuple Structs
 ```rust
 struct Color(i32, i32, i32);
@@ -272,8 +356,12 @@ fn main() {
 } 
 ```
 * The same as structs, except without named fields
-* The same as tuples, except with a type (...and more)
+* The same as tuples, except with an associated type.
+
+
 ---
+
+
 # Unit Structs
 ```rust
 struct AlwaysEqual;
@@ -283,18 +371,24 @@ fn main() {
 }
 ```
 * Structs that have no fields
-* You will see why these may be useful later...
 
 <!-- Only reasonable/common use I know of is implementing a trait for a unit struct (e.g. different implementations of an algorithm) -->
 
+
 ---
+
+
 # Can we store references in a struct?
 ```rust
 struct Borrower {
     borrowed_num: &i32,
 }
 ```
+
+
 ---
+
+
 # Not quite...
 ```
 error[E0106]: missing lifetime specifier
@@ -310,9 +404,13 @@ help: consider introducing a named lifetime parameter
   |
 ```
 * We don't know how long the reference will last!
-* What if we store a reference to a variable and then it is freed?
+* What if we store a reference to a variable and it later becomes invalid?
 * Lifetimes solve this problem (Lecture 7)!
+
+
 ---
+
+
 # Quick Struct Example
 ```rust
 fn draw_rectangle(x: u32, y: u32, width: u32, height: u32) {}
@@ -333,9 +431,17 @@ struct Rectangle {
 fn draw_rectangle(rect: Rectangle) {}
 ```
 * Which do you prefer?
+
+
 ---
+
+
 # **Struct Methods**
+
+
 ---
+
+
 # Struct Methods
 ```rust
 struct Rectangle {
@@ -353,7 +459,11 @@ impl Rectangle {
 ```
 * Functions defined within the context of a struct
 * Similar to object-oriented design patterns in other languages
+
+
 ---
+
+
 # Calling a method
 ```rust
 impl Rectangle {
@@ -367,7 +477,11 @@ fn main() {
     println!("Area: {}", rect.area());
 }
 ```
+
+
 ---
+
+
 # What's this "self"? 
 ```rust
 impl Rectangle {
@@ -380,7 +494,11 @@ impl Rectangle {
 * This context is the main difference between functions and methods
 * The `&` indicates we are taking an immutable reference to the struct
 * Same borrowing rules as before
+
+
 ---
+
+
 # Function equivalent of a method
 ```rust
 impl Rectangle {
@@ -395,7 +513,11 @@ fn area(rect: &Rectangle) -> u32 {
 }
 ```
 * We borrow for the same reasons in both cases.
+
+
 ---
+
+
 # What if we didn't borrow?
 ```rust
 impl Rectangle {
@@ -409,7 +531,11 @@ fn area(rect: Rectangle) -> u32 {
     rect.width * rect.height
 }
 ```
+
+
 ---
+
+
 # The `area` function "consumes" the `Rectangle`
 ```rust
 fn main() {
@@ -420,7 +546,11 @@ fn main() {
 ```
 * Same behavior in the equivalent function
 * Sometimes, you might want this!
+
+
 ---
+
+
 # Another Method Example
 ```rust
 impl Rectangle {
@@ -438,13 +568,21 @@ fn main() {
 }
 ```
 * Mutable references work as expected
+
+
 ---
+
+
 # Associated Functions
 * Also known as static methods in other languages
 * Functions that don't take in a `self`
     * Don't refer to an instance of the struct
 * Often used for "constructors" that return a new instance of the struct
+
+
 ---
+
+
 # Associated Function Example
 ```rust
 impl Rectangle {
@@ -463,14 +601,26 @@ fn main() {
     let sq = Rectangle::new_square(0, 0, 213);
 }
 ```
+
+
 ---
+
+
 # **Enums**
+
+
 ---
+
+
 # Enums
 * Allow us to encode/enumerate different possibilities
 * Similar to C enums, but much more powerful 
     * More akin to a tagged union
+
+
 ---
+
+
 # Enum Definition
 ```rust
 enum IpAddrKind {
@@ -480,7 +630,11 @@ enum IpAddrKind {
 ```
 * IP Addresses can be either IPv4 or IPv6, but not both at the same time.
 * We can express this concept in code with an enum consisting of V4 and V6 variants.
+
+
 ---
+
+
 # Enum Values
 We can make a value of type `IpAddrKind` as such:
 ```rust
@@ -489,7 +643,11 @@ let six = IpAddrKind::V6;
 ```
 * The `::` operator represents a _namespace_
     * `V4` is in the namespace of `IpAddrKind`
+
+
 ---
+
+
 # Enum Example
 ```rust
 enum IpAddrKind {
@@ -505,7 +663,11 @@ struct IpAddr {
 * IPv4 addresses look like `8.8.8.8`
 * IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
 * When we have an `IpAddr` struct, can check the `kind` field to determine how to interpret the `address` field.
+
+
 ---
+
+
 # Enum Associated Data
 Enum variants can hold fields:
 ```rust
@@ -516,7 +678,11 @@ enum IpAddr {
 
 let home = IpAddr::V4(127, 0, 0, 1);
 ```
+
+
 ---
+
+
 # Futher Enum Example
 ```rust
 enum Message {
@@ -529,7 +695,11 @@ enum Message {
 * The `Move` variant has named fields.
     * Seem familiar?
 * Can we do this equivalently with structs?
+
+
 ---
+
+
 # Struct Equivalent
 ```rust
 struct QuitMessage; // unit struct
@@ -542,7 +712,11 @@ struct ChangeColorMessage(i32, i32, i32); // tuple struct
 ```
 * Each of these structs has a separate type—we couldn't easily define a function to take any of these.
 * Enums seem to have a lot in common with structs...
+
+
 ---
+
+
 # Enum Methods
 ```rust
 struct Message {
@@ -560,9 +734,17 @@ m.call();
 ```
 * `self` holds the value of the enum
 * Same borrowing semantics as before
+
+
 ---
+
+
 # **Option Types**
+
+
 ---
+
+
 # Option Types
 > I call it my billion-dollar mistake. At that time, I was designing the first comprehensive type system for references in an object-oriented language. My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
 
@@ -570,7 +752,11 @@ m.call();
 * This is why references always point to valid memory, and are never `NULL`!
 * But then how can we return _nothing_?
 
+
+
 ---
+
+
 # Option Types
 The standard library defines an enum `Option<T>`:
 ```rust
@@ -582,7 +768,11 @@ enum Option<T> {
 * We can return either `None` or `Some`, where `Some` contains a value
 * The `<T>` is a generic type parameter—more on this next week
 
+
+
 ---
+
+
 # Option Types Example
 ```rust
 fn identity_theft() {
@@ -595,10 +785,17 @@ fn identity_theft() {
 }
 ```
 * There is a better syntax for this...
----
-# **Pattern Matching** 
+
 
 ---
+
+
+# **Pattern Matching** 
+
+
+---
+
+
 # Pattern Matching
 ```rust
 enum Coin {
@@ -618,7 +815,10 @@ fn value_in_cents(coin: Coin) -> u8 {
 ```
 * Allows us to execute code conditionally based on the variant of an enum using `match`
 
+
 ---
+
+
 # Pattern Matching
 ```rust
 fn value_in_cents(coin: Coin) -> u8 {
@@ -637,7 +837,11 @@ fn value_in_cents(coin: Coin) -> u8 {
 * Every `match` arm is an expression
 * `match` itself is also an expression, evaluating to the expression at the relevant arm
 * We can use block expressions here, too!
+
+
 ---
+
+
 # Patterns That Bind to Values
 ```rust
 fn identity_theft() {
@@ -650,7 +854,10 @@ fn identity_theft() {
 ```
 * Clean, and we can access the value in the `Some` variant easily.
 
+
 ---
+
+
 # Another Option Pattern Matching Example
 ```rust
 fn plus_one(x: Option<i32>) -> Option<i32> {
@@ -663,11 +870,17 @@ fn plus_one(x: Option<i32>) -> Option<i32> {
 * Takes in an option, and returns an option
 * Binds to the value `i` and constructs a new enum variant using it
 
+
 ---
+
+
 # Matches Are Exhaustive
 Continuing with the theme of Rust failing early, `match` must cover all of the possibilities—in our case, all of the variants of an enum.
 
+
 ---
+
+
 # Matches Are Exhaustive
 ```rust
 fn plus_one(x: Option<i32>) -> Option<i32> {
@@ -680,7 +893,10 @@ fn plus_one(x: Option<i32>) -> Option<i32> {
 * Prevents us from forgetting to explicitly handle the `None` case.
 * Protecting us from the billion-dollar mistake!
 
+
 ---
+
+
 # Catch-all Pattern
 ```rust
 fn value_in_cents(coin: Coin) -> u8 {
@@ -699,7 +915,10 @@ fn value_in_cents(coin: Coin) -> u8 {
 ```
 * Matches anything not covered in previous cases
 
+
 ---
+
+
 # Placeholder for Unused Values
 ```rust
 fn value_in_cents(coin: Coin) -> u8 {
@@ -718,7 +937,10 @@ fn value_in_cents(coin: Coin) -> u8 {
 ```
 * `_` matches anything as well, but no variable is assigned
 
+
 ---
+
+
 # `if let` shorthand
 ```rust
 fn value_in_cents(coin: Coin) -> u8 {
@@ -734,7 +956,10 @@ fn value_in_cents(coin: Coin) -> u8 {
 * If there are only one or two cases, it might be cleaner to use `if let`
 * Works with `else` and `else if`, also
 
+
 ---
+
+
 # Pattern Matching Is Really Powerful
 ```rust
 fn judge_number(num: Option<u8>) -> u8 { // returns rating from 0-5 stars
@@ -751,13 +976,20 @@ fn judge_number(num: Option<u8>) -> u8 { // returns rating from 0-5 stars
 * We can pattern match on numbers
 * We can pattern match within other structures
     * And we can use catch-all here, too!
+
+
 ---
+
+
 # Pattern Matching
 * Pattern matching lets you quickly and cleanly case on structures
     * Commonly used in compilers and parsers
     * Very useful in general
 
+
 ---
+
+
 # Next Lecture: Standard Collections and Generics
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
