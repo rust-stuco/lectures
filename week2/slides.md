@@ -653,6 +653,7 @@ fn calculate_length(s: String) -> (String, usize) {
 
 <!-- Especially because it is a common concept in programming -->
 
+
 ---
 
 
@@ -701,6 +702,8 @@ fn calculate_length(borrowed: &String) -> usize {
 * The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
 
 
+---
+
 
 # References as Function Arguments
 
@@ -715,6 +718,7 @@ fn calculate_length(borrowed: &String) -> usize {
 * We do not own `s1` if we just have a reference to it
 * This means `s1` will _not_ be dropped when we stop using `borrowed`
 * We call this _borrowing_
+
 
 ---
 
@@ -1000,7 +1004,7 @@ Focus on this line:
     * A book being read by multiple people is fine
     * If more than one person writes, they may overwrite each other's work
     * References are similar to Read-Write locks
-* Memory access through references is always valid—no NULL pointers!
+* References must always be valid
 
 <!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
 
