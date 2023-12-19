@@ -219,7 +219,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 fn cool_guy() {
     let favorite_computers = Vec::new();
     add_to_list(favorite_computers, String::from("Framework Laptop"));
-    println!("{:?}", favorite_computers);
+    println!("{:?}", favorite_computers); // <-- I want to print this!
 }
 
 fn add_to_list(mut fav_items: Vec<String>, item: String) {
@@ -227,7 +227,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 }
 ```
 
-* What if we want to print the list?
+- What if we want to print the list?
 * `favorite_computers` was moved in the `add_to_list` call
 * Same problem as example 1
 
@@ -273,6 +273,7 @@ fn please_dont_move() {
 ```
 
 * What should this print if it did compile?
+* What if the index was `2` instead of `3`?
 
 
 ---
@@ -602,7 +603,7 @@ error[E0277]: `Student` doesn't implement `Debug`
    = help: the trait `Debug` is not implemented for `Student`
 ```
 
-* We'll talk about Traits in Week 5
+* We'll talk more about Traits in Week 5!
     * They define shared functionality and behavior between types
 
 
@@ -779,7 +780,7 @@ impl Rectangle {
 fn main() {
     let rect = Rectangle { width: 42, height: 98 };
     println!("Area: {}", rect.area());
-    // println!("Width: {}", rect.width); <-- Cannot use this
+    // println!("Width: {}", rect.width); <-- Cannot do this
 }
 ```
 
@@ -824,7 +825,7 @@ fn main() {
 # Associated Functions
 
 
-We can define _associated function_ in `impl` blocks that do not take `self`.
+We can define an _associated function_ in `impl` blocks that do not take `self`.
 
 ```rust
 impl Rectangle {
@@ -943,18 +944,17 @@ At the moment, we only store the kind of address, not the data. We may want to t
 
 ```rust
 enum IpAddrKind {
-    V4,
-    V6,
+    V4, // IPv4 addresses look like `8.8.8.8`
+    V6, // IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
 }
+
 struct IpAddr {
     kind: IpAddrKind,
     address: String,
 }
 ```
 
-* IPv4 addresses look like `8.8.8.8`
-* IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
-* When we have an `IpAddr` struct, can check the `kind` field to determine how to interpret the `address` field.
+* When we have an `IpAddr` struct, we could check the `kind` field to determine how to interpret the `address` field.
 
 
 ---
@@ -1077,12 +1077,12 @@ We can define `impl` blocks for enums as well as structs.
 ```rust
 struct Message {
     Write(string),
-    // --snip--
+    // <-- snip -->
 }
 
 impl Message {
     fn call(&self) {
-        // --snip--
+        // <-- snip -->
     }
 }
 
@@ -1182,7 +1182,7 @@ let sum = x + y;
 
 # `Option<T>` vs `NULL`
 
-If we try to compile this, we get an error.
+If we try to compile this, we get an compile-time error.
 
 ```rust
 let x: i8 = 5;
@@ -1201,12 +1201,15 @@ error[E0277]: cannot add `Option<i8>` to `i8`
   = help: the trait `Add<Option<i8>>` is not implemented for `i8`
 ```
 
-* We need a way to extract the number out of the `Some(5)`
+* Instead of runtime error, we catch the error immediately at compile time!
+
 
 ---
 
 
 # Working With `Option<T>`
+
+We still need a way to extract the number out of the `Some(5)`.
 
 ```rust
 let x: i8 = 5;
@@ -1419,7 +1422,7 @@ let sum = match y {
 
 # Matches Are Exhaustive
 
-We get a compile-time error if we fail to specific what to do in every possibility.
+We get a compile-time error if we fail to specify what to do in every possibility.
 
 ```rust
 let x: i8 = 5;
