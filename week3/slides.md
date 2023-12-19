@@ -849,7 +849,7 @@ p1.distance(&p2);
 * In C and C++, you use `.` for direct access and `->` for access through a pointer
 * Rust instead has _**automatic referencing and dereferencing**_
 * When you call `object.something()`, Rust will automatically add in the `&`, `&mut`, or `*` so that `object` matches the signature of the method
-    * This is a big reason why ownership is ergonomic in practice
+    * This is a big reason why ownership and borrowing is ergonomic in practice
 
 
 ---
@@ -981,10 +981,12 @@ enum IpAddr {
     V6(String),
 }
 
-let home = IpAddr::V4(127, 0, 0, 1); // Even cleaner than the String!
+let home = IpAddr::V4(127, 0, 0, 1);
 
 let loopback = IpAddr::V6(String::from("::1"));
 ```
+
+* Even cleaner than carrying around a `String` that we need to parse!
 
 
 ---
@@ -1013,7 +1015,10 @@ enum IpAddr {
 ---
 
 
-# Further Enum Example
+# Enum Example
+
+Let's take a look at another example of an enum that models data with variants.
+
 ```rust
 enum Message {
     Quit,
@@ -1022,15 +1027,20 @@ enum Message {
     ChangeColor(i32, i32, i32),
 }
 ```
-* The `Move` variant has named fields.
-    * Seem familiar?
-* Can we do this equivalently with structs?
+
+* `Quit` has not data associated at all
+* `Move` has named fields like a struct
+* `Write` includes a single `String`
+* `ChangeColor` includes 3 `i32` values
 
 
 ---
 
 
-# Struct Equivalent
+# Enums vs Structs
+
+How would this look if we just used structs?
+
 ```rust
 struct QuitMessage; // unit struct
 struct MoveMessage {
@@ -1040,7 +1050,9 @@ struct MoveMessage {
 struct WriteMessage(String); // tuple struct
 struct ChangeColorMessage(i32, i32, i32); // tuple struct
 ```
-* Each of these structs has a separate type—we couldn't easily define a function to take any of these.
+
+* Each of these structs has a separate type
+    * We couldn't easily define a function to take in all of these types
 * Enums seem to have a lot in common with structs...
 
 
@@ -1048,11 +1060,15 @@ struct ChangeColorMessage(i32, i32, i32); // tuple struct
 
 
 # Enum Methods
+
+We can define `impl` blocks for enums as well as structs.
+
 ```rust
 struct Message {
     Write(string),
     // --snip--
 }
+
 impl Message {
     fn call(&self) {
         // --snip--
@@ -1062,20 +1078,21 @@ impl Message {
 let m = Message::Write(String::from("hello"));
 m.call();
 ```
+
 * `self` holds the value of the enum
-* Same borrowing semantics as before
+    * Same borrowing semantics as with structs
 
 
 ---
 
 
-# **Option Types**
+# **The Option Type**
 
 
 ---
 
 
-# Option Types
+# The Option Type
 > I call it my billion-dollar mistake. At that time, I was designing the first comprehensive type system for references in an object-oriented language. My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
 
 —Tony Hoare, "inventer of null", 2009
@@ -1087,7 +1104,7 @@ m.call();
 ---
 
 
-# Option Types
+# The Option Type
 The standard library defines an enum `Option<T>`:
 ```rust
 enum Option<T> {
@@ -1103,7 +1120,7 @@ enum Option<T> {
 ---
 
 
-# Option Types Example
+# Options Example
 ```rust
 fn identity_theft() {
     let result: Option<u32> = steal_david_ssn(); // might fail
