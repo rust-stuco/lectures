@@ -300,7 +300,7 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 # Structs
 
-Here is an example of a `struct` definition
+A _struct_ is a custom data type that lets you package together and name multiple related values that make up a meaningful group.
 
 ```rust
 struct Student {
@@ -321,7 +321,7 @@ struct Student {
 
 # Creating Structs
 
-We can create an _instance_ of a struct using the name of the struct and then key: value
+We can create an _instance_ of a struct using the name of the struct and `key: value`
 pairs inside curly brackets.
 
 ```rust
@@ -361,7 +361,7 @@ fn init_connor() -> Student {
 }
 ```
 
-* Note that the entire instance must be `mut` to modify any field
+* Note that the entire instance must be `mut` to modify _any_ field
 
 
 ---
@@ -402,7 +402,13 @@ fn relax_student(prev_student: Student) -> Student {
 ```
 
 * Note that this moves the data of the old struct
-    * Even if we wanted to, we can't use `prev_student` again
+    * `prev_student` is moved, so we can't use it again (_unless..._)
+
+<!--
+There is a way to make it not moved, if it is Copyable
+How do we make a struct Copy?
+Stay tuned to find out!
+-->
 
 
 ---
@@ -520,13 +526,173 @@ fn draw_rectangle(rect: Rectangle) {}
 ---
 
 
+# Printing Structs
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+What if we wanted to print these structs for debugging?
+
+```rust
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
+}
+
+fn main() {
+    let connor = init_connor();
+
+    println!("{:?}", connor);
+}
+```
+
+<!--
+All they need to know about `:?` is that it is used for debugging purposes
+-->
+
+
+---
+
+
+# Printing Structs
+
+We get an error if we try to print something that is not printable:
+
+```rust
+fn main() {
+    let connor = init_connor();
+
+    println!("{:?}", connor);
+}
+```
+
+```
+error[E0277]: `Student` doesn't implement `Debug`
+  --> src/main.rs:11:22
+   |
+11 |     println!("{:?}", connor);
+   |                      ^^^^^^ `Student` cannot be formatted using `{:?}`
+   |
+   = help: the trait `Debug` is not implemented for `Student`
+```
+
+
+---
+
+
+# Traits Sneak Peek
+
+What's this all about?
+
+```
+error[E0277]: `Student` doesn't implement `Debug`
+<-- snip -->
+   = help: the trait `Debug` is not implemented for `Student`
+```
+
+* We'll talk about Traits in Week 5
+    * They define shared functionality and behavior between types
+
+
+---
+
+
+# Derived Traits
+
+As always, we should look at what the compiler tells us.
+
+```
+help: consider annotating `Student` with `#[derive(Debug)]`
+   |
+2  + #[derive(Debug)]
+3  | struct Student {
+   |
+```
+
+* For now, let's just follow its advice
+    * We'll figure out why this works later!
+
+
+---
+
+
+# Derived Traits
+
+As a quick overview, derived traits allow us to quickly add functionality to our types.
+
+```rust
+#[derive(Debug)]
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
+}
+```
+
+* We can _derive_ a trait using the `derive` macro
+* This will allow us to print this struct!
+
+
+---
+
+
+# Derived Traits
+
+We can try again now:
+
+```rust
+#[derive(Debug)]
+struct Student {
+    // <-- snip -->
+}
+
+fn main() {
+    let connor = init_connor();
+
+    println!("{:?}", connor);
+}
+```
+
+```
+Student { andrew_id: "cjtsui", attendance: [true, false], grade: 80, stress_level: 18446744073709551615 }
+```
+
+
+---
+
+
 # **Struct Methods**
 
 
 ---
 
 
+# Struct Methods
+
+Suppose we wanted to write a function that was only dependent on the data inside a single instance of a struct.
+
+```rust
+struct Rectangle {
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+}
+```
+
+* What if we wanted to get the area of this rectangle?
+
+
+---
+
+
 # Struct Methods
+
+_Methods_ are like functions, but their first parameter is always `self`, and are always
+defined within the context of a struct
+
 ```rust
 struct Rectangle {
     x: u32,
@@ -541,68 +707,55 @@ impl Rectangle {
     }
 }
 ```
-* Functions defined within the context of a struct
-* Similar to object-oriented design patterns in other languages
 
 
 ---
 
 
-# Calling a method
+# Method Syntax
+
+Let's dive a bit deeper into this:
+
 ```rust
 impl Rectangle {
     fn area(&self) -> u32 {
         self.width * self.height
     }
 }
+```
 
+* We start with an `impl` block for `Rectangle`
+* We use `&self` instead of `rectangle: &Rectangle`
+    * `&self` is actually syntactic sugar for `self: &Self`
+        * _A reminder that `&Self` is the same as `&Rectangle`_
+* We still have to obey borrowing rules with references
+
+
+---
+
+
+# Calling Methods
+
+We can call a method using dot notation.
+
+```rust
 fn main() {
-    let rect = Rectangle { x: 0, y: 0, width: 42, height: 2691/39 };
+    let rect = Rectangle { x: 0, y: 0, width: 42, height: 98 };
+
     println!("Area: {}", rect.area());
 }
 ```
 
-
----
-
-
-# What's this "self"?
-```rust
-impl Rectangle {
-    fn area(&self) -> u32 {
-        self.width * self.height
-    }
-}
-```
-* `self` refers to the context of the current struct
-* This context is the main difference between functions and methods
-* The `&` indicates we are taking an immutable reference to the struct
-* Same borrowing rules as before
+* Note that we don't need to pass anything in for `self`
 
 
 ---
 
 
-# Function equivalent of a method
-```rust
-impl Rectangle {
-    fn area(&self) -> u32 {
-        self.width * self.height
-    }
-}
-```
-```rust
-fn area(rect: &Rectangle) -> u32 {
-    rect.width * rect.height
-}
-```
-* We borrow for the same reasons in both cases.
+# Consuming Methods
 
+What would happen if we didn't borrow with `&self` and instead use `self`?
 
----
-
-
-# What if we didn't borrow?
 ```rust
 impl Rectangle {
     fn area(self) -> u32 {
@@ -610,45 +763,45 @@ impl Rectangle {
     }
 }
 ```
-```rust
-fn area(rect: Rectangle) -> u32 {
-    rect.width * rect.height
-}
-```
 
-
----
-
-
-# The `area` function "consumes" the `Rectangle`
 ```rust
 fn main() {
-    let rect = Rectangle { width: 42, height: 2691/39 };
+    let rect = Rectangle { width: 42, height: 98 };
     println!("Area: {}", rect.area());
-    println!("Width: {}", rect.width); // <-- error: can't use `rect` anymore
+    // println!("Width: {}", rect.width); <-- Cannot use this
 }
 ```
-* Same behavior in the equivalent function
-* Sometimes, you might want this!
+
+* Same ownership rules as before, we take in `self` and consume it
+
+<!--
+There are cases where you might want this,
+for example if you want something to be done only once and
+you want to prevent it from happening twice (like a initialization of a protocol)
+-->
 
 
 ---
 
 
-# Another Method Example
+# `&mut self`
+
+We can take a mutable reference to our struct as well.
+
 ```rust
 impl Rectangle {
-    fn copy_width(&mut self, other: &Rectangle) {
-        self.width = other.width;
+    // <-- snip -->
+
+    fn change_width(&mut self, new_width: u32) {
+        self.width = new_width;
     }
 }
 
 fn main() {
-    let mut rect = Rectangle { x: 0, y: 0, width: 42, height: 2691/39 };
-    let rect2 = Rectangle { width: 99, ..rect };
-    println!("Width before: {}", rect.width); // immutable borrow
-    rect.copy_width(&rect2); // mutable borrow rect, immutable borrow rect2
-    println!("Width after: {}", rect.width); // immutable borrow
+    let mut rect = Rectangle { x: 0, y: 0, width: 42, height: 98 };
+    rect.change_width(100);
+
+    println!("{:?}", rect);
 }
 ```
 * Mutable references work as expected
@@ -658,33 +811,45 @@ fn main() {
 
 
 # Associated Functions
-* Also known as static methods in other languages
-* Functions that don't take in a `self`
-    * Don't refer to an instance of the struct
-* Often used for "constructors" that return a new instance of the struct
+
+
+We can define _associated function_ in `impl` blocks that do not take `self`.
+
+```rust
+impl Rectangle {
+    fn create_square(x: u32, y: u32, side_length: u32) -> Self {
+        Self { x, y, width: side_length, height: side_length }
+    }
+}
+
+fn main() {
+    let square = Rectangle::create_square(0, 0, 213);
+}
+```
+
+* We cannot use dot notation for these functions
+    * Instead we use the struct name and the `::` operator
+
+<!--
+Also known as static methods in other languages
+Often used for "constructors" that return a new instance of the struct
+-->
 
 
 ---
 
 
-# Associated Function Example
-```rust
-impl Rectangle {
-    fn new_square(x: u32, y: u32, side_length: u32) -> Rectangle {
-        Rectangle {
-            x,
-            y,
-            width: side_length,
-            height: side_length,
-        }
-    }
-}
+# Aside: What About `->`?
 
-fn main() {
-    // Call associated function with struct name rather than an instance
-    let sq = Rectangle::new_square(0, 0, 213);
-}
+```rust
+p1.distance(&p2);
+(&p1).distance(&p2); // This is the same!
 ```
+
+* In C and C++, you use `.` for direct access and `->` for access through a pointer
+* Rust instead has _**automatic referencing and dereferencing**_
+* When you call `object.something()`, Rust will automatically add in the `&`, `&mut`, or `*` so that `object` matches the signature of the method
+    * This is a big reason why ownership is ergonomic in practice
 
 
 ---
