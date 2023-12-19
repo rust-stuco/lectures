@@ -1092,46 +1092,127 @@ m.call();
 ---
 
 
-# The Option Type
-> I call it my billion-dollar mistake. At that time, I was designing the first comprehensive type system for references in an object-oriented language. My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler. But I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement. This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
+# `NULL`
 
-—Tony Hoare, "inventer of null", 2009
-* This is why references always point to valid memory, and are never `NULL`!
-* But then how can we return _nothing_?
+`NULL` is a pointer that does not point to a valid object or value.
 
+> I call it my billion-dollar mistake...
+My goal was to ensure that all use of references should be absolutely safe, with checking performed automatically by the compiler.
+But I couldn’t resist the temptation to put in a null reference, simply because it was so easy to implement.
+This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
+— Tony Hoare, "inventer of `NULL`", 2009
 
+* The issue is not the concept of `NULL`, rather its _implementation_
+* We still want a way to express that a a value could be _something_ **or** _nothing_
 
 ---
 
 
 # The Option Type
+
 The standard library defines an enum `Option<T>`:
+
 ```rust
 enum Option<T> {
     None,
     Some(T),
 }
 ```
-* We can return either `None` or `Some`, where `Some` contains a value
-* The `<T>` is a generic type parameter—more on this next week
 
+* We can return either `None` or `Some`, where `Some` contains a value
+* The `<T>` is a generic type parameter which means it can hold any type
+    * We'll talk about this next week!
 
 
 ---
 
 
-# Options Example
+# The Option Type
+
+Here are some examples of `Option<T>`:
+
 ```rust
-fn identity_theft() {
-    let result: Option<u32> = steal_david_ssn(); // might fail
-    if (result.is_none()) {
-        // Guess we failed
-    } else if (result.is_some()) {
-        // We have successfully stolen David's social security number
-    }
+enum Option<T> {
+    None,
+    Some(T),
+}
+
+let some_number = Some(5);
+let some_char = Some('e');
+
+let absent_number: Option<i32> = None;
+```
+
+* Rust will infer that `some_number` has type `Option<i32>` and `some_char` has type `Option<char>`
+* We still have to annotate `absent_number` with `Option<i32>`
+
+
+---
+
+
+# `Option<T>` vs `NULL`
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+So why is `Option<T>` better than `NULL`? Consider this:
+
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = x + y;
+```
+
+* What might be wrong with this?
+
+
+---
+
+
+# `Option<T>` vs `NULL`
+
+If we try to compile this, we get an error.
+
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = x + y;
+```
+
+```
+error[E0277]: cannot add `Option<i8>` to `i8`
+ --> src/main.rs:6:17
+  |
+6 |     let sum = x + y;
+  |                 ^ no implementation for `i8 + Option<i8>`
+  |
+  = help: the trait `Add<Option<i8>>` is not implemented for `i8`
+```
+
+* We need a way to extract the number out of the `Some(5)`
+
+---
+
+
+# Working With `Option<T>`
+
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+let sum = x + y;
+
+if y.is_none() {
+    // do something
+} else if y.is_some() {
+    // How do we even extract the `5` out???
+    // Something like `y.get() + x`???
 }
 ```
-* There is a better syntax for this...
+
+* This syntax is also kind of ugly...
+
+<!-- Cough cough C++ std::optional -->
 
 
 ---
@@ -1143,7 +1224,27 @@ fn identity_theft() {
 ---
 
 
+# `match`
+
+Rust has an extremely powerful control flow construct called `match`.
+
+* You can compare a value against a series of patterns
+* You can execute code based on which pattern matches
+* Patterns can be made up of literal values, variable names, wildcards, etc.
+
+<!--
+It's like a coin-sorting machine, where the coin rolls down
+and will fall into the hole that fits it first
+-->
+
+
+---
+
+
 # Pattern Matching
+
+Here's an example of a coin sorting function that tells us the value of the coin!
+
 ```rust
 enum Coin {
     Penny,
@@ -1151,6 +1252,7 @@ enum Coin {
     Dime,
     Quarter,
 }
+
 fn value_in_cents(coin: Coin) -> u8 {
     match coin {
         Coin::Penny => 1,
@@ -1160,13 +1262,37 @@ fn value_in_cents(coin: Coin) -> u8 {
     }
 }
 ```
-* Allows us to execute code conditionally based on the variant of an enum using `match`
 
 
 ---
 
 
 # Pattern Matching
+
+Let's break this down:
+
+```rust
+match coin {
+    Coin::Penny => 1,
+    Coin::Nickel => 5,
+    Coin::Dime => 10,
+    Coin::Quarter => 25,
+}
+```
+
+* First we write `match`, followed by an expression (in this case `coin`)
+* Similar to `if` branch, but the expression does not need to be a `bool`
+* Each arm has a pattern, followed by `=>`, followed by another expression
+    * The patterns here are the `Coin` enum variants
+    * The expressions here are just the values of each coin
+
+---
+
+
+# Pattern Matching
+
+Here's another similar example.
+
 ```rust
 fn value_in_cents(coin: Coin) -> u8 {
     let res = match coin {
@@ -1181,63 +1307,127 @@ fn value_in_cents(coin: Coin) -> u8 {
     res
 }
 ```
-* Every `match` arm is an expression
-* `match` itself is also an expression, evaluating to the expression at the relevant arm
-* We can use block expressions here, too!
+
+* The `match` arms can be any valid expression, including code blocks!
 
 
 ---
 
 
-# Patterns That Bind to Values
+# Binding Patterns: Quarters
+
+Patterns can bind to specific parts of the values that match the pattern.
+
+From 1999 through 2008, the United States minted quarters with different designs for each of the 50 states on one side.
+
 ```rust
-fn identity_theft() {
-    let result: Option<u32> = steal_david_ssn(); // might fail
-    match result {
-        None => println!("Theft failed"),
-        Some(ssn) => println!("David Rudo's SSN is {}", ssn),
-    }
+#[derive(Debug)] // so we can inspect the state in a minute
+enum UsState {
+    Alabama,
+    Alaska,
+    // --snip--
+}
+
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter(UsState),
 }
 ```
-* Clean, and we can access the value in the `Some` variant easily.
 
 
 ---
 
 
-# Another Option Pattern Matching Example
+# Binding Patterns: Quarters
+
 ```rust
-fn plus_one(x: Option<i32>) -> Option<i32> {
-    match x {
-        None => None,
-        Some(i) => Some(i + 1),
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => 1,
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter(state) => {
+            println!("State quarter from {:?}!", state);
+            25
+        }
     }
 }
 ```
-* Takes in an option, and returns an option
-* Binds to the value `i` and constructs a new enum variant using it
+
+* We bind `state` to the `UsState` the coin belongs to!
+
+
+---
+
+
+# Binding Patterns: `Option<T>`
+
+Let's revisit the example from before.
+
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = match y {
+    Some(num) => Some(x + num),
+    //   ^^^ `num` binds to 5
+    None => None,
+};
+
+println!("{:?}", sum); // Prints "Some(10)"
+```
+
+* Clean, and we can access the value in the `Some` variant easily
 
 
 ---
 
 
 # Matches Are Exhaustive
-Continuing with the theme of Rust failing early, `match` must cover all of the possibilities—in our case, all of the variants of an enum.
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+`match` must cover all of the possibilities that the expression it is matching against may take.
+
+What happens when we don't?
+
+```rust
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = match y {
+    Some(num) => x + num,
+};
+```
 
 
 ---
 
 
 # Matches Are Exhaustive
+
+We get a compile-time error if we fail to specific what to do in every possibility.
+
 ```rust
-fn plus_one(x: Option<i32>) -> Option<i32> {
-    match x {
-        Some(i) => Some(i + 1),
-    }
-}
+let x: i8 = 5;
+let y: Option<i8> = Some(5);
+
+let sum = match y {
+    Some(num) => x + num,
+};
 ```
-* This does not compile: `non-exhaustive patterns: None not covered`
-* Prevents us from forgetting to explicitly handle the `None` case.
+
+```
+error[E0004]: non-exhaustive patterns: `None` not covered
+   --> src/main.rs:6:21
+    |
+6   |     let sum = match y {
+    |                     ^ pattern `None` not covered
+```
+
+* Forces us to explicitly handle the `None` case
 * Protecting us from the billion-dollar mistake!
 
 
@@ -1245,93 +1435,118 @@ fn plus_one(x: Option<i32>) -> Option<i32> {
 
 
 # Catch-all Pattern
+
+Sometimes we want to do something special for a specific pattern, but for all other patterns we want to default to something else.
+
 ```rust
-fn value_in_cents(coin: Coin) -> u8 {
-    let res = match coin {
-        Coin::Penny => {
-            println!("Lucky penny!");
-            1
-        }
-        other_coin => { // matches anything
-            println!("Not a penny—don't care");
-            less_opinionated_value_in_cents(other_coin)
-        }
-    };
-    res
+fn add_fancy_hat() {}
+fn remove_fancy_hat() {}
+fn move_player(num_spaces: u8) {}
+
+let dice_roll = 9;
+match dice_roll {
+    3 => add_fancy_hat(),
+    7 => remove_fancy_hat(),
+    other => move_player(other),
 }
 ```
-* Matches anything not covered in previous cases
+
+* `other` matches anything not covered in the previous cases
 
 
 ---
 
 
-# Placeholder for Unused Values
+# `_` Pattern
+
+If we don't care about the matched value, we can use `_` instead.
+
 ```rust
-fn value_in_cents(coin: Coin) -> u8 {
-    let res = match coin {
-        Coin::Penny => {
-            println!("Lucky penny!");
-            1
-        }
-        _ => { // matches anything
-            println!("Not a penny—don't care");
-            0
-        }
-    };
-    res
+fn add_fancy_hat() {}
+fn remove_fancy_hat() {}
+fn reroll() {}
+
+let dice_roll = 9;
+match dice_roll {
+    3 => add_fancy_hat(),
+    7 => remove_fancy_hat(),
+    _ => reroll(),
 }
 ```
-* `_` matches anything as well, but no variable is assigned
+
+* `_` matches anything as well, but it doesn't bind the value
 
 
 ---
 
 
-# `if let` shorthand
+# Concise Control Flow with `if let`
+
+Sometimes we just want to match against 1 pattern while ignoring the rest.
+
+`if let` provides a more concise way to do this:
+
 ```rust
-fn value_in_cents(coin: Coin) -> u8 {
-    if let res = Coin::Penny {
-        println!("Lucky penny!");
-        return 1;
-    };
-    println!("Not a penny—don't care");
-    0
+if let Coin::Penny = coin {
+    println!("Lucky penny!");
 }
 ```
 
-* If there are only one or two cases, it might be cleaner to use `if let`
-* Works with `else` and `else if`, also
+* Works with `else if <pattern> = <expr>` and `else` as well
 
 
 ---
 
 
-# Pattern Matching Is Really Powerful
+# `if let` Example
+
+Here's another example of the same program written 2 different ways:
+
 ```rust
-fn judge_number(num: Option<u8>) -> u8 { // returns rating from 0-5 stars
-    match num {
-        Some(13) => 1 // unlucky
-        Some(8) => 4 // lucky
-        Some(7) => 5 // very lucky
-        Some(4) => 0 // very unlucky
-        Some(x) => x % 5 // idk just act important
-        _ => 0 // Anything else (only None left) is a 0
-    }
+let mut count = 0;
+match coin {
+    Coin::Quarter(state) => println!("State quarter from {:?}!", state),
+    _ => count += 1,
 }
 ```
-* We can pattern match on numbers
-* We can pattern match within other structures
-    * And we can use catch-all here, too!
+
+```rust
+let mut count = 0;
+if let Coin::Quarter(state) = coin {
+    println!("State quarter from {:?}!", state);
+} else {
+    count += 1;
+}
+```
 
 
 ---
 
 
 # Pattern Matching
-* Pattern matching lets you quickly and cleanly case on structures
+
+Pattern Matching is an incredibly powerful tool.
+
+* Gives you more control over a program’s control flow
+* Allows you to you quickly and cleanly case on structures, usually enums
+* Very useful in general
     * Commonly used in compilers and parsers
-    * Very useful in general
+* Rust has many more patterns than we have time to cover!
+    * Read [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust Book to find out more!
+        * _Will take less than 20 minutes_
+
+
+---
+
+
+# Homework 3
+
+* This will be the first homework where you will actually need to program something
+* You have been tasked with implementing two types of Pokemon:
+    * `Charmander` is a struct
+    * `Eevee` is a struct that can evolve into `EvolvedEevee`
+        * `EvolvedEevee` is an enum representing different evolutions
+* We _highly_ recommend reading [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust book if you have time!
 
 
 ---
@@ -1342,6 +1557,3 @@ fn judge_number(num: Option<u8>) -> u8 { // returns rating from 0-5 stars
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
 * Thanks for coming!
-
-<!-- TODO: Add ferrises -->
-<!-- TODO: Double check it all compiles -->
