@@ -27,6 +27,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
     * Prone to memory leaks or double frees
 * Garbage collection is slow and unpredictable
 * What if the compiler generated allocations and frees for us?
+    * Rust does this for us through the _Ownership_ system
 
 
 ---
@@ -47,13 +48,13 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```rust
-fn cool_guy() {
+fn main() {
     let s = String::from("yo");
-    helper_guy(s);
+    taker(s);
     println!("I *totally* still own {}", s);
 }
 
-fn helper_guy(some_string: String) {
+fn taker(some_string: String) {
     println!("{} is mine now!", some_string);
 }
 ```
@@ -66,16 +67,16 @@ fn helper_guy(some_string: String) {
 
 ```
 error[E0382]: borrow of moved value: `s`
-  --> cool_example.rs:8:42
-   |
-6  |     let s = String::from("yo");
-   |         - move occurs because `s` has type `String`, which does not
-                   implement the `Copy` trait
-7  |     helper_guy(s);
-   |                - value moved here
-8  |     println!("I *totally* still own {}", s);
-   |                                          ^ value borrowed here after move
-   |
+ --> src/main.rs:4:42
+  |
+2 |     let s = String::from("yo");
+  |         - move occurs because `s` has type `String`,
+  |           which does not implement the `Copy` trait
+3 |     taker(s);
+  |           - value moved here
+4 |     println!("I *totally* still own {}", s);
+  |                                          ^ value borrowed here after move
+  |
 ```
 * Looks like `cool_guy` doesn't still own `s`, after all.
 
@@ -85,17 +86,17 @@ error[E0382]: borrow of moved value: `s`
 
 # Ownership Example
 ```
-note: consider changing this parameter type in function `helper_guy`
- to borrow instead if owning the value isn't necessary
- --> cool_example.rs:11:28
+note: consider changing this parameter type in function `taker` to borrow
+      instead if owning the value isn't necessary
+ --> src/main.rs:7:23
   |
-7 | fn helper_guy(some_string: String) {
-  |    ----------              ^^^^^^ this parameter takes ownership of the value
+7 | fn taker(some_string: String) {
+  |    -----              ^^^^^^ this parameter takes ownership of the value
   |    |
   |    in this function
 ```
-* Suggestion from the compiler: rewrite `helper_guy` to borrow `some_string`.
-* Is it necessary for `helper_guy` to own the value?
+* Suggestion from the compiler: rewrite `taker` to _borrow_ `some_string`
+* Is it necessary for `taker` to own the value?
 
 
 ---
@@ -103,17 +104,17 @@ note: consider changing this parameter type in function `helper_guy`
 
 # Solution with References
 ```rust
-fn cool_guy() {
+fn main() {
     let s = String::from("yo");
-    helper_guy(&s);                // <-- Change to pass a reference
+    taker(&s);                   // <-- Change to pass a reference to a String
     println!("I *totally* still own {}", s);
 }
 
-fn helper_guy(some_string: &String) { // <-- Change to expect a reference
+fn taker(some_string: &String) { // <-- Change to expect a reference to a String
     println!("{} is mine now!", some_string);
 }
 ```
-* Let `helper_guy` borrow the value instead of moving it and transferring ownership.
+* Let `taker` borrow the value instead of moving it and transferring ownership.
 
 
 ---
@@ -122,14 +123,12 @@ fn helper_guy(some_string: &String) { // <-- Change to expect a reference
 # Alternative Solution
 ```
 help: consider cloning the value if the performance cost is acceptable
-   |
-7  |     helper_guy(s.clone());
-   |                 ++++++++
-
-error: aborting due to previous error
+  |
+3 |     taker(s.clone());
+  |            ++++++++
 ```
-* If we make a deep copy, it does compile
-    * But if `s` is large, cloning it will be expensive.
+* Making a clone (deep copy) allows this compile
+    * If `s` represents a large `String`, cloning will be expensive
 
 
 ---
