@@ -48,7 +48,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * At any given time, you can have either:
     * One mutable reference (exclusive reference)
     * Or any number of immutable references (shared references)
-* References must always be valid
+* Memory access through references is always valid
 
 
 ---
