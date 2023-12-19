@@ -43,9 +43,11 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# Review: Ownership Example
+# Review: Ownership Example 1
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Does this compile?
 
 ```rust
 fn main() {
@@ -63,7 +65,7 @@ fn taker(some_string: String) {
 ---
 
 
-# Ownership Example
+# Ownership Example 1
 
 ```
 error[E0382]: borrow of moved value: `s`
@@ -78,13 +80,14 @@ error[E0382]: borrow of moved value: `s`
   |                                          ^ value borrowed here after move
   |
 ```
-* Looks like `cool_guy` doesn't still own `s`, after all.
+* Looks like `taker` doesn't still own `s`, after all
 
 
 ---
 
 
-# Ownership Example
+# Ownership Example 1
+
 ```
 note: consider changing this parameter type in function `taker` to borrow
       instead if owning the value isn't necessary
@@ -95,14 +98,16 @@ note: consider changing this parameter type in function `taker` to borrow
   |    |
   |    in this function
 ```
-* Suggestion from the compiler: rewrite `taker` to _borrow_ `some_string`
+
+* Suggestion from the compiler: Rewrite `taker` to _borrow_ `some_string`
 * Is it necessary for `taker` to own the value?
 
 
 ---
 
 
-# Solution with References
+# Ownership Example 1 Solution (References)
+
 ```rust
 fn main() {
     let s = String::from("yo");
@@ -114,19 +119,21 @@ fn taker(some_string: &String) { // <-- Change to expect a reference to a String
     println!("{} is mine now!", some_string);
 }
 ```
-* Let `taker` borrow the value instead of moving it and transferring ownership.
+* Let `taker` borrow the value instead of moving it and transferring ownership
 
 
 ---
 
 
-# Alternative Solution
+# Ownership Example 1 (Alternative Solution)
+
 ```
 help: consider cloning the value if the performance cost is acceptable
   |
 3 |     taker(s.clone());
   |            ++++++++
 ```
+
 * Making a clone (deep copy) allows this compile
     * If `s` represents a large `String`, cloning will be expensive
 
@@ -134,12 +141,14 @@ help: consider cloning the value if the performance cost is acceptable
 ---
 
 
-# Review: Ownership Example 2
+# Ownership Example 2
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
+Does this compile?
+
 ```rust
-fn cool_guy() {
+fn main() {
     let favorite_computers = Vec::new();
     add_to_list(favorite_computers,
         String::from("Framework Laptop"));
@@ -155,34 +164,35 @@ fn add_to_list(fav_items: Vec<String>, item: String) {
 
 
 # Ownership Example 2
+
 ```
 error[E0596]: cannot borrow `fav_items` as mutable, as it is not declared as mutable
-  --> cool_example.rs:11:5
-   |
-11 |     fav_items.push(item);
-   |     ^^^^^^^^^^^^^^^^^^^^ cannot borrow as mutable
-   |
+ --> src/main.rs:8:5
+  |
+8 |     fav_items.push(item);
+  |     ^^^^^^^^^ cannot borrow as mutable
+  |
 help: consider changing this to be mutable
-   |
-10 | fn add_to_list(mut fav_items: Vec<String>, item: String) {
-   |                +++
-
-error: aborting due to previous error
-
+  |
+7 | fn add_to_list(mut fav_items: Vec<String>, item: String) {
+  |                +++
 ```
-* Missing one `mut` annotation.
+
+* Missing one `mut` annotation
 
 
 ---
 
 
 # Ownership Example 2
+
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
     add_to_list(favorite_computers, String::from("Framework Laptop"));
 }
 
+//             vvv Add `mut` here
 fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
@@ -193,6 +203,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 
 
 # Ownership Example 2
+
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
@@ -204,15 +215,19 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* What if I now want to print my list?
-* `favorite_computers` was moved in the `add_to_list` call.
-* Same problem as before
+
+* What if we want to print the list?
+* `favorite_computers` was moved in the `add_to_list` call
+* Same problem as example 1
 
 
 ---
 
 
-# Let's try a mutable reference
+# Ownership Example 2
+
+Let's try a mutable reference instead of moving the entire value.
+
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
@@ -224,45 +239,54 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
     fav_items.push(item);
 }
 ```
-* This works as expected!
+
+* This now works as intended!
 
 
 ---
 
 
-# Exclusive references save lives
+# Ownership Example 3
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Does this compile?
+
 ```rust
-fn main() {
+fn please_dont_move() {
     let mut v = vec![1, 2, 3, 4];
     let x = &v[3];
     v.pop(); // Removes last element in `vec`
     println!("{}", x); // What is `x`?
 }
 ```
+
 * Prevent data races and weird circumstances
-* What should this print?
+* What should this print if it did compile?
 
 
 ---
 
 
-# Compiler doesn't allow this!
+# Ownership Example 3
+
+The compiler doesn't allow this!
+
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> cool_example.rs:5:5
+ --> src/lib.rs:4:5
   |
 3 |     let x = &v[3];
   |              - immutable borrow occurs here
-4 |     // What if this is happening in another function? Another *thread*?
-5 |     v[3] = 5;
-  |     ^ mutable borrow occurs here
-6 |     println!("{}", x); // What is `x`?
+4 |     v.pop(); // Removes last element in `vec`
+  |     ^^^^^^^ mutable borrow occurs here
+5 |     println!("{}", x); // What is `x`?
   |                    - immutable borrow later used here
-
-error: aborting due to previous error
 ```
-* We failed early!
-* Potential debugging session prevented!
+
+* The `Vec` type is a resizable array, so popping the last element might resize it
+* When it resizes, the location of its data changes too
+    * Then `x` would point to an invalid location in memory!
 
 
 ---
