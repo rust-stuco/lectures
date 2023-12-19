@@ -142,7 +142,7 @@ error: aborting due to previous error
 ```rust
 fn cool_guy() {
     let favorite_computers = Vec::new();
-    add_to_list(favorite_computers, 
+    add_to_list(favorite_computers,
         String::from("Framework Laptop"));
 }
 
@@ -312,7 +312,7 @@ fn init_connor() -> Student {
 
 # Field Init Shorthand
 ```rust
-fn init_student(andrew: String, grade: u8, stress_level: u64, 
+fn init_student(andrew: String, grade: u8, stress_level: u64,
         att_vec: Vec<bool>) -> Student {
     let mut connor = Student {
         andrew_id: andrew,
@@ -353,7 +353,7 @@ struct Point(i32, i32, i32);
 fn main() {
     let red = Color(255, 0, 0);
     let origin = Point(0, 0, 0);
-} 
+}
 ```
 * The same as structs, except without named fields
 * The same as tuples, except with an associated type.
@@ -482,7 +482,7 @@ fn main() {
 ---
 
 
-# What's this "self"? 
+# What's this "self"?
 ```rust
 impl Rectangle {
     fn area(&self) -> u32 {
@@ -614,7 +614,7 @@ fn main() {
 
 # Enums
 * Allow us to encode/enumerate different possibilities
-* Similar to C enums, but much more powerful 
+* Similar to C enums, but much more powerful
     * More akin to a tagged union
 
 
@@ -683,7 +683,7 @@ let home = IpAddr::V4(127, 0, 0, 1);
 ---
 
 
-# Futher Enum Example
+# Further Enum Example
 ```rust
 enum Message {
     Quit,
@@ -790,7 +790,7 @@ fn identity_theft() {
 ---
 
 
-# **Pattern Matching** 
+# **Pattern Matching**
 
 
 ---
