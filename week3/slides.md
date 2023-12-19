@@ -862,53 +862,85 @@ p1.distance(&p2);
 
 
 # Enums
-* Allow us to encode/enumerate different possibilities
-* Similar to C enums, but much more powerful
-    * More akin to a tagged union
+
+* Defines a type with multiple possible _variants_
+* Represents the Sum Type of Algebraic Data Types
+    * Structs represent the Product Type
 
 
 ---
 
 
 # Enum Definition
+
+IP Addresses have two major standards, IPv4 and IPv6.
+
 ```rust
 enum IpAddrKind {
     V4,
     V6,
 }
 ```
-* IP Addresses can be either IPv4 or IPv6, but not both at the same time.
-* We can express this concept in code with an enum consisting of V4 and V6 variants.
+
+* IP Addresses can be either IPv4 or IPv6, but not both at the same time
+* We can express this concept in code with an enum consisting of V4 and V6 variants
+* In general, we can _enumerate_ all the possible variants with enums
 
 
 ---
 
 
-# Enum Values
+# Enum Variants
+
 We can make a value of type `IpAddrKind` as such:
+
 ```rust
 let four = IpAddrKind::V4;
 let six = IpAddrKind::V6;
 ```
+
 * The `::` operator represents a _namespace_
     * `V4` is in the namespace of `IpAddrKind`
+* This is useful because we can see both values are the same type: `IpAddrKind`
 
 
 ---
 
 
-# Enum Example
+# Enum Variants
+
+We can define a function that takes an `IpAddrKind`:
+
+```rust
+fn route(ip_kind: IpAddrKind) {}
+```
+
+And call it with the different variants:
+
+```rust
+route(IpAddrKind::V4);
+route(IpAddrKind::V6);
+```
+
+
+---
+
+
+# Enums vs Structs
+
+At the moment, we only store the kind of address, not the data. We may want to tackle this problem with structs then:
+
 ```rust
 enum IpAddrKind {
     V4,
     V6,
 }
-
 struct IpAddr {
     kind: IpAddrKind,
     address: String,
 }
 ```
+
 * IPv4 addresses look like `8.8.8.8`
 * IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
 * When we have an `IpAddr` struct, can check the `kind` field to determine how to interpret the `address` field.
@@ -917,15 +949,64 @@ struct IpAddr {
 ---
 
 
+# Enums Can Hold Data
+
+Instead of using structs to hold data, we can have the enums themselves hold data.
+
+```rust
+enum IpAddr {
+    V4(String),
+    V6(String),
+}
+
+let home = IpAddr::V4(String::from("127.0.0.1"));
+
+let loopback = IpAddr::V6(String::from("::1"));
+```
+
+* Much cleaner than before!
+
+
+---
+
+
 # Enum Associated Data
-Enum variants can hold fields:
+
+Each enum can also hold different types and different amounts of data.
+
+
 ```rust
 enum IpAddr {
     V4(u8, u8, u8, u8),
     V6(String),
 }
 
-let home = IpAddr::V4(127, 0, 0, 1);
+let home = IpAddr::V4(127, 0, 0, 1); // Even cleaner than the String!
+
+let loopback = IpAddr::V6(String::from("::1"));
+```
+
+
+---
+
+
+# `std::net::IpAddr`
+
+The Rust Standard Library actually has its own implementation of `IpAddr`.
+
+```rust
+struct Ipv4Addr {
+    // --snip--
+}
+
+struct Ipv6Addr {
+    // --snip--
+}
+
+enum IpAddr {
+    V4(Ipv4Addr),
+    V6(Ipv6Addr),
+}
 ```
 
 
