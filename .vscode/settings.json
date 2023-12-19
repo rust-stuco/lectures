@@ -2,4 +2,4 @@
     "markdown.marp.themes": [
       "./styles/rust.css"
     ]
-  }
+}
