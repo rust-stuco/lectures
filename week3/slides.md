@@ -299,6 +299,9 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 
 # Structs
+
+Here is an example of a `struct` definition
+
 ```rust
 struct Student {
     andrew_id: String,
@@ -307,45 +310,76 @@ struct Student {
     stress_level: u64,
 }
 ```
-* Like tuples, we can "package" data together
-* Very similar to C at first glance
+
+* To define a struct, we enter the keyword `struct` and name the entire struct
+* Inside the curly braces, we define the _fields_
+* Each field must be named
 
 
 ---
 
 
-# Struct Instantiation
+# Creating Structs
+
+We can create an _instance_ of a struct using the name of the struct and then key: value
+pairs inside curly brackets.
+
+```rust
+fn init_connor() -> Student {
+    Student {
+        andrew_id: String::from("cjtsui"),
+        stress_level: u64::MAX,
+        grade: 80,
+        attendance: vec![true, false, false, false, false, false, false],
+    }
+}
+```
+
+* You don't have to specify fields in the same order
+* You _must_ define every field of the struct to create an instance
+
+---
+
+
+# Accessing Fields
+
+We can access fields of a struct using dot notation.
+
 ```rust
 fn init_connor() -> Student {
     let mut connor = Student {
-        andrew_id: "cjtsui",
-        attendance: vec![true, false, false, false, false, false, false],
-        grade: 11,
+        andrew_id: String::from("cjtsui"),
         stress_level: u64::MAX,
+        grade: 80,
+        attendance: vec![true, false, false, false, false, false, false],
     };
 
-    connor.grade = 97; // shhh
-    connor // return cjtsui
+    connor.grade = 60; // shh
+    println!("{} has grade {}", connor.andrew_id, connor.grade);
+
+    connor
 }
 ```
+
+* Note that the entire instance must be `mut` to modify any field
 
 
 ---
 
 
 # Field Init Shorthand
+
+We can use _field init shorthand_ to remove repetitive wording.
+
 ```rust
-fn init_student(andrew: String, grade: u8, stress_level: u64,
-        att_vec: Vec<bool>) -> Student {
-    let mut connor = Student {
-        andrew_id: andrew,
-        attendance: att_vec,
-        grade, // Shorter syntax if variable has the same name
-        stress_level,
-    };
-
-    connor.grade = 97; // shhh
-    connor // return cjtsui
+fn init_student(andrew_id: String, grade: u8) -> Student {
+    // We can shorthand `andrew_id: andrew_id`, etc
+    Student {
+        andrew_id,
+        grade,
+        attendance: Vec::new(),
+        stress_level: u64::MAX, // default stress 😔
+    }
 }
 ```
 
@@ -353,22 +387,31 @@ fn init_student(andrew: String, grade: u8, stress_level: u64,
 ---
 
 
-# Field Init Shorthand
+# Struct Updates
+
+We can use values from another struct to create a new one.
+
 ```rust
 fn relax_student(prev_student: Student) -> Student {
-    let new_student = Student {
+    Student {
         stress_level: 0,
+        grade: 100,
         ..prev_student
-    };
-    new_student
+    }
 }
 ```
+
+* Note that this moves the data of the old struct
+    * Even if we wanted to, we can't use `prev_student` again
 
 
 ---
 
 
 # Tuple Structs
+
+We can created named tuples called Tuple Structs.
+
 ```rust
 struct Color(i32, i32, i32);
 struct Point(i32, i32, i32);
@@ -378,14 +421,18 @@ fn main() {
     let origin = Point(0, 0, 0);
 }
 ```
+
 * The same as structs, except without named fields
-* The same as tuples, except with an associated type.
+* The same as tuples, except with an associated name
 
 
 ---
 
 
 # Unit Structs
+
+We can declare _unit-like_ structs as such:
+
 ```rust
 struct AlwaysEqual;
 
@@ -393,18 +440,31 @@ fn main() {
     let subject = AlwaysEqual;
 }
 ```
-* Structs that have no fields
 
-<!-- Only reasonable/common use I know of is implementing a trait for a unit struct (e.g. different implementations of an algorithm) -->
+* Structs that have no fields
+* Most commonly used as markers since they are zero-sized types
+
+<!--
+Isomorphic to the unit type ()
+Useful when you want to implement a trait, but don't need to store any data with it
+-->
 
 
 ---
 
 
-# Can we store references in a struct?
+# References in Structs
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Can we store references inside structs?
+
 ```rust
-struct Borrower {
-    borrowed_num: &i32,
+struct Student {
+    andrew_id: &str, // <- &str instead of String
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
 }
 ```
 
@@ -412,29 +472,30 @@ struct Borrower {
 ---
 
 
-# Not quite...
+# Lifetimes Sneak Peek
+
 ```
 error[E0106]: missing lifetime specifier
- --> cool_example.rs:2:19
+ --> src/main.rs:2:16
   |
-2 |     borrowed_num: &i32,
-  |                   ^ expected named lifetime parameter
+2 |     andrew_id: &str, // <- &str instead of String
+  |                ^ expected named lifetime parameter
   |
 help: consider introducing a named lifetime parameter
   |
-1 ~ struct Borrower<'a> {
-2 ~     borrowed_num: &'a i32,
-  |
+1 ~ struct Student<'a> {
+2 ~     andrew_id: &'a str, // <- &str instead of String
 ```
-* We don't know how long the reference will last!
-* What if we store a reference to a variable and it later becomes invalid?
-* Lifetimes solve this problem (Lecture 7)!
+
+* We can store references in structs, but we need lifetime specifiers
+    * We'll talk about this in Week 7!
 
 
 ---
 
 
-# Quick Struct Example
+# Struct Example
+
 ```rust
 fn draw_rectangle(x: u32, y: u32, width: u32, height: u32) {}
 ```
