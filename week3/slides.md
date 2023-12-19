@@ -43,7 +43,18 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# Review: Ownership Example 1
+# Review: Borrowing Rules
+
+* At any given time, you can have either:
+    * One mutable reference (exclusive reference)
+    * Or any number of immutable references (shared references)
+* References must always be valid
+
+
+---
+
+
+# Pop Quiz: Question 1
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -65,7 +76,7 @@ fn taker(some_string: String) {
 ---
 
 
-# Ownership Example 1
+# Pop Quiz: Question 1
 
 ```
 error[E0382]: borrow of moved value: `s`
@@ -86,7 +97,7 @@ error[E0382]: borrow of moved value: `s`
 ---
 
 
-# Ownership Example 1
+# Pop Quiz: Question 1
 
 ```
 note: consider changing this parameter type in function `taker` to borrow
@@ -106,7 +117,7 @@ note: consider changing this parameter type in function `taker` to borrow
 ---
 
 
-# Ownership Example 1 Solution (References)
+# Pop Quiz: Question 1 Solution (References)
 
 ```rust
 fn main() {
@@ -125,7 +136,7 @@ fn taker(some_string: &String) { // <-- Change to expect a reference to a String
 ---
 
 
-# Ownership Example 1 (Alternative Solution)
+# Pop Quiz: Question 1 (Alternative Solution)
 
 ```
 help: consider cloning the value if the performance cost is acceptable
@@ -141,7 +152,7 @@ help: consider cloning the value if the performance cost is acceptable
 ---
 
 
-# Ownership Example 2
+# Pop Quiz: Question 2
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -163,7 +174,7 @@ fn add_to_list(fav_items: Vec<String>, item: String) {
 ---
 
 
-# Ownership Example 2
+# Pop Quiz: Question 2
 
 ```
 error[E0596]: cannot borrow `fav_items` as mutable, as it is not declared as mutable
@@ -184,7 +195,7 @@ help: consider changing this to be mutable
 ---
 
 
-# Ownership Example 2
+# Pop Quiz: Question 2 Solution
 
 ```rust
 fn cool_guy() {
@@ -202,7 +213,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 ---
 
 
-# Ownership Example 2
+# Pop Quiz: Question 2 (Bonus)
 
 ```rust
 fn cool_guy() {
@@ -224,7 +235,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 ---
 
 
-# Ownership Example 2
+# Pop Quiz: Question 2 (Bonus)
 
 Let's try a mutable reference instead of moving the entire value.
 
@@ -246,7 +257,7 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
 ---
 
 
-# Ownership Example 3
+# Pop Quiz: Question 3
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -261,14 +272,13 @@ fn please_dont_move() {
 }
 ```
 
-* Prevent data races and weird circumstances
 * What should this print if it did compile?
 
 
 ---
 
 
-# Ownership Example 3
+# Pop Quiz: Question 3
 
 The compiler doesn't allow this!
 
@@ -287,6 +297,7 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 * The `Vec` type is a resizable array, so popping the last element might resize it
 * When it resizes, the location of its data changes too
     * Then `x` would point to an invalid location in memory!
+* The compiler will prevent errors under weird circumstances
 
 
 ---
