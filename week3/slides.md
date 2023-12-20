@@ -27,7 +27,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
     * Prone to memory leaks or double frees
 * Garbage collection is slow and unpredictable
 * What if the compiler generated allocations and frees for us?
-    * Rust does this for us through the _Ownership_ system
+    * Rust does this for us through the _ownership_ system
 
 
 ---
@@ -36,7 +36,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 # Review: Ownership Rules
 
 * Each value in Rust has an _owner_
-* There can only be one owner at a time
+* A value can only have one owner at a time
 * When the owner goes out of scope, the value will be _dropped_
 
 
@@ -47,18 +47,18 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 * At any given time, you can have either:
     * One mutable reference (exclusive reference)
-    * Or any number of immutable references (shared references)
-* Memory access through references is always valid
+    * Any number of immutable references (shared references)
+* Memory access through references is guaranteed to be valid
 
 
 ---
 
 
-# Pop Quiz: Question 1
+# Review Question 1
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Does this compile?
+Why doesn't this compile?
 
 ```rust
 fn main() {
@@ -76,7 +76,7 @@ fn taker(some_string: String) {
 ---
 
 
-# Pop Quiz: Question 1
+# Review Question 1
 
 ```
 error[E0382]: borrow of moved value: `s`
@@ -91,13 +91,13 @@ error[E0382]: borrow of moved value: `s`
   |                                          ^ value borrowed here after move
   |
 ```
-* Looks like `taker` doesn't still own `s`, after all
+* Looks like `taker` does not still own `s`, after all
 
 
 ---
 
 
-# Pop Quiz: Question 1
+# Review Question 1
 
 ```
 note: consider changing this parameter type in function `taker` to borrow
@@ -117,7 +117,7 @@ note: consider changing this parameter type in function `taker` to borrow
 ---
 
 
-# Pop Quiz: Question 1 Solution (References)
+# Review Question 1 (References Solution)
 
 ```rust
 fn main() {
@@ -136,7 +136,7 @@ fn taker(some_string: &String) { // <-- Change to expect a reference to a String
 ---
 
 
-# Pop Quiz: Question 1 (Alternative Solution)
+# Review Question 1 (Alternative Solution)
 
 ```
 help: consider cloning the value if the performance cost is acceptable
@@ -152,11 +152,11 @@ help: consider cloning the value if the performance cost is acceptable
 ---
 
 
-# Pop Quiz: Question 2
+# Review Question 2
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Does this compile?
+Why doesn't this compile?
 
 ```rust
 fn main() {
@@ -174,7 +174,7 @@ fn add_to_list(fav_items: Vec<String>, item: String) {
 ---
 
 
-# Pop Quiz: Question 2
+# Review Question 2
 
 ```
 error[E0596]: cannot borrow `fav_items` as mutable, as it is not declared as mutable
@@ -195,7 +195,7 @@ help: consider changing this to be mutable
 ---
 
 
-# Pop Quiz: Question 2 Solution
+# Review Question 2 (Solution)
 
 ```rust
 fn cool_guy() {
@@ -213,7 +213,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 ---
 
 
-# Pop Quiz: Question 2 (Bonus)
+# Review Question 2b
 
 ```rust
 fn cool_guy() {
@@ -235,7 +235,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 ---
 
 
-# Pop Quiz: Question 2 (Bonus)
+# Review Question 2b (Solution)
 
 Let's try a mutable reference instead of moving the entire value.
 
@@ -257,11 +257,11 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
 ---
 
 
-# Pop Quiz: Question 3
+# Review Question 3
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Does this compile?
+Why doesn't this compile?
 
 ```rust
 fn please_dont_move() {
@@ -273,15 +273,12 @@ fn please_dont_move() {
 ```
 
 * What should this print if it did compile?
-* What if the index was `2` instead of `3`?
 
 
 ---
 
 
-# Pop Quiz: Question 3
-
-The compiler doesn't allow this!
+# Review Question 3
 
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
@@ -295,10 +292,9 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
   |                    - immutable borrow later used here
 ```
 
-* The `Vec` type is a resizable array, so popping the last element might resize it
-* When it resizes, the location of its data changes too
-    * Then `x` would point to an invalid location in memory!
-* The compiler will prevent errors under weird circumstances
+* We cannot mutably borrow a value with an existing immutable borrow.
+* In this case, if it were allowed, `x` would point to invalid memory!
+* These sorts of errors are gratifyingly caught at compile time.
 
 
 ---
@@ -312,7 +308,7 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 # Structs
 
-A _struct_ is a custom data type that lets you package together and name multiple related values that make up a meaningful group.
+A _struct_ is a custom data type that lets you package together and name related values that make up a meaningful group.
 
 ```rust
 struct Student {
@@ -323,15 +319,17 @@ struct Student {
 }
 ```
 
-* To define a struct, we enter the keyword `struct` and name the entire struct
-* Inside the curly braces, we define the _fields_
-* Each field must be named
+* To define a struct, we enter the keyword `struct` and name the entire group
+* Within the curly braces, we define _fields_
+* Each field is named and has an associated type
+
+<!-- Very similar to C structs -->
 
 
 ---
 
 
-# Creating Structs
+# Instantiating Structs
 
 We can create an _instance_ of a struct using the name of the struct and `key: value`
 pairs inside curly brackets.
@@ -347,8 +345,9 @@ fn init_connor() -> Student {
 }
 ```
 
-* You don't have to specify fields in the same order
+* You don't have to specify fields in any order
 * You _must_ define every field of the struct to create an instance
+
 
 ---
 
@@ -385,23 +384,23 @@ We can use _field init shorthand_ to remove repetitive wording.
 
 ```rust
 fn init_student(andrew_id: String, grade: u8) -> Student {
-    // We can shorthand `andrew_id: andrew_id`, etc
     Student {
         andrew_id,
         grade,
         attendance: Vec::new(),
-        stress_level: u64::MAX, // default stress 😔
+        stress_level: u64::MAX, // 😔
     }
 }
 ```
+* We can shorten `andrew_id: andrew_id` to simply `andrew_id`
 
 
 ---
 
 
-# Struct Updates
+# Struct Update Syntax
 
-We can use values from another struct to create a new one.
+Shorthand to use values from an existing struct to create a new one.
 
 ```rust
 fn relax_student(prev_student: Student) -> Student {
@@ -428,7 +427,7 @@ Stay tuned to find out!
 
 # Tuple Structs
 
-We can created named tuples called Tuple Structs.
+We can created named tuples called "tuple structs".
 
 ```rust
 struct Color(i32, i32, i32);
@@ -449,7 +448,7 @@ fn main() {
 
 # Unit Structs
 
-We can declare _unit-like_ structs as such:
+We can declare "unit structs" as such:
 
 ```rust
 struct AlwaysEqual;
@@ -506,7 +505,7 @@ help: consider introducing a named lifetime parameter
 ```
 
 * We can store references in structs, but we need lifetime specifiers
-    * We'll talk about this in Week 7!
+    * We will talk about these in Week 7!
 
 
 ---
@@ -533,6 +532,8 @@ struct Rectangle {
 fn draw_rectangle(rect: Rectangle) {}
 ```
 * Which do you prefer?
+
+<!-- Just with regard to code style... -->
 
 
 ---
@@ -603,7 +604,7 @@ error[E0277]: `Student` doesn't implement `Debug`
    = help: the trait `Debug` is not implemented for `Student`
 ```
 
-* We'll talk more about Traits in Week 5!
+* More on traits in Week 5!
     * They define shared functionality and behavior between types
 
 
@@ -612,7 +613,7 @@ error[E0277]: `Student` doesn't implement `Debug`
 
 # Derived Traits
 
-As always, we should look at what the compiler tells us.
+As is often the case, the compiler provides a helpful suggestion.
 
 ```
 help: consider annotating `Student` with `#[derive(Debug)]`
@@ -622,8 +623,7 @@ help: consider annotating `Student` with `#[derive(Debug)]`
    |
 ```
 
-* For now, let's just follow its advice
-    * We'll figure out why this works later!
+* For now, let's just follow the advice blindly.
 
 
 ---
@@ -671,6 +671,8 @@ fn main() {
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 80, stress_level: 18446744073709551615 }
 ```
 
+* We are given a relatively nice output for free
+
 
 ---
 
@@ -702,8 +704,7 @@ struct Rectangle {
 
 # Struct Methods
 
-_Methods_ are like functions, but their first parameter is always `self`, and are always
-defined within the context of a struct
+_Methods_ are like functions, but their first parameter is always `self`, and they are always defined within the context of a struct.
 
 ```rust
 struct Rectangle {
@@ -784,7 +785,7 @@ fn main() {
 }
 ```
 
-* Same ownership rules as before, we take in `self` and consume it
+* We take in `self` and "consume" it—the caller loses ownership.
 
 <!--
 There are cases where you might want this,
@@ -802,8 +803,6 @@ We can take a mutable reference to our struct as well.
 
 ```rust
 impl Rectangle {
-    // <-- snip -->
-
     fn change_width(&mut self, new_width: u32) {
         self.width = new_width;
     }
@@ -816,7 +815,7 @@ fn main() {
     println!("{:?}", rect);
 }
 ```
-* Mutable references work as expected
+* Follows the same rules for mutable references as before.
 
 
 ---
@@ -861,7 +860,7 @@ p1.distance(&p2);
 * In C and C++, you use `.` for direct access and `->` for access through a pointer
 * Rust instead has _**automatic referencing and dereferencing**_
 * When you call `object.something()`, Rust will automatically add in the `&`, `&mut`, or `*` so that `object` matches the signature of the method
-    * This is a big reason why ownership and borrowing is ergonomic in practice
+    * Makes ownership and borrowing more ergonomic
 
 
 ---
@@ -876,8 +875,10 @@ p1.distance(&p2);
 # Enums
 
 * Defines a type with multiple possible _variants_
-* Represents the Sum Type of Algebraic Data Types
-    * Structs represent the Product Type
+* Manifestation of the algebraic data type known as the "sum type"
+    * Structs are "product types"
+* Sum types hold a value that takes on one of several distinct variants.
+    * Think of sum types as a value that can be of type A ___or___ B
 
 
 ---
@@ -885,7 +886,7 @@ p1.distance(&p2);
 
 # Enum Definition
 
-IP Addresses have two major standards, IPv4 and IPv6.
+IP addresses have two major standards, IPv4 and IPv6.
 
 ```rust
 enum IpAddrKind {
@@ -894,9 +895,13 @@ enum IpAddrKind {
 }
 ```
 
-* IP Addresses can be either IPv4 or IPv6, but not both at the same time
+* IP addresses can be either IPv4 _or_ IPv6—not both simultaneously
 * We can express this concept in code with an enum consisting of V4 and V6 variants
-* In general, we can _enumerate_ all the possible variants with enums
+* In general, we enumerate variants of a sum type as fields in an enum
+
+<!--
+Express that variants are equivalent to distinct types from previous slide
+-->
 
 
 ---
@@ -913,7 +918,7 @@ let six = IpAddrKind::V6;
 
 * The `::` operator represents a _namespace_
     * `V4` is in the namespace of `IpAddrKind`
-* This is useful because we can see both values are the same type: `IpAddrKind`
+* Useful syntax, because we can see both values are of the same type: `IpAddrKind`
 
 
 ---
@@ -927,7 +932,7 @@ We can define a function that takes an `IpAddrKind`:
 fn route(ip_kind: IpAddrKind) {}
 ```
 
-And call it with the different variants:
+And call it with any of the variants:
 
 ```rust
 route(IpAddrKind::V4);
@@ -940,7 +945,7 @@ route(IpAddrKind::V6);
 
 # Enums vs Structs
 
-At the moment, we only store the kind of address, not the data. We may want to tackle this problem with structs then:
+At the moment, the enum only stores the kind of the address—the address itself has to be stored elsewhere. We can do this using structs:
 
 ```rust
 enum IpAddrKind {
@@ -955,6 +960,10 @@ struct IpAddr {
 ```
 
 * When we have an `IpAddr` struct, we could check the `kind` field to determine how to interpret the `address` field.
+
+<!-- 
+That works for this example, but what if V4 and V6 variants require different types?
+-->
 
 
 ---
@@ -977,6 +986,10 @@ let loopback = IpAddr::V6(String::from("::1"));
 
 * Much cleaner than before!
 
+<!--
+This is equivalent to a tagged union data structure now
+-->
+
 
 ---
 
@@ -997,13 +1010,13 @@ let home = IpAddr::V4(127, 0, 0, 1);
 let loopback = IpAddr::V6(String::from("::1"));
 ```
 
-* Even cleaner than carrying around a `String` that we need to parse!
+* Cleaner than carrying around a `String` that we need to parse
 
 
 ---
 
 
-# `std::net::IpAddr`
+# Aside: `std::net::IpAddr`
 
 The Rust Standard Library actually has its own implementation of `IpAddr`.
 
@@ -1039,7 +1052,7 @@ enum Message {
 }
 ```
 
-* `Quit` has not data associated at all
+* `Quit` has no associated data
 * `Move` has named fields like a struct
 * `Write` includes a single `String`
 * `ChangeColor` includes 3 `i32` values
@@ -1064,7 +1077,6 @@ struct ChangeColorMessage(i32, i32, i32); // tuple struct
 
 * Each of these structs has a separate type
     * We couldn't easily define a function to take in all of these types
-* Enums seem to have a lot in common with structs...
 
 
 ---
@@ -1114,7 +1126,7 @@ This has led to innumerable errors, vulnerabilities, and system crashes, which h
 — Tony Hoare, "inventer of `NULL`", 2009
 
 * The issue is not the concept of `NULL`, rather its _implementation_
-* We still want a way to express that a a value could be _something_ **or** _nothing_
+* We still want a way to express that a value could be _something_ **or** _nothing_
 
 ---
 
@@ -1240,13 +1252,15 @@ if y.is_none() {
 
 # `match`
 
-Rust has an extremely powerful control flow construct called `match`.
+Rust has a powerful control flow construct called `match`.
 
 * You can compare a value against a series of patterns
 * You can execute code based on which pattern matches
 * Patterns can be made up of literal values, variable names, wildcards, etc.
 
 <!--
+Patterns can be made up of values or structures
+
 It's like a coin-sorting machine, where the coin rolls down
 and will fall into the hole that fits it first
 -->
@@ -1257,7 +1271,7 @@ and will fall into the hole that fits it first
 
 # Pattern Matching
 
-Here's an example of a coin sorting function that tells us the value of the coin!
+Here's an example of a coin sorting function that returns the value of the coin.
 
 ```rust
 enum Coin {
@@ -1332,10 +1346,8 @@ fn value_in_cents(coin: Coin) -> u8 {
 
 Patterns can bind to specific parts of the values that match the pattern.
 
-From 1999 through 2008, the United States minted quarters with different designs for each of the 50 states on one side.
-
 ```rust
-#[derive(Debug)] // so we can inspect the state in a minute
+#[derive(Debug)] // Allow printing `UsState`
 enum UsState {
     Alabama,
     Alaska,
@@ -1346,7 +1358,7 @@ enum Coin {
     Penny,
     Nickel,
     Dime,
-    Quarter(UsState),
+    Quarter(UsState), // Quarters have states on them
 }
 ```
 
@@ -1370,7 +1382,7 @@ fn value_in_cents(coin: Coin) -> u8 {
 }
 ```
 
-* We bind `state` to the `UsState` the coin belongs to!
+* We bind the variable `state` to the `UsState` that the `Quarter` variant holds!
 
 
 ---
@@ -1403,9 +1415,9 @@ println!("{:?}", sum); // Prints "Some(10)"
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-`match` must cover all of the possibilities that the expression it is matching against may take.
+The `match` patterns must cover all possible values that the matched expression may take.
 
-What happens when we don't?
+What happens when we miss a case?
 
 ```rust
 let x: i8 = 5;
@@ -1421,8 +1433,6 @@ let sum = match y {
 
 
 # Matches Are Exhaustive
-
-We get a compile-time error if we fail to specify what to do in every possibility.
 
 ```rust
 let x: i8 = 5;
@@ -1450,7 +1460,7 @@ error[E0004]: non-exhaustive patterns: `None` not covered
 
 # Catch-all Pattern
 
-Sometimes we want to do something special for a specific pattern, but for all other patterns we want to default to something else.
+Sometimes we don't need to do something special for every case, and can instead have a fallback case.
 
 ```rust
 fn add_fancy_hat() {}
@@ -1465,7 +1475,7 @@ match dice_roll {
 }
 ```
 
-* `other` matches anything not covered in the previous cases
+* `other` matches anything not covered by previous patterns
 
 
 ---
@@ -1473,7 +1483,7 @@ match dice_roll {
 
 # `_` Pattern
 
-If we don't care about the matched value, we can use `_` instead.
+If we don't need the matched value, we can use `_` instead.
 
 ```rust
 fn add_fancy_hat() {}
@@ -1488,7 +1498,7 @@ match dice_roll {
 }
 ```
 
-* `_` matches anything as well, but it doesn't bind the value
+* `_` matches anything, but it doesn't bind the value
 
 
 ---
@@ -1506,7 +1516,7 @@ if let Coin::Penny = coin {
 }
 ```
 
-* Works with `else if <pattern> = <expr>` and `else` as well
+* Works with `else if let <pattern> = <expr>` and `else` as well    
 
 
 ---
@@ -1541,10 +1551,9 @@ if let Coin::Quarter(state) = coin {
 
 Pattern Matching is an incredibly powerful tool.
 
-* Gives you more control over a program’s control flow
-* Allows you to you quickly and cleanly case on structures, usually enums
-* Very useful in general
-    * Commonly used in compilers and parsers
+* Gives you more utilities for managing a program’s control flow
+* Allows you to you quickly and cleanly case on structures, typically enums.
+* Very useful for compilers and parsers.
 * Rust has many more patterns than we have time to cover!
     * Read [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust Book to find out more!
         * _Will take less than 20 minutes_
@@ -1555,12 +1564,14 @@ Pattern Matching is an incredibly powerful tool.
 
 # Homework 3
 
-* This will be the first homework where you will actually need to program something
+* This is the first homework where you need to actually synthesize code!
 * You have been tasked with implementing two types of Pokemon:
-    * `Charmander` is a struct
-    * `Eevee` is a struct that can evolve into `EvolvedEevee`
+    * `Charmander` struct
+    * `Eevee` struct that can evolve into `EvolvedEevee`
         * `EvolvedEevee` is an enum representing different evolutions
 * We _highly_ recommend reading [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust book if you have time!
+
+<!-- Contents of chapter 18 will not be fully covered by the course -->
 
 
 ---
