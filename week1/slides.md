@@ -703,7 +703,7 @@ fn main() {
 
 # Characters
 
-Rust has a UTF-8 character type `char`.
+Rust has a UTF-32 character type `char`.
 
 ```rust
 fn main() {
@@ -714,8 +714,8 @@ fn main() {
 ```
 
 * Use `char` with single quotes (`'a'` vs. `"a"`)
-* Due to `char` being UTF-8, a `char` is always **4 bytes in length**
-* We will talk more about this and UTF-8 in the future!
+* Due to `char` being UTF-32, a `char` is always **4 bytes in length**
+* We will talk more about this and UTF-8 / UTF-32 in the future!
 
 
 
