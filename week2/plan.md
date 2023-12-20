@@ -1,22 +1,24 @@
 ## Week 2: Ownership
 
 ### Lecture
-- `Vec` type basics (3 min)
-- `String` type basics (3 min)
-- Ownership (24 min)
+- Ownership (26 min)
+    - Review
+        - Scopes
+        - String literals
     - Ownership Rules
-    - Scope
+    - `String` type
     - Memory and Allocation
     - `Copy` and `Clone` traits
     - Ownership with functions and return values
 - References and Borrowing (14 min)
-    - Reference vs Address (`&`)
-    - Mutable references
+    - Reference vs Ownership
+    - Immutable and Mutable references
     - Dangling references and data racing
-    - Automatic referencing and dereferencing sneak peek
 - Slices (6 min)
     - Memory layout
     - `&str`
+- `Vec` (4 min)
+    - Memory layout
 
 ### Extra Material
 - Rust Book Chapter 4

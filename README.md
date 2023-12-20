@@ -1,10 +1,13 @@
-# Rust Stuco S24 Outline
+# Rust StuCo S24 Outline
+
+_Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
+
 
 </br>
 
 # Course Materials:
-- Main Source: [The Rust Programming Langauge (The Rust Book)](https://doc.rust-lang.org/book/)
-- The Rust Lang Book [in video format](https://www.youtube.com/playlist?list=PLai5B987bZ9CoVR-QEIN9foz4QCJ0H2Y8) on YouTube
+- Main Source: [The Rust Programming Language (The Rust Book)](https://doc.rust-lang.org/book/)
+    - The Rust Lang Book [in video format](https://www.youtube.com/playlist?list=PLai5B987bZ9CoVR-QEIN9foz4QCJ0H2Y8) on YouTube
 - [Rust By Example](https://doc.rust-lang.org/rust-by-example/index.html)
 - [The Rustonomicon](https://doc.rust-lang.org/nomicon/)
 - [The Rust Reference](https://doc.rust-lang.org/reference/index.html)
@@ -14,99 +17,137 @@
 
 </br>
 
-# Schedule
+
+# **Schedule**
+
 
 ## Week 1: Introduction
 - Why Rust?
-- Cargo basics
+- `cargo` basics
 - Rust Syntax
-- Installing Rust
+    - Variables and Mutability
+    - Types
+    - Functions, Statements, and Expressions
+    - Control Flow
+- Course Logistics
+    - Installing Rust
 
 
 ## Week 2: Ownership
 - Ownership
-- `Vec` and `String` basics
+    - The `String` Type
+    - Move Semantics
 - References and Borrowing
 - Slices
+- The `Vec` Type
 
 
 ## Week 3: Structs and Enums
 - Ownership review
 - Structs
 - Enums
+    - Pattern Matching
 
 
 ## Week 4: Standard Collections and Generics
-- Vectors
-- Strings
-- Maps
+- The `Vec<T>` Type
+- The `String` Type
+- The `HashMap<K, V>` Type
 - Generics
 
 
-## Week 5: Error handling and Traits
+## Week 5: Error Handling and Traits
 - Error Handling
 - Traits
 
 
 ## Week 6: Cargo, Modules, Crates, and Testing
-- Crates and Modules file system layout
-- Unit Testing and Integration Testing
+- Packages and Crates
+- Modules
+- The `use` Keyword
+- Module Paths and File Structure
+- Unit Tests
+- Integration Tests
 
-</br>
-</br>
-
-# TODO
 
 ## Week 7: Lifetimes
-Chapter 10.3 + probably need way more
-
-- Very important, need to get this right
+- Validating References
+- The Borrow Checker
+    - Lifetimes vs. Scope
+    - Lifetimes vs. Memory
+- Generic Lifetimes
+- Lifetime Annotations
+- Lifetime Elision
+- `'static` Lifetimes
 
 
 ## Week 8: Iterators, Closures, and Advanced Functional
-Chapter 13
+- Closures
+    - Captures
+    - The `move` Keyword
+    - `Fn` traits
+- Iterators
+    - `Iterator` Trait and `next`
+- Loops vs. Iterators
 
 
 ## Week 9: Smart Pointers and Trait Objects
-Chapter 15
-
-- `Box<T>`
-- `drop()`
-- `Rc<T>`
+- The `Box<T>` Type
+- The `Deref` Trait and Deref Coercion
+- The `Drop` Trait and `std::mem::drop`
+- The `Rc<T>` Type
 - `RefCell<T>`
-    - `UnsafeCell<T>`
-- Memory leaks
+- Memory Leaks
+- Object-Oriented Programming
 - Trait Objects
-    - Wide pointers
     - Dynamic dispatch with `dyn`
-    - Vtable
-    - Probably need more
 - Dynamically Sized Types
-- Object safety
+- Object Safety
 
 
-## Week 10 - 13: Misc Advanced Rust
-- Parallelism & Concurrency
-    - Locking
-    - Message Passing
-    - Async/Await
-- Essential Rust Crates
-    - `no_std`
-        - `rand`
-        - `time`
-    - `std`
-        - `log`
-        - `tracing`
-        - `anyhow`
-        - `clap`
-        - `rayon`
-    - Frameworks
-        - `serde`
-        - `criterion`
-        - `tokio`
-- Macros
-- Unsafe
-    - FFI
+## Week 10: Parallelism
+- The `Mutex<T>` Smart Pointer
+- The `Arc<T>` Smart Pointer
+- `std::sync::mspc::channel`
+- TODO
 
 
+## Week 11: Concurrency
+- `async`
+- `await`
+- The `Pin<T>` Type
+- TODO
 
+
+## Week 12: Macros
+- Declarative Macros
+    - `macro_rules!`
+- Procedural Macros
+- TODO
+
+
+## Week 13: `unsafe`
+- Unsafe Superpowers
+- Raw Pointers
+- `UnsafeCell<T>`
+- The `Rc<T>` Type Revisited
+- The `Vec<T>` Type Revisited
+- FFI
+
+
+## Misc
+Essential Rust Crates
+- `no_std`
+    - `rand`
+    - `time`
+- `std`
+    - `log`
+    - `tracing`
+    - `anyhow`
+    - `clap`
+    - `rayon`
+    - `flamegraph`
+- Frameworks
+    - `serde`
+    - `criterion`
+    - `tokio`
