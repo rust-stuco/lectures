@@ -203,7 +203,7 @@ fn cool_guy() {
     add_to_list(favorite_computers, String::from("Framework Laptop"));
 }
 
-//             vvv Add `mut` here
+//             +++ Add `mut` here
 fn add_to_list(mut fav_items: Vec<String>, item: String) {
     fav_items.push(item);
 }
@@ -229,7 +229,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 
 - What if we want to print the list?
 * `favorite_computers` was moved in the `add_to_list` call
-* Same problem as example 1
+* Same issue as review question 1
 
 
 ---
@@ -264,15 +264,13 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
 Why doesn't this compile?
 
 ```rust
-fn please_dont_move() {
+fn i_dont_exist() {
     let mut v = vec![1, 2, 3, 4];
     let x = &v[3];
-    v.pop(); // Removes last element in `vec`
+    v.pop(); // Removes last element in `v`
     println!("{}", x); // What is `x`?
 }
 ```
-
-* What should this print if it did compile?
 
 
 ---
@@ -282,7 +280,7 @@ fn please_dont_move() {
 
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> src/lib.rs:4:5
+ --> src/main.rs:4:5
   |
 3 |     let x = &v[3];
   |              - immutable borrow occurs here
@@ -292,9 +290,69 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
   |                    - immutable borrow later used here
 ```
 
-* We cannot mutably borrow a value with an existing immutable borrow.
+* We cannot mutably borrow a value with an existing immutable borrow
 * In this case, if it were allowed, `x` would point to invalid memory!
-* These sorts of errors are gratifyingly caught at compile time.
+
+<!--
+These sorts of errors are caught at compile time!
+-->
+
+
+---
+
+
+# Review Question 3b
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+What about this scenario?
+
+```rust
+fn please_dont_move() {
+    let mut v = vec![1, 2, 3];
+    let x = &v[2];
+    v.push(4); // Add an element to the end of `v`
+    println!("{}", x); // What is `x`?
+}
+```
+
+* This time we aren't removing the last element, instead we're adding more elements!
+    * Surely nothing happens to `x` this time, right?
+
+
+---
+
+
+# Review Question 3b
+
+We still get the same error!
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:4:5
+  |
+3 |     let x = &v[2];
+  |              - immutable borrow occurs here
+4 |     v.push(4);
+  |     ^^^^^^^^^ mutable borrow occurs here
+5 |     println!("{}", x); // What is `x`?
+  |                    - immutable borrow later used here
+```
+
+* In this case, what if pushing `4` onto `v` resizes the entire vector?
+    * Resizing means allocating new memory, copying over data, then deallocating the old memory
+* `x` would no longer point to valid memory!
+
+
+<!--
+What if, as the programmer, you knew that the vector initially has capacity 8,
+and that this push doesn't resize?
+
+The compiler has no way of knowing that, but you do!
+
+If you really want this code to work, there is a specific keyword, `unsafe`, that lets you do this.
+We will talk about `unsafe` in the later weeks.
+-->
 
 
 ---
@@ -400,7 +458,7 @@ fn init_student(andrew_id: String, grade: u8) -> Student {
 
 # Struct Update Syntax
 
-Shorthand to use values from an existing struct to create a new one.
+There is a shorthand to use values from an existing struct to create a new one.
 
 ```rust
 fn relax_student(prev_student: Student) -> Student {
@@ -623,7 +681,7 @@ help: consider annotating `Student` with `#[derive(Debug)]`
    |
 ```
 
-* For now, let's just follow the advice blindly.
+* For now, let's just follow the advice blindly
 
 
 ---
@@ -671,7 +729,7 @@ fn main() {
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 80, stress_level: 18446744073709551615 }
 ```
 
-* We are given a relatively nice output for free
+* We are given a relatively nice output for free!
 
 
 ---
@@ -740,8 +798,8 @@ impl Rectangle {
 * We start with an `impl` block for `Rectangle`
 * We use `&self` instead of `rectangle: &Rectangle`
     * `&self` is actually syntactic sugar for `self: &Self`
-        * _A reminder that `&Self` is the same as `&Rectangle`_
-* We still have to obey borrowing rules with references
+    * In `impl` blocks, `Self` is shorthand for the type being implemented
+    * So `&Self` is the same as `&Rectangle`
 
 
 ---
@@ -785,7 +843,7 @@ fn main() {
 }
 ```
 
-* We take in `self` and "consume" it—the caller loses ownership.
+* We take in `self` and "consume" it by taking ownership
 
 <!--
 There are cases where you might want this,
@@ -815,7 +873,7 @@ fn main() {
     println!("{:?}", rect);
 }
 ```
-* Follows the same rules for mutable references as before.
+* Follows the same rules for mutable references as before
 
 
 ---
@@ -838,6 +896,7 @@ fn main() {
 }
 ```
 
+* A reminder that `Self` is shorthand for `Rectangle` here
 * We cannot use dot notation for these functions
     * Instead we use the struct name and the `::` operator
 
@@ -895,7 +954,7 @@ enum IpAddrKind {
 }
 ```
 
-* IP addresses can be either IPv4 _or_ IPv6—not both simultaneously
+* IP addresses can be _either_ IPv4 _or_ IPv6
 * We can express this concept in code with an enum consisting of V4 and V6 variants
 * In general, we enumerate variants of a sum type as fields in an enum
 
@@ -945,7 +1004,9 @@ route(IpAddrKind::V6);
 
 # Enums vs Structs
 
-At the moment, the enum only stores the kind of the address—the address itself has to be stored elsewhere. We can do this using structs:
+At the moment, `IpAddrKind` only encodes the _kind_ of address, and the address itself has to be stored elsewhere.
+
+We could do this using structs:
 
 ```rust
 enum IpAddrKind {
@@ -959,9 +1020,9 @@ struct IpAddr {
 }
 ```
 
-* When we have an `IpAddr` struct, we could check the `kind` field to determine how to interpret the `address` field.
+* When we have an `IpAddr` struct, we could check the `kind` field to determine how to interpret the `address` field
 
-<!-- 
+<!--
 That works for this example, but what if V4 and V6 variants require different types?
 -->
 
@@ -1347,7 +1408,7 @@ fn value_in_cents(coin: Coin) -> u8 {
 Patterns can bind to specific parts of the values that match the pattern.
 
 ```rust
-#[derive(Debug)] // Allow printing `UsState`
+#[derive(Debug)] // Allows us to print `UsState`
 enum UsState {
     Alabama,
     Alaska,
@@ -1516,7 +1577,7 @@ if let Coin::Penny = coin {
 }
 ```
 
-* Works with `else if let <pattern> = <expr>` and `else` as well    
+* Works with `else if let <pattern> = <expr>` and `else` as well
 
 
 ---
@@ -1552,8 +1613,8 @@ if let Coin::Quarter(state) = coin {
 Pattern Matching is an incredibly powerful tool.
 
 * Gives you more utilities for managing a program’s control flow
-* Allows you to you quickly and cleanly case on structures, typically enums.
-* Very useful for compilers and parsers.
+* Allows you to you quickly and cleanly case on structures, typically enums
+* Very useful for compilers and parsers
 * Rust has many more patterns than we have time to cover!
     * Read [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust Book to find out more!
         * _Will take less than 20 minutes_
@@ -1564,7 +1625,7 @@ Pattern Matching is an incredibly powerful tool.
 
 # Homework 3
 
-* This is the first homework where you need to actually synthesize code!
+* This is the first homework where you will need to actually synthesize code!
 * You have been tasked with implementing two types of Pokemon:
     * `Charmander` struct
     * `Eevee` struct that can evolve into `EvolvedEevee`
