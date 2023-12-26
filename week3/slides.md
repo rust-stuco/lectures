@@ -264,7 +264,7 @@ fn add_to_list(fav_items: &mut Vec<String>, item: String) {
 Why doesn't this compile?
 
 ```rust
-fn i_dont_exist() {
+fn x_shouldnt_exist() {
     let mut v = vec![1, 2, 3, 4];
     let x = &v[3];
     v.pop(); // Removes last element in `v`
@@ -309,9 +309,9 @@ What about this scenario?
 
 ```rust
 fn please_dont_move() {
-    let mut v = vec![1, 2, 3];
+    let mut v = vec![1, 2, 3, 4];
     let x = &v[2];
-    v.push(4); // Add an element to the end of `v`
+    v.push(5); // Add an element to the end of `v`
     println!("{}", x); // What is `x`?
 }
 ```
@@ -333,13 +333,13 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
   |
 3 |     let x = &v[2];
   |              - immutable borrow occurs here
-4 |     v.push(4);
+4 |     v.push(5);
   |     ^^^^^^^^^ mutable borrow occurs here
 5 |     println!("{}", x); // What is `x`?
   |                    - immutable borrow later used here
 ```
 
-* In this case, what if pushing `4` onto `v` resizes the entire vector?
+* In this case, what if pushing `5` onto `v` resizes the entire vector?
     * Resizing means allocating new memory, copying over data, then deallocating the old memory
 * `x` would no longer point to valid memory!
 
