@@ -1,7 +1,7 @@
 ---
 marp: true
 theme: default
-class: invert
+# class: invert
 paginate: true
 ---
 
@@ -19,24 +19,13 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# Welcome back!
-
-- Homework 3 due today
-- You can use 7 late days over the whole semester
-- If you spent over an hour on the assignment, please let us know!
-- Other announcements (TODO)
-
-
----
-
-
 # Today: Standard Collections and Generics
 
-* Rust's collection types
+* Rust's collection data structures
     - `Vec<T>`
     - `String`
     - `HashMap<K, V>`
-* Generic Types
+* Generic types
 
 
 ---
@@ -45,12 +34,12 @@ Benjamin Owad, David Rudo, and Connor Tsui
 # Standard Collections
 
 
-Rust's standard library contains very useful data structures called _collections_.
+Rust's standard library contains a number of useful data structures called _collections_.
 
-* Most data types represent one specific value, but collections can contain multiple values
-* These collections are all stored on the heap
+* Most other data types represent a single value, but collections contain multiple values
+* Values in collections are stored on the heap
     * The amount of data each has does not need to be known at compile time
-    * If you are interested in the other kinds of collections you can read the official [documentation](https://doc.rust-lang.org/std/collections/index.html) of `std::collections`
+    * To learn about other standard library collections, consult the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module
 
 
 ---
@@ -64,7 +53,7 @@ Rust's standard library contains very useful data structures called _collections
 
 # Review: Vectors
 
-You can create an vector with `new`, and add elements with `push`.
+You can create a vector with `new`, and add elements with `push`.
 
 ```rust
 let mut v = Vec::new();
@@ -75,24 +64,6 @@ v.push(7);
 v.push(8);
 
 println!("{:?}", v);
-```
-
-
----
-
-
-# Review: `vec!` Macro
-
-Rust provides a _macro_ to create vectors easily in your programs.
-
-```rust
-let v = vec![1, 2, 3];
-
-println!("{:?}", v);
-```
-
-```
-[1, 2, 3]
 ```
 
 
@@ -149,11 +120,11 @@ let first = &v[0];
 
 v.push(6);
 
-// println!("The first element is: {}", first);
+println!("The first element is: {}", first);
 ```
 
 * You cannot mutate a vector while references to its elements exist
-* Appending might resize the vector and change the location in memory
+* Appending might reallocate the vector and change its location in memory
 
 
 ---
@@ -188,7 +159,7 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 # Iterating over a Vector
 
-To access each element in order, we can iterate through the elements with a `for` loop rather than use indices to access each at a time.
+To access each element in order, we can iterate through the elements with a `for` loop directly, rather than using indices.
 
 
 ```rust
@@ -227,6 +198,9 @@ println!("{:?}", elem);
 * We only have a single mutable reference into the vector at a time
     * We pass the borrow checker's rules!
 
+<!--
+Note: This doesn't allow us to remove elements from the vector, since we'd need a mutable reference to the entire vector to call the remove method.
+-->
 
 ---
 
@@ -244,6 +218,10 @@ for i in v {
 
 * The reason this works is subtle, and we'll talk more about why in week 8!
 
+<!--
+It calls `into_iter` instead of `iter`, "consuming" the vec
+-->
+
 
 ---
 
@@ -259,10 +237,9 @@ fn largest(list: &Vec<i32>) -> &i32
 fn largest(list: &[i32]) -> &i32
 ```
 
-* The latter is strictly more powerful
+* The latter is more generic (and preferred)
 * We can do this because of _deref coercion_, which basically means you can turn a reference to `Vec<T>` into a reference to `[T]`, or `&Vec<T>` into `&[T]`
 * We'll talk more about this in week 9!
-
 
 
 ---
@@ -270,7 +247,7 @@ fn largest(list: &[i32]) -> &i32
 
 # Use Enums to Store Multiple Types
 
-Vectors can only store values of the same type, so use Enums to store variants!
+Vectors can only store values of the same type, so we can use enums to store values of different types (variants).
 
 ```rust
 enum SpreadsheetCell {
@@ -289,9 +266,10 @@ let row = vec![
 
 ---
 
+
 # Vectors and Ownership
 
-Vectors owns all of the elements it contains. To insert an owned value into a vector, it must be moved.
+Vectors own all of their contained elements. To insert an owned value into a vector, it must be moved—i.e. ownership must be forfeit.
 
 ```rust
 let mut v = vec![String::from("rust"), String::from("is")];
@@ -300,7 +278,7 @@ let s = String::from("great!");
 
 v.push(s); // move `s` into `v`
 
-// `s` is no longer valid!
+// `s` identifier is no longer usable here!
 ```
 
 
@@ -320,7 +298,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 ```
 
 * When the vector gets dropped, all of its contents are also dropped
-* The borrow checker will ensure that any reference into the vector are only used while the vector is valid
+* The borrow checker will ensure that references into the vector cannot be used after it has been dropped
 
 
 ---
@@ -334,12 +312,11 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # What is a String?
 
-* A `String` is a collection of bytes, interpreted as text
+* A `String` is essentially a byte array interpreted as text
 * We introduced them back in week 2, but now we'll look at them in more depth
-* New Rustaceans commonly get stuck on strings for a combination of reasons:
-    * UTF-8
-    * Rust's propensity for exposing possible errors
-    * Strings being more complicated than many programmers think
+* New Rust programmers may be confused by:
+    * `String`'s internal UTF-8 encoding
+    * Rust's prevention of possible logical errors from misunderstanding the encoding
 
 
 ---
@@ -350,8 +327,16 @@ Like any other struct, a vector is dropped when it goes out of scope.
 - Rust only has one string type in the core language, `str`
     * We almost always see it in its borrowed form, `&str`
     * String slices are `&str`
-    * String literals are `&str` that are stored in the program's binary
+    * String literals are `&str`—references to data stored in the program's binary
 * `String` is a growable, mutable, owned, UTF-8 encoded string type
+
+<!-- 
+a raw `str` type always has to be on the heap, behind a ref, box, rc, raw ptr, or similar.
+
+Slices and literals are both actual references to existing data!
+
+Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative (std::string or Java String).
+-->
 
 
 ---
@@ -359,7 +344,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # Creating a `String`
 
-You can create an empty `String` with `new`, `to_string`, or `from`.
+You can create a `String` with `new`, `to_string`, or `from`.
 
 ```rust
 let mut s = String::new(); // empty mutable string
@@ -387,14 +372,14 @@ Here are some greetings in different languages!
 ```rust
 let hello = String::from("السلام عليكم");
 let hello = String::from("Dobrý den");
-let hello = String::from("Hello");
+let hello = String::from("Hallo");
 let hello = String::from("שָׁלוֹם");
 let hello = String::from("नमस्ते");
 let hello = String::from("こんにちは");
 let hello = String::from("안녕하세요");
 let hello = String::from("你好");
 let hello = String::from("Olá");
-let hello = String::from("Здравствуйте");
+let hello = String::from("Привет");
 let hello = String::from("Hola");
 ```
 
@@ -404,11 +389,12 @@ let hello = String::from("Hola");
 
 # Updating a `String`
 
-We can grow a `String` by using the `push_str` method.
+We can grow a `String` by using the `push` or `push_str` methods.
 
 ```rust
 let mut s = String::from("foo");
-s.push_str("bar");
+s.push('b'); // push a char
+s.push_str("ar"); // push a &str
 println!("{}", s);
 ```
 
@@ -422,7 +408,7 @@ foobar
 
 # Updating a `String`
 
-The `push_str` method takes a string slice, because we don't necessarily want to take ownership of the string passed in.
+The `push_str` method takes a string slice, because we don't want to take ownership of the string passed in.
 
 ```rust
 let mut s1 = String::from("foo");
@@ -433,23 +419,6 @@ println!("s2 is {}", s2); // `s2` is still valid!
 
 ```
 s2 is bar
-```
-
----
-
-
-# Updating a `String`
-
-The `push` method takes a single character and adds it to the `String`
-
-```rust
-let mut s = String::from("Monka");
-s.push('S');
-println!("{}", s);
-```
-
-```
-MonkaS
 ```
 
 
@@ -473,7 +442,7 @@ fn add(self, s: &str) -> String
 
 * Notice that it takes full ownership of `self`
 * Also notice it takes `&str` and not `&String`
-    * This is the same _deref coercion_ as with vectors!
+    * This is the same _deref coercion_ as with `&Vec<T>` to `&[T]`!
 
 
 ---
@@ -487,18 +456,18 @@ let s2 = String::from("tac");
 let s3 = String::from("toe");
 ```
 
-To combine multiple strings, you could do something like this:
+To combine multiple strings, you can do this:
 
 ```rust
 let s = s1 + "-" + &s2 + "-" + &s3;
 ```
 
-But you can instead use the `format!` macro to do the same thing.
+Or you can instead use the `format!` macro to do the same thing:
 
 ```rust
 let s = format!("{}-{}-{}", s1, s2, s3);
 
-let s = format!("{s1}-{s2}-{s3}"); // relatively new Rust feature!
+let s = format!("{s1}-{s2}-{s3}"); // relatively new shorthand!
 ```
 
 
@@ -509,15 +478,15 @@ let s = format!("{s1}-{s2}-{s3}"); // relatively new Rust feature!
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-The code below might seem normal if you know other programming languages like Python or C/C++.
+This code might seem reasonable from other programming languages like Python or C.
 
 ```rust
 let s1 = String::from("hello");
 let h = s1[0];
 ```
 
-- Accessing individual characters in a string by indexing is common in many languages.
-* However, if you try to access parts of a `String` using an index, you'll get an error.
+* Accessing individual characters in a string by indexing is common in many languages.
+* However, if you try to access a `String` using an index, you will get an error.
 
 
 
@@ -526,7 +495,6 @@ let h = s1[0];
 
 # Indexing into Strings
 
-Let's see what happens when we try to index into a `String`.
 
 ```rust
 let s1 = String::from("hello");
@@ -543,7 +511,7 @@ error[E0277]: the type `String` cannot be indexed by `{integer}`
   = help: the trait `Index<{integer}>` is not implemented for `String`
 ```
 
-* Why doesn't Rust support indexing?
+* Why won't Rust allow indexing `String`?
 
 
 ---
@@ -551,7 +519,7 @@ error[E0277]: the type `String` cannot be indexed by `{integer}`
 
 # Internal Representation of Strings
 
-A `String` is really a wrapper over `Vec<u8>`, or a vector of bytes. Let's look at some properly encoded UTF-8 strings.
+A `String` is really a wrapper over `Vec<u8>`, or a vector of bytes.
 
 ```rust
 let hello = String::from("Hola");
@@ -571,15 +539,12 @@ let hello = String::from("Hola");
 Now suppose we wanted to say "Hello", but in Russian.
 
 ```rust
-// Note that this string begins with the capital Cyrillic letter Ze,
-// NOT the number 3
-let hello = String::from("Здравствуйте");
-// З vs 3
+let hello = String::from("Привет");
 ```
 
 * How long is this string?
-    * There are 12 characters
-    * Rust's answer is 24, the number of bytes needed in the internal vector
+    * There are 6 distinct characters
+    * However, the string's `len` is 12, the number of bytes needed in the internal vector
 
 
 ---
@@ -592,14 +557,14 @@ let hello = String::from("Здравствуйте");
 Let's revisit some invalid Rust code again.
 
 ```rust
-let hello = "Здравствуйте";
+let hello = "Привет";
 let answer = &hello[0];
 ```
 
 * What _should_ `answer` be?
-    * It can't be `З`, internally it is represented by 2 bytes `[208, 151]`
+    * It can't be `З`, internally it is represented by 2 bytes `[208, 159]`
     * Do we return 208 instead?
-* Not so simple, eh?
+* There isn't an obvious expected behavior here
 
 
 ---
@@ -608,12 +573,12 @@ let answer = &hello[0];
 # Internal Representation: UTF-8
 
 ```rust
-let hello = "Здравствуйте";
+let hello = "Привет";
 let answer = &hello[0];
 ```
 
-* We don't want to return an unexpected value that might cause bugs
-* Rust chooses to not compile this code at all!
+* Anything we can return here might not be the expected result
+* Rust does not compile this code at all
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
 
@@ -627,9 +592,9 @@ let answer = &hello[0];
 Instead of indexing with a single number, you can use `[]` with a range to create a string slice containing specific bytes.
 
 ```rust
-let hello = "Здравствуйте";
+let hello = "Привет";
 
-let s = &hello[0..4]; // `s` == "Зд"
+let s = &hello[0..4]; // `s` == "Пр"
 ```
 
 
@@ -651,6 +616,10 @@ thread 'main' panicked at 'byte index 1 is not a char boundary;
 it is inside 'З' (bytes 0..2) of `Здравствуйте`'
 ```
 
+<!--
+Still preventing weird cases!
+-->
+
 
 ---
 
@@ -660,14 +629,14 @@ it is inside 'З' (bytes 0..2) of `Здравствуйте`'
 Normally, we want to iterate over individual Unicode scalar values, and we can use the `chars` method.
 
 ```rust
-for c in "Зд".chars() {
+for c in "Пр".chars() {
     println!("{c}");
 }
 ```
 
 ```
-З
-д
+П
+р
 ```
 
 
@@ -679,16 +648,16 @@ for c in "Зд".chars() {
 Alternatively, if you want the actual raw bytes, you can use the `bytes` method.
 
 ```rust
-for b in "Зд".bytes() {
+for b in "Пр".bytes() {
     println!("{b}");
 }
 ```
 
 ```
 208
-151
-208
-180
+159
+209
+128
 ```
 
 
@@ -697,12 +666,11 @@ for b in "Зд".bytes() {
 
 # Recap: Strings
 
-* Strings are complicated!
-* Rust chooses to make correct handling of `String` data the default
-    * Programmers have to put more thought into handling UTF-8 upfront
-    * The complexity of strings is more apparent in Rust
-    * But this prevents you from dealing with errors non-ASCII characters later!
-* The standard library offers a lot of methods for [`String`](https://doc.rust-lang.org/std/string/struct.String.html) and [`&str`](https://doc.rust-lang.org/std/primitive.str.html) types to help handle these complex situations correctly
+* Rust chooses to have UTF-8 `String`s as the default
+    * Programmers have to think about handling unicode upfront
+    * The complexity brought on by encodings is more apparent in Rust
+    * But this prevents having to deal with non-ASCII characters later!
+* The standard library offers many methods for [`String`](https://doc.rust-lang.org/std/string/struct.String.html) and [`&str`](https://doc.rust-lang.org/std/primitive.str.html) types to help handle these complex situations correctly
 
 
 ---
