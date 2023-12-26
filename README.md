@@ -1,6 +1,6 @@
 # Rust StuCo S24 Outline
 
-_Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
+_Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we might have extra material under **After Dark**, but only if we're able to teach it.
 
 
 </br>
@@ -32,6 +32,10 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 - Course Logistics
     - Installing Rust
 
+### After Dark
+- Setting up rust-analyzer
+- RustRover
+
 
 ## Week 2: Ownership
 - Ownership
@@ -55,10 +59,16 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 - The `HashMap<K, V>` Type
 - Generics
 
+### After Dark
+- Remaining collections in `std::collections`
+
 
 ## Week 5: Error Handling and Traits
 - Error Handling
 - Traits
+
+### After Dark
+- `anyhow`
 
 
 ## Week 6: Cargo, Modules, Crates, and Testing
@@ -68,6 +78,9 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 - Module Paths and File Structure
 - Unit Tests
 - Integration Tests
+
+### After Dark
+- Popular 3rd-party crates
 
 
 ## Week 7: Lifetimes
@@ -91,13 +104,10 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 - Loops vs. Iterators
 
 
-## Week 9: Smart Pointers and Trait Objects
+## Week 9: `Box<T>` and Trait Objects
 - The `Box<T>` Type
 - The `Deref` Trait and Deref Coercion
 - The `Drop` Trait and `std::mem::drop`
-- The `Rc<T>` Type
-- `RefCell<T>`
-- Memory Leaks
 - Object-Oriented Programming
 - Trait Objects
     - Dynamic dispatch with `dyn`
@@ -105,34 +115,51 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._
 - Object Safety
 
 
-## Week 10: Parallelism
-- The `Mutex<T>` Smart Pointer
+## Week 10: Smart Pointers and `unsafe`
+- The `Rc<T>` Type
+- The `RefCell<T>` Type
+- Memory Leaks
+- Unsafe Superpowers
+- Raw Pointers
+- `UnsafeCell<T>` and `Cell<T>`
+- FFI
+
+### After Dark
+- `Cow<'a, B>`
+- Implementation of:
+    - `Cell<T>`
+    - `RefCell<T>`
+    - `Rc<T>`
+
+
+## Week 11: Parallelism
 - The `Arc<T>` Smart Pointer
+- The `Mutex<T>` Smart Pointer
+- The `RwLock<T>` Smart Pointer
 - `std::sync::mspc::channel`
-- TODO
+- Shared State vs Channels
+- `Sync` and `Send` traits
+
+### After Dark
+- `Weak<T>`
+- `CondVar`
+- Implementation of:
+    - `Arc<T>`
+    - `Mutex<T>`
 
 
-## Week 11: Concurrency
+## Week 12: Concurrency
 - `async`
 - `await`
 - The `Pin<T>` Type
 - TODO
 
 
-## Week 12: Macros
+## Week 13: Macros
 - Declarative Macros
     - `macro_rules!`
 - Procedural Macros
 - TODO
-
-
-## Week 13: `unsafe`
-- Unsafe Superpowers
-- Raw Pointers
-- `UnsafeCell<T>`
-- The `Rc<T>` Type Revisited
-- The `Vec<T>` Type Revisited
-- FFI
 
 
 ## Misc
