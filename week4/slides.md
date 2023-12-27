@@ -1,7 +1,7 @@
 ---
 marp: true
 theme: default
-# class: invert
+class: invert
 paginate: true
 ---
 
@@ -39,7 +39,7 @@ Rust's standard library contains a number of useful data structures called _coll
 * Most other data types represent a single value, but collections contain multiple values
 * Values in collections are stored on the heap
     * The amount of data each has does not need to be known at compile time
-    * To learn about other standard library collections, consult the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module
+    * For more information on other standard library collections, refer to the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module
 
 
 ---
@@ -64,6 +64,24 @@ v.push(7);
 v.push(8);
 
 println!("{:?}", v);
+```
+
+
+---
+
+
+# Review: `vec!` Macro
+
+Rust provides a _macro_ to create vectors easily in your programs.
+
+```rust
+let v = vec![1, 2, 3];
+
+println!("{:?}", v);
+```
+
+```
+[1, 2, 3]
 ```
 
 
@@ -107,6 +125,7 @@ match third {
 
 ---
 
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 # `Vec` and References
 
@@ -124,7 +143,7 @@ println!("The first element is: {}", first);
 ```
 
 * You cannot mutate a vector while references to its elements exist
-* Appending might reallocate the vector and change its location in memory
+* Appending might resize and reallocate the vector and change its location in memory
 
 
 ---
@@ -269,7 +288,7 @@ let row = vec![
 
 # Vectors and Ownership
 
-Vectors own all of their contained elements. To insert an owned value into a vector, it must be moved—i.e. ownership must be forfeit.
+Vectors own all of their contained elements. To insert an owned value, it must be moved into the vector—i.e. ownership must be forfeit.
 
 ```rust
 let mut v = vec![String::from("rust"), String::from("is")];
@@ -278,7 +297,7 @@ let s = String::from("great!");
 
 v.push(s); // move `s` into `v`
 
-// `s` identifier is no longer usable here!
+// `s` is no longer usable here!
 ```
 
 
@@ -317,6 +336,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 * New Rust programmers may be confused by:
     * `String`'s internal UTF-8 encoding
     * Rust's prevention of possible logical errors from misunderstanding the encoding
+    * Strings are not as simple as they may initially seem
 
 
 ---
@@ -327,7 +347,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 - Rust only has one string type in the core language, `str`
     * We almost always see it in its borrowed form, `&str`
     * String slices are `&str`
-    * String literals are `&str`—references to data stored in the program's binary
+    * String literals are also `&str`—they reference data stored in the program's binary
 * `String` is a growable, mutable, owned, UTF-8 encoded string type
 
 <!-- 
@@ -562,9 +582,9 @@ let answer = &hello[0];
 ```
 
 * What _should_ `answer` be?
-    * It can't be `З`, internally it is represented by 2 bytes `[208, 159]`
+    * It can't be `П`, internally it is represented by 2 bytes—`[208, 159]`
     * Do we return 208 instead?
-* There isn't an obvious expected behavior here
+* There isn't any obvious expected behavior here
 
 
 ---
@@ -578,7 +598,7 @@ let answer = &hello[0];
 ```
 
 * Anything we can return here might not be the expected result
-* Rust does not compile this code at all
+* The philosophy of Rust is to not compile this code at all
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
 
@@ -606,14 +626,14 @@ let s = &hello[0..4]; // `s` == "Пр"
 However, if we try to slice only a part of a character's bytes, Rust would panic at runtime in the same way as if an invalid index were accessed in a vector.
 
 ```rust
-let hello = "Здравствуйте";
+let hello = "Привет";
 
 let s = &hello[0..1];
 ```
 
 ```
 thread 'main' panicked at 'byte index 1 is not a char boundary;
-it is inside 'З' (bytes 0..2) of `Здравствуйте`'
+it is inside 'П' (bytes 0..2) of `Привет`'
 ```
 
 <!--
@@ -711,7 +731,7 @@ scores.insert(String::from("Blue"), 10);
 scores.insert(String::from("Yellow"), 50);
 ```
 
-* Note that we need to bring in `HashMap` with `use` from the collections portion of the standard library
+* Note that we need to import `HashMap` from the standard library's collections module with `use`
 * We'll talk more about `use` in week 6!
 
 <!-- Mention that because Vec and String are used so frequently, they are automatically "imported" -->
@@ -722,7 +742,7 @@ scores.insert(String::from("Yellow"), 50);
 
 # Accessing Values in a Hash Map
 
-We can use the `get` method to get the value of a key.
+We can use the `get` method to get the value associated with a key.
 
 ```rust
 let mut scores = HashMap::new();
@@ -734,7 +754,8 @@ let score = scores.get(&team_name).unwrap_or(&0);
 ```
 
 * The `get` method returns an `Option<&V>`, similar to `Vec::get()`
-    * If it returns `Some(&x)`, we unwrap and get out `&x`
+* We use `unwrap_or(&0)` on the result
+    * If it returns `Some(&x)`, we unwrap and get `&x`
     * If it returns `None`, we go to the default case `&0`
 
 
@@ -743,7 +764,7 @@ let score = scores.get(&team_name).unwrap_or(&0);
 
 # Iterating over a Hash Map
 
-We can iterate over each key/value pair using a `for` loop, similarly to vectors.
+We can iterate over each key/value pair using a `for` loop, similar to with vectors.
 
 ```rust
 let mut scores = HashMap::new();
@@ -767,7 +788,7 @@ Blue: 10
 
 # Hash Maps and Ownership
 
-Hash Maps own the data that is contained inside them, much like vectors.
+Hash maps own their contained data, just like vectors.
 
 ```rust
 let field_name = String::from("Favorite color");
@@ -776,8 +797,7 @@ let field_value = String::from("Blue");
 let mut map = HashMap::new();
 map.insert(field_name, field_value);
 
-// field_name and field_value are invalid at this point,
-// try using them and see what compiler error you get!
+// field_name and field_value are invalid at this point
 ```
 
 
@@ -786,7 +806,7 @@ map.insert(field_name, field_value);
 
 # Updating a Hash Map
 
-`HashMap` only contains one key/value pair at a time, so you can overwrite old pairs.
+Hash maps only contain one value for each distinct key, so to update we can just insert twice.
 
 ```rust
 let mut scores = HashMap::new();
@@ -801,24 +821,26 @@ println!("{:?}", scores);
 {"Blue": 25}
 ```
 
-
----
-
-
-# Updating a Hash Map with Defaults
-
-- This is a common pattern with map types:
-    * If the key exists in the hash map, do something with the value
-    * If it doesn't exist, insert the key and a default value for it
-* `HashMap` has a special API for this called `Entry`
+* Inserting twice overwrites the existing value for the given key
 
 
 ---
 
 
-# `hash_map::Entry`
+# Accessing a Hash Map with Defaults
 
-If you want to insert a value if the key doesn't already exist, you can use the `Entry` method `or_insert`.
+* Commonly, when accessing a map, we expect our key to be present:
+    * If the key exists, we want to access the value as expected
+    * If the key does not exist, insert it with a default value
+* `HashMap` has a special API for defaults called `Entry`
+
+
+---
+
+
+# Hash Map Entries
+
+To insert a value if the key does not already exist, you can use the `Entry` method `or_insert`.
 
 ```rust
 let mut scores = HashMap::new();
@@ -838,9 +860,9 @@ println!("{:?}", scores);
 ---
 
 
-# `hash_map::Entry`
+# Hash Map Entries
 
-If you want to update a value if it exists, or provide a default, you can do something similar:
+If you want to update a value dependant on a default, you can do something similar:
 
 ```rust
 let text = "hello world wonderful world";
@@ -872,10 +894,13 @@ fn or_insert(self, default: V) -> &mut V
 ```
 
 * It gives out a mutable reference
-    * That reference is guaranteed to point to valid data
-    * We need the default otherwise the data might not exist
-* Be sure to check out the [documentation](https://doc.rust-lang.org/stable/std/collections/hash_map/enum.Entry.html) for `Entry`!
+    * References are guaranteed to point to valid data
+    * We need to provide a default, otherwise this data might not exist
+* Shorter and often more performant than separate conditionals
 
+<!--
+If the data might not exist, we would use a...OPTION TYPE
+-->
 
 ---
 
