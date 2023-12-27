@@ -121,11 +121,11 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 - Memory Leaks
 - Unsafe Superpowers
 - Raw Pointers
-- `UnsafeCell<T>` and `Cell<T>`
 - FFI
 
 ### After Dark
 - `Cow<'a, B>`
+- `UnsafeCell<T>` and `Cell<T>`
 - Implementation of:
     - `Cell<T>`
     - `RefCell<T>`
