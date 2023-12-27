@@ -907,7 +907,7 @@ If the data might not exist, we would use a...OPTION TYPE
 
 # Recap:
 
-* [The Rust Book Chapter 8](https://doc.rust-lang.org/book/ch08-00-common-collections.html)
+* We covered [The Rust Book Chapter 8](https://doc.rust-lang.org/book/ch08-00-common-collections.html)
 * Always refer to the documentation!
     * `Vec<T>` [documentation](https://doc.rust-lang.org/std/vec/struct.Vec.html)
     * `String` [documentation](https://doc.rust-lang.org/std/string/struct.String.html)
@@ -928,7 +928,7 @@ If the data might not exist, we would use a...OPTION TYPE
 So what was the deal with the `T` in `Vec<T>`, and `K, V` in `HashMap<K, V>`?
 
 * We refer to these as _generic_ types
-* Think of it as being able to fill in almost any type you want in place of `T`
+* Think of it as being able to fill in any type you want in place of `T`
 * Generics allow us to replace specific types with a placeholder that represents multiple types to remove code duplication
 
 ---
@@ -958,7 +958,7 @@ println!("The largest number is {}", largest);
 
 # Removing Code Duplication
 
-What if we have multiple lists?
+What if we have multiple lists? We then have to do multiple searches.
 
 ```rust
 let number_list = vec![34, 50, 25, 100, 65];
@@ -986,7 +986,7 @@ println!("The largest number is {}", largest);
 
 # Removing Code Duplication
 
-That was ugly, let's extract our logic into a function called `largest`.
+This requires duplicate code—to prevent this, we can make a function called `largest`.
 
 ```rust
 fn largest(list: &[i32]) -> &i32 {
@@ -1014,18 +1014,6 @@ fn main() {
 ---
 
 
-# Remove Code Duplication
-
-What did we just do?
-
-1. We identified duplicate code
-2. We extracted the duplicate code into a function
-3. We updated the duplicate code to call the function instead
-
-
----
-
-
 # Remove Function Duplication
 
 What if we wanted to also find the largest character in a slice?
@@ -1042,7 +1030,8 @@ fn largest_char(list: &[char]) -> &char {
 }
 ```
 
-* Seems awfully familiar...
+* This is effectively the same as finding the largest number in a list.
+* But, we would need to write this function in addition to `largest`
 * Can we remove a _function_ that has been duplicated?
 
 
@@ -1051,7 +1040,24 @@ fn largest_char(list: &[char]) -> &char {
 
 # Generic Functions
 
-We can define a function as generic with `<T>` (or any name like `<K>` or `<Hi>`):
+We can define a function as generic with `<T>`:
+
+```rust
+fn largest<T>(list: &[T]) -> &T
+```
+
+* This function is generic over `T`
+* This function takes in a slice of `T` as input
+* This function returns a reference to `T`
+* `T` can be any type! 
+
+
+---
+
+
+# Generic Functions
+
+Generic types can have any name, not just `<T>`:
 
 ```rust
 fn largest<T>(list: &[T]) -> &T
@@ -1066,9 +1072,6 @@ fn largest<Hi>(list: &[Hi]) -> &Hi
 ```
 
 * All of these essentially mean the same thing!
-    * This function is generic over `T`
-    * This function takes in a slice of `T` as input
-    * This function returns a reference to `T`
 
 
 ---
@@ -1139,8 +1142,9 @@ help: consider restricting type parameter `T`
 ```
 
 * We cannot compare two `&T` to each other
+* `T` can be _any_ type, even if `T` is a type that cannot be compared
 * We'll talk about type restrictions with _traits_ next week!
-* For now, all you need to know is that we need the `PartialOrd` trait in order to enable comparisons
+* For now, all you need to know is that we need the `PartialOrd` trait to enable comparisons
 * Let's just follow the compiler's advice for now!
 
 
@@ -1171,7 +1175,7 @@ fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
 
 # Generic Structs
 
-We can define structs to use a generic type parameter using the `<>` syntax.
+We can define structs to use a generic type parameter using the `<T>` syntax as well!
 
 ```rust
 struct Point<T> {
@@ -1193,7 +1197,7 @@ fn main() {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Observe that this requires both the `x` field and the `y` field to be the same type.
+Observe that this declaration defines both the `x` field and the `y` field to be of the same type.
 
 ```rust
 struct Point<T> {
@@ -1229,7 +1233,7 @@ error[E0308]: mismatched types
 
 # Generic Structs
 
-If we want a struct with different generic fields, we need to define other generic types with the `<>` syntax.
+If we want a struct that allows different generic fields to have different types, we need to define another generic type.
 
 ```rust
 struct Point<T, U> {
@@ -1243,6 +1247,8 @@ fn main() {
     let integer_and_float = Point { x: 5, y: 4.0 };
 }
 ```
+
+* Note that they can still be the same!
 
 
 ---
@@ -1259,7 +1265,7 @@ enum Option<T> {
 }
 ```
 
-* This is just a generic enum over `T`!
+* This is a generic enum over `T`!
 
 
 ---
@@ -1276,8 +1282,8 @@ enum Result<T, E> {
 }
 ```
 
-* This enum is generic over `T` and `E`, with each represented in a variant
-* `Result<T, E>` is actually a common type in the standard library that we'll talk about next week!
+* This enum is generic over `T` and `E`, with each stored in a variant
+* `Result<T, E>` is a very common type in the standard library that we will talk about next week!
 
 
 ---
@@ -1347,7 +1353,7 @@ impl Point<f32> {
 
 # Generic `impl`
 
-Suppose we went back to the `Point<T, U>`.
+Going back to the `Point<T, U>` example:
 
 ```rust
 struct Point<T, U> {
@@ -1356,7 +1362,7 @@ struct Point<T, U> {
 }
 ```
 
-We could implement for when `x` is always an integer, but `y` could be anything.
+We could implement methods for when `x` is `i32`, but with no restrictions on `y`.
 
 ```rust
 impl<U> Point<i32, U> {
@@ -1372,7 +1378,7 @@ impl<U> Point<i32, U> {
 
 # Generic `impl`
 
-This actually still requires for the two `y`s to have the same type.
+However, this actually restricts the type of `other` to have the same generic type parameters `<i32, U>`.
 
 ```rust
 impl<U> Point<i32, U> {
@@ -1388,13 +1394,15 @@ fn main() {
 }
 ```
 
+* Note that `U` has to be the same in both `self` and `other`.
+
 
 ---
 
 
 # Generic `impl`
 
-We can make the method generic over yet another type:
+To solve this, we can make the method generic over another type:
 
 ```rust
 impl<U> Point<i32, U> {
@@ -1447,9 +1455,9 @@ fn main() {
 
 # Generic `impl`
 
-- The purpose of these examples was to demonstrate a situation where some generics are defined with `impl`, and others with the method definition
+- The purpose of these examples was to demonstrate a situation where some generic types are specified within the `impl` block, and others within the method itself
 * Take some time to understand these examples
-    * These slides were based on examples made in the [book](https://doc.rust-lang.org/book/ch10-01-syntax.html)
+    * These slides were based on examples from the [book](https://doc.rust-lang.org/book/ch10-01-syntax.html)
 
 
 ---
@@ -1457,7 +1465,6 @@ fn main() {
 
 # Performance of Generics
 
-- You might be wondering whether there is a runtime cost to using generics
 * The good news is that there is _zero_ overhead to using generics!
 * Rust accomplishes this with _monomorphization_
 
@@ -1502,7 +1509,7 @@ fn main() {
 }
 ```
 
-* Compile time cost instead of runtime cost!
+* All extra work is performed at compile-time!
 
 
 ---
