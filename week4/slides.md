@@ -335,7 +335,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 * We introduced them back in week 2, but now we'll look at them in more depth
 * New Rust programmers may be confused by:
     * `String`'s internal UTF-8 encoding
-    * Rust's prevention of possible logical errors from misunderstanding the encoding
+    * Rust's prevention of possible logical errors from the encoding
     * Strings are not as simple as they may initially seem
 
 
@@ -505,8 +505,8 @@ let s1 = String::from("hello");
 let h = s1[0];
 ```
 
-* Accessing individual characters in a string by indexing is common in many languages.
-* However, if you try to access a `String` using an index, you will get an error.
+* Accessing individual characters in a string by indexing is common in many languages
+* However, if you try to access a `String` using an index, you will get an error
 
 
 
@@ -764,7 +764,7 @@ let score = scores.get(&team_name).unwrap_or(&0);
 
 # Iterating over a Hash Map
 
-We can iterate over each key/value pair using a `for` loop, similar to with vectors.
+We can iterate over each key/value pair using a `for` loop, similar to vectors.
 
 ```rust
 let mut scores = HashMap::new();
@@ -862,7 +862,8 @@ println!("{:?}", scores);
 
 # Hash Map Entries
 
-If you want to update a value dependant on a default, you can do something similar:
+If you want to update a value, or provide a default if it doesn't yet exist, you can do something similar:
+
 
 ```rust
 let text = "hello world wonderful world";
@@ -894,7 +895,7 @@ fn or_insert(self, default: V) -> &mut V
 ```
 
 * It gives out a mutable reference
-    * References are guaranteed to point to valid data
+    * That reference are guaranteed to point to valid data
     * We need to provide a default, otherwise this data might not exist
 * Shorter and often more performant than separate conditionals
 
@@ -986,7 +987,7 @@ println!("The largest number is {}", largest);
 
 # Removing Code Duplication
 
-This requires duplicate code—to prevent this, we can make a function called `largest`.
+This requires duplicate code—instead, we can make a function called `largest`.
 
 ```rust
 fn largest(list: &[i32]) -> &i32 {
@@ -1016,7 +1017,7 @@ fn main() {
 
 # Remove Function Duplication
 
-What if we wanted to also find the largest character in a slice?
+What if we also wanted to find the largest character in a slice?
 
 ```rust
 fn largest_char(list: &[char]) -> &char {
@@ -1030,8 +1031,8 @@ fn largest_char(list: &[char]) -> &char {
 }
 ```
 
-* This is effectively the same as finding the largest number in a list.
-* But, we would need to write this function in addition to `largest`
+* This is effectively the same as finding the largest number in a list
+* We would still need to write a new function in addition to `largest`
 * Can we remove a _function_ that has been duplicated?
 
 
@@ -1474,7 +1475,7 @@ fn main() {
 
 # Monomorphization
 
-Let’s look at how this works by using the standard library’s generic `Option<T>`:
+Let's look at how this works by using the standard library's generic `Option<T>`:
 
 ```rust
 let integer = Some(5);
