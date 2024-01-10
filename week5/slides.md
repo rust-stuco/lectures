@@ -446,6 +446,120 @@ pub struct Cat {
 
 ---
 
+# Trait Mix Ups
+Consider the following
+```rust
+trait Pilot {
+    fn fly(&self);
+}
+
+trait Wizard {
+    fn fly(&self);
+}
+
+struct Human;
+```
+
+---
+
+# Trait Mix Ups
+```rust
+impl Pilot for Human {
+    fn fly(&self) {
+        println!("This is your captain speaking.");
+    }
+}
+
+impl Wizard for Human {
+    fn fly(&self) {
+        println!("Up!");
+    }
+}
+
+impl Human {
+    fn fly(&self) {
+        println!("*waving arms furiously*");
+    }
+}
+```
+
+---
+
+# Trait Mix Ups
+What happens here?
+```rust
+fn main() {
+    let person = Human;
+    person.fly();
+}
+```
+
+---
+
+# Trait Mix Ups
+```rust
+fn main() {
+    let person = Human;
+    person.fly();
+}
+```
+`*waving arms furiously*` - Rust used `.fly()` from `Human`.
+
+
+How do we call every version of `.fly()`?
+```rust
+fn main() {
+    let person = Human;
+    Pilot::fly(&person); // fly takes &self as a parameter
+    Wizard::fly(&person);
+    person.fly();
+}
+```
+
+---
+
+# Even Worse Trait Mix Ups
+Last time we got lucky because `fly` took `&self` as a parameter. What would we do if that wasn't the case?
+
+```rust
+fn main() {
+    let person = Human;
+    <person as Pilot>::fly();
+    <person as Wizard>::fly();
+    person.fly();
+}
+```
+
+This is considered the *fully qualified syntax* of a trait. 
+
+---
+
+# Trait Bounds
+If your function is generic over a trait but you don't mind the specific type, you can simplify the function declaration using `impl Trait` as the type of the argument.
+
+Instead of
+```rust
+fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32
+```
+We can write:
+```rust
+fn get_csv_lines(src: impl std::io::BufRead) -> u32
+```
+
+---
+
+# Trait Bounds
+If your function returns a type that implements `MyTrait`, you can write its return type as `-> impl MyTrait`. This can help simplify your type signatures a lot!
+
+```rust
+fn combine_vecs(
+    v: Vec<i32>,
+    u: Vec<i32>,
+) -> impl Iterator<Item=i32>
+```
+
+---
+
 # **Next Lecture:**
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
