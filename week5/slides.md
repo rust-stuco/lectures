@@ -19,7 +19,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# **What `type_of` Error?**
+# What `type_of` Error?
 In Rust there are two main types of errors we care about: recoverable and unrecoverable errors (panics).
 * `Result<V, E>` - A return type for recoverable errors
 * `panic!` - A macro (*notice the `!`*) to invoke unrecoverable errors
@@ -29,7 +29,7 @@ In Rust there are two main types of errors we care about: recoverable and unreco
 ---
 
 
-# **The Result Type**
+# The Result Type
 This is how Rust represents "success" and "failure" states in code.
 ```rust 
 enum Result<V, E> {
@@ -47,7 +47,7 @@ fn integer_divide(a : i32, b : i32) -> Result<i32, String> {
 ---
 
 
-# **The ? Operator**
+# The ? Operator
 The `?` operator when applied to a result type, unwraps it on a `Ok` and propogates the error up one in the call stack otherwise.
 
 For clarity:
@@ -64,7 +64,7 @@ let x = match potential_fail() {
 Think of the `?` as quick way to see where a function short-circuit returns on failure
 
 ---
-# **The ? Operator**
+# The ? Operator
 We can also chain multiple `?` together:
 ```rust
 use std::fs::File;
@@ -81,20 +81,23 @@ fn read_username_from_file() -> Result<String, io::Error> {
 
 ---
 
-# **Panics**
+# Panics
 Panics in Rust are unrecoverable errors. They can happen in many different ways:
 * Out of bounds slice indexing
 * Integer overflow (debug)
 * `.unwrap()` on a `None` or `Err`
 * Calls to the `panic!` macro
-    - `assert!`, `assert_eq!`, `assert_ne!` conditionally panic
+
+---
+# More Panics
+- `assert!`, `assert_eq!`, `assert_ne!` conditionally panic
 
 There also some more uncommon, but useful macros that panic:
-- `unimplemented!` / `todo!`
+- `unimplemented!` / `todo!` - self documented
 - `unreachable!` - Lets the compiler optimize a code segment away
 ---
 
-# **Using `expect()` w/ Panics**
+# Using `expect()` w/ Panics
 Consider the following example from the Rust book:
 ```rust
 use std::fs::File;
@@ -112,7 +115,7 @@ src/main.rs:4:49
 
 ---
 
-# **Using `expect()` w/ Panics**
+# Using `expect()` w/ Panics
 We can do better than this. If we *expect* this error and have a specific message in mind.
 ```rust
 use std::fs::File;
@@ -131,11 +134,70 @@ src/main.rs:5:10
 
 ---
 
+# Functions that never return
+Consider the following code, what should the type of `x` be?
+```rust
+let x = loop { println!("forever"); };
+```
+
+---
+
+# The "Never" Type - `!`
+It isn't clear, right? That's why Rust has a special type called `!` for this exact reason.
+Another example:
+```rust
+fn bar() -> ! {
+    loop {}
+}
+```
+
+---
+
+# What's the point?
+Why have a type that never has a value? Consider the following
+```rust
+let guess: u32 = match guess.trim().parse() {
+    Ok(num) => num,
+    Err(_) => continue,
+};
+```
+Recall match statements can only return 1 type. So what's happening here? Well, `continue` has the `!` type. And so Rust knows this can't be value and allows 
+`guess: u32`. 
+
+---
+
+# What else uses `!`?
+Recall that `()` is a value! So `print!` and `assert!` don't use `!`.
+
+* `panic!`
+* `break`
+* `continue`
+* Everything that doesn't return a value -- typically control flow related.
+
+---
+
+# Pop Quiz
+What should the type of `x` be?
+```rust
+let x = {
+    return 123
+};
+```
+
+---
+
+# Answer
+`return` is also type `!`. So `let x : ! = ...` would compile. 
+
+Think of it like this because `return` returns from the **entire function**, `x` can be given type `!`
+
+---
+
 # **Traits**
 
 ---
 
-# **Trait Overview**
+# Trait Overview
 A `trait` is a collection of methods defined for an unknown type: `Self`. They can access other methods declared in the same trait.
 
 Traits are defined with the `trait` keyword:
@@ -157,7 +219,7 @@ trait Shape {
 ```
 
 ---
-# **Trait Overview**
+# Trait Overview
 So how do we use traits? We `impl`ement them `for` a `struct`
 ```rust
 struct Rectangle {
@@ -182,7 +244,7 @@ impl Shape for Rectangle {
 
 ---
 
-# **Traits in Action**
+# Traits in Action
 What happens we try and construct a `Rectangle`?
 ```rust
 let rec = Shape::new_unit();
@@ -200,7 +262,7 @@ without specifying the corresponding `impl` type
 
 ---
 
-# **Traits in Action**
+# Traits in Action
 ```rust
 let rec : Rectangle = Shape::new_unit();
 ```
@@ -211,8 +273,20 @@ Similar in style to:
 - Abstract/virtual classes
 
 ---
+# Type Aliases
+Rust gives us a way to declare a type alias i.e. give a name to an already existing type.
+```rust
+type Kilometers = i32;
 
-# **Advanced Traits**
+let x: i32 = 5;
+let y: Kilometers = 5;
+
+println!("x + y = {}", x + y); // Rust knows the types are really the same
+```
+
+---
+
+# Advanced Traits
 We'll look at the common `Iterator` trait which uses an *associated type* `Item`.
 ```rust
 pub trait Iterator {
@@ -224,7 +298,7 @@ pub trait Iterator {
 
 ---
 
-# **Advanced Traits**
+# Advanced Traits
 Here we see the associated type `Item` being defined for a particular instance. This means the `Iterator` trait can be defined for any `Item` depending on the collection.
 ```rust
 impl Iterator for Counter {
@@ -236,7 +310,7 @@ impl Iterator for Counter {
 
 ---
 
-# **Why Not Use Generics?**
+# Why Not Use Generics?
 Some of you may be wondering why the Rust std library doesn't define the `Iterator` trait like this:
 ```rust
 pub trait Iterator<T> {
@@ -249,7 +323,7 @@ Here's the issue, it would be possible to implement both `Iterator<i64> for Coun
 
 ---
 
-# **Why Is This Bad?**
+# Why Is This Bad?
 When we use the `next()` method on `Counter`, we would have to provide type annotations to indicate which implementation of `Iterator` we want to use.
 
 By using an associated type, we only implement `Iterator` once -- Note that we can define `Item` to be a generic type instead.
@@ -258,8 +332,9 @@ Associated types also become part of the trait’s contract: implementors of the
 
 ---
 
-# **Derive Traits**
-The compiler is capable of providing basic implementations for some traits via the `#[derive]` attribute. These traits can still be manually implemented if a more complex behavior is required.
+# Derive Traits
+The compiler is capable of providing basic implementations for some traits via the 
+`#[derive]` attribute. These traits can still be manually implemented if a more complex behavior is required.
 
 Here's a list
 - Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`.
@@ -271,14 +346,103 @@ Here's a list
 
 ---
 
-# **Copy**
+# Copy
 Recall `copy` only applies to:
 - All integer types: `u8`, `i32`, etc
 - `bool`
 - All floating point types: `f32`, `f64`, etc
 - `char` type
 
-It is a differentiator in whether or not 
+It is a differentiator in whether or not move semantics are applied to a function. (aka pass by reference vs value)
+
+---
+
+# Clone
+* Means the type can be duplicated 
+* Creates a new value with the same information as the original. 
+* The new value is independent of the original value and can be modified without affecting the original value.
+```rust
+let mut foo = vec![1, 2, 3];
+let mut foo2 = foo.clone(); // explicit duplication of an object
+
+foo.push(4); // foo = [1,2,3,4]
+let y = foo2.pop(); // y=3, foo2 = [1, 2]
+```
+
+---
+# Clone vs Copy
+Although their end result may feel the same they are different:
+
+Copy
+* Copies happen implicitely ex: `x = y`
+* Copy cannot be overloaded it is always a simple bitwise copy
+
+Clone
+* Cloning is an explicit action `x.clone()`
+* `Clone` can provide any type-specific behavior necessary to duplicate values safely.
+    * An example of this is for `String`, `Clone` would need to copy not just the pointer but the data on the heap.
+---
+
+# So How Do You `#[derive]` Clone?
+Any type made out of types that implement `Clone` can use the `#[derive]` -- This is a general rule for derivation.
+
+Example:
+```rust
+#[derive(Clone)]
+pub struct Cat {
+    age: u32,
+    name: String
+}
+```
+Note how in this example `Cat` can't implement `Copy` since a `String` can't be copied.
+
+---
+
+# A Brief Break w/ Super Traits
+Rust doesn't have "inheritence", but you can define a trait as being a superset of another trait.
+
+```rust
+trait Person {
+    fn name(&self) -> String;
+}
+
+trait Student: Person {
+    fn university(&self) -> String;
+}
+```
+`Person` is a supertrait of Student. This means implementing `Student` requires you to also `impl Person`.
+
+---
+
+# Even Superer Traits
+```rust
+trait Programmer {
+    fn fav_language(&self) -> String;
+}
+
+// CompSciStudent is a subtrait of both Programmer 
+// and Student.
+trait CompSciStudent: Programmer + Student {
+    fn git_username(&self) -> String;
+}
+```
+We can make a trait a subtrait of multiple traits with the `+` operator. Implementing CompSciStudent will now require you to `impl` both supertraits.
+
+---
+
+# What Can `#[derive]` Copy?
+Any type made out of types that implement Copy or a it holds a shared reference `&T`. 
+
+**Clone is a supertrait of Copy**
+So if we want to derive one, we have to derive the other.
+
+```rust
+#[derive(Clone, Copy)]
+pub struct Cat {
+    age: u32,
+    name: &'static str // reference to a string literal
+}
+```
 
 ---
 
