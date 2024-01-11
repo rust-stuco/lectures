@@ -115,7 +115,7 @@ In Rust there are two main types of errors we care about: recoverable and unreco
 * `Result<V, E>` - A return type for recoverable errors
 * `panic!` - A macro (*notice the `!`*) to invoke unrecoverable errors
 
-![bg right:30% 80%](../images/ferris_panics.svg)
+![bg right:25% 75%](../images/ferris_panics.svg)
 
 
 ---
@@ -362,14 +362,14 @@ trait Shape {
 So how do we use traits? We `impl`ement them `for` a `struct`
 ```rust
 struct Rectangle {
-    height : f32,
-    width : f32
+    height: f32,
+    width: f32
 }
 
 impl Shape for Rectangle {
     // Notice how 'Self' is now 'Rectangle' since it's the implementor
     fn new_unit() -> Rectangle {
-        Rectangle { height : 1.0, width : 1.0 }
+        Rectangle { height: 1.0, width: 1.0 }
     }
 
     ...
@@ -387,6 +387,8 @@ impl Shape for Rectangle {
 
 # Traits in Action
 
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 What happens we try and construct a `Rectangle`?
 ```rust
 let rec = Shape::new_unit();
@@ -400,13 +402,14 @@ without specifying the corresponding `impl` type
 8  |     fn new_unit() -> Self;
    |     ---------------------- `Shape::new_unit` defined
 ```
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 
 ---
 
 
 # Traits in Action
+
+![bg right:25% 80%](../images/ferris_happy.svg)
 
 ```rust
 let rec: Rectangle = Shape::new_unit();
