@@ -21,6 +21,21 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
+# Today: Error Handling and Traits
+
+* Const generic types
+* Rust's error handling mechanisms
+    * `Result<V,E>`
+    * `panic!`
+* The never type
+* Traits
+    * Trait bounds
+    * `Copy` vs `Clone`
+    * Super traits
+
+
+---
+
 # Const Generics
 
 ```rust
@@ -29,7 +44,7 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 ```
-Const generics are generic arguments that range over constant values, rather than types or lifetimes.
+Const generics are arguments that generic over constant values, rather than types.
 
 
 ---
@@ -39,23 +54,59 @@ Const generics are generic arguments that range over constant values, rather tha
 
 Currently, const parameters may only be instantiated by const arguments of the following forms:
 
-* A standalone const parameter.
-* A literal (i.e. an integer, bool, or character).
-* A concrete constant expression (enclosed by {}), involving no generic parameters.
+* A standalone const parameter
+* A literal (i.e. an integer, bool, or character)
+* A concrete constant expression (enclosed by {}), involving no generic parameters
 
 
 ---
 
 
-# Const Generics Rules In Action
+# A Const Parameter
 
+Currently, const parameters may only be instantiated by const arguments of the following forms:
+
+1. A standalone const parameter
+2. A literal (i.e. an integer, bool, or character)
+3. A concrete constant expression (enclosed by {}), involving no generic parameters
+
+
+---
+
+
+# Standalone Const Parameter
 ```rust
 fn foo<const N: usize>() {}
 
 fn bar<T, const M: usize>() {
     foo::<M>(); // Okay: `M` is a const parameter
-    foo::<2021>(); // Okay: `2021` is a literal
+    let _: [u8; M]; // Okay: `M` is a const parameter
+}
+```
 
+
+---
+
+
+# A Literal
+```rust
+fn foo<const N: usize>() {}
+
+fn bar<T, const M: usize>() {
+    foo::<2021>(); // Okay: `2021` is a literal
+}
+
+```
+
+
+---
+
+
+# A Concrete Constant Expression
+```rust
+fn foo<const N: usize>() {}
+
+fn bar<T, const M: usize>() {
     foo::<{20 * 100 + 20 * 10 + 1}>(); // Okay: const expression
                                        // contains no generic parameters
 
@@ -65,7 +116,6 @@ fn bar<T, const M: usize>() {
     foo::<{ std::mem::size_of::<T>() }>(); // Error: const expression
                                            //contains the generic parameter `T`
 
-    let _: [u8; M]; // Okay: `M` is a const parameter
     let _: [u8; std::mem::size_of::<T>()]; // Error: const expression
                                            // contains the generic parameter `T`
 }
@@ -103,6 +153,23 @@ fn main() {
 ---
 
 
+# Const Generic Designs
+
+Const generics can be used to create multiple versions of the same function with slightly different behavior. One popular way of doing this is letting const generics represent "option flags" for a function.
+
+```rust
+fn git_commit<const FORCE : bool, const NO_MESSAGE : bool>() {
+    ...
+    if FORCE {...}
+}
+```
+
+This design pattern will become more useful when we discuss closures and function pointers.
+
+
+---
+
+
 # **Error Handling**
 
 
@@ -130,16 +197,36 @@ enum Result<V, E> {
 }
 ```
 
-## Example with error messages
+
+---
+
+
+## Example Representing Errors
 ```rust
-fn integer_divide(a : i32, b : i32) -> Result<i32, String> {
+fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
     Err("Divide by zero") if b == 0 else Ok(a/b)
+}
+```
+
+```rust
+enum ArithError { // Dedicated Error enums is a common practice
+    DivideByZero,
+    IllegalShift(i32)
+}
+
+fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
+    if shift <= 0 {
+        Err(IllegalShift(shift))
+    } else if div == 0 {
+        Err(DivideByZero)
+    } else {
+        (x << shift)/div
+    }
 }
 ```
 
 
 ---
-
 
 
 # The ? Operator
@@ -158,6 +245,34 @@ let x = match potential_fail() {
 }
 ```
 Think of the `?` as quick way to see where a function short-circuit returns on failure
+
+
+---
+
+
+# The ? Operator Example 
+```rust
+use std::num::ParseIntError;
+
+fn multiply(first_number_str: &str, second_number_str: &str) -> Result<i32, ParseIntError> {
+    let first_number = first_number_str.parse::<i32>()?;
+    let second_number = second_number_str.parse::<i32>()?;
+
+    Ok(first_number * second_number)
+}
+
+fn print(result: Result<i32, ParseIntError>) {
+    match result {
+        Ok(n)  => println!("n is {}", n),
+        Err(e) => println!("Error: {}", e),
+    }
+}
+
+fn main() {
+    print(multiply("10", "2"));
+    print(multiply("ten", "2"));
+}
+```
 
 
 ---
@@ -318,7 +433,7 @@ let x = {
 
 # Answer
 
-`return` is also type `!`. So `let x : ! = ...` would compile.
+`return` is also type `!`. So Rust views it as  `let x : ! = ...`.
 
 Think of it like this because `return` returns from the **entire function**, `x` can be given type `!`
 
