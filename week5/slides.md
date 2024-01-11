@@ -461,13 +461,22 @@ trait Shape {
     fn area(&self) -> f32;
 
     fn name(&self) -> String;
+```
 
+
+---
+
+
+# Trait Overview
+Traits can also provide a default implementation of functions. They can be overriden for any given `impl Shape for MyStruct`
+```rust
     // Default method implementation -- can be overriden
     fn print(&self) {
         println!("{} has an area of {}", self.name(), self.area());
     }
-}
+} // end Trait Shape
 ```
+
 
 ---
 
@@ -487,9 +496,15 @@ impl Shape for Rectangle {
         Rectangle { height: 1.0, width: 1.0 }
     }
 
-    ...
+```
 
-    // We can override functions defined in the trait
+
+---
+
+
+# Trait Overview
+We can simply override functions as such:
+```rust
     fn print(&self) {
         println!("I am a rectangle! :)");
     }
