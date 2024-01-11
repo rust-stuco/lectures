@@ -92,8 +92,6 @@ fn main() {
 
 ---
 
----
-
 
 # What `type_of` Error?
 In Rust there are two main types of errors we care about: recoverable and unrecoverable errors (panics).
