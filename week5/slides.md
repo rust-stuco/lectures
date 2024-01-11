@@ -15,6 +15,82 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ![bg right:35% 65%](../images/ferris.svg)
 
+---
+
+# Const Generics
+```rust
+struct ArrayPair<T, const N: usize> {
+    left: [T; N],
+    right: [T; N],
+}
+```
+Const generics are generic arguments that range over constant values, rather than types or lifetimes.
+
+---
+
+# Const Generics Rules
+
+Currently, const parameters may only be instantiated by const arguments of the following forms:
+
+* A standalone const parameter.
+* A literal (i.e. an integer, bool, or character).
+* A concrete constant expression (enclosed by {}), involving no generic parameters.
+
+---
+
+# Const Generics Rules In Action
+```rust
+fn foo<const N: usize>() {}
+
+fn bar<T, const M: usize>() {
+    foo::<M>(); // Okay: `M` is a const parameter
+    foo::<2021>(); // Okay: `2021` is a literal
+
+    foo::<{20 * 100 + 20 * 10 + 1}>(); // Okay: const expression
+                                       // contains no generic parameters
+    
+    foo::<{ M + 1 }>(); // Error: const expression
+                        // contains the generic parameter `M`
+
+    foo::<{ std::mem::size_of::<T>() }>(); // Error: const expression
+                                           //contains the generic parameter `T`
+    
+    let _: [u8; M]; // Okay: `M` is a const parameter
+    let _: [u8; std::mem::size_of::<T>()]; // Error: const expression 
+                                           // contains the generic parameter `T`
+}
+
+```
+
+---
+
+# Advantages of Const Generics
+* Generalize behavior for larger set of types
+* Let us avoid some runtime checks (less overhead)
+```rust
+pub struct MinSlice<T, const N: usize> {
+    /// The bounded region of memory. Exactly `N` `T`s.
+    pub head: [T; N],
+    /// Zero or more remaining `T`s after the `N`
+    pub tail: [T],
+}
+
+fn main() {
+    let slice: &[u8] = b"Hello, world";
+    // Length check is performed when we construct a MinSlice,
+    // and it's known at compile time to be of length 12.
+    // If the `unwrap()` succeeds, no more checks are needed
+    let minslice = MinSlice::<u8, 12>::from_slice(slice).unwrap();
+    let value: u8 = minslice.head[6];
+    assert_eq!(value, b' ')
+}
+```
+
+---
+
+# **Error Handling**
+
+---
 
 ---
 
@@ -446,6 +522,53 @@ pub struct Cat {
 
 ---
 
+# When `#[derive]` Fails
+Sometimes we can't derive a trait, or need a more complex behavior than what the 
+`#[derive]` will provide. 
+1. Look at the standard library documentation for the trait
+2. Find out what the required functions are and `impl` them like any trait
+
+---
+
+# Example: `Default`
+`std::default::Default`
+```rust
+pub trait Default: Sized {
+    // Required method
+    fn default() -> Self;
+}
+
+struct SomeOptions {
+    foo: i32,
+    bar: f32,
+}
+```
+
+---
+
+# Example: `Default`
+```rust
+impl Default for SomeOptions {
+    fn default() -> Self {
+        SomeOptions {
+            foo: 12,
+            bar: 20.0,
+        }
+    }
+}
+```
+
+---
+
+# The Orphan Rule
+Rust has a rule that you cannot provide implementations of a trait for a struct unless:
+-  You are the crate that defines the struct 
+- You are the crate that defines the trait.
+
+What does this mean? Well it means we can't apply traits like `Clone` on a stdlib type since we neither define `Clone` nor the stdlib type (such as `String` or `Box`)
+
+---
+
 # Trait Mix Ups
 Consider the following
 ```rust
@@ -560,7 +683,60 @@ fn combine_vecs(
 
 ---
 
-# **Next Lecture:**
+# `where` Clauses
+Trait bounds are awesome, but sometimes too many can be a problem. 
+
+```rust
+fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
+```
+This can be cumbersome to write up so we have `where` clauses!
+```rust
+fn some_function<T, U>(t: &T, u: &U) -> i32
+where
+    T: Display + Clone,
+    U: Clone + Debug,
+{
+```
+Now we don't need ultrawide monitors to code in Rust!
+
+---
+
+# Conditionally Implement Methods
+Say we have a struct `Pair`.
+```rust
+use std::fmt::Display;
+
+struct Pair<T> {
+    x: T,
+    y: T,
+}
+
+impl<T> Pair<T> {
+    fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+```
+
+---
+
+# Conditionally Implement Methods
+```rust
+impl<T: Display + PartialOrd> Pair<T> {
+    fn cmp_display(&self) {
+        if self.x >= self.y {
+            println!("The largest member is x = {}", self.x);
+        } else {
+            println!("The largest member is y = {}", self.y);
+        }
+    }
+}
+```
+For `cmp_display()` to work, `T` must implement `Display` to be printed and `PartialOrd` to be compared. So `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>` 
+
+---
+
+# **Next Lecture: Cargo, Testing, Modules, and Crates**
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
