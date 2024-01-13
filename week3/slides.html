@@ -219,7 +219,7 @@ help: consider changing this to be mutable
 <h1 id="review-question-3">Review Question 3</h1>
 
 <p>Why doesn't this compile?</p>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">fn</span> <span class="hljs-title function_">i_dont_exist</span>() {
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">fn</span> <span class="hljs-title function_">x_shouldnt_exist</span>() {
     <span class="hljs-keyword">let</span> <span class="hljs-keyword">mut </span><span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>];
     <span class="hljs-keyword">let</span> <span class="hljs-variable">x</span> = &amp;v[<span class="hljs-number">3</span>];
     v.<span class="hljs-title function_ invoke__">pop</span>(); <span class="hljs-comment">// Removes last element in `v`</span>
@@ -249,9 +249,9 @@ help: consider changing this to be mutable
 
 <p>What about this scenario?</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">fn</span> <span class="hljs-title function_">please_dont_move</span>() {
-    <span class="hljs-keyword">let</span> <span class="hljs-keyword">mut </span><span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+    <span class="hljs-keyword">let</span> <span class="hljs-keyword">mut </span><span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>];
     <span class="hljs-keyword">let</span> <span class="hljs-variable">x</span> = &amp;v[<span class="hljs-number">2</span>];
-    v.<span class="hljs-title function_ invoke__">push</span>(<span class="hljs-number">4</span>); <span class="hljs-comment">// Add an element to the end of `v`</span>
+    v.<span class="hljs-title function_ invoke__">push</span>(<span class="hljs-number">5</span>); <span class="hljs-comment">// Add an element to the end of `v`</span>
     <span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;{}&quot;</span>, x); <span class="hljs-comment">// What is `x`?</span>
 }
 </code></pre>
@@ -271,13 +271,13 @@ help: consider changing this to be mutable
   |
 3 |     let x = &amp;v[2];
   |              - immutable borrow occurs here
-4 |     v.push(4);
+4 |     v.push(5);
   |     ^^^^^^^^^ mutable borrow occurs here
 5 |     println!(&quot;{}&quot;, x); // What is `x`?
   |                    - immutable borrow later used here
 </code></pre>
 <ul>
-<li data-marpit-fragment="1">In this case, what if pushing <code>4</code> onto <code>v</code> resizes the entire vector?
+<li data-marpit-fragment="1">In this case, what if pushing <code>5</code> onto <code>v</code> resizes the entire vector?
 <ul>
 <li data-marpit-fragment="2">Resizing means allocating new memory, copying over data, then deallocating the old memory</li>
 </ul>
@@ -436,7 +436,7 @@ help: consider introducing a named lifetime parameter
 <ul>
 <li data-marpit-fragment="1">We can store references in structs, but we need lifetime specifiers
 <ul>
-<li data-marpit-fragment="2">We will talk about these in Week 7!</li>
+<li data-marpit-fragment="2">We will talk about these in Week 8!</li>
 </ul>
 </li>
 </ul>

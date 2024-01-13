@@ -79,11 +79,26 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 - Unit Tests
 - Integration Tests
 
+
+## Week 7: Popular Crates, Closures, and Iterators
+- `no_std`: `rand`, `time`
+- `std`: `clap`, `log`, `tracing`, `anyhow`, `flamegraph`
+- Closures
+    - Captures
+    - The `move` Keyword
+    - `Fn` traits
+- Iterators
+    - `Iterator` Trait and `next`
+- Loops vs. Iterators
+
 ### After Dark
-- Popular 3rd-party crates
+- More Essential Rust Crates
+    - `rayon`
+    - `serde`
+    - `criterion`
 
 
-## Week 7: Lifetimes
+## Week 8: Lifetimes
 - Validating References
 - The Borrow Checker
     - Lifetimes vs. Scope
@@ -92,16 +107,6 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 - Lifetime Annotations
 - Lifetime Elision
 - `'static` Lifetimes
-
-
-## Week 8: Iterators, Closures, and Advanced Functional
-- Closures
-    - Captures
-    - The `move` Keyword
-    - `Fn` traits
-- Iterators
-    - `Iterator` Trait and `next`
-- Loops vs. Iterators
 
 
 ## Week 9: `Box<T>` and Trait Objects
@@ -160,21 +165,3 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
     - `macro_rules!`
 - Procedural Macros
 - TODO
-
-
-## Misc
-Essential Rust Crates
-- `no_std`
-    - `rand`
-    - `time`
-- `std`
-    - `log`
-    - `tracing`
-    - `anyhow`
-    - `clap`
-    - `rayon`
-    - `flamegraph`
-- Frameworks
-    - `serde`
-    - `criterion`
-    - `tokio`

@@ -947,7 +947,7 @@ println!("{}", r3);
 * The scope of a reference starts when it is initialized
 * The scope of a reference **ends at the last point it is used**
 * The specific term for reference scopes are _lifetimes_
-    * We'll talk about lifetimes in week 7!
+    * We'll talk about lifetimes in week 8!
 
 
 ---
