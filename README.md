@@ -96,7 +96,6 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
     - `rayon`
     - `serde`
     - `criterion`
-    - `tokio`
 
 
 ## Week 8: Lifetimes
