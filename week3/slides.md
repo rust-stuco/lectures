@@ -563,7 +563,7 @@ help: consider introducing a named lifetime parameter
 ```
 
 * We can store references in structs, but we need lifetime specifiers
-    * We will talk about these in Week 7!
+    * We will talk about these in Week 8!
 
 
 ---

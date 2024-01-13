@@ -235,7 +235,7 @@ for i in v {
 }
 ```
 
-* The reason this works is subtle, and we'll talk more about why in week 8!
+* The reason this works is subtle, and we'll talk more about why in week 7!
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
