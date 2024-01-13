@@ -23,8 +23,8 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Today: Error Handling and Traits
 
-* Const generic types
-* Rust's error handling mechanisms
+* Const generics
+* Erro handling
     * `Result<V,E>`
     * `panic!`
 * The never type
@@ -36,6 +36,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
+
 # Const Generics
 
 ```rust
@@ -44,7 +45,7 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 ```
-Const generics are arguments that generic over constant values, rather than types.
+Const generics allow items to be generic over constant values
 
 
 ---
@@ -54,35 +55,9 @@ Const generics are arguments that generic over constant values, rather than type
 
 Currently, const parameters may only be instantiated by const arguments of the following forms:
 
-* A standalone const parameter
 * A literal (i.e. an integer, bool, or character)
+* A standalone const parameter
 * A concrete constant expression (enclosed by {}), involving no generic parameters
-
-
----
-
-
-# A Const Parameter
-
-Currently, const parameters may only be instantiated by const arguments of the following forms:
-
-1. A standalone const parameter
-2. A literal (i.e. an integer, bool, or character)
-3. A concrete constant expression (enclosed by {}), involving no generic parameters
-
-
----
-
-
-# Standalone Const Parameter
-```rust
-fn foo<const N: usize>() {}
-
-fn bar<T, const M: usize>() {
-    foo::<M>(); // Okay: `M` is a const parameter
-    let _: [u8; M]; // Okay: `M` is a const parameter
-}
-```
 
 
 ---
@@ -96,6 +71,20 @@ fn bar<T, const M: usize>() {
     foo::<2021>(); // Okay: `2021` is a literal
 }
 
+```
+
+
+---
+
+
+# Standalone Const Parameter
+```rust
+fn foo<const N: usize>() {}
+
+fn bar<T, const M: usize>() {
+    foo::<M>(); // Okay: `M` is a const parameter
+    let _: [u8; M]; // Okay: `M` is a const parameter
+}
 ```
 
 
@@ -128,8 +117,6 @@ fn bar<T, const M: usize>() {
 
 # Advantages of Const Generics
 
-* Generalize behavior for larger set of types
-* Let us avoid some runtime checks (less overhead)
 ```rust
 pub struct MinSlice<T, const N: usize> {
     /// The bounded region of memory. Exactly `N` `T`s.
@@ -148,23 +135,24 @@ fn main() {
     assert_eq!(value, b' ')
 }
 ```
-
+* Generalize behavior for larger set of types
+* Allows for less runtime checks
 
 ---
 
 
-# Const Generic Designs
+# Const Generic Design Patterns
 
-Const generics can be used to create multiple versions of the same function with slightly different behavior. One popular way of doing this is letting const generics represent "option flags" for a function.
 
 ```rust
-fn git_commit<const FORCE : bool, const NO_MESSAGE : bool>() {
+fn git_commit<const FORCE: bool, const NO_MESSAGE : bool>() {
     ...
     if FORCE {...}
 }
 ```
-
-This design pattern will become more useful when we discuss closures and function pointers.
+* Const generics allow for multiple compilations of the same function with slightly different behavior. 
+* Popular idea: const generics represent "option flags" for a function.
+    * More useful when we discuss closures and function pointers.
 
 
 ---
@@ -201,13 +189,17 @@ enum Result<V, E> {
 ---
 
 
-## Example Representing Errors
+## Example Representing Errors #1
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
-    Err("Divide by zero") if b == 0 else Ok(a/b)
+    Err("Divide by zero".to_string()) if b == 0 else Ok(a/b)
 }
 ```
 
+---
+
+
+## Example Representing Errors #2
 ```rust
 enum ArithError { // Dedicated Error enums is a common practice
     DivideByZero,
@@ -216,11 +208,11 @@ enum ArithError { // Dedicated Error enums is a common practice
 
 fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     if shift <= 0 {
-        Err(IllegalShift(shift))
+        Err(ArithError::IllegalShift(shift))
     } else if div == 0 {
-        Err(DivideByZero)
+        Err(ArithError::DivideByZero)
     } else {
-        (x << shift)/div
+        Ok((x << shift)/div)
     }
 }
 ```
@@ -321,7 +313,7 @@ There also some more uncommon, but useful macros that panic:
 ---
 
 
-# Using `expect()` w/ Panics
+# `expect()`
 
 Consider the following example from the Rust book:
 ```rust
@@ -370,14 +362,14 @@ Consider the following code, what should the type of `x` be?
 ```rust
 let x = loop { println!("forever"); };
 ```
-
+It isn't clear right?
 
 ---
 
 
 # The "Never" Type - `!`
 
-It isn't clear, right? That's why Rust has a special type called `!` for this exact reason.
+Rust has a special type called `!`, or the "never type", for this exact reason.
 Another example:
 ```rust
 fn bar() -> ! {
@@ -398,8 +390,9 @@ let guess: u32 = match guess.trim().parse() {
     Err(_) => continue,
 };
 ```
-Recall match statements can only return 1 type. So what's happening here? Well, `continue` has the `!` type. And so Rust knows this can't be value and allows
-`guess: u32`.
+* Recall match statements can only return 1 type
+* `continue` has the `!` type
+    * Rust knows this can't be value and allows `guess: u32`
 
 
 ---
@@ -407,13 +400,11 @@ Recall match statements can only return 1 type. So what's happening here? Well, 
 
 # What else uses `!`?
 
-Recall that `()` is a value! So `print!` and `assert!` don't use `!`.
-
 * `panic!`
 * `break`
 * `continue`
-* Everything that doesn't return a value -- typically control flow related.
-
+* Everything that doesn't return a value -- typically control flow related
+    * `print!` and `assert!` return `()`, so they don't use `!`
 
 ---
 
@@ -449,9 +440,6 @@ Think of it like this because `return` returns from the **entire function**, `x`
 
 # Trait Overview
 
-A `trait` is a collection of methods defined for an unknown type: `Self`. They can access other methods declared in the same trait.
-
-Traits are defined with the `trait` keyword:
 ```rust
 trait Shape {
     // Associated function signature; `Self` refers to the implementor type.
@@ -462,7 +450,8 @@ trait Shape {
 
     fn name(&self) -> String;
 ```
-
+* Traits are defined with the `trait` keyword
+* Defines shared behavior among different types represented with `Self`
 
 ---
 
@@ -708,7 +697,7 @@ Note how in this example `Cat` can't implement `Copy` since a `String` can't be 
 ---
 
 
-# A Brief Break w/ Super Traits
+# Super Traits
 
 Rust doesn't have "inheritence", but you can define a trait as being a superset of another trait.
 
@@ -759,6 +748,29 @@ pub struct Cat {
     age: u32,
     name: &'static str // reference to a string literal
 }
+```
+
+---
+
+
+# When `#[derive]` Fails
+
+What happens if parameter `T` doesn't implement `Default`?
+```rust
+#[derive(Default)]
+pub struct Gift<T> {
+    to: &'static str,
+    is_wrapped: bool,
+    contents: T
+} 
+```
+```
+   |
+41 |     let _: Gift<MyType> = Gift::default();
+   |                              ^^^^ the trait `Default` is not implemented for `MyType`
+   |
+   = help: the trait `Default` is implemented for `Gift<T>`
+note: required for `Gift<MyType>` to implement `Default`
 ```
 
 
@@ -949,10 +961,9 @@ fn get_csv_lines(src: impl std::io::BufRead) -> u32
 If your function returns a type that implements `MyTrait`, you can write its return type as `-> impl MyTrait`. This can help simplify your type signatures a lot!
 
 ```rust
-fn combine_vecs(
-    v: Vec<i32>,
-    u: Vec<i32>,
-) -> impl Iterator<Item=i32>
+fn to_key<T>(
+    v: Vec<T>,
+) -> impl Hash
 ```
 
 
@@ -1015,7 +1026,9 @@ impl<T: Display + PartialOrd> Pair<T> {
     }
 }
 ```
-For `cmp_display()` to work, `T` must implement `Display` to be printed and `PartialOrd` to be compared. So `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>`
+* `T` must implement `Display` to be printed
+* `T` must implement `PartialOrd` to be compared
+* `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>`
 
 
 ---
