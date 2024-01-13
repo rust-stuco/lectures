@@ -313,7 +313,7 @@ There also some more uncommon, but useful macros that panic:
 ---
 
 
-# `expect()`
+# `unwrap()`
 
 Consider the following example from the Rust book:
 ```rust
@@ -334,7 +334,7 @@ src/main.rs:4:49
 ---
 
 
-# Using `expect()` w/ Panics
+# `expect()`
 
 We can do better than this. If we *expect* this error and have a specific message in mind.
 ```rust
