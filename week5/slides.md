@@ -23,15 +23,15 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Today: Error Handling and Traits
 
-* Const generics
-* Erro handling
+* Const Generics
+* Error Handling
     * `Result<V,E>`
     * `panic!`
-* The never type
+* The Never Type
 * Traits
-    * Trait bounds
+    * Trait Bounds
     * `Copy` vs `Clone`
-    * Super traits
+    * Supertraits
 
 
 ---
@@ -45,7 +45,7 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 ```
-Const generics allow items to be generic over constant values
+Const generics allow items to be generic over constant values.
 
 
 ---
@@ -72,7 +72,7 @@ fn bar<T, const M: usize>() {
 }
 
 ```
-
+Note that any valid constant with the correct type `usize` can be a generic parameter.
 
 ---
 
@@ -86,6 +86,7 @@ fn bar<T, const M: usize>() {
     let _: [u8; M]; // Okay: `M` is a const parameter
 }
 ```
+Since `M` and `N` are const generic parameters of the same type, `M` is a valid parameter.
 
 
 ---
@@ -98,7 +99,19 @@ fn foo<const N: usize>() {}
 fn bar<T, const M: usize>() {
     foo::<{20 * 100 + 20 * 10 + 1}>(); // Okay: const expression
                                        // contains no generic parameters
+}
 
+```
+
+
+---
+
+
+# Bad Constant Expressions
+```rust
+fn foo<const N: usize>() {}
+
+fn bar<T, const M: usize>() {
     foo::<{ M + 1 }>(); // Error: const expression
                         // contains the generic parameter `M`
 
@@ -108,35 +121,8 @@ fn bar<T, const M: usize>() {
     let _: [u8; std::mem::size_of::<T>()]; // Error: const expression
                                            // contains the generic parameter `T`
 }
-
 ```
 
-
----
-
-
-# Advantages of Const Generics
-
-```rust
-pub struct MinSlice<T, const N: usize> {
-    /// The bounded region of memory. Exactly `N` `T`s.
-    pub head: [T; N],
-    /// Zero or more remaining `T`s after the `N`
-    pub tail: [T],
-}
-
-fn main() {
-    let slice: &[u8] = b"Hello, world";
-    // Length check is performed when we construct a MinSlice,
-    // and it's known at compile time to be of length 12.
-    // If the `unwrap()` succeeds, no more checks are needed
-    let minslice = MinSlice::<u8, 12>::from_slice(slice).unwrap();
-    let value: u8 = minslice.head[6];
-    assert_eq!(value, b' ')
-}
-```
-* Generalize behavior for larger set of types
-* Allows for less runtime checks
 
 ---
 
@@ -192,7 +178,11 @@ enum Result<V, E> {
 ## Example Representing Errors #1
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
-    Err("Divide by zero".to_string()) if b == 0 else Ok(a/b)
+    if b == 0 {
+        Err("Divide by zero".to_string())
+    } else {
+        Ok(a/b)
+    }
 }
 ```
 
@@ -201,7 +191,7 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 
 ## Example Representing Errors #2
 ```rust
-enum ArithError { // Dedicated Error enums is a common practice
+enum ArithError {
     DivideByZero,
     IllegalShift(i32)
 }
@@ -216,7 +206,7 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     }
 }
 ```
-
+* Creating your own "error" enum like `ArithError` is a common practice in Rust.
 
 ---
 
@@ -225,18 +215,15 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
 
 The `?` operator when applied to a result type, unwraps it on a `Ok` and propogates the error up one in the call stack otherwise.
 
-For clarity:
 ```rust
 let x = potential_fail()?;
-```
-de-sugars to
-```rust
+
 let x = match potential_fail() {
     Ok(v) => v
     Err(e) => return Err(e.into()), // Error is propogated up a level
 }
 ```
-Think of the `?` as quick way to see where a function short-circuit returns on failure
+* Think of the `?` as quick way to see where a function short-circuit returns on failure.
 
 
 ---
@@ -259,13 +246,23 @@ fn print(result: Result<i32, ParseIntError>) {
         Err(e) => println!("Error: {}", e),
     }
 }
+```
 
+
+---
+
+
+# The ? Operator Example
+```rust
 fn main() {
     print(multiply("10", "2"));
     print(multiply("ten", "2"));
 }
 ```
-
+```
+n is 20
+Error: invalid digit found in string
+```
 
 ---
 
@@ -336,7 +333,7 @@ src/main.rs:4:49
 
 # `expect()`
 
-We can do better than this. If we *expect* this error and have a specific message in mind.
+We can do better than this if we *expect* this error and have a specific message in mind.
 ```rust
 use std::fs::File;
 
@@ -362,7 +359,7 @@ Consider the following code, what should the type of `x` be?
 ```rust
 let x = loop { println!("forever"); };
 ```
-It isn't clear right?
+* It isn't clear right?
 
 ---
 
@@ -405,29 +402,6 @@ let guess: u32 = match guess.trim().parse() {
 * `continue`
 * Everything that doesn't return a value -- typically control flow related
     * `print!` and `assert!` return `()`, so they don't use `!`
-
----
-
-
-# Pop Quiz
-
-What should the type of `x` be?
-```rust
-let x = {
-    return 123
-};
-```
-
-
----
-
-
-# Answer
-
-`return` is also type `!`. So Rust views it as  `let x : ! = ...`.
-
-Think of it like this because `return` returns from the **entire function**, `x` can be given type `!`
-
 
 ---
 
@@ -480,8 +454,8 @@ struct Rectangle {
 }
 
 impl Shape for Rectangle {
-    // Notice how 'Self' is now 'Rectangle' since it's the implementor
-    fn new_unit() -> Rectangle {
+    // Notice how 'Self' represents 'Rectangle' since it's the implementor
+    fn new_unit() -> Self {
         Rectangle { height: 1.0, width: 1.0 }
     }
 
@@ -616,87 +590,6 @@ Associated types also become part of the trait’s contract: implementors of the
 ---
 
 
-# Derive Traits
-
-The compiler is capable of providing basic implementations for some traits via the
-`#[derive]` attribute. These traits can still be manually implemented if a more complex behavior is required.
-
-Here's a list
-- Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`.
-- `Clone`, to create `T` from `&T` via a copy.
-- `Copy`, to give a type 'copy semantics' instead of 'move semantics'.
-- `Hash`, to compute a hash from `&T`.
-- `Default`, to create an empty instance of a data type.
-- `Debug`, to format a value using the `{:?}` formatter.
-
-
----
-
-
-# Copy
-
-Recall `copy` only applies to:
-- All integer types: `u8`, `i32`, etc
-- `bool`
-- All floating point types: `f32`, `f64`, etc
-- `char` type
-
-It is a differentiator in whether or not move semantics are applied to a function. (aka pass by reference vs value)
-
-
----
-
-
-# Clone
-
-* Means the type can be duplicated
-* Creates a new value with the same information as the original.
-* The new value is independent of the original value and can be modified without affecting the original value.
-```rust
-let mut foo = vec![1, 2, 3];
-let mut foo2 = foo.clone(); // explicit duplication of an object
-
-foo.push(4); // foo = [1,2,3,4]
-let y = foo2.pop(); // y=3, foo2 = [1, 2]
-```
-
----
-
-
-# Clone vs Copy
-
-Although their end result may feel the same they are different:
-
-Copy
-* Copies happen implicitely ex: `x = y`
-* Copy cannot be overloaded it is always a simple bitwise copy
-
-Clone
-* Cloning is an explicit action `x.clone()`
-* `Clone` can provide any type-specific behavior necessary to duplicate values safely.
-    * An example of this is for `String`, `Clone` would need to copy not just the pointer but the data on the heap.
-
----
-
-
-# So How Do You `#[derive]` Clone?
-
-Any type made out of types that implement `Clone` can use the `#[derive]` -- This is a general rule for derivation.
-
-Example:
-```rust
-#[derive(Clone)]
-pub struct Cat {
-    age: u32,
-    name: String
-}
-```
-Note how in this example `Cat` can't implement `Copy` since a `String` can't be copied.
-
-
----
-
-
 # Super Traits
 
 Rust doesn't have "inheritence", but you can define a trait as being a superset of another trait.
@@ -710,7 +603,8 @@ trait Student: Person {
     fn university(&self) -> String;
 }
 ```
-`Person` is a supertrait of Student. This means implementing `Student` requires you to also `impl Person`.
+* `Person` is a supertrait of Student 
+* Implementing `Student` requires you to also `impl Person`
 
 
 ---
@@ -729,15 +623,129 @@ trait CompSciStudent: Programmer + Student {
     fn git_username(&self) -> String;
 }
 ```
-We can make a trait a subtrait of multiple traits with the `+` operator. Implementing CompSciStudent will now require you to `impl` both supertraits.
+* We can make a trait a subtrait of multiple traits with the `+` operator 
+* Implementing CompSciStudent will now require you to `impl` both supertraits
 
+
+---
+
+
+# Derive Traits
+
+* The compiler can providie basic implementations for some traits via the
+`#[derive]` attribute 
+    * A general rule is that `struct X` can `#[derive]` a trait if all the fields of `X` derive that trait
+* These traits can still be manually implemented if a more complex behavior is required
+
+
+---
+
+
+# Clone
+
+* Means the type can be duplicated
+* Creates a new value with the same information as the original.
+* The new value is independent of the original value and can be modified without affecting the original value.
+```rust
+let mut foo = vec![1, 2, 3];
+let mut foo2 = foo.clone(); // explicit duplication of an object
+
+foo.push(4); // foo = [1,2,3,4]
+let y = foo2.pop(); // y=3, foo2 = [1, 2]
+```
+
+
+---
+
+
+# `#[derive]` Clone
+
+Any type made out of types that implement `Clone` can use the `#[derive]` -- This is a general rule for derivation.
+
+Example:
+```rust
+#[derive(Clone)]
+pub struct Cat {
+    age: u32,
+    name: String
+}
+```
+* `Cat` can't implement `Copy` since a `String` can't be copied.
+
+
+---
+
+
+# `#[derive]` Clone Behind The Scenes
+```rust
+pub struct Cat {
+    age: u32,
+    name: String,
+}
+
+impl Clone for Cat {
+    fn clone(&self) -> Cat {
+        Cat {
+            age: Clone::clone(&self.age),
+            name: Clone::clone(&self.name),
+        }
+    }
+}
+```
+
+
+---
+
+
+
+# Derive Traits
+
+Here's a list of other traits that can be derived:
+- Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`.
+- `Clone`, to create `T` from `&T` via a copy.
+- `Copy`, to give a type 'copy semantics' instead of 'move semantics'.
+- `Hash`, to compute a hash from `&T`.
+- `Default`, to create an empty instance of a data type.
+- `Debug`, to format a value using the `{:?}` formatter.
+
+
+---
+
+
+# Copy
+
+Recall `Copy` only applies to:
+- All integer types: `u8`, `i32`, etc
+- `bool`
+- All floating point types: `f32`, `f64`, etc
+- `char` type
+
+It is a differentiator in whether or not move semantics are applied to a function. (aka pass by reference vs value)
+
+
+---
+
+
+# Clone vs Copy
+
+Although their end result may feel the same they are different:
+
+Copy
+* Copies happen implicitely ex: `x = y`
+* `Copy` **cannot be overloaded** it is always a simple bitwise copy
+    * `Copy` can't be implemented on a type for complex behaviors like other traits
+
+Clone
+* Cloning is an explicit action `x.clone()`
+* `Clone` can provide any type-specific behavior necessary to duplicate values safely
+    * An example of this is for `String`, `Clone` would need to copy not just the pointer but the data on the heap
 
 ---
 
 
 # What Can `#[derive]` Copy?
 
-Any type made out of types that implement Copy or a it holds a shared reference `&T`.
+Any type made out of types that implement Copy or holds a shared reference `&T`.
 
 **Clone is a supertrait of Copy**
 So if we want to derive one, we have to derive the other.
@@ -991,7 +999,7 @@ Now we don't need ultrawide monitors to code in Rust!
 ---
 
 
-# Conditionally Implement Methods
+# Conditional Implement Methods
 
 Say we have a struct `Pair`.
 ```rust
