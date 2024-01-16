@@ -64,7 +64,7 @@ From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-unders
 
 > Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
 
-* Today we'll introduce Ownership, as well as several related features
+* Today we'll introduce _Ownership_, as well as several related features
 
 
 ---
@@ -151,8 +151,6 @@ You can create a `String` from a string literal using `String::from()`.
 let s = String::from("hello");
 ```
 
-<br>
-
 This kind of string _can_ be mutated:
 
 ```rust
@@ -163,7 +161,7 @@ s.push_str(", world!"); // push_str() appends a literal to a String
 println!("{}", s); // This will print `hello, world!`
 ```
 
-* Why can `String` be mutated but literals cannot?
+* Why can `String` be mutated but string literals cannot?
 
 
 ---
@@ -172,8 +170,8 @@ println!("{}", s); // This will print `hello, world!`
 # `String` vs literals
 
 * We know the contents of string literals at compile time, so the text is hardcoded directly into the final executable
-* To support a fully resizable piece of text, we need to allocate on the heap
-    * This means we must request memory from the allocator at runtime
+* To support a fully resizable piece of text, we need to allocate on the _heap_
+    * This means we must request memory from the allocator at _runtime_
     * We need a way of returning the memory when we're done using it
     * What 2 `C` functions does this remind you of?
 
