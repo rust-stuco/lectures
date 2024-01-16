@@ -814,7 +814,7 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
-# Derive Traits
+# Deriveable Traits
 
 Back in week 3, we saw this example:
 
@@ -882,7 +882,7 @@ Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_leve
 ---
 
 
-# Derive Traits
+# Deriveable Traits
 
 Luckily, Rust can `derive` traits for us when there there is an obvious and common implementation.
 
@@ -895,11 +895,31 @@ Luckily, Rust can `derive` traits for us when there there is an obvious and comm
 ---
 
 
-# Clone
+# Deriveable Traits
 
-* Means the type can be duplicated
-* Creates a new value with the same information as the original.
-* The new value is independent of the original value and can be modified without affecting the original value.
+Let's break this down.
+
+```rust
+#[derive(Debug)]
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
+}
+```
+
+* Every single field is printable
+* It is then reasonable that the struct itself should also be printable!
+* Are there other traits that follow the same logic with structs?
+
+
+---
+
+
+# `Clone`
+
+Recall the `Clone` trait from week 2.
 
 ```rust
 let mut foo = vec![1, 2, 3];
@@ -909,45 +929,52 @@ foo.push(4); // foo = [1,2,3,4]
 let y = foo2.pop(); // y=3, foo2 = [1, 2]
 ```
 
+* A type that implements `Clone` can be duplicated / deep copied.
+* The new value is independent of the original value and can be modified without affecting the original value
+
 
 ---
 
 
-# `#[derive]` Clone
+# `Clone`
 
-Any type made out of types that implement `Clone` can use the `#[derive]` -- This is a general rule for derivation.
-
-Example:
+We can also derive `Clone` for `Student`!
 
 ```rust
 #[derive(Clone)]
-pub struct Cat {
-    age: u32,
-    name: String
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
 }
 ```
 
-* `Cat` can't implement `Copy` since a `String` can't be copied.
+* Each field is cloneable
+* So the entire struct should also be cloneable!
 
 
 ---
 
 
-# `#[derive]` Clone Behind The Scenes
+# `#[derive(Clone)]` Behind The Scenes
 
 ```rust
-pub struct Cat {
-    age: u32,
-    name: String,
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
 }
 
-impl Clone for Cat {
-    fn clone(&self) -> Cat {
-        Cat {
-            age: Clone::clone(&self.age),
-            name: Clone::clone(&self.name),
+impl Clone for Student {
+    fn clone(&self) -> Self {
+        Self {
+            andrew_id: self.andrew_id.clone(),
+            attendance: self.attendance.clone(),
+            grade: self.grade.clone(),
+            stress_level: self.stress_level.clone(),
         }
-    }
 }
 ```
 
@@ -958,12 +985,12 @@ impl Clone for Cat {
 # Derive Traits
 
 Here's a list of other traits that can be derived:
-- Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`.
-- `Clone`, to create `T` from `&T` via a copy.
-- `Copy`, to give a type 'copy semantics' instead of 'move semantics'.
-- `Hash`, to compute a hash from `&T`.
-- `Default`, to create an empty instance of a data type.
-- `Debug`, to format a value using the `{:?}` formatter.
+- Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`
+- `Clone`, to create a `T` from a `&T`
+- `Copy`, to give a type "copy semantics" instead of "move semantics"
+- `Hash`, to compute a hash from `&T`
+- `Default`, to create an empty instance of a data type
+- `Debug`, to format a value using the `{:?}` formatter
 
 
 ---
