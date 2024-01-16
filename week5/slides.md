@@ -37,6 +37,56 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
+# Type Aliases
+
+You can declare a type alias to give a name to an already existing type.
+
+```rust
+type Kilometers = i32;
+
+let x: i32 = 5;
+let y: Kilometers = 5;
+
+println!("x + y = {}", x + y); // Rust knows the types are really the same
+```
+
+
+---
+
+
+# Generic Type Aliases
+
+You can also include generics in your type aliases.
+
+```rust
+type Grades = Vec<u8>;
+
+fn main() {
+    let mut empty_grades = Grades::new();
+    empty_grades.push(42);
+}
+```
+
+```rust
+type Stack<T> = Vec<T>;
+
+fn main() {
+    let mut stack: Stack<i32> = Stack::new();
+    stack.push(42);
+}
+```
+
+
+
+---
+
+
+# **Const Generics**
+
+
+---
+
+
 # Const Generics
 
 ```rust
@@ -45,7 +95,8 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 ```
-Const generics allow items to be generic over constant values.
+
+* Const generics allow items to be generic over constant values
 
 
 ---
@@ -64,20 +115,23 @@ Currently, const parameters may only be instantiated by const arguments of the f
 
 
 # A Literal
+
 ```rust
 fn foo<const N: usize>() {}
 
 fn bar<T, const M: usize>() {
     foo::<2021>(); // Okay: `2021` is a literal
 }
-
 ```
+
 Note that any valid constant with the correct type `usize` can be a generic parameter.
+
 
 ---
 
 
 # Standalone Const Parameter
+
 ```rust
 fn foo<const N: usize>() {}
 
@@ -86,13 +140,15 @@ fn bar<T, const M: usize>() {
     let _: [u8; M]; // Okay: `M` is a const parameter
 }
 ```
-Since `M` and `N` are const generic parameters of the same type, `M` is a valid parameter.
+
+* Since `M` and `N` are const generic parameters of the same type, `M` is a valid parameter
 
 
 ---
 
 
 # A Concrete Constant Expression
+
 ```rust
 fn foo<const N: usize>() {}
 
@@ -100,7 +156,6 @@ fn bar<T, const M: usize>() {
     foo::<{20 * 100 + 20 * 10 + 1}>(); // Okay: const expression
                                        // contains no generic parameters
 }
-
 ```
 
 
@@ -108,6 +163,7 @@ fn bar<T, const M: usize>() {
 
 
 # Bad Constant Expressions
+
 ```rust
 fn foo<const N: usize>() {}
 
@@ -129,14 +185,13 @@ fn bar<T, const M: usize>() {
 
 # Const Generic Design Patterns
 
-
 ```rust
 fn git_commit<const FORCE: bool, const NO_MESSAGE : bool>() {
     ...
     if FORCE {...}
 }
 ```
-* Const generics allow for multiple compilations of the same function with slightly different behavior. 
+* Const generics allow for multiple compilations of the same function with slightly different behavior.
 * Popular idea: const generics represent "option flags" for a function.
     * More useful when we discuss closures and function pointers.
 
@@ -152,18 +207,21 @@ fn git_commit<const FORCE: bool, const NO_MESSAGE : bool>() {
 
 # What `type_of` Error?
 
+![bg right:25% 75%](../images/ferris_panics.svg)
+
 In Rust there are two main types of errors we care about: recoverable and unrecoverable errors (panics).
+
 * `Result<V, E>` - A return type for recoverable errors
 * `panic!` - A macro (*notice the `!`*) to invoke unrecoverable errors
-
-![bg right:25% 75%](../images/ferris_panics.svg)
 
 
 ---
 
 
 # The Result Type
+
 This is how Rust represents "success" and "failure" states in code.
+
 ```rust
 enum Result<V, E> {
     Ok(V),
@@ -176,6 +234,7 @@ enum Result<V, E> {
 
 
 ## Example Representing Errors #1
+
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
     if b == 0 {
@@ -186,10 +245,12 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 }
 ```
 
+
 ---
 
 
 ## Example Representing Errors #2
+
 ```rust
 enum ArithError {
     DivideByZero,
@@ -206,7 +267,9 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     }
 }
 ```
+
 * Creating your own "error" enum like `ArithError` is a common practice in Rust.
+
 
 ---
 
@@ -229,7 +292,8 @@ let x = match potential_fail() {
 ---
 
 
-# The ? Operator Example 
+# The ? Operator Example
+
 ```rust
 use std::num::ParseIntError;
 
@@ -253,16 +317,19 @@ fn print(result: Result<i32, ParseIntError>) {
 
 
 # The ? Operator Example
+
 ```rust
 fn main() {
     print(multiply("10", "2"));
     print(multiply("ten", "2"));
 }
 ```
+
 ```
 n is 20
 Error: invalid digit found in string
 ```
+
 
 ---
 
@@ -270,6 +337,7 @@ Error: invalid digit found in string
 # The ? Operator
 
 We can also chain multiple `?` together:
+
 ```rust
 use std::fs::File;
 use std::io::{self, Read};
@@ -283,12 +351,14 @@ fn read_username_from_file() -> Result<String, io::Error> {
 }
 ```
 
+
 ---
 
 
 # Panics
 
 Panics in Rust are unrecoverable errors. They can happen in many different ways:
+
 * Out of bounds slice indexing
 * Integer overflow (debug)
 * `.unwrap()` on a `None` or `Err`
@@ -300,11 +370,11 @@ Panics in Rust are unrecoverable errors. They can happen in many different ways:
 
 # More Panics
 
-- `assert!`, `assert_eq!`, `assert_ne!` conditionally panic
+There are other useful macros that panic:
 
-There also some more uncommon, but useful macros that panic:
-- `unimplemented!` / `todo!` - self documented
-- `unreachable!` - Lets the compiler optimize a code segment away
+* `assert!`, `assert_eq!`, `assert_ne!` conditionally panic
+* `unimplemented!` / `todo!` - self documented
+* `unreachable!` - Lets the compiler optimize a code segment away
 
 
 ---
@@ -313,6 +383,7 @@ There also some more uncommon, but useful macros that panic:
 # `unwrap()`
 
 Consider the following example from the Rust book:
+
 ```rust
 use std::fs::File;
 
@@ -320,12 +391,29 @@ fn main() {
     let greeting_file = File::open("hello.txt").unwrap();
 }
 ```
-What happens if we don't have `"hello.txt"`?
+
+* What happens if we don't have `"hello.txt"`?
+
+
+---
+
+
+# `unwrap()`
+
+
+```rust
+fn main() {
+    let greeting_file = File::open("hello.txt").unwrap();
+}
 ```
-thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Os {
-code: 2, kind: NotFound, message: "No such file or directory" }',
-src/main.rs:4:49
+
 ```
+thread 'main' panicked at src/main.rs:4:49:
+called `Result::unwrap()` on an `Err` value:
+    Os { code: 2, kind: NotFound, message: "No such file or directory" }
+```
+
+* This error message isn't the best...
 
 
 ---
@@ -333,21 +421,26 @@ src/main.rs:4:49
 
 # `expect()`
 
-We can do better than this if we *expect* this error and have a specific message in mind.
-```rust
-use std::fs::File;
+We can do better than this if we *expect* this error and know what message to print to the user if something goes wrong.
 
+```rust
 fn main() {
     let greeting_file = File::open("hello.txt")
-        .expect("hello.txt should be included in this project");
+        .expect("'hello.txt' should be included in this project");
 }
 ```
 Now we get:
 ```
-thread 'main' panicked at 'hello.txt should be included in this project: Os {
-code: 2, kind: NotFound, message: "No such file or directory" }',
-src/main.rs:5:10
+thread 'main' panicked at src/main.rs:5:33:
+'hello.txt' should be included in this project:
+    Os { code: 2, kind: NotFound, message: "No such file or directory" }
 ```
+
+
+---
+
+
+# **The Never Type**
 
 
 ---
@@ -356,10 +449,13 @@ src/main.rs:5:10
 # Functions that never return
 
 Consider the following code, what should the type of `x` be?
+
 ```rust
 let x = loop { println!("forever"); };
 ```
-* It isn't clear right?
+
+* This is not immediately obvious, right?
+
 
 ---
 
@@ -368,6 +464,7 @@ let x = loop { println!("forever"); };
 
 Rust has a special type called `!`, or the "never type", for this exact reason.
 Another example:
+
 ```rust
 fn bar() -> ! {
     loop {}
@@ -380,13 +477,15 @@ fn bar() -> ! {
 
 # What's the point?
 
-Why have a type that never has a value? Consider the following
+Why have a type that never has a value? Consider the following:
+
 ```rust
 let guess: u32 = match guess.trim().parse() {
     Ok(num) => num,
     Err(_) => continue,
 };
 ```
+
 * Recall match statements can only return 1 type
 * `continue` has the `!` type
     * Rust knows this can't be value and allows `guess: u32`
@@ -395,13 +494,14 @@ let guess: u32 = match guess.trim().parse() {
 ---
 
 
-# What else uses `!`?
+# What else is `!`?
 
 * `panic!`
 * `break`
 * `continue`
-* Everything that doesn't return a value -- typically control flow related
+* Everything that doesn't return a value - typically related to control flow
     * `print!` and `assert!` return `()`, so they don't use `!`
+
 
 ---
 
@@ -412,41 +512,32 @@ let guess: u32 = match guess.trim().parse() {
 ---
 
 
-# Trait Overview
+# Traits
+
+A _trait_ defines functionality a particular type has and can share with other types.
 
 ```rust
 trait Shape {
     // Associated function signature; `Self` refers to the implementor type.
-    fn new_unit() -> Self;
+    fn new_shape() -> Self;
 
     // Method signature to be implemented by a struct.
     fn area(&self) -> f32;
 
     fn name(&self) -> String;
+}
 ```
+
 * Traits are defined with the `trait` keyword
-* Defines shared behavior among different types represented with `Self`
-
----
-
-
-# Trait Overview
-Traits can also provide a default implementation of functions. They can be overriden for any given `impl Shape for MyStruct`
-```rust
-    // Default method implementation -- can be overriden
-    fn print(&self) {
-        println!("{} has an area of {}", self.name(), self.area());
-    }
-} // end Trait Shape
-```
 
 
 ---
 
 
-# Trait Overview
+# Trait Definitions
 
-So how do we use traits? We `impl`ement them `for` a `struct`
+So how do we use traits? We `impl`ement them `for` a `struct`:
+
 ```rust
 struct Rectangle {
     height: f32,
@@ -455,19 +546,47 @@ struct Rectangle {
 
 impl Shape for Rectangle {
     // Notice how 'Self' represents 'Rectangle' since it's the implementor
-    fn new_unit() -> Self {
+    fn new_shape() -> Self {
         Rectangle { height: 1.0, width: 1.0 }
     }
 
+    // <-- snip -->
+}
 ```
 
 
 ---
 
 
-# Trait Overview
-We can simply override functions as such:
+# Default Trait Implementations
+
+Traits can also provide a default implementation of functions.
+
 ```rust
+trait Shape {
+    // <-- snip -->
+
+    // Default method implementation -- can be overriden
+    fn print(&self) {
+        println!("{} has an area of {}", self.name(), self.area());
+    }
+}
+```
+
+* These can be overriden by any `impl Shape for MyStruct`
+
+
+---
+
+
+# Overriding Default Trait Implementations
+
+We can simply override functions as such:
+
+```rust
+impl Shape for Rectangle {
+    // <-- snip -->
+
     fn print(&self) {
         println!("I am a rectangle! :)");
     }
@@ -482,18 +601,27 @@ We can simply override functions as such:
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-What happens we try and construct a `Rectangle`?
+What happens we try and construct a `Shape`?
+
 ```rust
 let rec = Shape::new_unit();
 ```
 
 ```
-error[E0790]: cannot call associated function on trait
-without specifying the corresponding `impl` type
-  --> src/main.rs:43:15
+error[E0790]: cannot call associated function on trait without
+              specifying the corresponding `impl` type
+  --> src/main.rs:20:15
    |
-8  |     fn new_unit() -> Self;
-   |     ---------------------- `Shape::new_unit` defined
+3  |     fn new_shape() -> Self;
+   |     ----------------------- `Shape::new_shape` defined here
+...
+20 |     let rec = Shape::new_shape();
+   |               ^^^^^^^^^^^^^^^^ cannot call associated function of trait
+   |
+help: use the fully-qualified path to the only available implementation
+   |
+20 |     let rec = <Rectangle as Shape>::new_shape();
+   |               +++++++++++++      +
 ```
 
 
@@ -504,34 +632,20 @@ without specifying the corresponding `impl` type
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
 
+Traits, even those that define their functions, cannot be constructed directly.
+
+To use the `Shape` trait, Rust must know who is implementing it.
+
 ```rust
 let rec: Rectangle = Shape::new_unit();
-```
-Traits, even those that define their functions, cannot be constructed directly. To use the `Shape` trait, Rust must know who is implementing it.
-
-Similar in style to:
-- Interfaces
-- Abstract/virtual classes
-
----
-
-
-# Type Aliases
-
-Rust gives us a way to declare a type alias i.e. give a name to an already existing type.
-```rust
-type Kilometers = i32;
-
-let x: i32 = 5;
-let y: Kilometers = 5;
-
-println!("x + y = {}", x + y); // Rust knows the types are really the same
+let rec = <Rectangle as Shape>::new_shape();
 ```
 
 
 ---
 
 
+<!--
 # Advanced Traits
 
 We'll look at the common `Iterator` trait which uses an *associated type* `Item`.
@@ -587,7 +701,7 @@ By using an associated type, we only implement `Iterator` once -- Note that we c
 Associated types also become part of the trait’s contract: implementors of the trait must provide a type to stand in for the associated type placeholder. Associated types often have a name that describes how the type will be used, and documenting the associated type in the API documentation is good practice.
 
 
----
+--- -->
 
 
 # Super Traits
@@ -603,8 +717,8 @@ trait Student: Person {
     fn university(&self) -> String;
 }
 ```
-* `Person` is a supertrait of Student 
-* Implementing `Student` requires you to also `impl Person`
+* `Person` is a supertrait of Student
+* Implementing `Student` on a tyupe requires you to also `impl Person`
 
 
 ---
@@ -617,14 +731,25 @@ trait Programmer {
     fn fav_language(&self) -> String;
 }
 
-// CompSciStudent is a subtrait of both Programmer
-// and Student.
+// CompSciStudent is a subtrait of both Programmer and Student.
 trait CompSciStudent: Programmer + Student {
     fn git_username(&self) -> String;
 }
 ```
-* We can make a trait a subtrait of multiple traits with the `+` operator 
-* Implementing CompSciStudent will now require you to `impl` both supertraits
+* We can make a trait a subtrait of multiple traits with the `+` operator
+* Implementing `CompSciStudent` will now require you to `impl` both supertraits
+
+
+---
+
+
+# Traits Quick Recap
+
+* Traits define shared behavior among types in an abstract way
+* Instead of inheritance, Rust has supertraits
+* Traits are similar to:
+    * Interfaces
+    * Abstract / Virtual Classes
 
 
 ---
@@ -633,7 +758,7 @@ trait CompSciStudent: Programmer + Student {
 # Derive Traits
 
 * The compiler can providie basic implementations for some traits via the
-`#[derive]` attribute 
+`#[derive]` attribute
     * A general rule is that `struct X` can `#[derive]` a trait if all the fields of `X` derive that trait
 * These traits can still be manually implemented if a more complex behavior is required
 
@@ -646,6 +771,7 @@ trait CompSciStudent: Programmer + Student {
 * Means the type can be duplicated
 * Creates a new value with the same information as the original.
 * The new value is independent of the original value and can be modified without affecting the original value.
+
 ```rust
 let mut foo = vec![1, 2, 3];
 let mut foo2 = foo.clone(); // explicit duplication of an object
@@ -663,6 +789,7 @@ let y = foo2.pop(); // y=3, foo2 = [1, 2]
 Any type made out of types that implement `Clone` can use the `#[derive]` -- This is a general rule for derivation.
 
 Example:
+
 ```rust
 #[derive(Clone)]
 pub struct Cat {
@@ -670,6 +797,7 @@ pub struct Cat {
     name: String
 }
 ```
+
 * `Cat` can't implement `Copy` since a `String` can't be copied.
 
 
@@ -677,6 +805,7 @@ pub struct Cat {
 
 
 # `#[derive]` Clone Behind The Scenes
+
 ```rust
 pub struct Cat {
     age: u32,
@@ -695,7 +824,6 @@ impl Clone for Cat {
 
 
 ---
-
 
 
 # Derive Traits
@@ -764,14 +892,16 @@ pub struct Cat {
 # When `#[derive]` Fails
 
 What happens if parameter `T` doesn't implement `Default`?
+
 ```rust
 #[derive(Default)]
 pub struct Gift<T> {
     to: &'static str,
     is_wrapped: bool,
     contents: T
-} 
+}
 ```
+
 ```
    |
 41 |     let _: Gift<MyType> = Gift::default();
@@ -847,6 +977,7 @@ What does this mean? Well it means we can't apply traits like `Clone` on a stdli
 # Trait Mix Ups
 
 Consider the following
+
 ```rust
 trait Pilot {
     fn fly(&self);
@@ -892,6 +1023,7 @@ impl Human {
 # Trait Mix Ups
 
 What happens here?
+
 ```rust
 fn main() {
     let person = Human;
@@ -952,10 +1084,13 @@ This is considered the *fully qualified syntax* of a trait.
 If your function is generic over a trait but you don't mind the specific type, you can simplify the function declaration using `impl Trait` as the type of the argument.
 
 Instead of
+
 ```rust
 fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32
 ```
+
 We can write:
+
 ```rust
 fn get_csv_lines(src: impl std::io::BufRead) -> u32
 ```
@@ -985,7 +1120,9 @@ Trait bounds are awesome, but sometimes too many can be a problem.
 ```rust
 fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
 ```
+
 This can be cumbersome to write up so we have `where` clauses!
+
 ```rust
 fn some_function<T, U>(t: &T, u: &U) -> i32
 where
@@ -1002,6 +1139,7 @@ Now we don't need ultrawide monitors to code in Rust!
 # Conditional Implement Methods
 
 Say we have a struct `Pair`.
+
 ```rust
 use std::fmt::Display;
 
@@ -1034,6 +1172,7 @@ impl<T: Display + PartialOrd> Pair<T> {
     }
 }
 ```
+
 * `T` must implement `Display` to be printed
 * `T` must implement `PartialOrd` to be compared
 * `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>`
