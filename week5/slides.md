@@ -96,7 +96,35 @@ struct ArrayPair<T, const N: usize> {
 }
 ```
 
-* Const generics allow items to be generic over constant values
+* Const Generics allow items to be generic over constant values
+
+
+---
+
+
+# Const Generics
+
+Here's an example of constructing an `ArrayPair` with generic constant `5`:
+
+```rust
+struct ArrayPair<T, const N: usize> {
+    left: [T; N],
+    right: [T; N],
+}
+
+fn main() {
+    let pair = ArrayPair::<i32, 5> {
+        left: [0; 5],
+        right: [1; 5],
+    };
+
+    println!("{:?}, {:?}", pair.left, pair.right);
+}
+```
+
+```sh
+[0, 0, 0, 0, 0], [1, 1, 1, 1, 1]
+```
 
 
 ---
@@ -108,13 +136,13 @@ Currently, const parameters may only be instantiated by const arguments of the f
 
 * A literal (i.e. an integer, bool, or character)
 * A standalone const parameter
-* A concrete constant expression (enclosed by {}), involving no generic parameters
+* A concrete constant expression (enclosed by `{}`), involving no generic parameters
 
 
 ---
 
 
-# A Literal
+# Const Generic Literals
 
 ```rust
 fn foo<const N: usize>() {}
@@ -124,7 +152,7 @@ fn bar<T, const M: usize>() {
 }
 ```
 
-Note that any valid constant with the correct type `usize` can be a generic parameter.
+* Note that any valid constant with the correct type `usize` can be a generic parameter
 
 
 ---
@@ -186,14 +214,47 @@ fn bar<T, const M: usize>() {
 # Const Generic Design Patterns
 
 ```rust
-fn git_commit<const FORCE: bool, const NO_MESSAGE : bool>() {
-    ...
-    if FORCE {...}
+fn alternating<const ODD: bool>(nums: &[usize]) {
+    let mut i = 0;
+    if ODD {
+        i = 1;
+    }
+
+    while i < nums.len() {
+        print!("{} ", nums[i]);
+        i += 2;
+    }
 }
 ```
-* Const generics allow for multiple compilations of the same function with slightly different behavior.
-* Popular idea: const generics represent "option flags" for a function.
-    * More useful when we discuss closures and function pointers.
+
+* Const generics allow for multiple compilations of the same function with slightly different behavior
+* Const Generics can represent "option flags" for a function
+
+
+---
+
+
+# Const Generic Design Patterns
+
+```rust
+fn alternating<const ODD: bool>(nums: &[usize]) {
+    // <-- snip -->
+}
+
+fn main() {
+    let nums = [0, 1, 2, 3, 4, 5, 6, 7];
+
+    alternating::<false>(&nums);
+    println!();
+    alternating::<true>(&nums);
+}
+```
+
+```sh
+0 2 4 6
+1 3 5 7
+```
+
 
 
 ---
@@ -286,6 +347,7 @@ let x = match potential_fail() {
     Err(e) => return Err(e.into()), // Error is propogated up a level
 }
 ```
+
 * Think of the `?` as quick way to see where a function short-circuit returns on failure.
 
 
@@ -303,13 +365,6 @@ fn multiply(first_number_str: &str, second_number_str: &str) -> Result<i32, Pars
 
     Ok(first_number * second_number)
 }
-
-fn print(result: Result<i32, ParseIntError>) {
-    match result {
-        Ok(n)  => println!("n is {}", n),
-        Err(e) => println!("Error: {}", e),
-    }
-}
 ```
 
 
@@ -319,6 +374,13 @@ fn print(result: Result<i32, ParseIntError>) {
 # The ? Operator Example
 
 ```rust
+fn print(result: Result<i32, ParseIntError>) {
+    match result {
+        Ok(n)  => println!("n is {}", n),
+        Err(e) => println!("Error: {}", e),
+    }
+}
+
 fn main() {
     print(multiply("10", "2"));
     print(multiply("ten", "2"));
@@ -429,7 +491,9 @@ fn main() {
         .expect("'hello.txt' should be included in this project");
 }
 ```
+
 Now we get:
+
 ```
 thread 'main' panicked at src/main.rs:5:33:
 'hello.txt' should be included in this project:
@@ -463,6 +527,7 @@ let x = loop { println!("forever"); };
 # The "Never" Type - `!`
 
 Rust has a special type called `!`, or the "never type", for this exact reason.
+
 Another example:
 
 ```rust
@@ -717,6 +782,7 @@ trait Student: Person {
     fn university(&self) -> String;
 }
 ```
+
 * `Person` is a supertrait of Student
 * Implementing `Student` on a tyupe requires you to also `impl Person`
 
@@ -736,6 +802,7 @@ trait CompSciStudent: Programmer + Student {
     fn git_username(&self) -> String;
 }
 ```
+
 * We can make a trait a subtrait of multiple traits with the `+` operator
 * Implementing `CompSciStudent` will now require you to `impl` both supertraits
 
