@@ -233,7 +233,7 @@ fn alternating<const ODD: bool>(nums: &[usize]) {
 }
 ```
 
-* Const generics allow for multiple compilations of the same function with slightly different behavior
+* Const Generics allow for multiple compilations of the same function with slightly different behavior
 * Const Generics representing "optional flags" is a common pattern
 
 
@@ -929,7 +929,7 @@ foo.push(4); // foo = [1,2,3,4]
 let y = foo2.pop(); // y=3, foo2 = [1, 2]
 ```
 
-* A type that implements `Clone` can be duplicated / deep copied.
+* A type that implements `Clone` can be duplicated / deep copied
 * The new value is independent of the original value and can be modified without affecting the original value
 
 
@@ -1101,7 +1101,9 @@ pub struct Stuff<T> {
 
 # When `#[derive(Default)]` Fails
 
-We can derive `Default` only if every generic type `T` used is also `Default`.
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+We can only derive `Default` if every generic type `T` used is also `Default`.
 
 ```rust
 struct Nope;
@@ -1434,7 +1436,20 @@ impl<T: Display + PartialOrd> Pair<T> {
 ---
 
 
-# **Next Lecture: Cargo, Testing, Modules, and Crates**
+# Homework 5
+
+* You'll be parsing some files to implement `Reader` and `Summary` traits
+    * The `parse` methods will return a `Result`, which means they can fail
+* Parsing strings in Rust is tricky, so you will only need to do _half_ of this homework to receive _full credit_
+    * The second half is all extra credit!
+* Even though this week focused on Errors and Traits, this homework will heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
+* Please do not hesistate to reach out for help!
+
+
+---
+
+
+# **Next Lecture: Modules and Testing**
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
