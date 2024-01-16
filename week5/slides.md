@@ -215,15 +215,13 @@ fn bar<T, const M: usize>() {
 
 ```rust
 fn alternating<const ODD: bool>(nums: &[usize]) {
-    let mut i = 0;
-    if ODD {
-        i = 1;
-    }
+    let mut i = if ODD { 1 } else { 0 };
 
     while i < nums.len() {
         print!("{} ", nums[i]);
         i += 2;
     }
+
 }
 ```
 
@@ -270,10 +268,12 @@ fn main() {
 
 ![bg right:25% 75%](../images/ferris_panics.svg)
 
-In Rust there are two main types of errors we care about: recoverable and unrecoverable errors (panics).
+In Rust there are two main types of errors we care about: _recoverable_ and _unrecoverable_ errors (panics).
 
-* `Result<V, E>` - A return type for recoverable errors
-* `panic!` - A macro (*notice the `!`*) to invoke unrecoverable errors
+* `Result<V, E>`
+    * A return type for recoverable errors
+* `panic!`
+    * A macro (_notice the `!`_) to invoke unrecoverable errors
 
 
 ---
@@ -281,20 +281,22 @@ In Rust there are two main types of errors we care about: recoverable and unreco
 
 # The Result Type
 
-This is how Rust represents "success" and "failure" states in code.
+Rust provides a `Result` type to represent "success" and "failure" states in code.
 
 ```rust
-enum Result<V, E> {
-    Ok(V),
+enum Result<T, E> {
+    Ok(T),
     Err(E),
 }
 ```
+
+* Notice how the "success" does not have to have the same type as the "error"
 
 
 ---
 
 
-## Example Representing Errors #1
+# Errors Example 1
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
@@ -306,11 +308,16 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 }
 ```
 
+* Here, the "success" type is an `i32`, and the "failure" a `String`
+* The caller has to handle both cases
+
 
 ---
 
 
-## Example Representing Errors #2
+# Errors Example 2
+
+`Result<T, E>` is fully generic, so we can create our own error types!
 
 ```rust
 enum ArithError {
@@ -324,20 +331,21 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     } else if div == 0 {
         Err(ArithError::DivideByZero)
     } else {
-        Ok((x << shift)/div)
+        Ok((x << shift) / div)
     }
 }
 ```
 
-* Creating your own "error" enum like `ArithError` is a common practice in Rust.
+* Creating your own "error" enum like `ArithError` is a common pattern
 
 
 ---
 
 
-# The ? Operator
+# The `?` Operator
 
-The `?` operator when applied to a result type, unwraps it on a `Ok` and propogates the error up one in the call stack otherwise.
+
+To make error handling more ergonomic, Rust provides the `?` operator.
 
 ```rust
 let x = potential_fail()?;
@@ -348,24 +356,33 @@ let x = match potential_fail() {
 }
 ```
 
-* Think of the `?` as quick way to see where a function short-circuit returns on failure.
+* If `potential_fail` returns an `Err`, return early
+* Else we can unwrap the inner value and continue
+* Think of the `?` as quick way to see where a function short-circuit returns on failure
 
 
 ---
 
 
-# The ? Operator Example
+# The `?` Operator Example
 
 ```rust
 use std::num::ParseIntError;
 
-fn multiply(first_number_str: &str, second_number_str: &str) -> Result<i32, ParseIntError> {
+fn multiply(
+    first_number_str: &str,
+    second_number_str: &str,
+) -> Result<i32, ParseIntError> {
+
     let first_number = first_number_str.parse::<i32>()?;
     let second_number = second_number_str.parse::<i32>()?;
 
     Ok(first_number * second_number)
 }
 ```
+
+* If either of the `parse` calls fail, we return that `Err`
+* Else we take the parsed values and multiply them
 
 
 ---
@@ -412,6 +429,12 @@ fn read_username_from_file() -> Result<String, io::Error> {
     Ok(username)
 }
 ```
+
+
+---
+
+
+# **Panics**
 
 
 ---
