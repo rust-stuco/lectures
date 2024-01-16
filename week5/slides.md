@@ -130,7 +130,7 @@ fn main() {
 }
 ```
 
-```sh
+```
 [0, 0, 0, 0, 0], [1, 1, 1, 1, 1]
 ```
 
@@ -256,7 +256,7 @@ fn main() {
 }
 ```
 
-```sh
+```
 0 2 4 6
 1 3 5 7
 ```
@@ -828,7 +828,7 @@ struct Student {
 }
 ```
 
-```sh
+```
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
 ```
 
@@ -872,7 +872,7 @@ impl fmt::Debug for Student {
 }
 ```
 
-```sh
+```
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
 ```
 
@@ -998,41 +998,36 @@ Here's a list of other traits that can be derived:
 
 # Copy
 
-Recall `Copy` only applies to:
+Recall that the `Copy` is a marker for types whose values can be duplicated simply by copying bits.
+
+The only types that are `Copy` are:
 - All integer types: `u8`, `i32`, etc
 - `bool`
 - All floating point types: `f32`, `f64`, etc
 - `char` type
 
-It is a differentiator in whether or not move semantics are applied to a function. (aka pass by reference vs value)
+
+---
+
+
+# Copy
+
+Here is the definition of `Copy` in the standard library:
+
+```rust
+pub trait Copy: Clone {}
+```
+
+* Notice how therre are no methods associated with `Copy`
+* `Copy` is a subtrait of `Clone`
 
 
 ---
 
 
-# Clone vs Copy
+# What Can `#[derive(Copy)]`?
 
-Although their end result may feel the same they are different:
-
-Copy
-* Copies happen implicitely ex: `x = y`
-* `Copy` **cannot be overloaded** it is always a simple bitwise copy
-    * `Copy` can't be implemented on a type for complex behaviors like other traits
-
-Clone
-* Cloning is an explicit action `x.clone()`
-* `Clone` can provide any type-specific behavior necessary to duplicate values safely
-    * An example of this is for `String`, `Clone` would need to copy not just the pointer but the data on the heap
-
----
-
-
-# What Can `#[derive]` Copy?
-
-Any type made out of types that implement Copy or holds a shared reference `&T`.
-
-**Clone is a supertrait of Copy**
-So if we want to derive one, we have to derive the other.
+Since `Clone` is a supertrait of `Copy`, we must derive `Clone` first to derive `Copy`.
 
 ```rust
 #[derive(Clone, Copy)]
@@ -1042,49 +1037,109 @@ pub struct Cat {
 }
 ```
 
+* Note that we cannot force `impl Copy` ourselves whenever
+`#[derive(Clone, Copy)]` doesn't work, so always use `#[derive]` for `Copy`
+
+
 ---
 
 
 # When `#[derive]` Fails
 
-What happens if parameter `T` doesn't implement `Default`?
+What happens if a field is not `Copy`?
 
 ```rust
-#[derive(Default)]
-pub struct Gift<T> {
-    to: &'static str,
-    is_wrapped: bool,
-    contents: T
+#[derive(Copy)]
+pub struct Stuff<T> {
+    singleton: T,
+    many: Vec<T>,
 }
 ```
 
 ```
-   |
-41 |     let _: Gift<MyType> = Gift::default();
-   |                              ^^^^ the trait `Default` is not implemented for `MyType`
-   |
-   = help: the trait `Default` is implemented for `Gift<T>`
-note: required for `Gift<MyType>` to implement `Default`
+error[E0204]: the trait `Copy` cannot be implemented for this type
+ --> src/main.rs:4:10
+  |
+4 | #[derive(Copy)]
+  |          ^^^^
+...
+7 |     many: Vec<T>,
+  |     ------------ this field does not implement `Copy`
+  |
+  = note: this error originates in the derive macro `Copy`
 ```
 
 
 ---
 
 
-# When `#[derive]` Fails
+# Deriving `Default`
 
-Sometimes we can't derive a trait, or need a more complex behavior than what the
-`#[derive]` will provide.
-1. Look at the standard library documentation for the trait
-2. Find out what the required functions are and `impl` them like any trait
+What if we tried to derive `Default` instead?
+
+```rust
+pub trait Default: Sized {
+    // Required method
+    fn default() -> Self;
+}
+```
+
+```rust
+#[derive(Default)]
+pub struct Stuff<T> {
+    singleton: T,
+    many: Vec<T>,
+}
+```
+
+* This actually compiles, even though `T` is not `Default`!
+    * However...
 
 
 ---
 
 
-# Example: `Default`
+# When `#[derive(Default)]` Fails
 
-`std::default::Default`
+We can derive `Default` only if every generic type `T` used is also `Default`.
+
+```rust
+struct Nope;
+
+fn main() {
+    let d: Stuff<Nope> = Stuff::default();
+}
+```
+
+* `Nope` is not `Default`
+
+
+---
+
+
+# When `#[derive(Default)]` Fails
+
+We get this error only after trying to construct `Stuff<Nope>`.
+
+```
+error[E0277]: the trait bound `Nope: Default` is not satisfied
+  --> src/main.rs:10:26
+   |
+10 |     let d: Stuff<Nope> = Stuff::default();
+   |                          ^^^^^ the trait `Default` is not implemented for `Nope`
+   |
+   = help: the trait `Default` is implemented for `Stuff<T>`
+```
+
+
+---
+
+
+# `#[derive]` vs Manual Implementation
+
+Sometimes we can't derive a trait, or need a more complex behavior than what the
+`#[derive]` will provide.
+
 ```rust
 pub trait Default: Sized {
     // Required method
@@ -1097,11 +1152,16 @@ struct SomeOptions {
 }
 ```
 
+* Defaults for both `i32` and `f32` is `0`
+* We probably don't always want this
+
 
 ---
 
 
 # Example: `Default`
+
+We can still manaully implement all of the derivable traits.
 
 ```rust
 impl Default for SomeOptions {
@@ -1118,13 +1178,26 @@ impl Default for SomeOptions {
 ---
 
 
-# The Orphan Rule
+# Aside: The Orphan Rule
 
-Rust has a rule that you cannot provide implementations of a trait for a struct unless:
--  You are the crate that defines the struct
-- You are the crate that defines the trait.
+Rust has a specific rule for trait implementations.
 
-What does this mean? Well it means we can't apply traits like `Clone` on a stdlib type since we neither define `Clone` nor the stdlib type (such as `String` or `Box`)
+You cannot provide implementations of a trait for a type unless:
+* You created the type
+* You created the trait
+
+
+---
+
+
+# Aside: The Orphan Rule
+
+The orphan rule basically means you cannot implement someone else's trait for someone else's type.
+
+Examples:
+* You cannot implement `Hash` for `Vec<T>`
+* You cannot implement `PartialOrd` for `String`
+* _The real reason is that these trait implementations actually already exist, but this will become clearer when we talk about 3rd party crates._
 
 
 ---
@@ -1132,7 +1205,7 @@ What does this mean? Well it means we can't apply traits like `Clone` on a stdli
 
 # Trait Mix Ups
 
-Consider the following
+Consider the following:
 
 ```rust
 trait Pilot {
@@ -1151,6 +1224,8 @@ struct Human;
 
 
 # Trait Mix Ups
+
+Let's say we implement both traits for `Human`, which both have the `fly` method, as well as our own `fly` implementation.
 
 ```rust
 impl Pilot for Human {
@@ -1193,16 +1268,17 @@ fn main() {
 
 # Trait Mix Ups
 
+Here, Rust uses `.fly()` from `Human`.
+
 ```rust
 fn main() {
     let person = Human;
     person.fly();
 }
 ```
-`*waving arms furiously*` - Rust used `.fly()` from `Human`.
-
 
 How do we call every version of `.fly()`?
+
 ```rust
 fn main() {
     let person = Human;
@@ -1229,7 +1305,7 @@ fn main() {
 }
 ```
 
-This is considered the *fully qualified syntax* of a trait.
+* This is considered the *fully qualified syntax* of a trait
 
 
 ---
@@ -1237,33 +1313,52 @@ This is considered the *fully qualified syntax* of a trait.
 
 # Trait Bounds
 
-If your function is generic over a trait but you don't mind the specific type, you can simplify the function declaration using `impl Trait` as the type of the argument.
+If we want to ensure that a generic argument implements a trait, we can use _trait bounds._
 
-Instead of
-
-```rust
-fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32
-```
-
-We can write:
 
 ```rust
-fn get_csv_lines(src: impl std::io::BufRead) -> u32
+pub fn notify<T: Summary>(item: &T) {
+    println!("Breaking news! {}", item.summarize());
+}
 ```
+
+* We can only call `item.summarize()` because `T` is `Summary`
 
 
 ---
 
 
-# Trait Bounds
+# Argument Position `impl Trait`
 
-If your function returns a type that implements `MyTrait`, you can write its return type as `-> impl MyTrait`. This can help simplify your type signatures a lot!
+You can annotate the generic type with a trait bound, or you can use `impl Trait` as the type of the argument.
+
 
 ```rust
-fn to_key<T>(
-    v: Vec<T>,
-) -> impl Hash
+fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32;
+
+fn get_csv_lines(src: impl std::io::BufRead) -> u32;
 ```
+
+* The second line is called an _argument-position impl trait (APIT)_.
+* There is a slight difference here which we won't cover, just know that these aren't completely identical
+    * Watch [this](https://youtu.be/CWiz_RtA1Hw?si=nJ4lFAJz7Uczz50I&t=882) for more information
+
+
+---
+
+
+# Return Position `impl Trait`
+
+If your function _returns_ a type that implements `MyTrait`, you can write its return type as `-> impl MyTrait`.
+
+```rust
+fn to_key<T>(v: Vec<T>) -> impl Hash;
+```
+
+* This is called _return-position impl trait (RPIT)_
+* Starting in Rust 1.75, you can use RPIT in traits!
+* These are no longer generics, but are instead _existential_ types
+    * Read [this](https://varkor.github.io/blog/2018/07/03/existential-types-in-rust.html) blog for more information
 
 
 ---
@@ -1271,28 +1366,28 @@ fn to_key<T>(
 
 # `where` Clauses
 
-Trait bounds are awesome, but sometimes too many can be a problem.
+Trait bounds are awesome, but sometimes too many can be verbose.
 
 ```rust
-fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
+fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32;
 ```
 
-This can be cumbersome to write up so we have `where` clauses!
+This can be cumbersome to write, so we have `where` clauses!
 
 ```rust
 fn some_function<T, U>(t: &T, u: &U) -> i32
 where
     T: Display + Clone,
     U: Clone + Debug,
-{
 ```
-Now we don't need ultrawide monitors to code in Rust!
+
+* Now we don't need ultrawide monitors to code in Rust!
 
 
 ---
 
 
-# Conditional Implement Methods
+# Conditional Implementation
 
 Say we have a struct `Pair`.
 
@@ -1315,7 +1410,9 @@ impl<T> Pair<T> {
 ---
 
 
-# Conditionally Implement Methods
+# Conditional Implementation
+
+We can conditionally implement methods based on the traits the generic parameters implement.
 
 ```rust
 impl<T: Display + PartialOrd> Pair<T> {
