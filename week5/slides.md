@@ -33,6 +33,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
     * Trait Bounds
     * `Copy` vs `Clone`
     * Supertraits
+    * Derivable Traits
 
 
 ---
@@ -795,7 +796,7 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
-# Traits Recap
+# Recap: Traits
 
 * Traits define shared behavior among types in an abstract way
 * Instead of inheritance, Rust has supertraits
@@ -807,11 +808,87 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
+# **Derivable Traits**
+
+
+---
+
+
 # Derive Traits
 
-* The compiler can providie basic implementations for some traits via the
-`#[derive]` attribute
-    * A general rule is that `struct X` can `#[derive]` a trait if all the fields of `X` derive that trait
+Back in week 3, we saw this example:
+
+```rust
+#[derive(Debug)]
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
+}
+```
+
+```sh
+Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
+```
+
+* Recall that we were not able to print out this struct without the
+`#[derive(Debug)]`
+
+
+---
+
+
+# `Debug` Trait
+
+The `Debug` trait is defined as such in the standard library:
+
+```rust
+pub trait Debug {
+    // Required method
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>;
+}
+```
+
+* We _could_ implement this trait for `Student` ourselves
+    * It would likely be tedious...
+
+
+---
+
+
+# `Debug` Trait
+
+```rust
+impl fmt::Debug for Student {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Student {{ ")?;
+        write!(f, "andrew_id: {:?}, ", self.andrew_id)?;
+        write!(f, "attendance: {:?}, ", self.attendance)?;
+        write!(f, "grade: {:?}, ", self.grade)?;
+        write!(f, "stress_level: {:?}, ", self.stress_level)?;
+        write!(f, "}}")
+    }
+}
+```
+
+```sh
+Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
+```
+
+* _Editor's note: it was indeed tedious_
+
+
+---
+
+
+# Derive Traits
+
+Luckily, Rust can `derive` traits for us when there there is an obvious and common implementation.
+
+* The compiler can provide basic implementations for some traits via the
+`#[derive]` [attribute](https://doc.rust-lang.org/reference/attributes.html)
+* `struct X` can `#[derive]` a trait if all the fields of `X` can derive that trait
 * These traits can still be manually implemented if a more complex behavior is required
 
 
