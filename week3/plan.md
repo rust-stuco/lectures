@@ -2,17 +2,17 @@
 
 ### Lecture
 - Ownership Review (10 min)
-- Structs (8 min)
+- Structs (10 min)
     - Creating Structs
         - Update syntax
     - Tuple Structs
     - Unit Structs
     - Lifetimes sneak peek
-- `impl` Structs and Methods (10 min)
+- `impl` Structs and Methods (6 min)
     - Automatic referencing and dereferencing
     - `Self` vs `&self`
     - Associated functions
-- Enum basics (25 min)
+- Enum basics (24 min)
     - Pattern Matching
     - Option Type
     - `if let`

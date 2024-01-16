@@ -1,21 +1,20 @@
 ## Week 4: Standard Collections and Generics
 
 ### Lecture
-- Vectors (5 min)
-    - Go through common methods
-        - TODO
-- Strings (10 min)
+- Vectors (7 min)
+    - `Vec<T>` API
+    - Ownership and Borrowing
+- Strings (14 min)
     - UTF-8
-    - char length
-    - Common methods
-- Maps (15 min)
-    - Focus on `HashMap` and `HashSet` (if time available `BTreeMap`)
+    - `String` API
+- Maps (7 min)
+    - Focus on `HashMap` and `HashSet`
     - `Entry` API
-- Generics basics (20 min)
-    - Metaprogramming
-    - Structs, Enums, Function definitions
-    - Monomorphization vs. Polymorphism
-    - Performance
+- Generics (22 min)
+    - Functions
+    - Structs and Enums
+    - `impl` Blocks
+    - Monomorphization
 
 ### Extra Material
 - Rust Book Chapters 8 and 10.1

@@ -71,7 +71,7 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 - `anyhow`
 
 
-## Week 6: Cargo, Modules, Crates, and Testing
+## Week 6: Modules and Testing
 - Packages and Crates
 - Modules
 - The `use` Keyword
@@ -80,7 +80,7 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 - Integration Tests
 
 
-## Week 7: Popular Crates, Closures, and Iterators
+## Week 7: Crates, Closures, and Iterators
 - `no_std`: `rand`, `time`
 - `std`: `clap`, `log`, `tracing`, `anyhow`, `flamegraph`
 - Closures
