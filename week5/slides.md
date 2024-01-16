@@ -23,6 +23,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Today: Error Handling and Traits
 
+* Type Aliases
 * Const Generics
 * Error Handling
     * `Result<V,E>`
@@ -32,6 +33,12 @@ Benjamin Owad, David Rudo, and Connor Tsui
     * Trait Bounds
     * `Copy` vs `Clone`
     * Supertraits
+
+
+---
+
+
+# **Type Aliases**
 
 
 ---
@@ -132,10 +139,10 @@ fn main() {
 
 # Const Generics Rules
 
-Currently, const parameters may only be instantiated by const arguments of the following forms:
+Currently, `const` parameters may only be instantiated by `const` arguments of the following forms:
 
 * A literal (i.e. an integer, bool, or character)
-* A standalone const parameter
+* A standalone `const` parameter
 * A concrete constant expression (enclosed by `{}`), involving no generic parameters
 
 
@@ -200,7 +207,7 @@ fn bar<T, const M: usize>() {
                         // contains the generic parameter `M`
 
     foo::<{ std::mem::size_of::<T>() }>(); // Error: const expression
-                                           //contains the generic parameter `T`
+                                           // contains the generic parameter `T`
 
     let _: [u8; std::mem::size_of::<T>()]; // Error: const expression
                                            // contains the generic parameter `T`
@@ -226,7 +233,7 @@ fn alternating<const ODD: bool>(nums: &[usize]) {
 ```
 
 * Const generics allow for multiple compilations of the same function with slightly different behavior
-* Const Generics can represent "option flags" for a function
+* Const Generics representing "optional flags" is a common pattern
 
 
 ---
@@ -268,7 +275,7 @@ fn main() {
 
 ![bg right:25% 75%](../images/ferris_panics.svg)
 
-In Rust there are two main types of errors we care about: _recoverable_ and _unrecoverable_ errors (panics).
+In Rust there are **two** main types of errors we care about: _recoverable_ and _unrecoverable_ errors (panics).
 
 * `Result<V, E>`
     * A return type for recoverable errors
@@ -290,7 +297,7 @@ enum Result<T, E> {
 }
 ```
 
-* Notice how the "success" does not have to have the same type as the "error"
+* Notice how the "success" does _not_ have to have the same type as the "error"
 
 
 ---
@@ -381,7 +388,7 @@ fn multiply(
 }
 ```
 
-* If either of the `parse` calls fail, we return that `Err`
+* If either of the `parse` calls fail, we return their `Err`s
 * Else we take the parsed values and multiply them
 
 
@@ -445,7 +452,7 @@ fn read_username_from_file() -> Result<String, io::Error> {
 Panics in Rust are unrecoverable errors. They can happen in many different ways:
 
 * Out of bounds slice indexing
-* Integer overflow (debug)
+* Integer overflow (only in debug mode)
 * `.unwrap()` on a `None` or `Err`
 * Calls to the `panic!` macro
 
@@ -457,9 +464,12 @@ Panics in Rust are unrecoverable errors. They can happen in many different ways:
 
 There are other useful macros that panic:
 
-* `assert!`, `assert_eq!`, `assert_ne!` conditionally panic
-* `unimplemented!` / `todo!` - self documented
-* `unreachable!` - Lets the compiler optimize a code segment away
+* `assert!`, `assert_eq!`, `assert_ne!`
+    * Conditionally panics based on inputs
+* `unimplemented!` / `todo!`
+    * Usually used while something is in progress
+* `unreachable!`
+    * Can help the compiler optimize a code segment away
 
 
 ---
@@ -633,7 +643,6 @@ struct Rectangle {
 }
 
 impl Shape for Rectangle {
-    // Notice how 'Self' represents 'Rectangle' since it's the implementor
     fn new_shape() -> Self {
         Rectangle { height: 1.0, width: 1.0 }
     }
@@ -654,7 +663,7 @@ Traits can also provide a default implementation of functions.
 trait Shape {
     // <-- snip -->
 
-    // Default method implementation -- can be overriden
+    // Default method implementation (can be overriden)
     fn print(&self) {
         println!("{} has an area of {}", self.name(), self.area());
     }
@@ -695,6 +704,17 @@ What happens we try and construct a `Shape`?
 let rec = Shape::new_unit();
 ```
 
+
+---
+
+
+# Traits `!=` Types
+
+
+```rust
+let rec = Shape::new_unit();
+```
+
 ```
 error[E0790]: cannot call associated function on trait without
               specifying the corresponding `impl` type
@@ -712,6 +732,8 @@ help: use the fully-qualified path to the only available implementation
    |               +++++++++++++      +
 ```
 
+* Traits are _abstract_, we cannot construct a trait by itself
+
 
 ---
 
@@ -719,8 +741,6 @@ help: use the fully-qualified path to the only available implementation
 # Traits in Action
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
-
-Traits, even those that define their functions, cannot be constructed directly.
 
 To use the `Shape` trait, Rust must know who is implementing it.
 
@@ -731,65 +751,6 @@ let rec = <Rectangle as Shape>::new_shape();
 
 
 ---
-
-
-<!--
-# Advanced Traits
-
-We'll look at the common `Iterator` trait which uses an *associated type* `Item`.
-```rust
-pub trait Iterator {
-    type Item;
-
-    fn next(&mut self) -> Option<Self::Item>;
-}
-```
-
-
----
-
-
-# Advanced Traits
-
-Here we see the associated type `Item` being defined for a particular instance. This means the `Iterator` trait can be defined for any `Item` depending on the collection.
-```rust
-impl Iterator for Counter {
-    type Item = u32;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // --snip--
-```
-
-
----
-
-
-# Why Not Use Generics?
-
-Some of you may be wondering why the Rust std library doesn't define the `Iterator` trait like this:
-```rust
-pub trait Iterator<T> {
-    fn next(&mut self) -> Option<T>;
-}
-```
-There's nothing technically wrong with this -- it will compile.
-
-Here's the issue, it would be possible to implement both `Iterator<i64> for Counter` **and** `Iterator<u32> for Counter` !
-
-
----
-
-
-# Why Is This Bad?
-
-When we use the `next()` method on `Counter`, we would have to provide type annotations to indicate which implementation of `Iterator` we want to use.
-
-By using an associated type, we only implement `Iterator` once -- Note that we can define `Item` to be a generic type instead.
-
-Associated types also become part of the trait’s contract: implementors of the trait must provide a type to stand in for the associated type placeholder. Associated types often have a name that describes how the type will be used, and documenting the associated type in the API documentation is good practice.
-
-
---- -->
 
 
 # Super Traits
@@ -806,8 +767,9 @@ trait Student: Person {
 }
 ```
 
-* `Person` is a supertrait of Student
-* Implementing `Student` on a tyupe requires you to also `impl Person`
+* `Person` is a supertrait of `Student`
+* `Student` is a subtrait of `Person`
+* Implementing `Student` on a type requires you to also `impl Person`
 
 
 ---
@@ -820,7 +782,7 @@ trait Programmer {
     fn fav_language(&self) -> String;
 }
 
-// CompSciStudent is a subtrait of both Programmer and Student.
+// CompSciStudent is a subtrait of both Programmer and Student
 trait CompSciStudent: Programmer + Student {
     fn git_username(&self) -> String;
 }
@@ -833,7 +795,7 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
-# Traits Quick Recap
+# Traits Recap
 
 * Traits define shared behavior among types in an abstract way
 * Instead of inheritance, Rust has supertraits
