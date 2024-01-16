@@ -24,7 +24,6 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * Homework 1 due today
 * You can use 7 late days over the whole semester
 * If you spent over an hour on the assignment, please let us know!
-* Other announcements (TODO)
 
 
 ---
@@ -32,7 +31,8 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Review: Scopes
 
-Recall scopes in Rust.
+Recall _scopes_ in Rust.
+
 ```rust
 
                            // s is not valid here, it’s not yet declared
@@ -107,7 +107,7 @@ fn main() {
 }
 ```
 
-String literals live inside in the program binary.
+* String literals live inside in the program binary
 
 <!-- Like C/C++ -->
 
