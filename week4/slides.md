@@ -21,11 +21,11 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Today: Standard Collections and Generics
 
-* Rust's collection data structures
+* Rust's `std::collection` Types
     - `Vec<T>`
     - `String`
     - `HashMap<K, V>`
-* Generic types
+* Generic Types
 
 
 ---
@@ -235,7 +235,7 @@ for i in v {
 }
 ```
 
-* The reason this works is subtle, and we'll talk more about why in week 8!
+* The reason this works is subtle, and we'll talk more about why in week 7!
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
@@ -288,7 +288,7 @@ let row = vec![
 
 # Vectors and Ownership
 
-Vectors own all of their contained elements. To insert an owned value, it must be moved into the vector—i.e. ownership must be forfeit.
+Vectors own all of their contained elements.
 
 ```rust
 let mut v = vec![String::from("rust"), String::from("is")];
@@ -299,6 +299,9 @@ v.push(s); // move `s` into `v`
 
 // `s` is no longer usable here!
 ```
+
+* To insert an owned value, it must be moved
+    * In other words, ownership must be transferred into the vector
 
 
 ---
@@ -350,7 +353,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
     * String literals are also `&str`—they reference data stored in the program's binary
 * `String` is a growable, mutable, owned, UTF-8 encoded string type
 
-<!-- 
+<!--
 a raw `str` type always has to be on the heap, behind a ref, box, rc, raw ptr, or similar.
 
 Slices and literals are both actual references to existing data!
@@ -395,9 +398,6 @@ let hello = String::from("Dobrý den");
 let hello = String::from("Hallo");
 let hello = String::from("שָׁלוֹם");
 let hello = String::from("नमस्ते");
-let hello = String::from("こんにちは");
-let hello = String::from("안녕하세요");
-let hello = String::from("你好");
 let hello = String::from("Olá");
 let hello = String::from("Привет");
 let hello = String::from("Hola");
@@ -582,8 +582,8 @@ let answer = &hello[0];
 ```
 
 * What _should_ `answer` be?
-    * It can't be `П`, internally it is represented by 2 bytes—`[208, 159]`
-    * Do we return 208 instead?
+    * It can't be `П`, internally it is represented by 2 bytes: `[208, 159]`
+    * Do we return `208` instead?
 * There isn't any obvious expected behavior here
 
 
@@ -594,7 +594,7 @@ let answer = &hello[0];
 
 ```rust
 let hello = "Привет";
-let answer = &hello[0];
+let answer = &hello[0]; // BAD!
 ```
 
 * Anything we can return here might not be the expected result
@@ -871,7 +871,7 @@ let text = "hello world wonderful world";
 let mut map = HashMap::new();
 
 for word in text.split_whitespace() {
-    let count = map.entry(word).or_insert(0);
+    let count: &mut usize = map.entry(word).or_insert(0);
     *count += 1;
 }
 
@@ -1050,7 +1050,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function is generic over `T`
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
-* `T` can be any type! 
+* `T` can be any type!
 
 
 ---
@@ -1065,11 +1065,11 @@ fn largest<T>(list: &[T]) -> &T
 ```
 
 ```rust
-fn largest<K>(list: &[K]) -> &K
+fn largest<Key>(list: &[Key]) -> &Key
 ```
 
 ```rust
-fn largest<Hi>(list: &[Hi]) -> &Hi
+fn largest<HiThere>(list: &[HiThere]) -> &HiThere
 ```
 
 * All of these essentially mean the same thing!
@@ -1395,7 +1395,7 @@ fn main() {
 }
 ```
 
-* Note that `U` has to be the same in both `self` and `other`.
+* Note that `U` has to be the same in both `self` and `other`
 
 
 ---
@@ -1424,9 +1424,9 @@ fn main() {
 ---
 
 
-```rust
-// Another example
+Here's another example of a generic `impl`:
 
+```rust
 struct Point<X1, Y1> {
     x: X1,
     y: Y1,
@@ -1527,7 +1527,12 @@ fn main() {
 
 # Homework 4
 
-* TODO
+* You'll be implementing two collection data structures:
+    * `MultiSet`
+        - A collection that stores unordered values and tracks multiplicity
+    * `MultiMap`
+        - A collection that maps keys to any number of values
+* Make sure you are familiar with the API for [`HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html) and [`Entry`](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)!
 
 
 ---

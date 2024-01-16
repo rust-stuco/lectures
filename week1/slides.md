@@ -1003,7 +1003,7 @@ fn main() {
 
 * Notice that there is no semicolon after `x + 1`
 * Scopes return the value of their last expression
-* Since functions are scopes, they also can return values in this way!
+* Since functions are scopes, they can also return values in this way!
 
 
 ---
@@ -1377,6 +1377,7 @@ certain nuances that we will talk about in future weeks.
 # Course Logistics: Communication
 
 * [Discord](https://discord.gg/hKSYvnvD)
+* [Piazza](https://piazza.com/cmu/spring2024/98008/home)
 * Email
 * Talk to us!
     * If you can't make it to lecture, tell us beforehand

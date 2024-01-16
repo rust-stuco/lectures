@@ -517,7 +517,7 @@ fn main() {
 ```
 
 * Structs that have no fields
-* Most commonly used as markers since they are zero-sized types
+* Most commonly used as compile-time markers since they are zero-sized types
 
 <!--
 Isomorphic to the unit type ()
@@ -563,7 +563,7 @@ help: consider introducing a named lifetime parameter
 ```
 
 * We can store references in structs, but we need lifetime specifiers
-    * We will talk about these in Week 7!
+    * We will talk about these in Week 8!
 
 
 ---
@@ -735,7 +735,7 @@ Student { andrew_id: "cjtsui", attendance: [true, false], grade: 80, stress_leve
 ---
 
 
-# **Struct Methods**
+# **Methods**
 
 
 ---

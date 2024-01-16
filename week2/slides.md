@@ -24,7 +24,6 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * Homework 1 due today
 * You can use 7 late days over the whole semester
 * If you spent over an hour on the assignment, please let us know!
-* Other announcements (TODO)
 
 
 ---
@@ -32,7 +31,8 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Review: Scopes
 
-Recall scopes in Rust.
+Recall _scopes_ in Rust.
+
 ```rust
 
                            // s is not valid here, it’s not yet declared
@@ -64,7 +64,7 @@ From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-unders
 
 > Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
 
-* Today we'll introduce Ownership, as well as several related features
+* Today we'll introduce _Ownership_, as well as several related features
 
 
 ---
@@ -107,7 +107,7 @@ fn main() {
 }
 ```
 
-String literals live inside in the program binary.
+* String literals live inside in the program binary
 
 <!-- Like C/C++ -->
 
@@ -151,8 +151,6 @@ You can create a `String` from a string literal using `String::from()`.
 let s = String::from("hello");
 ```
 
-<br>
-
 This kind of string _can_ be mutated:
 
 ```rust
@@ -163,7 +161,7 @@ s.push_str(", world!"); // push_str() appends a literal to a String
 println!("{}", s); // This will print `hello, world!`
 ```
 
-* Why can `String` be mutated but literals cannot?
+* Why can `String` be mutated but string literals cannot?
 
 
 ---
@@ -172,8 +170,8 @@ println!("{}", s); // This will print `hello, world!`
 # `String` vs literals
 
 * We know the contents of string literals at compile time, so the text is hardcoded directly into the final executable
-* To support a fully resizable piece of text, we need to allocate on the heap
-    * This means we must request memory from the allocator at runtime
+* To support a fully resizable piece of text, we need to allocate on the _heap_
+    * This means we must request memory from the allocator at _runtime_
     * We need a way of returning the memory when we're done using it
     * What 2 `C` functions does this remind you of?
 
@@ -947,7 +945,7 @@ println!("{}", r3);
 * The scope of a reference starts when it is initialized
 * The scope of a reference **ends at the last point it is used**
 * The specific term for reference scopes are _lifetimes_
-    * We'll talk about lifetimes in week 7!
+    * We'll talk about lifetimes in week 8!
 
 
 ---
