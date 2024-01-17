@@ -1,5 +1,7 @@
 ## Week 1: Introduction
 
+TODO: Fix time plan
+
 ### Lecture
 - Why Rust? (10 min)
 - Cargo Basics (5 min)
