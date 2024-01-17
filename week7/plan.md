@@ -1,4 +1,4 @@
-## Week 7: Popular Crates, Closures, and Iterators
+## Week 7: Crates, Closures, and Iterators
 
 ### Lecture
 

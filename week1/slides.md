@@ -1,15 +1,18 @@
 ---
 marp: true
-theme: default
-class: invert
+theme: rust
 paginate: true
 ---
 
-# Intro to Rust Lang
+
+<!-- _class: communism invert  -->
+
+## Intro to Rust Lang
+# Introduction
+
+<br>
 
 Benjamin Owad, David Rudo, and Connor Tsui
-
-![bg right:35% 65%](../images/ferris.svg)
 
 
 ---

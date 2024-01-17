@@ -1,4 +1,4 @@
-## Week 6: Cargo, Testing, Modules, and Crates
+## Week 6: Modules and Testing
 
 ### Lecture
 - File system (20 min)
