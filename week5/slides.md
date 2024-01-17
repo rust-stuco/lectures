@@ -756,7 +756,7 @@ let rec = <Rectangle as Shape>::new_shape();
 
 # Super Traits
 
-Rust doesn't have "inheritence", but you can define a trait as being a superset of another trait.
+Rust doesn't have "inheritance", but you can define a trait as being a superset of another trait.
 
 ```rust
 trait Person {
@@ -776,7 +776,7 @@ trait Student: Person {
 ---
 
 
-# Even Superer Traits
+# Even Super-er Traits
 
 ```rust
 trait Programmer {
@@ -1040,6 +1040,14 @@ pub struct Cat {
 * Note that we cannot force `impl Copy` ourselves whenever
 `#[derive(Clone, Copy)]` doesn't work, so always use `#[derive]` for `Copy`
 
+<!--
+If you try to do this on a type that has fields that are not copyable,
+you will get a compiler error.
+So you will only ever get a compiler error like that if #[derive(Clone, Copy)]
+also wouldn't work.
+So at that point you might as well just use #[derive(Clone, Copy)]
+-->
+
 
 ---
 
@@ -1106,6 +1114,7 @@ pub struct Stuff<T> {
 We can only derive `Default` if every generic type `T` used is also `Default`.
 
 ```rust
+// No #[derive(Default)] here!
 struct Nope;
 
 fn main() {
@@ -1139,8 +1148,7 @@ error[E0277]: the trait bound `Nope: Default` is not satisfied
 
 # `#[derive]` vs Manual Implementation
 
-Sometimes we can't derive a trait, or need a more complex behavior than what the
-`#[derive]` will provide.
+Sometimes we can't derive a trait, or need a more complex behavior than what the `#[derive]` will provide.
 
 ```rust
 pub trait Default: Sized {
@@ -1155,7 +1163,7 @@ struct SomeOptions {
 ```
 
 * Defaults for both `i32` and `f32` is `0`
-* We probably don't always want this
+* We don't always want this behaviour
 
 
 ---
@@ -1175,6 +1183,9 @@ impl Default for SomeOptions {
     }
 }
 ```
+
+* `#[derive(Default)]` would make both of those values `0`
+* Instead we manualy set them to values we want
 
 
 ---
@@ -1358,7 +1369,7 @@ fn to_key<T>(v: Vec<T>) -> impl Hash;
 ```
 
 * This is called _return-position impl trait (RPIT)_
-* Starting in Rust 1.75, you can use RPIT in traits!
+* Starting in Rust 1.75, you can use [RPIT in traits](https://blog.rust-lang.org/2023/12/21/async-fn-rpit-in-traits.html)!
 * These are no longer generics, but are instead _existential_ types
     * Read [this](https://varkor.github.io/blog/2018/07/03/existential-types-in-rust.html) blog for more information
 
