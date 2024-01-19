@@ -26,8 +26,8 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * Type Aliases
 * Const Generics
 * Error Handling
-    * `Result<V,E>`
     * `panic!`
+    * `Result<V,E>`
 * The Never Type
 * Traits
     * Trait Bounds
@@ -156,7 +156,7 @@ Currently, `const` parameters may only be instantiated by `const` arguments of t
 fn foo<const N: usize>() {}
 
 fn bar<T, const M: usize>() {
-    foo::<2021>(); // Okay: `2021` is a literal
+    foo::<2024>(); // Okay: `2024` is a literal
 }
 ```
 
@@ -205,7 +205,7 @@ fn foo<const N: usize>() {}
 
 fn bar<T, const M: usize>() {
     foo::<{ M + 1 }>(); // Error: const expression
-                        // contains the generic parameter `M`
+                        // contains the generic parameter `M`, M+1 could overflow
 
     foo::<{ std::mem::size_of::<T>() }>(); // Error: const expression
                                            // contains the generic parameter `T`
@@ -215,9 +215,12 @@ fn bar<T, const M: usize>() {
 }
 ```
 
+<!---
+This is an unresolved question in the RFC, but basically we don't know what M or the size_of will output, so we don't know it doesn't overflow and panic. Theoretically you could make these work.
+-->
+
 
 ---
-
 
 # Const Generic Design Patterns
 
@@ -304,7 +307,113 @@ enum Result<T, E> {
 ---
 
 
-# Errors Example 1
+# `unwrap()`
+```rust
+pub const fn unwrap(self) -> T {
+    match self {
+        Ok(val) => val,
+        Err => panic!("called `Option::unwrap()` on a `Err` value"),
+    }
+}
+```
+
+* Takes and enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
+* Most common source of panics in Rust programs
+    * It should only be used when you expect an inner value, otherwise halt
+
+
+---
+# `unwrap()`
+
+Consider the following example from the Rust book:
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let greeting_file = File::open("hello.txt").unwrap();
+}
+```
+
+* What happens if we don't have `"hello.txt"`?
+
+
+---
+
+
+# `unwrap()`
+
+
+```rust
+fn main() {
+    let greeting_file = File::open("hello.txt").unwrap();
+}
+```
+
+```
+thread 'main' panicked at src/main.rs:4:49:
+called `Result::unwrap()` on an `Err` value:
+    Os { code: 2, kind: NotFound, message: "No such file or directory" }
+```
+
+* This error message isn't the best...
+
+
+---
+
+
+# `expect()`
+
+We can do better than this if we *expect* this error and know what message to print to the user if something goes wrong.
+
+```rust
+fn main() {
+    let greeting_file = File::open("hello.txt")
+        .expect("'hello.txt' should be included in this project");
+}
+```
+
+Now we get:
+
+```
+thread 'main' panicked at src/main.rs:5:33:
+'hello.txt' should be included in this project:
+    Os { code: 2, kind: NotFound, message: "No such file or directory" }
+```
+
+
+---
+
+
+# Panics
+
+Panics in Rust are unrecoverable errors. They can happen in many different ways:
+
+* Out of bounds slice indexing
+* Integer overflow (only in debug mode)
+* `.unwrap()` on a `None` or `Err`
+* Calls to the `panic!` macro
+
+
+---
+
+
+# More Panics
+
+There are other useful macros that panic:
+
+* `assert!`, `assert_eq!`, `assert_ne!`
+    * Conditionally panics based on inputs
+* `unimplemented!` / `todo!`
+    * Usually used while something is in progress
+* `unreachable!`
+    * Can help the compiler optimize a code segment away
+
+
+---
+
+
+# Using Results 1
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
@@ -323,7 +432,7 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 ---
 
 
-# Errors Example 2
+# Using Results 2
 
 `Result<T, E>` is fully generic, so we can create our own error types!
 
@@ -442,102 +551,6 @@ fn read_username_from_file() -> Result<String, io::Error> {
 ---
 
 
-# **Panics**
-
-
----
-
-
-# Panics
-
-Panics in Rust are unrecoverable errors. They can happen in many different ways:
-
-* Out of bounds slice indexing
-* Integer overflow (only in debug mode)
-* `.unwrap()` on a `None` or `Err`
-* Calls to the `panic!` macro
-
-
----
-
-
-# More Panics
-
-There are other useful macros that panic:
-
-* `assert!`, `assert_eq!`, `assert_ne!`
-    * Conditionally panics based on inputs
-* `unimplemented!` / `todo!`
-    * Usually used while something is in progress
-* `unreachable!`
-    * Can help the compiler optimize a code segment away
-
-
----
-
-
-# `unwrap()`
-
-Consider the following example from the Rust book:
-
-```rust
-use std::fs::File;
-
-fn main() {
-    let greeting_file = File::open("hello.txt").unwrap();
-}
-```
-
-* What happens if we don't have `"hello.txt"`?
-
-
----
-
-
-# `unwrap()`
-
-
-```rust
-fn main() {
-    let greeting_file = File::open("hello.txt").unwrap();
-}
-```
-
-```
-thread 'main' panicked at src/main.rs:4:49:
-called `Result::unwrap()` on an `Err` value:
-    Os { code: 2, kind: NotFound, message: "No such file or directory" }
-```
-
-* This error message isn't the best...
-
-
----
-
-
-# `expect()`
-
-We can do better than this if we *expect* this error and know what message to print to the user if something goes wrong.
-
-```rust
-fn main() {
-    let greeting_file = File::open("hello.txt")
-        .expect("'hello.txt' should be included in this project");
-}
-```
-
-Now we get:
-
-```
-thread 'main' panicked at src/main.rs:5:33:
-'hello.txt' should be included in this project:
-    Os { code: 2, kind: NotFound, message: "No such file or directory" }
-```
-
-
----
-
-
 # **The Never Type**
 
 
@@ -553,6 +566,7 @@ let x = loop { println!("forever"); };
 ```
 
 * This is not immediately obvious, right?
+* `loop` never terminates so what type should it be?
 
 
 ---
@@ -588,6 +602,7 @@ let guess: u32 = match guess.trim().parse() {
 * Recall match statements can only return 1 type
 * `continue` has the `!` type
     * Rust knows this can't be value and allows `guess: u32`
+    * This is why we can have `panic!` in a match statement like `unwrap()`
 
 
 ---
@@ -613,11 +628,11 @@ let guess: u32 = match guess.trim().parse() {
 
 # Traits
 
-A _trait_ defines functionality a particular type has and can share with other types.
+A _trait_ defines functionality a particular type has and can share with other types. 
 
 ```rust
 trait Shape {
-    // Associated function signature; `Self` refers to the implementor type.
+    // Associated function signature; `Self` refers to the implementer type.
     fn new_shape() -> Self;
 
     // Method signature to be implemented by a struct.
@@ -628,14 +643,15 @@ trait Shape {
 ```
 
 * Traits are defined with the `trait` keyword
-
+* They act as an interface for structs
+    * They can cannot be constructed directly, only applied onto structs
 
 ---
 
 
 # Trait Definitions
 
-So how do we use traits? We `impl`ement them `for` a `struct`:
+So how do we use traits? We `impl`ement them for a struct:
 
 ```rust
 struct Rectangle {
@@ -1019,6 +1035,7 @@ pub trait Copy: Clone {}
 ```
 
 * Notice how therre are no methods associated with `Copy`
+    * This is because `Copy` is always a simple bitwise copy
 * `Copy` is a subtrait of `Clone`
 
 
