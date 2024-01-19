@@ -317,9 +317,9 @@ pub const fn unwrap(self) -> T {
 }
 ```
 
-* Takes and enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
-* Most common source of panics in Rust programs
-    * It should only be used when you expect an inner value, otherwise halt
+* Takes an enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
+* It should only be used when you expect an inner value, otherwise it will panic
+    * Most common source of panics in Rust programs
 
 
 ---
@@ -415,6 +415,8 @@ There are other useful macros that panic:
 
 # Using Results 1
 
+To have recoverable errors, we should use results.
+
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
     if b == 0 {
@@ -434,7 +436,7 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 
 # Using Results 2
 
-`Result<T, E>` is fully generic, so we can create our own error types!
+`Result<T, E>` is generic, so we can create our own failure/error types!
 
 ```rust
 enum ArithError {
@@ -469,7 +471,7 @@ let x = potential_fail()?;
 
 let x = match potential_fail() {
     Ok(v) => v
-    Err(e) => return Err(e.into()), // Error is propogated up a level
+    Err(e) => return Err(e.into()), // Error is propagated up a level
 }
 ```
 
@@ -484,7 +486,7 @@ let x = match potential_fail() {
 # The `?` Operator Example
 
 ```rust
-use std::num::ParseIntError;
+use std::num::ParseIntError; // a built-in error type
 
 fn multiply(
     first_number_str: &str,
@@ -498,14 +500,16 @@ fn multiply(
 }
 ```
 
-* If either of the `parse` calls fail, we return their `Err`s
-* Else we take the parsed values and multiply them
+* If either of the `parse` calls fail, we return their `Err` values
+* Otherwise, we store the parsed values
 
 
 ---
 
 
 # The ? Operator Example
+
+If `parse` fails, we will get the `parse` function's `Err` values as expected.
 
 ```rust
 fn print(result: Result<i32, ParseIntError>) {
@@ -565,8 +569,8 @@ Consider the following code, what should the type of `x` be?
 let x = loop { println!("forever"); };
 ```
 
+* `loop` never terminates, so what type should `x` be?
 * This is not immediately obvious, right?
-* `loop` never terminates so what type should it be?
 
 
 ---
