@@ -3,7 +3,6 @@ marp: true
 theme: default
 class: invert
 paginate: true
-
 ---
 
 
@@ -632,7 +631,7 @@ let guess: u32 = match guess.trim().parse() {
 
 # Traits
 
-A _trait_ defines functionality a particular type has and can share with other types. 
+A _trait_ defines functionality a particular type has and can share with other types.
 
 ```rust
 trait Shape {
