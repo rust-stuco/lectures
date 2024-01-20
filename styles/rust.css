@@ -24,3 +24,9 @@ section.communism h1 {
 section.communism {
     background-image: url('../images/bg2.jpg');
 }
+
+h6 {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 0;
+}
