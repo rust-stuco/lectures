@@ -2,18 +2,16 @@
 
 ### Lecture
 - Ownership (26 min)
-    - Review
-        - Scopes
-        - String literals
-    - Ownership Rules
-    - `String` type
-    - Memory and Allocation
-    - `Copy` and `Clone` traits
-    - Ownership with functions and return values
+    - Announcements and Review (2 min)
+    - Ownership Rules (3 min)
+    - Memory and Allocation (4 min)
+    - `String` Type and Aliasing (5 min)
+    - `Copy` and `Clone` traits (4 min)
+    - Ownership with functions and return values (6 min)
 - References and Borrowing (14 min)
-    - Reference vs Ownership
-    - Immutable and Mutable references
-    - Dangling references and data racing
+    - Reference vs Ownership (3 min)
+    - Immutable and Mutable references (8 min)
+    - Dangling references and data racing (3 min)
 - Slices (6 min)
     - Memory layout
     - `&str`
