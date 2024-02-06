@@ -987,7 +987,7 @@ println!("The largest number is {}", largest);
 
 # Removing Code Duplication
 
-This requires duplicate code—instead, we can make a function called `largest`.
+Instead, we can make a function called `largest`.
 
 ```rust
 fn largest(list: &[i32]) -> &i32 {
@@ -1041,7 +1041,7 @@ fn largest_char(list: &[char]) -> &char {
 
 # Generic Functions
 
-We can define a function as generic with `<T>`:
+We can define a function as generic over some type `T` with a tag `<T>`:
 
 ```rust
 fn largest<T>(list: &[T]) -> &T
@@ -1050,7 +1050,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function is generic over `T`
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
-* `T` can be any type!
+* `T` can be _any_ type!
 
 
 ---
@@ -1080,7 +1080,9 @@ fn largest<HiThere>(list: &[HiThere]) -> &HiThere
 
 # Generic Functions
 
-Let's try and just modify our old function directly:
+Let's try to modify our old function directly:
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```rust
 fn largest<T>(list: &[T]) -> &T {
@@ -1094,11 +1096,10 @@ fn largest<T>(list: &[T]) -> &T {
 }
 
 fn main() {
-    let number_list = vec![34, 50, 25, 100, 65];
-    println!("The largest number is {}", largest(&number_list));
-
-    let char_list = vec!['y', 'm', 'a', 'q'];
-    println!("The largest char is {}", largest(&char_list));
+    println!("The largest number is {}",
+             largest(&[34, 50, 25, 100, 65]));
+    println!("The largest char is {}",
+             largest(&['y', 'm', 'a', 'q']));
 }
 ```
 
@@ -1170,13 +1171,17 @@ fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
 }
 ```
 
+```
+The largest number is 100
+The largest char is y
+```
 
 ---
 
 
 # Generic Structs
 
-We can define structs to use a generic type parameter using the `<T>` syntax as well!
+We can define structs to contain a generic type using the `<T>` syntax as well!
 
 ```rust
 struct Point<T> {
