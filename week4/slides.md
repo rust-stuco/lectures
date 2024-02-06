@@ -39,9 +39,9 @@ Benjamin Owad, David Rudo, and Connor Tsui
 Rust's standard library contains a number of useful data structures called _collections_.
 
 * Most other data types represent a single value, but collections contain multiple values
-* Values in collections are stored on the heap
+* Values in collections are stored on the _heap_
     * The amount of data each has does not need to be known at compile time
-    * For more information on other standard library collections, refer to the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module
+    * _For more information on other standard library collections, refer to the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module_
 
 
 ---
@@ -209,7 +209,7 @@ let mut v = vec![100, 32, 57];
 for elem in &mut v {  // `elem` is a mutable reference to an i32
     *elem += 50;
 }
-println!("{:?}", elem);
+println!("{:?}", v);
 ```
 
 ```
@@ -228,16 +228,17 @@ Note: This doesn't allow us to remove elements from the vector, since we'd need 
 
 # For Loop Sugar
 
-Removing the `&` also works when you only want immutable references:
+You can also _consume_ the vector when you want to loop over it.
 
 ```rust
 let v = vec![100, 32, 57];
 for i in v {
     println!("{}", i);
 }
+// println!("{:?}", v); <-- Can't do this anymore!
 ```
 
-* The reason this works is subtle, and we'll talk more about why in week 7!
+* We'll talk more about this in week 7!
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
@@ -315,10 +316,10 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 ```rust
 {
-    let v = vec![String::from("rust"), String::from("is"), String::from("great!")];
+    let v = vec!["rust".to_string(), "is".to_string(), "great!".to_string()];
 
     // do stuff with `v`
-} // <- `v` goes out of scope and is freed here
+} // <- `v` goes out of scope and everything it contains is freed here
 ```
 
 * When the vector gets dropped, all of its contents are also dropped
@@ -336,12 +337,12 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # What is a String?
 
-* A `String` is essentially a byte array interpreted as text
+* A `String` is essentially a `Vec` of bytes interpreted as text
 * We introduced them back in week 2, but now we'll look at them in more depth
 * New Rust programmers may be confused by:
     * `String`'s internal UTF-8 encoding
     * Rust's prevention of possible logical errors from the encoding
-    * Strings are not as simple as they may initially seem
+    * `String`s are not as simple as they may initially seem
 
 
 ---
@@ -349,10 +350,11 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # What is a String?
 
-- Rust only has one string type in the core language, `str`
+- Rust "only" has one string type in the core language, `str`
     * We almost always see it in its borrowed form, `&str`
     * String slices are `&str`
-    * String literals are also `&str`—they reference data stored in the program's binary
+    * String literals are also `&str`
+        * References data stored in the program's binary
 * `String` is a growable, mutable, owned, UTF-8 encoded string type
 
 <!--
@@ -390,7 +392,7 @@ let s = String::from("initial contents"); // string literal into `String`
 
 # Strings are UTF-8 Encoded
 
-We can include any properly encoded data in `String`.
+We can represent any properly encoded data in `String`.
 
 Here are some greetings in different languages!
 
@@ -500,7 +502,7 @@ let s = format!("{s1}-{s2}-{s3}"); // relatively new shorthand!
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-This code might seem reasonable from other programming languages like Python or C.
+This code might seem reasonable from any other programming language like Python or C.
 
 ```rust
 let s1 = String::from("hello");
@@ -611,7 +613,7 @@ let answer = &hello[0]; // BAD!
 
 # Slicing Strings
 
-Instead of indexing with a single number, you can use `[]` with a range to create a string slice containing specific bytes.
+Instead of indexing with a single number, you can use `[]` with a _range_ to create a string slice containing specific bytes.
 
 ```rust
 let hello = "Привет";
