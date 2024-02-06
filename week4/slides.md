@@ -1,19 +1,21 @@
 ---
 marp: true
-theme: default
+theme: rust
 class: invert
 paginate: true
 ---
 
-# Intro to Rust Lang
 
-# **Standard Collections and Generics**
+<!-- _class: communism invert  -->
+
+## Intro to Rust Lang
+# Standard Collections and Generics
 
 <br>
 
 Benjamin Owad, David Rudo, and Connor Tsui
 
-![bg right:35% 65%](../images/ferris.svg)
+<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
