@@ -35,10 +35,10 @@
 <p>Rust's standard library contains a number of useful data structures called <em>collections</em>.</p>
 <ul>
 <li data-marpit-fragment="1">Most other data types represent a single value, but collections contain multiple values</li>
-<li data-marpit-fragment="2">Values in collections are stored on the heap
+<li data-marpit-fragment="2">Values in collections are stored on the <em>heap</em>
 <ul>
 <li data-marpit-fragment="3">The amount of data each has does not need to be known at compile time</li>
-<li data-marpit-fragment="4">For more information on other standard library collections, refer to the <a href="https://doc.rust-lang.org/std/collections/index.html">documentation</a> of the <code>std::collections</code> module</li>
+<li data-marpit-fragment="4"><em>For more information on other standard library collections, refer to the <a href="https://doc.rust-lang.org/std/collections/index.html">documentation</a> of the <code>std::collections</code> module</em></li>
 </ul>
 </li>
 </ul>
@@ -151,7 +151,7 @@ v.<span class="hljs-title function_ invoke__">push</span>(<span class="hljs-numb
 <span class="hljs-keyword">for</span> <span class="hljs-variable">elem</span> <span class="hljs-keyword">in</span> &amp;<span class="hljs-keyword">mut</span> v {  <span class="hljs-comment">// `elem` is a mutable reference to an i32</span>
     *elem += <span class="hljs-number">50</span>;
 }
-<span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;{:?}&quot;</span>, elem);
+<span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;{:?}&quot;</span>, v);
 </code></pre>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code>[150, 82, 107]
 </code></pre>
@@ -165,14 +165,15 @@ v.<span class="hljs-title function_ invoke__">push</span>(<span class="hljs-numb
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="13" data-marpit-fragments="1" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="13" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
 <h1 id="for-loop-sugar">For Loop Sugar</h1>
-<p>Removing the <code>&amp;</code> also works when you only want immutable references:</p>
+<p>You can also <em>consume</em> the vector when you want to loop over it.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-number">100</span>, <span class="hljs-number">32</span>, <span class="hljs-number">57</span>];
 <span class="hljs-keyword">for</span> <span class="hljs-variable">i</span> <span class="hljs-keyword">in</span> v {
     <span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;{}&quot;</span>, i);
 }
+<span class="hljs-comment">// println!(&quot;{:?}&quot;, v); &lt;-- Can&#x27;t do this anymore!</span>
 </code></pre>
 <ul>
-<li data-marpit-fragment="1">The reason this works is subtle, and we'll talk more about why in week 7!</li>
+<li data-marpit-fragment="1">We'll talk more about this in week 7!</li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="14" data-marpit-fragments="3" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="14" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
@@ -227,10 +228,10 @@ v.<span class="hljs-title function_ invoke__">push</span>(s); <span class="hljs-
 <h1 id="dropping-a-vector">Dropping a Vector</h1>
 <p>Like any other struct, a vector is dropped when it goes out of scope.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust">{
-    <span class="hljs-keyword">let</span> <span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;rust&quot;</span>), <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;is&quot;</span>), <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;great!&quot;</span>)];
+    <span class="hljs-keyword">let</span> <span class="hljs-variable">v</span> = <span class="hljs-built_in">vec!</span>[<span class="hljs-string">&quot;rust&quot;</span>.<span class="hljs-title function_ invoke__">to_string</span>(), <span class="hljs-string">&quot;is&quot;</span>.<span class="hljs-title function_ invoke__">to_string</span>(), <span class="hljs-string">&quot;great!&quot;</span>.<span class="hljs-title function_ invoke__">to_string</span>()];
 
     <span class="hljs-comment">// do stuff with `v`</span>
-} <span class="hljs-comment">// &lt;- `v` goes out of scope and is freed here</span>
+} <span class="hljs-comment">// &lt;- `v` goes out of scope and everything it contains is freed here</span>
 </code></pre>
 <ul>
 <li data-marpit-fragment="1">When the vector gets dropped, all of its contents are also dropped</li>
@@ -243,30 +244,34 @@ v.<span class="hljs-title function_ invoke__">push</span>(s); <span class="hljs-
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="19" data-marpit-fragments="6" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="19" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
 <h1 id="what-is-a-string">What is a String?</h1>
 <ul>
-<li data-marpit-fragment="1">A <code>String</code> is essentially a byte array interpreted as text</li>
+<li data-marpit-fragment="1">A <code>String</code> is essentially a <code>Vec</code> of bytes interpreted as text</li>
 <li data-marpit-fragment="2">We introduced them back in week 2, but now we'll look at them in more depth</li>
 <li data-marpit-fragment="3">New Rust programmers may be confused by:
 <ul>
 <li data-marpit-fragment="4"><code>String</code>'s internal UTF-8 encoding</li>
 <li data-marpit-fragment="5">Rust's prevention of possible logical errors from the encoding</li>
-<li data-marpit-fragment="6">Strings are not as simple as they may initially seem</li>
+<li data-marpit-fragment="6"><code>String</code>s are not as simple as they may initially seem</li>
 </ul>
 </li>
 </ul>
 </section>
-</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="20" data-marpit-fragments="4" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="20" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
+</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="20" data-marpit-fragments="5" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="20" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
 <h1 id="what-is-a-string-1">What is a String?</h1>
 <ul>
-<li>Rust only has one string type in the core language, <code>str</code>
+<li>Rust &quot;only&quot; has one string type in the core language, <code>str</code>
 <ul>
 <li data-marpit-fragment="1">We almost always see it in its borrowed form, <code>&amp;str</code></li>
 <li data-marpit-fragment="2">String slices are <code>&amp;str</code></li>
-<li data-marpit-fragment="3">String literals are also <code>&amp;str</code>—they reference data stored in the program's binary</li>
+<li data-marpit-fragment="3">String literals are also <code>&amp;str</code>
+<ul>
+<li data-marpit-fragment="4">References data stored in the program's binary</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
 <ul>
-<li data-marpit-fragment="4"><code>String</code> is a growable, mutable, owned, UTF-8 encoded string type</li>
+<li data-marpit-fragment="5"><code>String</code> is a growable, mutable, owned, UTF-8 encoded string type</li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="21" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="21" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
@@ -286,7 +291,7 @@ v.<span class="hljs-title function_ invoke__">push</span>(s); <span class="hljs-
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="22" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="22" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
 <h1 id="strings-are-utf-8-encoded">Strings are UTF-8 Encoded</h1>
-<p>We can include any properly encoded data in <code>String</code>.</p>
+<p>We can represent any properly encoded data in <code>String</code>.</p>
 <p>Here are some greetings in different languages!</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">hello</span> = <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;السلام عليكم&quot;</span>);
 <span class="hljs-keyword">let</span> <span class="hljs-variable">hello</span> = <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;Dobrý den&quot;</span>);
@@ -357,7 +362,7 @@ s1.<span class="hljs-title function_ invoke__">push_str</span>(&amp;s2);
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section data-marpit-fragments="2" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="27" style="--class:invert;--paginate:true;--theme:rust;--marpit-advanced-background-split:25%;" data-marpit-pagination-total="81" data-marpit-advanced-background="background" data-marpit-advanced-background-split="right"><div data-marpit-advanced-background-container="true" data-marpit-advanced-background-direction="horizontal"><figure style="background-image:url(&quot;../images/ferris_does_not_compile.svg&quot;);background-size:75%;"></figure></div></section></foreignObject><foreignObject width="75%" height="720"><section id="27" data-marpit-fragments="2" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="27" style="--class:invert;--paginate:true;--theme:rust;--marpit-advanced-background-split:25%;" data-marpit-pagination-total="81" data-marpit-advanced-background="content" data-marpit-advanced-background-split="right">
 <h1 id="indexing-into-strings">Indexing into Strings</h1>
 
-<p>This code might seem reasonable from other programming languages like Python or C.</p>
+<p>This code might seem reasonable from any other programming language like Python or C.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">s1</span> = <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;hello&quot;</span>);
 <span class="hljs-keyword">let</span> <span class="hljs-variable">h</span> = s1[<span class="hljs-number">0</span>];
 </code></pre>
@@ -446,7 +451,7 @@ s1.<span class="hljs-title function_ invoke__">push_str</span>(&amp;s2);
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="33" data-class="invert" data-paginate="true" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="33" style="--class:invert;--paginate:true;--theme:rust;" data-marpit-pagination-total="81">
 <h1 id="slicing-strings">Slicing Strings</h1>
-<p>Instead of indexing with a single number, you can use <code>[]</code> with a range to create a string slice containing specific bytes.</p>
+<p>Instead of indexing with a single number, you can use <code>[]</code> with a <em>range</em> to create a string slice containing specific bytes.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">hello</span> = <span class="hljs-string">&quot;Привет&quot;</span>;
 
 <span class="hljs-keyword">let</span> <span class="hljs-variable">s</span> = &amp;hello[<span class="hljs-number">0</span>..<span class="hljs-number">4</span>]; <span class="hljs-comment">// `s` == &quot;Пр&quot;</span>
