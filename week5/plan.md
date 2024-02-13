@@ -4,13 +4,14 @@
 - Type Aliases (2 min)
 - Const Generics (5 min)
 - Error Handling (10 min)
-    - `Result<V,E>`
     - `panic!`
+    - `Result<V,E>`
 - The Never Type (3 min)
 - Traits (30 min)
-    - Basics and Supertraits
-    - Derivable traits
-    - Trait bounds
+    - Trait Bounds
+    - `Copy` vs `Clone`
+    - Supertraits
+    - Derivable Traits
 
 ### Extra Material
 - Rust Book Chapter 10.1 and 10.2
