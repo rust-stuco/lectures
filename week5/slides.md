@@ -1,20 +1,21 @@
 ---
 marp: true
-theme: default
+theme: rust
 class: invert
 paginate: true
 ---
 
 
-# Intro to Rust Lang
+<!-- _class: communism invert  -->
 
-# **Error Handling and Traits**
+## Intro to Rust Lang
+# Error Handling and Traits
 
 <br>
 
 Benjamin Owad, David Rudo, and Connor Tsui
 
-![bg right:35% 65%](../images/ferris.svg)
+<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
