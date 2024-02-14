@@ -21,43 +21,123 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Today: Modules and Testing
 
-* File system
-    * Crates
-    * Packages
-    * Modules
-* Testing
+
+* Packages and Crates
+* Modules
+    * The `use` keyword
+    * Module Paths and File System
+* Unit Testing
+* Integration Testing
 
 
 ---
 
 
-# **File System**
+# Large Programs
+
+When we write large programs, organizing code becomes increasingly important.
+
+It is generally good practice to:
+
+- Split code into multiple folders and files
+- Group related functionality
+- Separate code with distinct features
+- Encapsulate implementation details
+- _Modularize_ your program
 
 
 ---
 
 
-# Making a new crate
+# Module System
 
-As mentioned previously, to create a new project called `hello_cargo`, run:
+Rust has organizational features collectively referred to as the _module system_.
+
+* Packages: A Cargo feature that lets you build, test, and share crates
+* Crates: A tree of modules that produces a library or executable
+* Modules: Lets you control the organization, scope, and privacy of paths
+* Paths: A way of naming an item, such as a struct, function, or module
+
+
+---
+
+
+# **Packages and Crates**
+
+
+---
+
+
+# Crate
+
+A _crate_ is the smallest amount of code that the Rust compiler considers at a time.
+
+- The equivalent in C/C++ is a _compilation unit_
+- Running `rustc` on a single file also creates a crate
+- Crates contain modules
+    - Modules can be defined in other files
+
+
+---
+
+
+
+# Crate
+
+There are two types of crates: a _binary_ crate or a _library_ crate.
+
+* A binary crate is a program you can compile to an executable that contains a `main` function
+    * These executables can be run, like a command-line program or server
+* A library crate has no `main` function, and does not compile to an executable
+    * Defines functionality intended to be shared with multiple projects
+* There is also a special crate called the _crate root_
+    * _The Rust compiler looks at this first, and it makes up the root module of the crate (more on modules later)_
+
+---
+
+
+# Package
+
+A package is a bundle of one or more crates.
+
+- A package is defined by a `Cargo.toml` file at the root of your directory
+    - `Cargo.toml` describes how to build all of the crates
+- A package can contain as many binary crates as you like!
+- But it can only have at most 1 library crate
+
+
+---
+
+
+# `cargo new`
+
+Let’s walk through what happens when we create a package with `cargo`.
 
 ```
-cargo new hello_cargo
-````
+$ cargo new my-project
+     Created binary (application) `my-project` package
+$ ls my-project
+Cargo.toml
+src
+$ ls my-project/src
+main.rs
+```
 
-* This will yield an empty package called `hello_cargo`, with:
-    * A `src/main.rs` file that prints "Hello, world!"
-    * And a `cargo.toml`
-        * What is `cargo.toml`?
+* Creates a new package called `my-project`
+* A `src/main.rs` file that prints `"Hello, world!"`
+* `Cargo.toml` in the root directory
 
 
 ---
 
-# Cargo.toml
+
+# `Cargo.toml`
+
+Let's take a look inside the `Cargo.toml`.
 
 ```toml
 [package]
-name = "hello_cargo"
+name = "my-project"
 version = "0.1.0"
 edition = "2021"
 
@@ -65,36 +145,32 @@ edition = "2021"
 ```
 
 * File written in `toml`, a file format for configuration files
-* Defines metadata and dependencies for a package
-    * Wait, aren't these crates?
-
-<!--
-Don't say crate name, crate version, crate edition, this is a *package*!
--->
+* Notice how there's no mention of `src/main.rs`!
+* Cargo follows the convention that `src/main.rs` is the crate root and builds a binary crate
+* Similarly, if you create a `src/lib.rs` file, the package will build a library crate!
 
 
 ---
 
 
-# Terminology: Packages and Crates
+# Example: `cargo`
 
-* Packages are bundles comprising one or more crates
-    * Packages are defined by a cargo.toml, describing its crates
-* A crate is the smallest amount of code the rust compiler will consider at a time
-    * Even if you run `rustc` on a single source file, it is considered a crate
-* The terms are used interchangeably in practice
+Cargo is actually a Rust package!
+
+* Contains the binary crate that compiles to the executable `cargo`
+* Contains a library crate that the `cargo` binary depends on
 
 
 ---
 
-# Terminology: Types of Crates
 
-* Binary crates compile to an executable that you can run
-* Library crates define functionality to be shared between different projects
-* Packages contain at most one library crate, and any number of binary crates
-* Example: `cargo` has a binary crate and a library crate
-    * The binary crate has the executable itself
-    * The library crate has functionality that other projects can depend on to use the same logic
+# Aside: Package vs Project vs Program
+
+* "Package" is the only term with a formal definition in Rust.
+* "Project" can mean a lot of different things, and is a formal term in an _IDE_
+* "Program" - ask the mathemeticians
+
+<!-- TODO idk what to say for that last one -->
 
 
 ---
