@@ -564,9 +564,8 @@ The one case where glob is idiomatic is with the prelude pattern
 
 Correctness of a program is complex and not easy to prove.
 
-* Rust's type system shoulders a huge part of this burden!
-* However, it cannot catch everything
-* Rust includes support for writing  automated tests for this exact reason!
+* Rust's type system helps with this, but it certainly cannot catch everything
+* Rust includes a testing framework for this reason!
 
 
 ---
@@ -576,9 +575,9 @@ Correctness of a program is complex and not easy to prove.
 
 Generally we want to perform at least 3 actions when running a test:
 
-1) Set up any needed data or state
-2) Run the code you want to test
-3) Assert the results are what you expect
+1) Set up needed data or state
+2) Run the evaluated code
+3) Determine if the results are as expected
 
 
 ---
@@ -607,8 +606,6 @@ mod tests {
 
 
 # Writing Tests
-
-Let's break this down.
 
 ```rust
 #[test]
@@ -663,10 +660,9 @@ test tests::it_works ... ok
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-* We see `test result: ok`, meaning we have passed all the tests*
-* In this case, we only had 1 test run, with `1 passed; 0 failed;`
-* We'll show how to ignore and some tests later
-* The `0 measured` statistic is for benchmark tests, which are currently only available in nightly Rust
+* We see `test result: ok`, meaning we have passed all the tests
+* In this case, only 1 test has run, and it has passed
+* The `0 measured` statistic is for benchmark tests, which are currently only available in "nightly" versions of Rust
 
 
 ---
@@ -685,7 +681,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 ```
 
 * All of the code examples in documentation comments are treated as tests!
-* This is super useful for keeping your docs and your code in sync
+* This is useful for keeping docs and your code in sync
 
 
 ---
@@ -846,7 +842,7 @@ thread 'tests::it_adds_two' panicked at 'assertion failed: `(left == right)`
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ```
 
-* Generally a nicer error message than using `assert!(left == right)`
+* Generally a nicer error message from `assert_eq!` rather than using `assert!(left == right)`
 
 
 ---
@@ -907,8 +903,8 @@ fn it_works() -> Result<(), String> {
 }
 ```
 
-* Our test will now fail if it returns `Err`
-* Provides an easier way to use `?` in your tests
+* The test will now fail if it returns `Err`
+* Allows convenient usage of `?` in tests
 * Note that you can't use `#[should_panic]` on tests that return a `Result`
 
 
@@ -920,18 +916,20 @@ fn it_works() -> Result<(), String> {
 `cargo test` compiles your code in test mode and runs the resulting test binary.
 
 * By default, it will run all tests in parallel and prevent the output (`stdout` and `stderr`) from being displayed.
-* Let's talk about the types of configurations you can get your tests to run in!
+* Other testing configurations are available
 * _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
 
+<!-- Parallel stuff leads into next slide -->
 
 ---
 
 
-# Parallel Tests
+# Issues With Running Tests in Parallel
 
 Suppose each of your tests all write to some shared file on disk.
 
 * All tests write to a file `output.txt`
+    * This is pretty silly
 * They later assert that the file still contains that data they wrote
 * You probably don't want all of them to run at the same time!
 
@@ -942,7 +940,7 @@ Suppose each of your tests all write to some shared file on disk.
 # Test Threads
 
 
-By default, Rust will run all of your tests in parallel on different threads.
+By default, Rust will run all of the tests in parallel, on different threads.
 
 You can use `--test-threads` to control the number of threads running the tests.
 
@@ -951,8 +949,7 @@ You can use `--test-threads` to control the number of threads running the tests.
 $ cargo test -- --test-threads=1
 ```
 
-* You generally don't want to do this, since you lose all parallelism
-* _Take 15-445 if you want to do this safely without losing parallelism!_
+* Generally not a good idea, since the benefits of parallelism are lost
 
 
 ---
@@ -966,8 +963,9 @@ If you want to prevent the capturing of output, you can use `--show-output`
 $ cargo test -- --show-output
 ```
 
-* Of course, if you have 1000 tests, this might get verbose
-* Is there a way to limit the tests we run?
+* This will print the full output of every test that is run
+* With 1000 tests, this might get too verbose!
+* If only we could only run a subset of the tests...
 
 
 ---
@@ -1047,7 +1045,7 @@ fn expensive_test() {
 The Rust community thinks about tests in terms of two main categories: unit tests and integration tests.
 
 * Unit tests test each unit of code in isolation
-* Integration tests are entirely external to your library
+* Integration tests are external to your library, testing the entire system
 
 
 ---
@@ -1059,6 +1057,7 @@ Unit tests are almost always contained within the `src` directory.
 
 * The convention is to create a submodule named `tests` annotated with `#[cfg(test)]` for every module you want to test
 * Recall that `#[cfg(test)]` attribute on items will only compile those items when running `cargo test`, and not `cargo build`
+* Prevents deploying extra code in production that is only used for testing
 
 
 ---
@@ -1087,9 +1086,9 @@ mod tests {
 <!--
 Excerpt from the Rust Book:
 
-There’s debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
+There's debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
 
-If you don’t think private functions should be tested, there’s nothing in Rust that will compel you to do so.
+If you don't think private functions should be tested, there's nothing in Rust that will compel you to do so.
 -->
 
 
@@ -1100,7 +1099,7 @@ If you don’t think private functions should be tested, there’s nothing in Ru
 
 Integration Tests use your library in the same way any other code would
 
-* They can only call functions that are part of your library’s public API
+* They can only call functions that are part of your library's public API
 * Useful for testing if many parts of your library work together correctly
 
 
@@ -1219,9 +1218,9 @@ We cannot create integration tests for a binary crate.
 
 # Recap: Testing
 
-* Unit tests exercise different parts of a library separately and can test private implementation details
+* Unit tests examine parts of a library in isolation and can test private implementation details
 * Integration tests check that many parts of the library work together correctly
-* Even though Rust can prevent some kinds of bugs, tests are still important to reduce logical bugs!
+* Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs
 
 
 ---
