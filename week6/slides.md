@@ -176,14 +176,21 @@ Cargo is actually a Rust package!
 ---
 
 
+# **Modules**
+
+
+---
+
+
 # Modules
 
-In Rust, *modules* are used to hierarchically split code into separate units.
+_Modules_ let us organize code within a crate for readability and easy reuse.
 
-* A module is a collection of functions, structs, traits, etc
-* Used to manage visibility (public/private)
-* Mitigates name collisions
-* More explicit and flexible than importing files directly
+* Modules are collections of _items_
+    * Items are functions, structs, traits, etc.
+* Allows us to control the privacy of items
+* Mitigates namespace collisions
+* Here is a [cheat sheet](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html) from the Rust Book!
 
 
 ---
@@ -525,6 +532,376 @@ use std::io::{Bytes, Write, Self};
 <!--
 The one case where glob is idiomatic is with the prelude pattern
 -->
+
+
+---
+
+
+# **Testing**
+
+
+---
+
+
+# Testing
+
+> Program testing can be a very effective way to show the presence of bugs, but it is hopelessly inadequate for showing their absence.
+
+* Edsger W. Dijkstra, _The Humble Programmer_
+
+
+---
+
+
+# Testing
+
+Correctness of a program is complex and not easy to prove.
+
+* Rust's type system shoulders a huge part of this burden!
+* However, it cannot catch everything
+* Rust includes support for writing  automated tests for this exact reason!
+
+
+---
+
+
+# What is a Test?
+
+Generally we want to perform at least 3 actions when running a test:
+
+1) Set up any needed data or state
+2) Run the code you want to test
+3) Assert the results are what you expect
+
+
+---
+
+
+# Writing Tests
+
+In Rust, a test is a function annotated with the `#[test]` attribute.
+
+###### src/lib.rs
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        let result = 2 + 2;
+        assert_eq!(result, 4);
+    }
+}
+```
+
+* After running `cargo new adder --lib`, this code will be in `lib.rs`
+
+
+---
+
+
+# Writing Tests
+
+Let's break this down.
+
+```rust
+    #[test]
+    fn it_works() {
+        let result = 2 + 2;
+        assert_eq!(result, 4);
+    }
+```
+
+* The `#[test]` indicates that this is a test function
+* We set up the value `result` by adding `2 + 2`
+* We use the `assert_eq!` macro to assert that `result` is correct
+
+
+---
+
+
+# Running Tests
+
+We run tests with `cargo test`.
+
+```
+$ cargo test
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.57s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 1 test
+test tests::it_works ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests adder
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+
+---
+
+
+# Running Tests
+
+Let's break down the output now.
+
+```
+running 1 test
+test tests::it_works ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+* We see `test result: ok`, meaining we have passed all the tests*
+* In this case, we only had 1 test run, with `1 passed; 0 failed;`
+* We'll show you how to ignore and some tests later
+* The `0 measured` statistic is for benchmark tests, which are currently only available in nightly Rust
+
+
+---
+
+
+# Documentation Tests
+
+You may have seen something similar to this in your homework:
+
+```
+   Doc-tests adder
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+* All of the code examples in documentation comments are treated as tests!
+* This is super useful for keeping you docs and your code in sync
+
+
+---
+
+
+# `#[cfg(test)]`
+
+You may have also noticed this `#[cfg(test)]` attribute in your homework:
+
+```rust
+#[cfg(test)]
+mod tests {
+    // <-- snip -->
+}
+```
+
+* This tells the compiler that this entire module should _only_ be used for testing
+* Effectively removes this module from the source code when compiling
+
+
+---
+
+
+# Writing Better Tests
+
+Let's try and be more creative with our tests.
+
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn exploration() {
+        assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn another() {
+        panic!("Make this test fail");
+    }
+}
+```
+
+
+---
+
+
+# Failing Tests
+
+Let's see what we get:
+
+```
+$ cargo test
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.72s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 2 tests
+test tests::another ... FAILED
+test tests::exploration ... ok
+
+failures:
+
+---- tests::another stdout ----
+thread 'tests::another' panicked at 'Make this test fail', src/lib.rs:10:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::another
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+```
+
+
+---
+
+
+# Failing Tests
+
+
+```
+failures:
+
+---- tests::another stdout ----
+thread 'tests::another' panicked at 'Make this test fail', src/lib.rs:10:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::another
+
+test result: FAILED. 1 passed; 1 failed; <-- snip -->
+
+error: test failed, to rerun pass `--lib`
+```
+
+* Instead of `ok`, we get that the result of `tests:another` is `FAILED`
+
+
+---
+
+
+# Checking Results
+
+We can use the `assert!` macro to ensure that something is `true`.
+
+```rust
+#[test]
+fn larger_can_hold_smaller() {
+    let larger = Rectangle {
+        width: 8,
+        height: 7,
+    };
+    let smaller = Rectangle {
+        width: 5,
+        height: 1,
+    };
+
+    assert!(larger.can_hold(&smaller));
+}
+```
+
+<!--
+Say in lecture that `assert!` will give you a nicer error message
+than if you did an if check and panic manually
+-->
+
+
+---
+
+
+# Testing Equality
+
+Rust also provides a way to check equality between two values.
+
+```rust
+#[test]
+fn it_adds_two() {
+    assert_eq!(4, add_two(2));
+}
+```
+
+
+---
+
+
+# Testing Equality
+
+If `add_two(2)` somehow evaluated to `5`, we would get this output:
+
+```
+---- tests::it_adds_two stdout ----
+thread 'tests::it_adds_two' panicked at 'assertion failed: `(left == right)`
+  left: `4`,
+ right: `5`', src/lib.rs:11:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+* Generally a nicer error message than using `assert!(left == right)`
+
+
+---
+
+
+# Custom Error Messages
+
+We can also write our own custom error messages in `assert!`
+
+```rust
+#[test]
+fn greeting_contains_name() {
+    let result = greeting("Carol");
+    assert!(
+        result.contains("Carol"),
+        "Greeting did not contain name, value was `{}`",
+        result
+    );
+}
+```
+
+
+---
+
+
+# `#[should_panic]`
+
+You may have seen this in your homework:
+
+```rust
+#[test]
+#[should_panic(expected = "not less than 100")]
+fn greater_than_100() {
+    this_better_be_less_than_100(200);
+}
+```
+
+* This attribute says that this test expects a panic with a specific error message!
+
+
+---
+
+
+
+# Using `Result<T, E>` in Tests
+
+We can also use `Result` in our tests.
+
+```rust
+#[test]
+fn it_works() -> Result<(), String> {
+    if 2 + 2 == 4 {
+        Ok(())
+    } else {
+        Err(String::from("two plus two does not equal four"))
+    }
+}
+```
+
+* Our test will now fail if it returns `Err`
+* Provides an easier way to use `?`
+* Note that you can't use `#[should_panic]` on tests that return a `Result`
 
 
 ---
