@@ -39,11 +39,11 @@ When we write large programs, organizing code becomes increasingly important.
 
 It is generally good practice to:
 
-- Split code into multiple folders and files
-- Group related functionality
-- Separate code with distinct features
-- Encapsulate implementation details
-- _Modularize_ your program
+* Split code into multiple folders and files
+* Group related functionality
+* Separate code with distinct features
+* Encapsulate implementation details
+* _Modularize_ your program
 
 
 ---
@@ -53,10 +53,10 @@ It is generally good practice to:
 
 Rust has organizational features collectively referred to as the _module system_.
 
-* Packages: A Cargo feature that lets you build, test, and share crates
-* Crates: A tree of modules that produces a library or executable
-* Modules: Lets you control the organization, scope, and privacy of paths
-* Paths: A way of naming an item, such as a struct, function, or module
+* **Packages**: A Cargo feature that lets you build, test, and share crates
+* **Crates**: A tree of modules that produces a library or executable
+* **Modules**: Lets you control the organization, scope, and privacy of paths
+* **Paths**: A way of naming an item, such as a struct, function, or module
 
 
 ---
@@ -72,10 +72,11 @@ Rust has organizational features collectively referred to as the _module system_
 
 A _crate_ is the smallest amount of code that the Rust compiler considers at a time.
 
-- The equivalent in C/C++ is a _compilation unit_
-- Running `rustc` on a single file also creates a crate
-- Crates contain modules
-    - Modules can be defined in other files
+* The equivalent in C/C++ is a _compilation unit_
+* Running `rustc` on a single file also builds a crate
+* Crates contain Modules
+    * Modules can be defined in other files
+    * Paths link code in Modules together
 
 
 ---
@@ -91,7 +92,7 @@ There are two types of crates: a _binary_ crate or a _library_ crate.
 * A library crate has no `main` function, and does not compile to an executable
     * Defines functionality intended to be shared with multiple projects
 * There is also a special crate called the _crate root_
-    * _The Rust compiler looks at this first, and it makes up the root module of the crate (more on modules later)_
+    * _The Rust compiler looks at this first, and it makes up the root module of the crate (more on modules later!)_
 
 ---
 
@@ -146,8 +147,8 @@ edition = "2021"
 
 * File written in `toml`, a file format for configuration files
 * Notice how there's no mention of `src/main.rs`!
-* Cargo follows the convention that `src/main.rs` is the crate root and builds a binary crate
-* Similarly, if you create a `src/lib.rs` file, the package will build a library crate!
+* Cargo follows the convention that `src/main.rs` is the crate root and builds a _binary_ crate
+* Similarly, if you create a `src/lib.rs` file, the package will build a _library_ crate
 
 
 ---
@@ -155,7 +156,7 @@ edition = "2021"
 
 # Example: `cargo`
 
-Cargo is actually a Rust package!
+Cargo is actually a Rust package that ships with installations of Rust!
 
 * Contains the binary crate that compiles to the executable `cargo`
 * Contains a library crate that the `cargo` binary depends on
@@ -166,7 +167,7 @@ Cargo is actually a Rust package!
 
 # Aside: Package vs Project vs Program
 
-* "Package" is the only term with a formal definition in Rust.
+* "Package" is the only term with a formal definition in Rust
 * "Project" can mean a lot of different things, and is a formal term in an _IDE_
 * "Program" - ask the mathematicians
 
@@ -599,7 +600,7 @@ mod tests {
 }
 ```
 
-* After running `cargo new adder --lib`, this code will be in `lib.rs`
+* After running `cargo new adder --lib`, this code will be in `src/lib.rs`
 
 
 ---
@@ -610,14 +611,14 @@ mod tests {
 Let's break this down.
 
 ```rust
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+#[test]
+fn it_works() {
+    let result = 2 + 2;
+    assert_eq!(result, 4);
+}
 ```
 
-* The `#[test]` indicates that this is a test function
+* The `#[test]` attribute indicates that this is a test function
 * We set up the value `result` by adding `2 + 2`
 * We use the `assert_eq!` macro to assert that `result` is correct
 
@@ -653,7 +654,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 # Running Tests
 
-Let's break down the output now.
+Let's break down the output of `cargo test`.
 
 ```
 running 1 test
@@ -664,7 +665,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 * We see `test result: ok`, meaning we have passed all the tests*
 * In this case, we only had 1 test run, with `1 passed; 0 failed;`
-* We'll show you how to ignore and some tests later
+* We'll show how to ignore and some tests later
 * The `0 measured` statistic is for benchmark tests, which are currently only available in nightly Rust
 
 
@@ -684,7 +685,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 ```
 
 * All of the code examples in documentation comments are treated as tests!
-* This is super useful for keeping you docs and your code in sync
+* This is super useful for keeping your docs and your code in sync
 
 
 ---
@@ -702,7 +703,7 @@ mod tests {
 ```
 
 * This tells the compiler that this entire module should _only_ be used for testing
-* Effectively removes this module from the source code when compiling
+* Effectively removes this module from the source code when compiling with `cargo build`
 
 
 ---
@@ -873,7 +874,7 @@ fn greeting_contains_name() {
 
 # `#[should_panic]`
 
-You may have seen this in your homework:
+You may have seen something similar in your homework:
 
 ```rust
 #[test]
@@ -883,7 +884,8 @@ fn greater_than_100() {
 }
 ```
 
-* This attribute says that this test expects a panic with a specific error message!
+* The `#[should_panic]` attribute says that this test expects a panic!
+* Adding the `expected = "..."` means we want a specific panic message
 
 
 ---
@@ -906,20 +908,32 @@ fn it_works() -> Result<(), String> {
 ```
 
 * Our test will now fail if it returns `Err`
-* Provides an easier way to use `?`
+* Provides an easier way to use `?` in your tests
 * Note that you can't use `#[should_panic]` on tests that return a `Result`
 
 
 ---
 
 
-# Controlling Tests
+# Controlling Test Behavior
 
 `cargo test` compiles your code in test mode and runs the resulting test binary.
 
 * By default, it will run all tests in parallel and prevent the output (`stdout` and `stderr`) from being displayed.
 * Let's talk about the types of configurations you can get your tests to run in!
-* _Note that you can run `cargo test --help`, and `cargo test -- --help`_
+* _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
+
+
+---
+
+
+# Parallel Tests
+
+Suppose each of your tests all write to some shared file on disk.
+
+* All tests write to a file `output.txt`
+* They later assert that the file still contains that data they wrote
+* You probably don't want all of them to run at the same time!
 
 
 ---
@@ -927,7 +941,8 @@ fn it_works() -> Result<(), String> {
 
 # Test Threads
 
-Suppose your tests all write to some shared file on disk. You probably don't want your tests to all run at the same time.
+
+By default, Rust will run all of your tests in parallel on different threads.
 
 You can use `--test-threads` to control the number of threads running the tests.
 
@@ -936,7 +951,8 @@ You can use `--test-threads` to control the number of threads running the tests.
 $ cargo test -- --test-threads=1
 ```
 
-* Take 15-445 if you _do_ want to do this safely!
+* You generally don't want to do this, since you lose all parallelism
+* _Take 15-445 if you want to do this safely without losing parallelism!_
 
 
 ---
@@ -951,6 +967,7 @@ $ cargo test -- --show-output
 ```
 
 * Of course, if you have 1000 tests, this might get verbose
+* Is there a way to limit the tests we run?
 
 
 ---
@@ -958,7 +975,7 @@ $ cargo test -- --show-output
 
 # Running Tests by Name
 
-Let's say we have 1000 tests, but only one is named `one_hundred`. We can pass the name in to `cargo test` to only run that test.
+Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run that test.
 
 ```
 $ cargo test one_hundred
@@ -969,10 +986,10 @@ $ cargo test one_hundred
 running 1 test
 test tests::one_hundred ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 999 filtered out; finished in 0.00s
 ```
 
-* Notice how there are now `2 filtered out` tests, these were the tests that didn't match the name `one_hundred`
+* Notice how there are now `999 filtered out` tests, these were the tests that didn't match the name `one_hundred`
 
 
 ---
@@ -992,7 +1009,7 @@ running 2 tests
 test tests::add_three_and_two ... ok
 test tests::add_two_and_two ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 998 filtered out; finished in 0.00s
 ```
 
 * If you want an exact name, use `cargo test {name} -- --exact`
@@ -1019,7 +1036,7 @@ fn expensive_test() {
 ```
 
 * If we only want to run ignored tests, we can run `cargo test -- --ignored`
-* If we want all tests, we can run `cargo test -- --include-ignored`
+* If we want to run all tests, we can run `cargo test -- --include-ignored`
 
 
 ---
@@ -1029,8 +1046,8 @@ fn expensive_test() {
 
 The Rust community thinks about tests in terms of two main categories: unit tests and integration tests.
 
-* Unit Tests test each unit of code in isolation
-* Integration Tests are entirely external to your library
+* Unit tests test each unit of code in isolation
+* Integration tests are entirely external to your library
 
 
 ---
@@ -1038,9 +1055,9 @@ The Rust community thinks about tests in terms of two main categories: unit test
 
 # Unit Tests
 
-Unit tests are almost always within the `src` directory.
+Unit tests are almost always contained within the `src` directory.
 
-* The convention is to create a module named `tests` annotated with `#[cfg (test)]`
+* The convention is to create a submodule named `tests` annotated with `#[cfg(test)]` for every module you want to test
 * Recall that `#[cfg(test)]` attribute on items will only compile those items when running `cargo test`, and not `cargo build`
 
 
@@ -1125,7 +1142,7 @@ fn it_adds_two() {
 ```
 
 * Note that we don't need to annotate anything with `#[cfg(tests)]`
-* We can now also run test file using the _name_ of the file with
+* We can now also run test files using the _name_ of the file with
 `cargo test --test integration_test`
 
 
@@ -1164,7 +1181,7 @@ Using the alternate naming convention with `common/mod.rs` tells Rust not to tre
 
 # Submodules in Integration Tests
 
-Here is an example of using `common` in an Integration Test:
+Here is an example of using `common` in an integration test:
 
 ```
 └── tests
