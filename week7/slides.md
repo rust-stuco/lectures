@@ -127,7 +127,7 @@ Rust powered flamegraph generator with Cargo support!
 
 # What Is A Closure?
 * Known as lambdas in "lesser languages"
-* Anonymous functions you can save in a variable or pass an argument to other functions
+* Anonymous functions you can save in a variable or pass as an argument to other functions
 
 **Unlike functions**: Closures can capture values from the scope in which they're defined
 
@@ -392,6 +392,7 @@ let double = |x| x * 2;
 # Closure Traits Summarized
 * `Fn`, `FnMut`, `FnOnce` describe different groups of closures
   * You don't `impl` them, they apply to a closure automatically if appropriate
+  * A single closure can implement one or multiple of these traits
 * `Fn` - call multiple times, environment doesn't change
 * `FnMut` - call multiple times, environment may change
 * `FnOnce` - call at least once, environment may be consumed
@@ -419,6 +420,8 @@ impl<T> Option<T> {
 ```
 * We simply use trait bounds!
 * `F` is a generic for any closure that implements `FnOnce`
+  * Every closure implements `FnOnce` at minimum making this function flexible
+  * ` F: FnOnce() -> T` - `F` must take no args and return `T`
 
 ---
 
@@ -448,3 +451,28 @@ where
 ```
 * We can specify the arguments and return types
 * While this example is generic we could've replaced `T` with a concrete type
+
+---
+
+# Hate Functional Programming? No Problem!
+```rust
+fn add_one(x: i32) -> i32 {
+    x + 1
+}
+
+fn do_twice(f: fn(i32) -> i32, arg: i32) -> i32 {
+    f(arg) + f(arg)
+}
+
+fn main() {
+    let answer = do_twice(add_one, 5);
+}
+```
+* Rust has function pointers
+* `fn` is a **type** that implements `Fn`, `FnMut`, and `FnOnce`
+
+---
+
+# **Iterators**
+
+
