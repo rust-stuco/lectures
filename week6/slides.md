@@ -168,7 +168,7 @@ Cargo is actually a Rust package!
 
 * "Package" is the only term with a formal definition in Rust.
 * "Project" can mean a lot of different things, and is a formal term in an _IDE_
-* "Program" - ask the mathemeticians
+* "Program" - ask the mathematicians
 
 <!-- TODO idk what to say for that last one -->
 
@@ -656,7 +656,7 @@ test tests::it_works ... ok
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-* We see `test result: ok`, meaining we have passed all the tests*
+* We see `test result: ok`, meaning we have passed all the tests*
 * In this case, we only had 1 test run, with `1 passed; 0 failed;`
 * We'll show you how to ignore and some tests later
 * The `0 measured` statistic is for benchmark tests, which are currently only available in nightly Rust
@@ -905,5 +905,121 @@ fn it_works() -> Result<(), String> {
 
 
 ---
+
+
+# Controlling Tests
+
+`cargo test` compiles your code in test mode and runs the resulting test binary.
+
+* By default, it will run all tests in parallel and prevent the output (`stdout` and `stderr`) from being displayed.
+* Let's talk about the types of configurations you can get your tests to run in!
+* _Note that you can run `cargo test --help`, and `cargo test -- --help`_
+
+
+---
+
+
+# Test Threads
+
+Suppose your tests all write to some shared file on disk. You probably don't want your tests to all run at the same time.
+
+You can use `--test-threads` to control the number of threads running the tests.
+
+
+```
+$ cargo test -- --test-threads=1
+```
+
+* Take 15-445 if you _do_ want to do this safely!
+
+
+---
+
+
+# Showing Output
+
+If you want to prevent the capturing of output, you can use `--show-output`
+
+```
+$ cargo test -- --show-output
+```
+
+* Of course, if you have 1000 tests, this might get verbose
+
+
+---
+
+
+# Running Tests by Name
+
+Let's say we have 1000 tests, but only one is named `one_hundred`. We can pass the name in to `cargo test` to only run that test.
+
+```
+$ cargo test one_hundred
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.69s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 1 test
+test tests::one_hundred ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+```
+
+* Notice how there are now `2 filtered out` tests, these were the tests that didn't match the name `one_hundred`
+
+
+---
+
+
+# Multiple Tests by Name
+
+`cargo` will actually find any test that matches the name you passed in.
+
+```
+$ cargo test add
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.61s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 2 tests
+test tests::add_three_and_two ... ok
+test tests::add_two_and_two ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+```
+
+* If you want an exact name, use `cargo test {name} -- --exact`
+
+
+---
+
+
+# Ignoring Tests
+
+We can ignore some tests by using the `#[ignore]` attribute.
+
+```rust
+#[test]
+fn it_works() {
+    assert_eq!(2 + 2, 4);
+}
+
+#[test]
+#[ignore]
+fn expensive_test() {
+    // code that takes an hour to run
+}
+```
+
+* If we only want to run ignored tests, we can run `cargo test -- --ignored`
+* If we want all tests, we can run `cargo test -- --include-ignored`
+
+
+---
+
+
+
+
 
 
