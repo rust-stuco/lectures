@@ -537,6 +537,12 @@ The one case where glob is idiomatic is with the prelude pattern
 ---
 
 
+# Recap: TODO
+
+
+---
+
+
 # **Testing**
 
 
@@ -1017,6 +1023,198 @@ fn expensive_test() {
 
 
 ---
+
+
+# Test Organization
+
+The Rust community thinks about tests in terms of two main categories: unit tests and integration tests.
+
+* Unit Tests test each unit of code in isolation
+* Integration Tests are entirely external to your library
+
+
+---
+
+
+# Unit Tests
+
+Unit tests are almost always within the `src` directory.
+
+* The convention is to create a module named `tests` annotated with `#[cfg (test)]`
+* Recall that `#[cfg(test)]` attribute on items will only compile those items when running `cargo test`, and not `cargo build`
+
+
+---
+
+
+# Testing Private Functions
+
+Rust allows you to test private functions.
+
+```rust
+// bad style for slides
+pub fn add_two(a: i32) -> i32 { internal_adder(a, 2) }
+fn internal_adder(a: i32, b: i32) -> i32 { a + b }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn internal() {
+        assert_eq!(4, internal_adder(2, 2));
+    }
+}
+```
+
+<!--
+Excerpt from the Rust Book:
+
+There’s debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
+
+If you don’t think private functions should be tested, there’s nothing in Rust that will compel you to do so.
+-->
+
+
+---
+
+
+# Integration Tests
+
+Integration Tests use your library in the same way any other code would
+
+* They can only call functions that are part of your library’s public API
+* Useful for testing if many parts of your library work together correctly
+
+
+---
+
+
+# Integration Tests
+
+To create integration tests, we need a `tests` directory.
+
+```
+adder
+├── Cargo.lock
+├── Cargo.toml
+├── src
+│   └── lib.rs
+└── tests
+    └── integration_test.rs
+```
+
+* Notice how `tests` is _outside_ of `src`
+
+
+---
+
+
+# Integration Tests
+
+Since we are now external to our own library, we must import everything as if it were a 3rd-party crate.
+
+###### tests/integration_test.rs
+```rust
+use adder;
+
+#[test]
+fn it_adds_two() {
+    assert_eq!(4, adder::add_two(2));
+}
+```
+
+* Note that we don't need to annotate anything with `#[cfg(tests)]`
+* We can now also run test file using the _name_ of the file with
+`cargo test --test integration_test`
+
+
+---
+
+
+# Submodules in Integration Tests
+
+As you add more integration tests, you might want to make more files in the `tests` directory to help organize them.
+
+* You can use submodules in the `tests` directory just like in the `src` directory
+* You can also use the "alternate file path" method to define non-test code
+
+
+---
+
+
+# Submodules in Integration Tests
+
+Using the alternate naming convention with `common/mod.rs` tells Rust not to treat the `common` module as an integration test file.
+
+```
+├── Cargo.lock
+├── Cargo.toml
+├── src
+│   └── lib.rs
+└── tests
+    ├── common
+    │   └── mod.rs
+    └── integration_test.rs
+```
+
+
+---
+
+
+# Submodules in Integration Tests
+
+Here is an example of using `common` in an Integration Test:
+
+```
+└── tests
+    ├── common
+    │   └── mod.rs
+    └── integration_test.rs
+```
+
+```rust
+use adder;
+
+mod common;
+
+#[test]
+fn it_adds_two() {
+    common::setup();
+    assert_eq!(4, adder::add_two(2));
+}
+```
+
+
+---
+
+
+# Integration Tests for Binary Crates
+
+We cannot create integration tests for a binary crate.
+
+* Binary crates do not expose their functions
+* This is why most binary crates will be paired with a library crate, even if they don't _need_ to expose any functions
+
+
+---
+
+
+# Recap: Testing
+
+* Unit tests exercise different parts of a library separately and can test private implementation details
+* Integration tests check that many parts of the library work together correctly
+* Even though Rust can prevent some kinds of bugs, tests are still important to reduce logical bugs!
+
+
+---
+
+
+# Homework 6
+
+TODO
+
+
 
 
 
