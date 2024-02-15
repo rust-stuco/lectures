@@ -1212,12 +1212,20 @@ We cannot create integration tests for a binary crate.
 
 # Homework 6
 
-TODO
+You'll be following the [Rust Book](https://doc.rust-lang.org/book/ch12-00-an-io-project.html) and implementing a mini version of `grep`!
+
+* You can do this homework in <10 minutes by copying and pasting code
+* We encourage you to actually read and follow the tutorial
+* You will still have to add some small extra feature once you are done!
+* _Remember that if you complete 4 homeworks and show up to every lecture, you pass this course!_
+* _We will only grade homework 6 at the end of the semester if your grade is not already high enough_
 
 
+---
 
 
+# Next Lecture: Crates, Closures, and Iterators
 
+![bg right:30% 80%](../images/ferris_happy.svg)
 
-
-
+* Thanks for coming!
