@@ -101,10 +101,10 @@ There are two types of crates: a _binary_ crate or a _library_ crate.
 
 A package is a bundle of one or more crates.
 
-- A package is defined by a `Cargo.toml` file at the root of your directory
-    - `Cargo.toml` describes how to build all of the crates
-- A package can contain as many binary crates as you like!
-- But it can only have at most 1 library crate
+* A package is defined by a `Cargo.toml` file at the root of your directory
+    * `Cargo.toml` describes how to build all of the crates
+* A package can contain as many binary crates as you like!
+* But it can only have at most 1 library crate
 
 
 ---
@@ -624,7 +624,7 @@ fn main() {
 }
 ```
 
-* All files in `src/kitchen` the exact same
+* All files in `src/kitchen` remain unchanged
 * What do we put in `???`?
 
 
@@ -641,6 +641,9 @@ fn main() {
     restaurant::kitchen::stove::cook();
 }
 ```
+
+* Similar to how you would treat `std` as an external crate
+* We'll talk about external crates more next week!
 
 
 ---
@@ -706,7 +709,7 @@ pub enum Appetizer {
 ```
 
 * We can mark specific fields of structs public
-* If an `enum` is public, so are its variants!
+* If an enum is public, so are its variants!
 
 
 ---
@@ -798,7 +801,7 @@ fn it_works() {
 * The `#[test]` attribute indicates that this is a test function
 * We set up the value `result` by adding `2 + 2`
 * We use the `assert_eq!` macro to assert that `result` is correct
-* We don't need to return anything, since not panicking _is_ the test
+* We don't need to return anything, since not panicking _is_ the test!
 
 
 ---
@@ -1281,7 +1284,7 @@ If you don't think private functions should be tested, there's nothing in Rust t
 
 # Integration Tests
 
-Integration Tests use your library in the same way any other code would
+Integration Tests use your library in the same way any other code would.
 
 * They can only call functions that are part of your library's public API
 * Useful for testing if many parts of your library work together correctly
