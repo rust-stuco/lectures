@@ -160,7 +160,7 @@ edition = "2021"
 
 * File written in `toml`, a file format for configuration files
 * Notice how there is no explicit mention of `src/main.rs`
-* Cargo follows the convention of `src/main.rs` being the crate root of a _binary_ crate contained in the package
+* Cargo follows the convention that a`src/main.rs` file is the crate root of a _binary_ crate
 * Similarly, a `src/lib.rs` file is the crate root of a _library_ crate
 
 <!--
@@ -185,10 +185,10 @@ Cargo is actually a Rust package that ships with installations of Rust!
 # Aside: Package vs Project vs Program
 
 * "Package" is the only term of these three with a formal definition in Rust
-* "Project" is a very overloaded term—meaningful in the context of an _IDE_
-* "Program"—ask the mathematicians
-
-<!-- TODO idk what to say for that last one -->
+* "Project" is a very overloaded term
+    * Meaningful in the context of an _IDE_
+* "Program"
+    * Ask the mathematicians ¯\\_(ツ)_/¯
 
 
 ---
@@ -319,7 +319,7 @@ mod kitchen {
 
 # Modules as Files
 
-In addition to declaring modules _within_ files, creating a file named `module_name.rs` creates with it a corresponding module named `module_name`.
+In addition to declaring modules _within_ files, creating a file named `module_name.rs` declares a corresponding module named `module_name`.
 
 ```sh
 src
@@ -428,7 +428,8 @@ src
 └── main.rs
 ```
 
-* This is a stylistic choice that each instructor has a very strong opinion on. Ask at your own peril...
+* This is a stylistic choice that each instructor has a very strong opinion on
+    * Ask at your own peril...
 * Consistency with surrounding codebase is ___always___ most important
 
 
@@ -541,7 +542,7 @@ fn main() {
 }
 ```
 
-* It is idiomatic to `use` up to the _parent_ of a function, rather than the function itself.
+* It is idiomatic to `use` up to the _parent_ of a function, rather than the function item itself
 
 
 <!--
@@ -703,12 +704,10 @@ pub fn cook() {
 # Privacy
 
 ```rust
-crate restaurant
-├── mod kitchen: pub(crate)
-│   ├── fn examine_ingredients: pub(self)
-│   └── mod stove: pub
-│       └── fn cook: pub
-└── fn main: pub(crate)
+mod kitchen: pub(crate)
+├── fn examine_ingredients: pub(self)
+└── mod stove: pub
+    └── fn cook: pub
 ```
 ###### src/kitchen/stove.rs
 ```rust
@@ -720,6 +719,7 @@ pub fn cook() {
 
 * `examine_ingredients` does not need to be public in this case
 * `stove` can access anything in its parent module `kitchen`
+* Privacy only applies to parent modules and above
 
 
 ---
@@ -741,8 +741,7 @@ pub enum Appetizer {
 }
 ```
 
-* We can mark specific fields of structs public, allowing direct access and manipulation
-    * Bad for encapsulation, but potentially convenient
+* We can mark specific fields of structs public, allowing direct access
 * If an enum is public, so are its variants!
 
 
