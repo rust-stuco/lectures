@@ -74,10 +74,11 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 ## Week 6: Modules and Testing
 - Packages and Crates
 - Modules
-- The `use` Keyword
-- Module Paths and File Structure
-- Unit Tests
-- Integration Tests
+    - Module Paths and File Structure
+    - The `use` Keyword
+- Testing
+    - Unit Tests
+    - Integration Tests
 
 
 ## Week 7: Crates, Closures, and Iterators

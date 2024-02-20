@@ -1,20 +1,16 @@
 ## Week 6: Modules and Testing
 
 ### Lecture
-- File system (20 min)
-    - `Cargo.toml`
-    - Packages
-    - Crates
-        - Binary vs Library crate
-    - Modules
-        - `mod` keyword
-        - Scope, Privacy, and Paths
-        - Module organization
-- Testing (30 min)
-    - `#[cfg(test)]` and `#[test]`
-    - `cargo test` usage and flags
-    - `#[should_panic]` and `Result<T, E>` in tests
-    - Unit testing
+- Module system (30 min)
+    - Packages and Crates (5 min)
+    - Modules (25 min)
+        - Using Modules (10 min)
+        - Paths (10 min)
+        - Misc (5 min)
+- Testing (20 min)
+    - Simple Testing (10 min)
+    - Controlled Testing (5 min)
+    - Test Organization (5 min)
 
 ### Extra Material
 - Rust Book Chapters 7, 11, and 14
