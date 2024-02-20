@@ -201,27 +201,25 @@ _Modules_ let us organize code within a crate for readability and easy reuse.
 
 The root module is in our `main.rs` (for a binary crate) or `lib.rs` (for a library crate).
 
-###### main.rs
+###### src/main.rs
 ```rust
-// `main` is defined implicitly the root module
 fn main() {
     println!("Hello, world!");
 }
 ```
+
 
 ---
 
 
 # Declaring Modules
 
-We can declare a new module inline, in the same file as our crate root.
+We can declare a new module within any other module (for example, in our root module) with the keyword `mod`.
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-###### main.rs
+###### src/main.rs
 ```rust
 fn main() {
-    kitchen::cook();
+    println!("Hello, World!");
 }
 
 mod kitchen {
@@ -232,16 +230,15 @@ mod kitchen {
 }
 ```
 
-* Can we call `cook` from `main`?
-
 
 ---
 
 
-# Declaring Modules
+# Using Modules
 
-We need to explicitly declare `cook` as `pub`—everything is private by default in Rust.
-###### main.rs
+To use items outside of a module, we must declare them as `pub`.
+
+###### src/main.rs
 ```rust
 fn main() {
     kitchen::cook();
@@ -250,12 +247,17 @@ fn main() {
 mod kitchen {
     pub fn cook() { println!("I'm cooking"); }
 
-    // Only those internal to the kitchen should be able to do this
+    // Only items internal to the `kitchen` should be able to access this
     fn examine_ingredients() {}
 }
 ```
 
-<!-- Private by default is very very good -->
+* By default, all module items are private in Rust
+
+<!--
+In fact, generally everything is private by default in Rust
+Private by default is very very good
+-->
 
 
 ---
@@ -263,9 +265,9 @@ mod kitchen {
 
 # Declaring Submodules
 
+We can declare submodules inside of other modules.
 
-Modules are a tree! We can declare submodules inside of modules.
-###### main.rs
+###### src/main.rs
 ```rust
 fn main() {
     kitchen::stove::cook();
@@ -280,15 +282,33 @@ mod kitchen {
 }
 ```
 
-* Submodules also have to be declared as `pub` to be accessible.
+* Submodules also have to be declared as `pub mod` to be accessible
+* The module system is a tree, just like a file system
+
 
 ---
 
 
-# Modules in Different Files
+# Modules as Files
 
-Let's move the `kitchen` module to its own file.
-###### main.rs
+In addition to declaring modules _within_ files, creating a file named `kitchen.rs` or `module_name.rs` will create a module with the same name.
+
+```sh
+src
+├── kitchen.rs
+└── main.rs
+```
+
+* Allows us to couple our module system to the file system
+* Let's move the `kitchen` module to its own file!
+
+
+---
+
+
+# Modules as Files
+
+###### src/main.rs
 ```rust
 mod kitchen; // The compiler will look for kitchen.rs
 
@@ -298,7 +318,7 @@ fn main() {
 
 ```
 
-###### kitchen.rs
+###### src/kitchen.rs
 ```rust
 pub mod stove {
     pub fn cook() { println!("I'm cooking"); }
@@ -307,28 +327,29 @@ pub mod stove {
 fn examine_ingredients() {}
 ```
 
-* Can we separate `stove`, while maintaining that it is a submodule of `kitchen`?
+* What about the `stove` submodule?
 
 
 ---
 
+
 # Submodules in Different Folders
 
-We can put `stove.rs` in the `kitchen` folder to indicate the hierarchy.
-###### kitchen.rs
+We can move the `stove` submodule into a file  `src/kitchen/stove.rs` to indicate that `stove` is a submodule of `kitchen`.
+
+###### src/kitchen.rs
 ```rust
 pub mod stove; // note this still has to be `pub`
 
 fn examine_ingredients() {}
 ```
 
-###### kitchen/stove.rs
+###### src/kitchen/stove.rs
 ```rust
 pub fn cook() {
     println!("I'm cooking");
 }
 ```
-
 
 * `main.rs` is unchanged (omitted for room on the slide)
 
@@ -338,46 +359,69 @@ pub fn cook() {
 
 # Alternate Submodule File Naming
 
-`kitchen.rs` can be moved into the kitchen folder as well, if we wanted
-###### kitchen/mod.rs
+We could also replace `src/kitchen.rs` with `src/kitchen/mod.rs`.
+
+###### src/kitchen/mod.rs
 ```rust
 pub mod stove;
 
 fn examine_ingredients() {}
 ```
 
-###### kitchen/stove.rs
+###### src/kitchen/stove.rs
 ```rust
 pub fn cook() {
     println!("I'm cooking");
 }
 ```
 
+* The only difference here is the file name and location of the `kitchen` module!
 
-* The other style is newer and generally preferred
-* Often this style is used if `mod.rs` only contains other `mod` declarations
+
+---
+
+
+# Alternate Submodule File Naming
+
+In terms of Rust's module system, these two file trees are (essentially) identical.
+
+```sh
+src
+├── kitchen
+│  └── stove.rs
+├── kitchen.rs
+└── main.rs
+```
+
+```sh
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+└── main.rs
+```
+
+* First would be preferred if `kitchen/stove.rs` didn't exist
+* Second is preferred if there are any submodule files
 
 
 ---
 
 
 # The Module Tree, Visualized
-![width:500px](../images/module-tree.png)
-- Does this look familiar?
-&nbsp;
-&nbsp;
 
----
+Even with our file system changes, the module tree stays the same!
 
+```rust
+crate restaurant
+├── mod kitchen: pub(crate)
+│   ├── fn examine_ingredients: pub(self)
+│   └── mod stove: pub
+│       └── fn cook: pub
+└── fn main: pub(crate)
+```
 
-# The Module Tree, Visualized
-
-![width:500px](../images/module-tree.png)
-![bg right:35% 75%](../images/module-tree-fs.png)
-
-- Does this look familiar?
-
-* The module tree corresponds to the filesystem tree
+* We can customize our file structure without changing any behavior
 
 
 ---
