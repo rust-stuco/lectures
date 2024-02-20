@@ -642,9 +642,6 @@ fn main() {
 }
 ```
 
-* All files in `src/kitchen` the exact same
-* What do we put in `???`?
-
 
 ---
 
@@ -670,9 +667,23 @@ pub fn cook() {
 }
 ```
 
-<!--
-Note that `examine_ingredients` does not need to be public for this to work
--->
+
+---
+
+
+# Privacy
+
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    super::examine_ingredients(); // Make sure you do this before cooking!
+    println!("I'm cooking");
+}
+```
+
+* Note that `examine_ingredients` does not need to be public for this to work
+* Privacy only applies to parent modules and above
+* So `stove` can access anything in its parent module `kitchen`
 
 
 ---
