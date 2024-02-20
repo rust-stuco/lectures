@@ -607,6 +607,8 @@ mod tests {
 
 # Writing Tests
 
+Let's break this down.
+
 ```rust
 #[test]
 fn it_works() {
@@ -618,6 +620,7 @@ fn it_works() {
 * The `#[test]` attribute indicates that this is a test function
 * We set up the value `result` by adding `2 + 2`
 * We use the `assert_eq!` macro to assert that `result` is correct
+* We don't need to return anything, since not panicking _is_ the test
 
 
 ---
@@ -681,7 +684,7 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 ```
 
 * All of the code examples in documentation comments are treated as tests!
-* This is useful for keeping docs and your code in sync
+* This is useful for keeping your docs and code in sync
 
 
 ---
@@ -842,7 +845,8 @@ thread 'tests::it_adds_two' panicked at 'assertion failed: `(left == right)`
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ```
 
-* Generally a nicer error message from `assert_eq!` rather than using `assert!(left == right)`
+* You get a nicer error message from `assert_eq!` versus using
+`assert!(left == right)`
 
 
 ---
@@ -924,12 +928,10 @@ fn it_works() -> Result<(), String> {
 ---
 
 
-# Issues With Running Tests in Parallel
+# Running Tests in Parallel
 
-Suppose each of your tests all write to some shared file on disk.
-
-* All tests write to a file `output.txt`
-    * This is pretty silly
+* Suppose each of your tests all write to some shared file on disk.
+    * All tests write to a file `output.txt`
 * They later assert that the file still contains that data they wrote
 * You probably don't want all of them to run at the same time!
 
@@ -950,6 +952,10 @@ $ cargo test -- --test-threads=1
 ```
 
 * Generally not a good idea, since the benefits of parallelism are lost
+
+<!--
+Take 15-445 if you want to do this safely without losing parallelism!
+-->
 
 
 ---
@@ -1220,7 +1226,7 @@ We cannot create integration tests for a binary crate.
 
 * Unit tests examine parts of a library in isolation and can test private implementation details
 * Integration tests check that many parts of the library work together correctly
-* Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs
+* Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs!
 
 
 ---
