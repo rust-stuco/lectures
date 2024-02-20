@@ -74,9 +74,9 @@ A _crate_ is the smallest amount of code that the Rust compiler considers at a t
 
 * The equivalent in C/C++ is a _compilation unit_
 * Running `rustc` on a single file also builds a crate
-* Crates contain Modules
+* Crates contain modules
     * Modules can be defined in other files
-    * Paths link code in Modules together
+    * Paths link code in modules together
 
 
 ---
@@ -114,19 +114,21 @@ A package is a bundle of one or more crates.
 
 Let’s walk through what happens when we create a package with `cargo`.
 
-```
+```sh
 $ cargo new my-project
      Created binary (application) `my-project` package
+
 $ ls my-project
 Cargo.toml
 src
+
 $ ls my-project/src
 main.rs
 ```
 
 * Creates a new package called `my-project`
-* A `src/main.rs` file that prints `"Hello, world!"`
-* `Cargo.toml` in the root directory
+* Creates a `src/main.rs` file that prints `"Hello, world!"`
+* Creates a `Cargo.toml` in the root directory
 
 
 ---
@@ -201,6 +203,10 @@ _Modules_ let us organize code within a crate for readability and easy reuse.
 
 The root module is in our `main.rs` (for a binary crate) or `lib.rs` (for a library crate).
 
+```sh
+$ cargo new restaurant
+```
+
 ###### src/main.rs
 ```rust
 fn main() {
@@ -214,7 +220,7 @@ fn main() {
 
 # Declaring Modules
 
-We can declare a new module within any other module (for example, in our root module) with the keyword `mod`.
+We can declare a new module with the keyword `mod`.
 
 ###### src/main.rs
 ```rust
@@ -295,12 +301,12 @@ In addition to declaring modules _within_ files, creating a file named `kitchen.
 
 ```sh
 src
-├── kitchen.rs
+├── module_name.rs
 └── main.rs
 ```
 
 * Allows us to couple our module system to the file system
-* Let's move the `kitchen` module to its own file!
+* Let's try moving the `kitchen` module to its own file!
 
 
 ---
@@ -315,7 +321,6 @@ mod kitchen; // The compiler will look for kitchen.rs
 fn main() {
     kitchen::stove::cook();
 }
-
 ```
 
 ###### src/kitchen.rs
@@ -327,13 +332,13 @@ pub mod stove {
 fn examine_ingredients() {}
 ```
 
-* What about the `stove` submodule?
+* What about moving the `stove` submodule?
 
 
 ---
 
 
-# Submodules in Different Folders
+# Submodules as Files
 
 We can move the `stove` submodule into a file  `src/kitchen/stove.rs` to indicate that `stove` is a submodule of `kitchen`.
 
@@ -427,6 +432,20 @@ crate restaurant
 ---
 
 
+# Module Paths
+
+To use any item in a module, we need to know its _path_, just like a filesystem.
+
+There are two types of paths:
+
+* An _absolute path_ is the full path starting from the crate root
+* A _relative path_ starts from the current module and use `self`, `super`, or an identifier in the current module
+* Paths are separated by double colons (`::`)
+
+
+---
+
+
 # Paths for Referring to Modules
 
 You may have noticed a path from the previous sequence:
@@ -438,32 +457,16 @@ kitchen::stove::cook();
 This is saying:
 * In the module `kitchen`
     * In the submodule `stove`
-        * call the function `cook`
+        * Call the function `cook`
+* This is a path relative to the crate root
 
 
 ---
 
 
-# Paths for Referring to Modules
+# Using Paths
 
-You may have noticed a path from the previous sequence:
-
-```rust
-kitchen::stove::cook();
-```
-
-* This is a relative path, relative to the module of `main.rs` (which is the root).
-* Another example of a relative path is `stove::cook()`, valid from within the `kitchen` module.
-* We can also express this absolutely, as `crate::kitchen::stove::cook()`.
-* There also exists a `super` keyword for paths relative to parent modules.
-
-
----
-
-
-# Bringing Paths into Scope with `use`
-
-###### main.rs
+###### src/main.rs
 ```rust
 mod kitchen;
 
@@ -472,107 +475,87 @@ fn main() {
 }
 ```
 
-* Programmers are lazy, and this is a lot to type
+* Not too hard to write...
 
 
 ---
 
 
-# Bringing Paths into Scope with `use`
+# Using Verbose Paths
 
-###### main.rs
+What if we had a deeper module tree?
+
+###### src/main.rs
 ```rust
-mod restaurant;
-
 fn main() {
-    restaurant::back::kitchen::stove::stovetop::burner::gasknob::cook();
-    restaurant::back::kitchen::stove::stovetop::burner::gasknob::cook();
-    restaurant::back::kitchen::stove::stovetop::burner::gasknob::cook();
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
 }
 ```
 
-- Programmers are lazy, and this is a lot to type
-    - Especially if the hierarchy is deep, and we are using it multiple times
+* A lot more verbose...
+    * Especially if we need to write this multiple times
+
 
 ---
 
 
-# Bringing Paths into Scope with `use`
+# The `use` Keyword
 
-###### main.rs
+We can bring paths into scope with the `use` keyword.
+
+###### src/main.rs
 ```rust
-mod restaurant;
+mod kitchen;
 
-// The path must be absolute
-use crate::restaurant::back::kitchen::stove::stovetop::burner::gasknob;
+use kitchen::stove::stovetop::burner::gas::gasknob::pot;
 
 fn main() {
-    gasknob::cook();
-    gasknob::cook();
-    gasknob::cook();
+    pot::cook();
+    pot::cook();
+    pot::cook();
 }
 ```
 
-- Programmers are lazy, and this is a lot to type
-    - Especially if the hierarchy is deep, and we are using it multiple times
-- We can bring `gasknob` into scope with `use` to eliminate the need to fully qualify this function call
-&nbsp;
+* It is idiomatic to bring in the _parent_ of an item rather than the item itself
+
+<!--
+Makes it clear that the item is not locally defined
+-->
 
 
 ---
 
 
-# Bringing Paths into Scope with `use`
+# More `use` Syntax
 
-###### main.rs
-```rust
-mod restaurant;
-
-// The path must be absolute
-use crate::restaurant::back::kitchen::stove::stovetop::burner::gasknob::cook;
-
-fn main() {
-    cook();
-    cook();
-    cook();
-}
-```
-
-- Programmers are lazy, and this is a lot to type
-    - Especially if the hierarchy is deep, and we are using it multiple times
-- We can bring `gasknob` into scope with `use` to eliminate the need to fully qualify this function call
-- Or, we can bring the function itself into scope
-
-
----
-
-
-# More `use` syntaxes
-
-We can also import items from the standard library.
+We can also import items from the Rust standard library `std`.
 
 ```rust
+use std::collections::HashMap;
 use std::io::Bytes;
 use std::io::Write;
-use std::io;
 ```
-* `Bytes` is a struct, and `Write` is a trait.
+
+* `HashMap` and `Bytes` are types, and `Write` is a trait
 
 
 ---
 
 
-# More `use` syntaxes
+# More `use` Syntax
 
-We can combine those 3 imports into one statement:
+We can combine those 2 `std::io` imports into one statement:
 
 ```rust
-use std::io::{Bytes, Write, Self};
+use std::collections::HashMap;
+use std::io::{Bytes, Write};
 ```
 
-* One could also write `use std::io::*`
+* You could also write `use std::io::*` to bring in everything from the `std::io` module (including `Bytes` and `Write`)
     * Called the "glob operator"
-    * Generally not recommended to avoid this
+    * Generally not recommended (increases compilation cost)
 
 <!--
 The one case where glob is idiomatic is with the prelude pattern
@@ -582,7 +565,147 @@ The one case where glob is idiomatic is with the prelude pattern
 ---
 
 
-# Recap: TODO
+# Aside: Binary and Library Crate Paths
+
+In the past examples, we were using a binary crate (`src/main.rs`). All the same principles apply to using a library crate.
+
+However, if you use _both_ a binary _and_ a library crate, things are slightly different.
+
+```sh
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+├── lib.rs <- What happens when we add this?
+└── main.rs
+```
+
+
+---
+
+
+# Aside: Binary and Library Crate Paths
+
+Typically when you have both a binary and library crate in the same package, you want to call functions defined in `lib.rs` from `main.rs`.
+
+```
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+├── lib.rs
+└── main.rs (wants to call functions from lib.rs)
+```
+
+* If you have both a `main.rs` file and a `lib.rs` file, _both_ are crate roots
+* So how can we get items from a separate module tree?
+
+<!--
+Since both are crate roots, there are technically 2 separate module trees
+-->
+
+
+---
+
+
+# Accessing Library from Binary
+
+Let's try to refactor our previous example:
+
+###### src/lib.rs
+```rust
+pub mod kitchen; // Now marked `pub`!
+```
+
+###### src/main.rs
+```rust
+fn main() {
+    ???::kitchen::stove::cook();
+}
+```
+
+* All files in `src/kitchen` the exact same
+* What do we put in `???`?
+
+
+---
+
+
+# Accessing Library from Binary
+
+We treat our library crate as an _external_ crate, with the same name as our package.
+
+###### src/main.rs
+```rust
+fn main() {
+    restaurant::kitchen::stove::cook();
+}
+```
+
+* All files in `src/kitchen` the exact same
+* What do we put in `???`?
+
+
+---
+
+
+# The `super` Keyword
+
+We can also construct relative paths that begin in the parent module with `super`.
+
+```rust
+crate restaurant
+├── mod kitchen: pub(crate)
+│   ├── fn examine_ingredients: pub(self)
+│   └── mod stove: pub
+│       └── fn cook: pub
+└── fn main: pub(crate)
+```
+
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    super::examine_ingredients(); // Make sure you do this before cooking!
+    println!("I'm cooking");
+}
+```
+
+<!--
+Note that `examine_ingredients` does not need to be public for this to work
+-->
+
+
+---
+
+
+# Privacy of Types
+
+We can also use `pub` to designate structs and enums as public.
+
+```rust
+pub struct Breakfast {
+    pub toast: String,
+    seasonal_fruit: String,
+}
+
+pub enum Appetizer {
+    Soup,
+    Salad,
+}
+```
+
+* We can mark specific fields of structs public
+* If an `enum` is public, so are its variants!
+
+
+---
+
+
+# Recap: Modules
+
+* You can split a package into crates, and crates into modules
+* You can refer to items defined in other modules with paths
+* All module code is private by default, unless you mark items `pub`
 
 
 ---
