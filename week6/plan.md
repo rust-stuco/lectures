@@ -3,7 +3,7 @@
 ### Lecture
 - Module system (30 min)
     - Packages and Crates (5 min)
-    - Modules (20 min)
+    - Modules (25 min)
         - Using Modules (10 min)
         - Paths (10 min)
         - Misc (5 min)
