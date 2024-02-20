@@ -35,7 +35,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # Large Programs
 
-When we write large programs, organizing code becomes increasingly important.
+As your programs get larger, the organization of the code becomes increasingly important.
 
 It is generally good practice to:
 
@@ -51,13 +51,17 @@ It is generally good practice to:
 
 # Module System
 
-Rust has organizational features collectively referred to as the _module system_.
+Rust implements a number of organizational features, collectively referred to as the _module system_.
 
 * **Packages**: A Cargo feature that lets you build, test, and share crates
 * **Crates**: A tree of modules that produces a library or executable
 * **Modules**: Lets you control the organization, scope, and privacy of paths
 * **Paths**: A way of naming an item, such as a struct, function, or module
 
+
+<!--
+Paths are what we've been calling namespaces this whole time basically
+-->
 
 ---
 
@@ -76,8 +80,15 @@ A _crate_ is the smallest amount of code that the Rust compiler considers at a t
 * Running `rustc` on a single file also builds a crate
 * Crates contain modules
     * Modules can be defined in other files
-    * Paths link code in modules together
+    * Paths allow modules to refer to other modules
 
+
+<!--
+You've probably never heard of compilation units---
+Think of it as adding a .o to your makefile. When you add it,
+the preprocessor will logically pull in all of the headers. The
+source c/cxx/cpp file and all of its dependents is one compilation unit.
+-->
 
 ---
 
@@ -85,14 +96,15 @@ A _crate_ is the smallest amount of code that the Rust compiler considers at a t
 
 # Crate
 
-There are two types of crates: a _binary_ crate or a _library_ crate.
+There are two types of crates: binary crates and library crates.
 
-* A binary crate is a program you can compile to an executable that contains a `main` function
-    * These executables can be run, like a command-line program or server
+* A binary crate can be compiled to an executable
+    * Contains a `main` function
+    * Examples include command-line utilities or servers
 * A library crate has no `main` function, and does not compile to an executable
     * Defines functionality intended to be shared with multiple projects
-* There is also a special crate called the _crate root_
-    * _The Rust compiler looks at this first, and it makes up the root module of the crate (more on modules later!)_
+* Each crate also has a file referred to as the _crate root_
+    * _The Rust compiler looks at this file first, and it is also the root module of the crate (more on modules later!)_
 
 ---
 
@@ -103,8 +115,7 @@ A package is a bundle of one or more crates.
 
 * A package is defined by a `Cargo.toml` file at the root of your directory
     * `Cargo.toml` describes how to build all of the crates
-* A package can contain as many binary crates as you like!
-* But it can only have at most 1 library crate
+* A package can contain any number of binary crates, but at most one library crate
 
 
 ---
@@ -112,7 +123,7 @@ A package is a bundle of one or more crates.
 
 # `cargo new`
 
-Let’s walk through what happens when we create a package with `cargo`.
+Let's walk through what happens when we create a package with `cargo new`.
 
 ```sh
 $ cargo new my-project
@@ -148,9 +159,13 @@ edition = "2021"
 ```
 
 * File written in `toml`, a file format for configuration files
-* Notice how there's no mention of `src/main.rs`!
-* Cargo follows the convention that `src/main.rs` is the crate root and builds a _binary_ crate
-* Similarly, if you create a `src/lib.rs` file, the package will build a _library_ crate
+* Notice how there is no explicit mention of `src/main.rs`
+* Cargo follows the convention of `src/main.rs` being the crate root of a _binary_ crate contained in the package
+* Similarly, a `src/lib.rs` file is the crate root of a _library_ crate
+
+<!--
+You *can* have both lib.rs and main.rs
+-->
 
 
 ---
@@ -169,9 +184,9 @@ Cargo is actually a Rust package that ships with installations of Rust!
 
 # Aside: Package vs Project vs Program
 
-* "Package" is the only term with a formal definition in Rust
-* "Project" can mean a lot of different things, and is a formal term in an _IDE_
-* "Program" - ask the mathematicians
+* "Package" is the only term of these three with a formal definition in Rust
+* "Project" is a very overloaded term—meaningful in the context of an _IDE_
+* "Program"—ask the mathematicians
 
 <!-- TODO idk what to say for that last one -->
 
@@ -196,6 +211,10 @@ _Modules_ let us organize code within a crate for readability and easy reuse.
 * Here is a [cheat sheet](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html) from the Rust Book!
 
 
+<!--
+Generally, a mechanism for encapsulation
+-->
+
 ---
 
 
@@ -214,6 +233,9 @@ fn main() {
 }
 ```
 
+<!--
+Root module is implicit here, no `mod` keyword
+-->
 
 ---
 
@@ -297,7 +319,7 @@ mod kitchen {
 
 # Modules as Files
 
-In addition to declaring modules _within_ files, creating a file named `kitchen.rs` or `module_name.rs` will create a module with the same name.
+In addition to declaring modules _within_ files, creating a file named `module_name.rs` creates with it a corresponding module named `module_name`.
 
 ```sh
 src
@@ -305,7 +327,7 @@ src
 └── main.rs
 ```
 
-* Allows us to couple our module system to the file system
+* Allows us to represent the module structure in the file system
 * Let's try moving the `kitchen` module to its own file!
 
 
@@ -332,7 +354,7 @@ pub mod stove {
 fn examine_ingredients() {}
 ```
 
-* What about moving the `stove` submodule?
+* What about moving the `stove` submodule to its own file?
 
 
 ---
@@ -356,7 +378,7 @@ pub fn cook() {
 }
 ```
 
-* `main.rs` is unchanged (omitted for room on the slide)
+* `main.rs` is unchanged (omitted for slide real estate)
 
 
 ---
@@ -380,7 +402,7 @@ pub fn cook() {
 }
 ```
 
-* The only difference here is the file name and location of the `kitchen` module!
+* The only difference is in which file the `kitchen` module is defined
 
 
 ---
@@ -406,8 +428,9 @@ src
 └── main.rs
 ```
 
-* First would be preferred if `kitchen/stove.rs` didn't exist
-* Second is preferred if there are any submodule files
+* This is a stylistic choice that each instructor has a very strong opinion on. Ask at your own peril...
+* Consistency with surrounding codebase is ___always___ most important
+
 
 
 ---
@@ -440,7 +463,7 @@ There are two types of paths:
 
 * An _absolute path_ is the full path starting from the crate root
 * A _relative path_ starts from the current module and use `self`, `super`, or an identifier in the current module
-* Paths are separated by double colons (`::`)
+* Components of paths are separated by double colons (`::`)
 
 
 ---
@@ -518,10 +541,11 @@ fn main() {
 }
 ```
 
-* It is idiomatic to bring in the _parent_ of an item rather than the item itself
+* It is idiomatic to `use` up to the _parent_ of a function, rather than the function itself.
+
 
 <!--
-Makes it clear that the item is not locally defined
+It is idiomatic to do it this way, because it makes it clear that the item is not locally defined
 -->
 
 
@@ -530,7 +554,7 @@ Makes it clear that the item is not locally defined
 
 # More `use` Syntax
 
-We can also import items from the Rust standard library `std`.
+We can also import items from the Rust standard library (`std`).
 
 ```rust
 use std::collections::HashMap;
@@ -538,7 +562,9 @@ use std::io::Bytes;
 use std::io::Write;
 ```
 
-* `HashMap` and `Bytes` are types, and `Write` is a trait
+* `HashMap` and `Bytes` are structs, and `Write` is a trait
+* It is idiomatic to import structs, enums, traits, etc. directly
+    * No real reason behind this besides convention
 
 
 ---
@@ -676,6 +702,14 @@ pub fn cook() {
 
 # Privacy
 
+```rust
+crate restaurant
+├── mod kitchen: pub(crate)
+│   ├── fn examine_ingredients: pub(self)
+│   └── mod stove: pub
+│       └── fn cook: pub
+└── fn main: pub(crate)
+```
 ###### src/kitchen/stove.rs
 ```rust
 pub fn cook() {
@@ -684,9 +718,8 @@ pub fn cook() {
 }
 ```
 
-* Note that `examine_ingredients` does not need to be public for this to work
-* Privacy only applies to parent modules and above
-* So `stove` can access anything in its parent module `kitchen`
+* `examine_ingredients` does not need to be public in this case
+* `stove` can access anything in its parent module `kitchen`
 
 
 ---
@@ -708,7 +741,8 @@ pub enum Appetizer {
 }
 ```
 
-* We can mark specific fields of structs public
+* We can mark specific fields of structs public, allowing direct access and manipulation
+    * Bad for encapsulation, but potentially convenient
 * If an enum is public, so are its variants!
 
 
@@ -719,7 +753,7 @@ pub enum Appetizer {
 
 * You can split a package into crates, and crates into modules
 * You can refer to items defined in other modules with paths
-* All module code is private by default, unless you mark items `pub`
+* All module components are private by default, unless you mark them as `pub`
 
 
 ---
