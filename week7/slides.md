@@ -19,13 +19,9 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 ## Week 7: Crates, Closures, and Iterators
-- Crate Highlight: `rand`, `clap`, `anyhow`, `tracing`, `flamegraph`
+- Crate Highlights
 - Closures
-    - Captures
-    - The `move` Keyword
-    - `Fn` traits
 - Iterators
-    - `Iterator` Trait and `next`
 - Loops vs. Iterators
 
 ### After Dark
@@ -468,11 +464,144 @@ fn main() {
     let answer = do_twice(add_one, 5);
 }
 ```
-* Rust has function pointers
+* Rust has function pointers, notated by `fn` (**not** `Fn`)
 * `fn` is a **type** that implements `Fn`, `FnMut`, and `FnOnce`
 
 ---
 
 # **Iterators**
+Sorry functional haters
 
+---
 
+# What is an Iterator?
+* Iterators allow you to perform some task on a sequence of elements
+* Iterators manage iterating over each item and determining termination
+* Rust iterators are *lazy*
+  * This means we don't pay a cost until we consume the iterator
+
+---
+
+# Iterator Trait
+All iterators must implement the `Iterator` trait:
+```rust
+pub trait Iterator {
+  type Item;
+
+  fn next(&mut self) -> Option<Self::Item>;
+
+  // methods with default implementations elided
+}
+```
+* What's going on with `Item`?
+  * This is an *associated type*
+  * Interpret as: to define `Iterator` you must define the type, `Item`, you're iterating over
+
+---
+
+# Custom Iterator Example
+```rust
+struct Fibonacci {
+  curr: u32,
+  next: u32,
+}
+```
+* I want to implement an iterator that contains the fibonacci sequence.
+* First need to declare the struct that can implement `Iterator`
+
+---
+ 
+# Custom Iterator Example
+
+```rust
+impl Iterator for Fibonacci {
+    type Item = u32;
+
+    // We use Self::Item in the return type, so we can change
+    // the type without having to update the function signatures.
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.curr;
+
+        self.curr = self.next;
+        self.next = current + self.next;
+
+        // No endpoint to a Fibonacci sequence - `Some` is always returned.
+        Some(current)
+    }
+}
+```
+* Notice `Self::Item` is aliased to `u32`
+* When the `Iterator` is finished, `None` is returned, else `Some`
+
+---
+
+# Iterators from Vectors
+```rust
+let v1 = vec![1, 2, 3];
+
+let v1_iter = v1.iter();
+
+for val in v1_iter {
+    println!("Got: {}", val);
+}
+```
+* We saw this code before in lecture 4
+  * Except now we explicitly create the iterator that Rust did for us
+
+---
+
+# Iterating Explicitly
+
+```rust
+let v1 = vec![1, 2, 3];
+
+let mut v1_iter = v1.iter();
+
+assert_eq!(v1_iter.next(), Some(&1));
+assert_eq!(v1_iter.next(), Some(&2));
+assert_eq!(v1_iter.next(), Some(&3));
+assert_eq!(v1_iter.next(), None);
+    
+```
+* Here we see how the required `next` function operates
+* Notice how `v1_iter` is mutable
+  * When we call `next()` we've **consumed** that iterator element
+  * The iterators internal state has changed
+  * Note that `iter()` provides immutable borrows to `v1`'s elements
+
+---
+
+# Iterators and Mutable Borrows
+```rust
+let mut vec = vec![1, 2, 3]; // Note we need vec to be mutable
+let mut mutable_iter = vec.iter_mut();
+
+while let Some(val) = mutable_iter.next() {
+    *val += 1;
+}
+
+println!("{:?}", vec);
+```
+```
+[2, 3, 4]
+```
+* Before we saw that `v1.iter()` gave us references to elements
+* We can use `iter_mut()` for `&mut`
+
+---
+
+# Iterators and Ownership
+```rust
+let mut vec = vec![1, 2, 3];
+let owned_iter = vec.into_iter(); // vec is consumed
+for val in owned_iter {
+    println!("{}", val);
+}
+// owned_iter is consumed
+```
+* To make an iterator that owns its values we have `into_iter()`
+* This is what consuming for loops do under the hood
+
+---
+
+# 
