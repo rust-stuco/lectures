@@ -593,7 +593,7 @@ println!("{:?}", vec);
 # Iterators and Ownership
 ```rust
 let mut vec = vec![1, 2, 3];
-let owned_iter = vec.into_iter(); // vec is consumed
+let owned_iter = vec.into_iter(); // vec is *consumed*
 for val in owned_iter {
     println!("{}", val);
 }
@@ -604,4 +604,134 @@ for val in owned_iter {
 
 ---
 
-# 
+# Consuming Iterators
+```rust
+let v1 = vec![1, 2, 3];
+
+let v1_iter = v1.iter();
+
+let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
+
+assert_eq!(total, 6);
+```
+* The standard library has many functions for iterators.
+* Some of these functions *consume* the iterator
+
+---
+
+# Other consuming functions
+* `collect(self)` - Coming soon
+* `fold(self, init: B, f: F)`
+* `count(self)`
+
+---
+
+# Producing Iterators
+![bg right:25% 75%](../images/ferris_not_desired_behavior.svg)
+```rust
+let v1: Vec<i32> = vec![1, 2, 3];
+
+v1.iter().map(|x| x + 1);
+```
+* This code seems fine...
+
+---
+
+# Producing Iterators
+```
+warning: unused `Map` that must be used
+ --> src/main.rs:4:5
+  |
+4 |     v1.iter().map(|x| x + 1);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: iterators are lazy and do nothing unless consumed
+  = note: `#[warn(unused_must_use)]` on by default
+
+warning: `iterators` (bin "iterators") generated 1 warning
+    Finished dev [unoptimized + debuginfo] target(s) in 0.47s
+     Running `target/debug/iterators`
+```
+* Zero-cost abstractions at work
+* Rust won't make us pay for our iterator until we use it
+
+---
+
+# Producing Iterators
+```rust
+let v2: Vec<_> = (1..4).map(|x| x + 1).collect();
+
+println!("{:?}", v2);
+```
+
+```
+[2, 3, 4]
+```
+* We use `collect()` to tell Rust we're done modifying our iterator and want to convert our changes to a `Vec`
+
+---
+
+# Filter
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+```rust
+fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
+    list.into_iter().filter(|x| x == val).collect()
+}
+```
+```
+--> src/main.rs:2:35
+  |
+2 |     list.into_iter().filter(|x| x == val).collect()
+  |                                   ^^ no implementation for `&i32 == i32`
+  |
+```
+* Some iterator functions take a reference instead of ownership
+* Note how our filter closure captures `val` for our filtering needs
+
+---
+
+# Filter
+![bg right:25% 75%](../images/ferris_happy.svg)
+```rust
+list.into_iter().filter(|&x| x == val).collect()
+```
+or
+```rust
+list.into_iter().filter(|x| *x == val).collect()
+```
+* We either explicitly match on the reference or dereference
+
+---
+
+# Chaining It Together
+```rust
+let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
+println!("{:?}", iter);
+// Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 2 } }
+for x in iter.take(5) {
+    print!("{}, ", x); // 9, 36, 81, 144, 225, 
+}
+```
+* Read as: Print first 5 squares skipping 0 divisible by 3
+* Note filter doesn't need a deref here for `%`
+
+---
+
+# Iterator Recap
+
+* Iterators is an extremely powerful structure in Rust
+* View std library for more info on functions
+* Rules regarding closures and ownership still apply
+  * `iter`
+  * `iter_mut`
+  * `into_iter`
+* Iterators are *lazy*
+  * Remember `.collect()`!
+
+---
+
+# Next Lecture: Lifetimes
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for coming!
