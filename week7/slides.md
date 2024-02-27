@@ -1,27 +1,26 @@
 ---
 marp: true
-theme: default
+theme: rust
 class: invert
 paginate: true
 ---
 
+<!-- _class: communism invert  -->
 
-# Intro to Rust Lang
+## Intro to Rust Lang
+# Crates, Closures, and Iterators
+###### (oh my)
 
-# **Crates, Closures, and Iterators**
-
-*Oh my!*
 <br>
 
 Benjamin Owad, David Rudo, and Connor Tsui
 
-![bg right:35% 65%](../images/ferris.svg)
+<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
 
-
-## Today: Crates, Closures, and Iterators
+# Today: Crates, Closures, and Iterators
 
 - Crate Highlights
 - Closures
