@@ -5,9 +5,11 @@ class: invert
 paginate: true
 ---
 
+
 # Intro to Rust Lang
 
 # **Crates, Closures, and Iterators**
+
 *Oh my!*
 <br>
 
@@ -18,7 +20,9 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
-## Week 7: Crates, Closures, and Iterators
+
+## Today: Crates, Closures, and Iterators
+
 - Crate Highlights
 - Closures
 - Iterators
@@ -30,17 +34,16 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
+
 # **Crate Highlights**
+
 
 ---
 
-# Rand
-The standard library includes many things but a random number generator isn't one of them*
 
-* Rand is the defacto crate for:
-    * Generate random numbers
-    * Create distributions
-    * Provides randomness related algorithms (like vector shuffling)
+# `Rand`
+
+The standard library includes many things but a random number generator isn't one of them*
 
 ```Rust
 use rand::prelude::*;
@@ -51,10 +54,17 @@ let y: f64 = rng.gen(); // generates a float between 0 and 1
 let mut nums: Vec<i32> = (1..100).collect();
 nums.shuffle(&mut rng);
 ```
+* Rand is the defacto crate for:
+    * Generate random numbers
+    * Create distributions
+    * Provides randomness related algorithms (like vector shuffling)
+
 
 ---
 
-# Clap
+
+# `Clap`
+
 A very popular (but not the only!) argument parser used in Rust programs.
 
 ```Rust
@@ -78,9 +88,12 @@ fn main() {
 }
 ```
 
+
 ---
 
-# Anyhow
+
+# `Anyhow`
+
 Have code that can throw multiple error types that you wish was one? Use this!
 ```Rust
 use anyhow::Result;
@@ -97,61 +110,82 @@ fn get_cluster_info() -> Result<ClusterMap> {
     * Attaching custom context/error messages
     * Custom errors
 
+
 ---
 
-# Tracing
-Framework for instrumenting Rust programs 
+
+# `Tracing`
+
+Framework for instrumenting Rust programs
 * Collects structured, event-based diagnostic information
 * First class support for async programs
 * Manages execution through periods of computation known as *spans*
 * Provides distinction of program events in terms of severity and custom messages
 * Extremely flexible for reformatting/changing
 
+
 ---
 
-# Flamegraph
+
+# `Flamegraph`
+
 ![bg right:50% 90%](../images/example_flame.png)
 Rust powered flamegraph generator with Cargo support!
 * Can support non-Rust projects too
 * Relies on perf/dtrace
 
+
 ---
+
 
 # **Closures**
 
+
 ---
 
+
 # What Is A Closure?
-* Known as lambdas in "lesser languages"
-* Anonymous functions you can save in a variable or pass as an argument to other functions
 
 **Unlike functions**: Closures can capture values from the scope in which they're defined
 
+* Known as lambdas in "lesser languages"
+* Anonymous functions you can save in a variable or pass as an argument to other functions
+
+
+
 ---
 
+
 # Closure Syntax
+
 ```Rust
-let annotated_closure = |num : u32| -> u32 {
+let annotated_closure = |num: u32| -> u32 {
     num
 };
 ```
 This looks very similar to functions, but Rust is smarter than this. Rust can derive closure type annotations from context!
 
+
 ---
 
+
 # Closures Simplified
+
 ```Rust
 fn  add_one_v1   (x: u32) -> u32 { x + 1 }
 let add_one_v2 = |x: u32| -> u32 { x + 1 };
 let add_one_v3 = |x|             { x + 1 };
-let add_one_v4 = |x|               x + 1  ; 
+let add_one_v4 = |x|               x + 1  ;
 ```
-Note that for v4, we can remove the `{}` since the body is only one line.
-This simplification is similar in style to how we don't annotate `let v = Vec::new()`.
+* For v4, we can remove the `{}` since the body is only one line
+* This simplification is similar in style to how we don't annotate `let v = Vec::new()`
+
 
 ---
 
+
 # How about this?
+
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```Rust
@@ -161,12 +195,18 @@ let s = example_closure(String::from("hello"));
 let n = example_closure(5);
 ```
 
+
 ---
 
+
 # Annotations Are Still Important
+```Rust
+let example_closure = |x| x;
+
+let s = example_closure(String::from("hello"));
+let n = example_closure(5);
 ```
-$ cargo run
-   Compiling closure-example v0.1.0 (file:///projects/closure-example)
+```
 error[E0308]: mismatched types
  --> src/main.rs:5:29
   |
@@ -181,29 +221,34 @@ note: closure parameter defined here
   |
 2 |     let example_closure = |x| x;
   |                            ^
-
-For more information about this error, try `rustc --explain E0308`.
-error: could not compile `closure-example` due to previous error
 ```
 
+
 ---
+
 
 # So What Happened Here?
-* The first time we called `example_closure` with a `String` 
-* Rust inferred the type of `x` and the return type 
-* Those types are now bound to the closure 
+
+* The first time we called `example_closure` with a `String`
+* Rust inferred the type of `x` and the return type
+* Those types are now bound to the closure
     * Causing `example_closure(5)` to fail
+
 
 ---
 
+
 # Capturing References
+
 Closures can capture values from their environment in three ways:
 * Borrowing immutably
 * Borrowing mutably
-* Taking ownership 
+* Taking ownership
     * i.e. _moving_ the value to the closure
 
+
 ---
+
 
 # Immutable Borrowing in Closures
 
@@ -220,10 +265,14 @@ println!("After calling closure: {:?}", list);
 - Note how once a closure is defined, it's invoked in the same manner as a function.
 - Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference.
 
+<!-- println! implicitly takes references to anything passed in, that's why this works -->
+
+
 ---
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 # Mutable Borrowing in Closures
+
 ```rust
 let mut list = vec![1, 2, 3];
 println!("Before defining closure: {:?}", list);
@@ -235,7 +284,9 @@ println!("After calling closure: {:?}", list);
 ```
 * This seems like it would work...
 
+
 ---
+
 
 # Mutable Borrowing in Closures
 
@@ -244,7 +295,7 @@ error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared 
  --> src/main.rs:7:5
   |
 5 |     let borrows_mutably = || list.push(7);
-  |                              ---- calling `borrows_mutably` requires mutable 
+  |                              ---- calling `borrows_mutably` requires mutable
   |                                    binding due to mutable borrow of `list`
 6 |
 7 |     borrows_mutably();
@@ -258,7 +309,9 @@ help: consider changing this to be mutable
 * Mutability must always be explicitly stated
 * Note that Rust only considers the **invocation** a borrow, not the definition
 
+
 ---
+
 
 # Mutable Borrowing in Closures
 
@@ -280,9 +333,12 @@ After calling closure: [1, 2, 3, 7]
 * `borrows_mutably` isn't called again, so Rust knows the borrowing has ended.
   * This is why we can call `println!` after.
 
+
 ---
 
+
 # Giving Closures Ownership
+
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 ```rust
 let mystery = {
@@ -311,9 +367,12 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
   |         ++++
 ```
 
+
 ---
 
+
 # Giving Closures Ownership
+
 ![bg right:25% 75%](../images/ferris_happy.svg)
 ```rust
 let mystery = {
@@ -327,9 +386,12 @@ println!("Mystery value is {}", mystery(5));
 * We can tell a closure to own a value using the `move` keyword
 * This is important for threads in Rust (to be discussed later)
 
+
 ---
 
+
 #  Closures After Capturing
+
 - A closure body can now do any of the following:
   - Move a captured value out of the closure
   - Mutate a captured value
@@ -338,7 +400,9 @@ println!("Mystery value is {}", mystery(5));
 - Depending on which of these properties a closure has determines its trait
   - Closure traits is how functions/structs specify what _kind_ of closure is wanted
 
+
 ---
+
 
 # FnOnce
 
@@ -352,13 +416,17 @@ let my_str = String::from("x");
 let consume_and_return = move || my_str;
 ```
 * Rust won't implicitly copy `my_str`
-  * This closure consumes `my_str` by giving ownership back to the caller 
+  * This closure consumes `my_str` by giving ownership back to the caller
+
 
 ---
 
+
+
+
 # FnMut
 
-* Trait applies to closures that: 
+* Trait applies to closures that:
   * Don't move captured values out of their body
   * Might mutate captured values
 * Can be called more than once
@@ -366,13 +434,20 @@ let consume_and_return = move || my_str;
 ```rust
 let mut x: usize = 1;
 let add_two_to_x = || x += 2;
+
+let mut base = String::from("");
+let mut build_string = |addition| base.push_str(addition);
+build_string("Ferris is happy");
 ```
 * Note this compiles until `add_two_to_x()` then `mut` is needed for the borrow
   * `mut` signals that we are mutating our closure's environment
 
+
 ---
 
+
 # Fn
+
 * Trait applies to closures that:
   * Don't move captured values out of their body
   * Don't mutate captured values
@@ -380,12 +455,22 @@ let add_two_to_x = || x += 2;
 * Can be called more than once without mutating environment
 
 ```rust
-let double = |x| x * 2;
+let double = |x| x * 2; // captures nothing
+
+let mascot = String::from("Ferris");
+let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+
+let my_sanity = ();
+let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+
 ```
+
 
 ---
 
+
 # Closure Traits Summarized
+
 * `Fn`, `FnMut`, `FnOnce` describe different groups of closures
   * You don't `impl` them, they apply to a closure automatically if appropriate
   * A single closure can implement one or multiple of these traits
@@ -393,14 +478,20 @@ let double = |x| x * 2;
 * `FnMut` - call multiple times, environment may change
 * `FnOnce` - call at least once, environment may be consumed
 
+
 ---
+
 
 # Closure Traits Picturized
+
 ![bg right:65% 100%](../images/closure_traits.svg)
+
 
 ---
 
+
 # Passing Closures to Functions
+
 ```rust
 impl<T> Option<T> {
     pub fn unwrap_or_else<F>(self, f: F) -> T
@@ -419,9 +510,12 @@ impl<T> Option<T> {
   * Every closure implements `FnOnce` at minimum making this function flexible
   * ` F: FnOnce() -> T` - `F` must take no args and return `T`
 
+
 ---
 
+
 # Passing Mutable Closures to Functions
+
 ```rust
 fn do_twice<F>(mut func: F)
     where F: FnMut()
@@ -434,9 +528,12 @@ fn do_twice<F>(mut func: F)
   * We now require mutable borrowing the environment
   * Similar to the requirements of defining and using a `FnMut` shown before
 
+
 ---
 
+
 # Passing Specific Closures to Functions
+
 ```rust
 fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
 where
@@ -448,9 +545,12 @@ where
 * We can specify the arguments and return types
 * While this example is generic we could've replaced `T` with a concrete type
 
+
 ---
 
+
 # Hate Functional Programming? No Problem!
+
 ```rust
 fn add_one(x: i32) -> i32 {
     x + 1
@@ -467,22 +567,31 @@ fn main() {
 * Rust has function pointers, notated by `fn` (**not** `Fn`)
 * `fn` is a **type** that implements `Fn`, `FnMut`, and `FnOnce`
 
+
 ---
+
 
 # **Iterators**
+
 Sorry functional haters
+
 
 ---
 
+
 # What is an Iterator?
+
 * Iterators allow you to perform some task on a sequence of elements
 * Iterators manage iterating over each item and determining termination
 * Rust iterators are *lazy*
   * This means we don't pay a cost until we consume the iterator
 
+
 ---
 
+
 # Iterator Trait
+
 All iterators must implement the `Iterator` trait:
 ```rust
 pub trait Iterator {
@@ -497,9 +606,12 @@ pub trait Iterator {
   * This is an *associated type*
   * Interpret as: to define `Iterator` you must define the type, `Item`, you're iterating over
 
+
 ---
 
+
 # Custom Iterator Example
+
 ```rust
 struct Fibonacci {
   curr: u32,
@@ -509,8 +621,10 @@ struct Fibonacci {
 * I want to implement an iterator that contains the fibonacci sequence.
 * First need to declare the struct that can implement `Iterator`
 
+
 ---
- 
+
+
 # Custom Iterator Example
 
 ```rust
@@ -533,9 +647,12 @@ impl Iterator for Fibonacci {
 * Notice `Self::Item` is aliased to `u32`
 * When the `Iterator` is finished, `None` is returned, else `Some`
 
+
 ---
 
+
 # Iterators from Vectors
+
 ```rust
 let v1 = vec![1, 2, 3];
 
@@ -548,7 +665,9 @@ for val in v1_iter {
 * We saw this code before in lecture 4
   * Except now we explicitly create the iterator that Rust did for us
 
+
 ---
+
 
 # Iterating Explicitly
 
@@ -561,7 +680,7 @@ assert_eq!(v1_iter.next(), Some(&1));
 assert_eq!(v1_iter.next(), Some(&2));
 assert_eq!(v1_iter.next(), Some(&3));
 assert_eq!(v1_iter.next(), None);
-    
+
 ```
 * Here we see how the required `next` function operates
 * Notice how `v1_iter` is mutable
@@ -569,9 +688,12 @@ assert_eq!(v1_iter.next(), None);
   * The iterators internal state has changed
   * Note that `iter()` provides immutable borrows to `v1`'s elements
 
+
 ---
 
+
 # Iterators and Mutable Borrows
+
 ```rust
 let mut vec = vec![1, 2, 3]; // Note we need vec to be mutable
 let mut mutable_iter = vec.iter_mut();
@@ -588,9 +710,12 @@ println!("{:?}", vec);
 * Before we saw that `v1.iter()` gave us references to elements
 * We can use `iter_mut()` for `&mut`
 
+
 ---
 
+
 # Iterators and Ownership
+
 ```rust
 let mut vec = vec![1, 2, 3];
 let owned_iter = vec.into_iter(); // vec is *consumed*
@@ -602,9 +727,12 @@ for val in owned_iter {
 * To make an iterator that owns its values we have `into_iter()`
 * This is what consuming for loops do under the hood
 
+
 ---
 
+
 # Consuming Iterators
+
 ```rust
 let v1 = vec![1, 2, 3];
 
@@ -617,16 +745,22 @@ assert_eq!(total, 6);
 * The standard library has many functions for iterators.
 * Some of these functions *consume* the iterator
 
+
 ---
 
+
 # Other consuming functions
+
 * `collect(self)` - Coming soon
 * `fold(self, init: B, f: F)`
 * `count(self)`
 
+
 ---
 
+
 # Producing Iterators
+
 ![bg right:25% 75%](../images/ferris_not_desired_behavior.svg)
 ```rust
 let v1: Vec<i32> = vec![1, 2, 3];
@@ -635,9 +769,12 @@ v1.iter().map(|x| x + 1);
 ```
 * This code seems fine...
 
+
 ---
 
+
 # Producing Iterators
+
 ```
 warning: unused `Map` that must be used
  --> src/main.rs:4:5
@@ -654,10 +791,14 @@ warning: `iterators` (bin "iterators") generated 1 warning
 ```
 * Zero-cost abstractions at work
 * Rust won't make us pay for our iterator until we use it
+  * It will compile and warn us of unused data
+
 
 ---
 
+
 # Producing Iterators
+
 ```rust
 let v2: Vec<_> = (1..4).map(|x| x + 1).collect();
 
@@ -669,9 +810,12 @@ println!("{:?}", v2);
 ```
 * We use `collect()` to tell Rust we're done modifying our iterator and want to convert our changes to a `Vec`
 
+
 ---
 
+
 # Filter
+
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 ```rust
 fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
@@ -688,9 +832,12 @@ fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
 * Some iterator functions take a reference instead of ownership
 * Note how our filter closure captures `val` for our filtering needs
 
+
 ---
 
+
 # Filter
+
 ![bg right:25% 75%](../images/ferris_happy.svg)
 ```rust
 list.into_iter().filter(|&x| x == val).collect()
@@ -701,21 +848,26 @@ list.into_iter().filter(|x| *x == val).collect()
 ```
 * We either explicitly match on the reference or dereference
 
+
 ---
 
+
 # Chaining It Together
+
 ```rust
 let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
 println!("{:?}", iter);
 // Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 2 } }
 for x in iter.take(5) {
-    print!("{}, ", x); // 9, 36, 81, 144, 225, 
+    print!("{}, ", x); // 9, 36, 81, 144, 225,
 }
 ```
 * Read as: Print first 5 squares skipping 0 divisible by 3
 * Note filter doesn't need a deref here for `%`
 
+
 ---
+
 
 # Iterator Recap
 
@@ -728,9 +880,12 @@ for x in iter.take(5) {
 * Iterators are *lazy*
   * Remember `.collect()`!
 
+
 ---
 
-# Next Lecture: Lifetimes
+
+# Next Lecture: ISD
+*Instructors still debating*
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
