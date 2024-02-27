@@ -28,9 +28,6 @@ Benjamin Owad, David Rudo, and Connor Tsui
 - Iterators
 - Loops vs. Iterators
 
-### After Dark
-- More Essential Rust Crates
-    - `rayon`, `serde`, `criterion`
 
 ---
 
@@ -41,11 +38,13 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ---
 
 
-# `Rand`
+# `rand`
 
-The standard library includes many things but a random number generator isn't one of them*
+The standard library includes many things... but a random number generator isn't one of them*.
 
-```Rust
+Here's an example of using the `rand` crate:
+
+```rust
 use rand::prelude::*;
 
 let mut rng = rand::thread_rng();
@@ -54,20 +53,39 @@ let y: f64 = rng.gen(); // generates a float between 0 and 1
 let mut nums: Vec<i32> = (1..100).collect();
 nums.shuffle(&mut rng);
 ```
-* Rand is the defacto crate for:
-    * Generate random numbers
-    * Create distributions
-    * Provides randomness related algorithms (like vector shuffling)
 
 
 ---
 
 
-# `Clap`
+# `rand`
 
-A very popular (but not the only!) argument parser used in Rust programs.
+```rust
+use rand::prelude::*;
 
-```Rust
+let mut rng = rand::thread_rng();
+let y: f64 = rng.gen(); // generates a float between 0 and 1
+
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+```
+
+* `rand` is the de facto crate for:
+    * Generating random numbers
+    * Creating probabilistic distributions
+    * Providing randomness related algorithms (like vector shuffling)
+
+
+---
+
+
+# `clap`
+
+Often, we want our binary to take in command line arguments.
+
+A very popular argument parser used in Rust programs is `clap`.
+
+```rust
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -79,9 +97,28 @@ struct Args {
     #[arg(short, long, default_value_t = 1)]
     count: u8, // Number of times to greet
 }
+```
+
+* Makes use of Rust's macro system to generate boilerplate code for us!
+
+
+---
+
+
+# `clap`
+
+Here's how you would use a `clap` struct called `Args`:
+
+```rust
+use clap::Parser;
+
+// <-- snip -->
+struct Args {
+    // <-- snip -->
+}
 
 fn main() {
-    let args = Args::parse(); //get-opt could never
+    let args = Args::parse(); // get-opt could never
     for _ in 0..args.count {
         println!("Hello {}!", args.name)
     }
@@ -92,10 +129,40 @@ fn main() {
 ---
 
 
-# `Anyhow`
+# `clap`
+
+If we run the binary called `demo`:
+
+```
+$ demo --help
+A simple to use, efficient, and full-featured Command Line Argument Parser
+
+Usage: demo[EXE] [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    Name of the person to greet
+  -c, --count <COUNT>  Number of times to greet [default: 1]
+  -h, --help           Print help
+  -V, --version        Print version
+
+$ demo --name Me
+Hello Me!
+```
+
+* Note that `clap` is not the only 3rd-party crate option!
+
+<!--
+clap can be pretty heavyweight if you don't need too much functionality
+-->
+
+
+---
+
+
+# `anyhow`
 
 Have code that can throw multiple error types that you wish was one? Use this!
-```Rust
+```rust
 use anyhow::Result;
 
 fn get_cluster_info() -> Result<ClusterMap> {
@@ -103,18 +170,42 @@ fn get_cluster_info() -> Result<ClusterMap> {
     let map: ClusterMap = serde_json::from_str(&config)?;
     Ok(map)
 }
+
 ```
-* Makes error more dynamic
-* Allows for:
-    * Downcasting to original error types
-    * Attaching custom context/error messages
-    * Custom errors
+
+* Both lines return different error types, but `anyhow` allows us to return both!
+* Makes errors more dynamic and ergonomic
 
 
 ---
 
 
-# `Tracing`
+# `anyhow`
+
+Another example:
+
+```rust
+use anyhow::{Context, Result};
+
+fn main() -> Result<()> {
+    // <-- snip -->
+    it.detach().context("Failed to detach the important thing")?;
+
+    let content = std::fs::read(path)
+        .with_context(|| format!("Failed to read instrs from {}", path))?;
+}
+```
+
+Other `anyhow` features include:
+* Downcasting to the original error types
+* Attaching custom context / error messages
+* More expressive custom errors
+
+
+---
+
+
+# `tracing`
 
 Framework for instrumenting Rust programs
 * Collects structured, event-based diagnostic information
@@ -127,10 +218,14 @@ Framework for instrumenting Rust programs
 ---
 
 
-# `Flamegraph`
+# `flamegraph`
 
-![bg right:50% 90%](../images/example_flame.png)
+![bg right:60% 90%](../images/example_flame.png)
+
 Rust powered flamegraph generator with Cargo support!
+
+With a bit of setup, you can generate this with `cargo flamegraph`
+
 * Can support non-Rust projects too
 * Relies on perf/dtrace
 
@@ -146,11 +241,10 @@ Rust powered flamegraph generator with Cargo support!
 
 # What Is A Closure?
 
-**Unlike functions**: Closures can capture values from the scope in which they're defined
+Closures are anonymous functions that can capture values from the scope in which they're defined.
 
 * Known as lambdas in "lesser languages"
-* Anonymous functions you can save in a variable or pass as an argument to other functions
-
+* You can save closures in a variable or pass as an argument to other functions
 
 
 ---
@@ -158,12 +252,13 @@ Rust powered flamegraph generator with Cargo support!
 
 # Closure Syntax
 
-```Rust
+```rust
 let annotated_closure = |num: u32| -> u32 {
     num
 };
 ```
-This looks very similar to functions, but Rust is smarter than this. Rust can derive closure type annotations from context!
+* This looks very similar to functions, but Rust is smarter than this
+* Like normal variables, rust can derive closure type annotations from context!
 
 
 ---
@@ -171,14 +266,20 @@ This looks very similar to functions, but Rust is smarter than this. Rust can de
 
 # Closures Simplified
 
-```Rust
+```rust
 fn  add_one_v1   (x: u32) -> u32 { x + 1 }
 let add_one_v2 = |x: u32| -> u32 { x + 1 };
 let add_one_v3 = |x|             { x + 1 };
 let add_one_v4 = |x|               x + 1  ;
+
+let _ = add_one_v3(3);
+let _ = add_one_v4(4);
 ```
-* For v4, we can remove the `{}` since the body is only one line
-* This simplification is similar in style to how we don't annotate `let v = Vec::new()`
+
+* `v1` is the equivalent function
+* We can remove type parameters in `v3`
+  * This is similar to eliding the type parameter in `let v = Vec::new()`
+* For `v4`, we can remove the `{}` since the body is only one line
 
 
 ---
@@ -188,7 +289,7 @@ let add_one_v4 = |x|               x + 1  ;
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-```Rust
+```rust
 let example_closure = |x| x;
 
 let s = example_closure(String::from("hello"));
@@ -200,12 +301,14 @@ let n = example_closure(5);
 
 
 # Annotations Are Still Important
-```Rust
+
+```rust
 let example_closure = |x| x;
 
 let s = example_closure(String::from("hello"));
 let n = example_closure(5);
 ```
+
 ```
 error[E0308]: mismatched types
  --> src/main.rs:5:29
@@ -229,10 +332,17 @@ note: closure parameter defined here
 
 # So What Happened Here?
 
+```rust
+let example_closure = |x| x;
+
+let s = example_closure(String::from("hello"));
+let n = example_closure(5);
+```
+
 * The first time we called `example_closure` with a `String`
-* Rust inferred the type of `x` and the return type
+* Rust inferred the type of `x` and the return type to be `String`
 * Those types are now bound to the closure
-    * Causing `example_closure(5)` to fail
+    * `example_closure(5)` will not type check
 
 
 ---
@@ -262,16 +372,19 @@ println!("Before calling closure: {:?}", list);
 only_borrows();
 println!("After calling closure: {:?}", list);
 ```
-- Note how once a closure is defined, it's invoked in the same manner as a function
-- Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
+
+* Note how once a closure is defined, it's invoked in the same manner as a function
+* Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
 
 <!-- println! implicitly takes references to anything passed in, that's why this works -->
 
 
 ---
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 # Mutable Borrowing in Closures
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```rust
 let mut list = vec![1, 2, 3];
@@ -306,8 +419,9 @@ help: consider changing this to be mutable
 5 |     let mut borrows_mutably = || list.push(7);
   |         +++
 ```
+
 * Mutability must always be explicitly stated
-* Note that Rust only considers the **invocation** a borrow, not the definition
+* Rust only considers the **invocation** a borrow, not the definition
 
 
 ---
@@ -384,7 +498,8 @@ println!("Mystery value is {}", mystery(5));
 ```
 
 * We can tell a closure to own a value using the `move` keyword
-* This is important for threads in Rust (to be discussed later)
+* This is important for thread safety in Rust
+  * To be discussed later...
 
 
 ---
