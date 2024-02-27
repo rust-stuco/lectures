@@ -262,8 +262,8 @@ println!("Before calling closure: {:?}", list);
 only_borrows();
 println!("After calling closure: {:?}", list);
 ```
-- Note how once a closure is defined, it's invoked in the same manner as a function.
-- Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference.
+- Note how once a closure is defined, it's invoked in the same manner as a function
+- Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
 
 <!-- println! implicitly takes references to anything passed in, that's why this works -->
 
@@ -329,9 +329,9 @@ println!("After calling closure: {:?}", list);
 Before defining closure: [1, 2, 3]
 After calling closure: [1, 2, 3, 7]
 ```
-* Note how we can't have a `println!` before invoking `borrows_mutably` like before.
-* `borrows_mutably` isn't called again, so Rust knows the borrowing has ended.
-  * This is why we can call `println!` after.
+* Note how we can't have a `println!` before invoking `borrows_mutably` like before
+* `borrows_mutably` isn't called again, so Rust knows the borrowing has ended
+  * This is why we can call `println!` after
 
 
 ---
@@ -618,7 +618,7 @@ struct Fibonacci {
   next: u32,
 }
 ```
-* I want to implement an iterator that contains the fibonacci sequence.
+* I want to implement an iterator that contains the fibonacci sequence
 * First need to declare the struct that can implement `Iterator`
 
 
@@ -742,7 +742,7 @@ let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
 
 assert_eq!(total, 6);
 ```
-* The standard library has many functions for iterators.
+* The standard library has many functions for iterators
 * Some of these functions *consume* the iterator
 
 
