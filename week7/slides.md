@@ -816,9 +816,10 @@ fn main() {
 ---
 
 
-# Iterator Trait
+# The `Iterator` Trait
 
 All iterators must implement the `Iterator` trait:
+
 ```rust
 pub trait Iterator {
   type Item;
@@ -828,15 +829,39 @@ pub trait Iterator {
   // methods with default implementations elided
 }
 ```
-* What's going on with `Item`?
-  * This is an *associated type*
-  * Interpret as: to define `Iterator` you must define the type, `Item`, you're iterating over
+
+* Keep generating `Some(item)`
+* When the `Iterator` is finished, `None` is returned
+
+
+---
+
+# `type Item`
+
+What's going on with the `type Item`?
+
+```rust
+pub trait Iterator {
+  type Item;
+
+  fn next(&mut self) -> Option<Self::Item>;
+
+  // methods with default implementations elided
+}
+```
+
+* This is an _associated type_
+* To define `Iterator` you must define the `Item` you're iterating over
+* _Different from generic types!_
+  * There can only be one way to iterate over something
 
 
 ---
 
 
 # Custom Iterator Example
+
+Let's say we want to implement an iterator that generates the Fibonacci sequence.
 
 ```rust
 struct Fibonacci {
@@ -844,14 +869,15 @@ struct Fibonacci {
   next: u32,
 }
 ```
-* I want to implement an iterator that contains the fibonacci sequence
-* First need to declare the struct that can implement `Iterator`
+
+* First need to declare the `struct` that can implement `Iterator`
+* We need to store two numbers to compute the next element
 
 
 ---
 
 
-# Custom Iterator Example
+# Fibonacci Example
 
 ```rust
 impl Iterator for Fibonacci {
@@ -871,23 +897,28 @@ impl Iterator for Fibonacci {
 }
 ```
 * Notice `Self::Item` is aliased to `u32`
-* When the `Iterator` is finished, `None` is returned, else `Some`
+
 
 
 ---
 
 
-# Iterators from Vectors
+# `Vec` Iterators
 
 ```rust
 let v1 = vec![1, 2, 3];
 
 let v1_iter = v1.iter();
-
 for val in v1_iter {
     println!("Got: {}", val);
 }
+
+for val in v1 {
+    println!("Got: {}", val);
+}
 ```
+
+* These do the same thing!
 * We saw this code before in lecture 4
   * Except now we explicitly create the iterator that Rust did for us
 
@@ -906,12 +937,12 @@ assert_eq!(v1_iter.next(), Some(&1));
 assert_eq!(v1_iter.next(), Some(&2));
 assert_eq!(v1_iter.next(), Some(&3));
 assert_eq!(v1_iter.next(), None);
-
 ```
+
 * Here we see how the required `next` function operates
 * Notice how `v1_iter` is mutable
   * When we call `next()` we've **consumed** that iterator element
-  * The iterators internal state has changed
+  * The iterator's internal state has changed
   * Note that `iter()` provides immutable borrows to `v1`'s elements
 
 
@@ -930,9 +961,11 @@ while let Some(val) = mutable_iter.next() {
 
 println!("{:?}", vec);
 ```
+
 ```
 [2, 3, 4]
 ```
+
 * Before we saw that `v1.iter()` gave us references to elements
 * We can use `iter_mut()` for `&mut`
 
@@ -950,6 +983,7 @@ for val in owned_iter {
 }
 // owned_iter is consumed
 ```
+
 * To make an iterator that owns its values we have `into_iter()`
 * This is what consuming for loops do under the hood
 
@@ -968,6 +1002,7 @@ let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
 
 assert_eq!(total, 6);
 ```
+
 * The standard library has many functions for iterators
 * Some of these functions *consume* the iterator
 
@@ -993,6 +1028,7 @@ let v1: Vec<i32> = vec![1, 2, 3];
 
 v1.iter().map(|x| x + 1);
 ```
+
 * This code seems fine...
 
 
@@ -1015,6 +1051,7 @@ warning: `iterators` (bin "iterators") generated 1 warning
     Finished dev [unoptimized + debuginfo] target(s) in 0.47s
      Running `target/debug/iterators`
 ```
+
 * Zero-cost abstractions at work
 * Rust won't make us pay for our iterator until we use it
   * It will compile and warn us of unused data
@@ -1048,6 +1085,7 @@ fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
     list.into_iter().filter(|x| x == val).collect()
 }
 ```
+
 ```
 --> src/main.rs:2:35
   |
@@ -1055,6 +1093,7 @@ fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
   |                                   ^^ no implementation for `&i32 == i32`
   |
 ```
+
 * Some iterator functions take a reference instead of ownership
 * Note how our filter closure captures `val` for our filtering needs
 
@@ -1068,7 +1107,9 @@ fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
 ```rust
 list.into_iter().filter(|&x| x == val).collect()
 ```
+
 or
+
 ```rust
 list.into_iter().filter(|x| *x == val).collect()
 ```
@@ -1111,6 +1152,7 @@ for x in iter.take(5) {
 
 
 # Next Lecture: ISD
+
 *Instructors still debating*
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
