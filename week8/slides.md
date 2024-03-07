@@ -27,7 +27,7 @@ We've used the term "lifetime" a few times before, and today we're going to expl
 
 * What is `'a` lifetime?
 * How to think about lifetimes
-* Other perspectives
+* Other perspectives...
 
 
 ---
@@ -39,6 +39,7 @@ Lifetimes are similar to generic types with trait bounds.
 
 * Traits ensure that a generic type has the behavior we want
 * Lifetimes ensure that references are valid for as long as we need them to be
+    * Remember that references are just pointers with constraints
     * **Lifetimes are all about references, and nothing else**
 
 
@@ -98,7 +99,7 @@ error[E0597]: `x` does not live long enough
 
 The Rust compiler's borrow checker will compare scopes to determine whether all borrows are valid.
 
-Here's the same code, but with lifetime annotations:
+Here is the same code, but with a lifetime diagram:
 ```rust
 fn main() {
     let r;                // ---------+-- 'a
@@ -137,7 +138,7 @@ fn main() {
 * The borrow checker will compare the "size" of the two lifetimes
     * `r` has a lifetime of `'a`
     * `r` refers to a variable with lifetime `'b`
-    * Rejected because `'b` is shorter than `'a`
+    * Rejects because `'b` is shorter than `'a`
 
 
 ---
@@ -180,7 +181,8 @@ fn main() {
 }
 ```
 
-Expected result:
+We want this output:
+
 ```
 The longest string is abcd
 ```
@@ -215,7 +217,7 @@ fn longest(x: &str, y: &str) -> &str {
 
 # `longest` error
 
-For some reason, our attempt does not compile.
+Unfortunately, our attempt will not compile:
 
 ```
 error[E0106]: missing lifetime specifier
@@ -373,12 +375,8 @@ We can extrapolate a lot from a function's signature, even without the body.
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 ```
 
-* This function takes two string slices that live at least as long as lifetime `'a`
-* The string slice returned will also live at least as long as `'a`
-
-<!--
-Be clear that functions do not "return" lifetimes, this is just for slide space
--->
+* This function takes two string slices (`x` and `y`) that live at least as long as lifetime `'a`
+* The string slice returned (the longer of `x` or `y`) will also live at least as long as `'a`
 
 
 ---
@@ -394,6 +392,10 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 * In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
 
 <!--
+Be clear that functions do not "return" lifetimes, this is just for slide space
+
+In general, lifetimes and scope do not overlap in some parts and not in others
+
 Note that the longest function doesn’t need to know exactly how long x and y will live, only that some scope can be substituted for 'a that will satisfy this signature.
 -->
 
@@ -444,7 +446,7 @@ fn main() {
 }
 ```
 
-* `result` should only be valid in the inner scope, but we try to reference it in the outer scope
+* `result` should only be valid in the smaller (inner) scope, but we try to reference it in the outer scope
 
 
 ---
@@ -460,7 +462,7 @@ error[E0597]: `string2` does not live long enough
   |
 6 |         result = longest(string1.as_str(), string2.as_str());
   |                                            ^^^^^^^^^^^^^^^^
-                                    borrowed value does not live long enough
+                       borrowed value does not live long enough
 7 |     }
   |     - `string2` dropped here while still borrowed
 8 |     println!("The longest string is {}", result);
@@ -516,7 +518,7 @@ println!("The longest string is {}", result);
 Suppose we wanted to always return the first input, `x`.
 
 ```rust
-fn longest<'a>(x: &'a str, y: &str) -> &'a str {
+fn first<'a>(x: &'a str, y: &str) -> &'a str {
     x
 }
 ```
@@ -529,10 +531,10 @@ fn longest<'a>(x: &'a str, y: &str) -> &'a str {
 
 # Lifetimes of Return Values
 
-The lifetime of a return value _must_ match the lifetime of one of the inputs
+The lifetime of a return value _must_ match the lifetime of one of the inputs.
 
 ```rust
-fn longest<'a>(x: &str, y: &str) -> &'a str {
+fn dangling<'a>(x: &str, y: &str) -> &'a str {
     let result = String::from("really long string");
     result.as_str()
 }
@@ -546,7 +548,7 @@ fn longest<'a>(x: &str, y: &str) -> &'a str {
 
 # Lifetime Elision
 
-So all references must have a lifetime. But we've seen many references without lifetime annotations...
+All references must have a lifetime. But we've seen many references without lifetime annotations...
 
 This is a version of a function we saw back in week 2:
 
@@ -578,8 +580,8 @@ _Long ago, in the dark ages of the 2010s, every reference needed an explicit lif
 fn first_word<'a>(s: &'a str) -> &'a str {
 ```
 
-* Every single `&` needed an attached `'something`
-* But this became incredibly repetitive, and so the Rust team programmed the borrow checker to infer lifetime annotation patterns of certain situations
+* Before Rust 1.0, every single `&` needed an explicit `'something` annotation
+* This became incredibly repetitive, and so the Rust team programmed the borrow checker to infer lifetime annotation patterns of certain situations
 * These patterns are called the _lifetime elision rules_
 
 
@@ -588,8 +590,8 @@ fn first_word<'a>(s: &'a str) -> &'a str {
 
 # Lifetime Elision
 
-* Lifetime Elision does not provide full inference, it will only infer when it is absolutely sure it is correct
-* Lifetimes on function or method parameters are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_.
+* Lifetime elision does not provide full inference, it will only infer when it is absolutely sure it is correct
+* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_.
 * There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes.
 
 
@@ -600,9 +602,13 @@ fn first_word<'a>(s: &'a str) -> &'a str {
 
 The first rule is that the compiler will assign a different lifetime parameter for each input lifetime.
 
-* `fn foo(x: &i32)` becomes `fn foo<'a>(x: &'a i32)`
-* `fn bar(x: &i32, y: &i32)` becomes `bar<'a, 'b>(x: &'a i32, y: &'b i32)`
+```rust
+fn foo(x: &i32);
+fn foo<'a>(x: &'a i32);
 
+fn bar(x: &i32, y: &i32);
+fn bar<'a, 'b>(x: &'a i32, y: &'b i32);
+```
 
 
 
@@ -613,9 +619,13 @@ The first rule is that the compiler will assign a different lifetime parameter f
 
 The second rule is that if there is only 1 input lifetime parameter, then it is assigned to all output lifetimes.
 
-* `fn foo(x: &i32) -> &i32` becomes `fn foo<'a>(x: &'a i32) -> &'a i32`
-* `fn bar(arr: &[i32]) -> (&i32, &i32)` becomes
-`fn bar<'a>(arr: &'a [i32]) -> (&'a i32, &'a i32)`
+```rust
+fn foo(x: &i32) -> &i32;
+fn foo<'a>(x: &'a i32) -> &'a i32;
+
+fn bar(arr: &[i32]) -> (&i32, &i32);
+fn bar<'a>(arr: &'a [i32]) -> (&'a i32, &'a i32);
+```
 
 
 ---
@@ -627,6 +637,7 @@ If there are multiple input lifetime parameters, but the first parameter is `&se
 
 * This only applies to methods
 * Makes writing methods much nicer!
+* _Examples to come later..._
 
 
 ---
@@ -706,7 +717,7 @@ fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
 ```
 
 * The second rule doesn't apply here, because there is more than 1 input lifetime (`'a` and `'b`)
-* Since Rust cannot figure out what to do, it gives a compile error to the programmer so they can write the annotations themselves
+* Since Rust cannot figure out what to do, it gives a compiler error to the programmer so they can write the annotations themselves
 
 
 
@@ -715,7 +726,7 @@ fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
 
 # Lifetimes in Structs
 
-So far, all of the `struct`s we've looked at have held _owned_ types.
+So far, all of the `struct`s we've looked at have held _owned_ type fields.
 
 If we want a `struct` to hold a reference, we need to annotate them.
 
@@ -745,7 +756,7 @@ struct ImportantExcerpt<'a> {
 }
 ```
 
-* As with generic data types, we declare the name of the generic lifetime parameter inside angle brackets
+- As with generic data types, we declare the name of the generic lifetime parameter inside angle brackets
 * This annotation means an instance of `ImportantExcerpt` can’t outlive the reference it holds in its `part` field
 
 
@@ -1008,367 +1019,15 @@ You can find some more examples here: [Rust By Example](https://doc.rust-lang.or
 ---
 
 
+# Another Perspective
 
+[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
 
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
+* This is a great video made by `leddoo` that explains another way to think about lifetimes!
+* Instead of lifetimes as regions of code or scopes, what if we thought about lifetimes as regions of memory?
 
 
 ---
-
-
-
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
-
----
-
-
-
-
-
-
-
-
 
 
 
