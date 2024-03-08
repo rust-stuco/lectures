@@ -804,11 +804,7 @@ impl<'a> ImportantExcerpt<'a> {
 Let’s briefly look at the syntax of specifying generic type parameters, trait bounds, and lifetimes all in one function!
 
 ```rust
-fn longest_with_an_announcement<'a, T>(
-    x: &'a str,
-    y: &'a str,
-    ann: T,
-) -> &'a str
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
 where
     T: Display,
 {
@@ -830,49 +826,89 @@ where
 Lifetimes can be bounds, just like traits.
 
 ```rust
-// `Ref` contains a reference to a generic type `T` that has
-// an unknown lifetime `'a`. `T` is bounded such that any
-// *references* in `T` must outlive `'a`.
-// Additionally, the lifetime of `Ref` may not exceed `'a`.
 #[derive(Debug)]
 struct Ref<'a, T: 'a>(&'a T);
-
-// A generic function which prints using the `Debug` trait.
-fn print<T>(t: T) where
-    T: Debug {
-    println!("`print`: t is {:?}", t);
-}
 ```
 
-* `T: 'a`: All references in `T` must outlive lifetime `'a`
-* `T: Trait + 'a`: Type `T` must implement trait `Trait` and all references in `T` must outlive `'a`
+* `Ref` contains a reference, with a lifetime of `'a`, to a generic type `T`
+* `T` is bounded such that any references _in_ `T` must live at least as long as `'a`
+* Additionally, the lifetime of `Ref` may not exceed `'a`
 
 
 ---
 
 
-# Lifetime Bounded Lifetimes
+# Lifetime Bounds
 
-We can have lifetimes that are bounded by other lifetimes as well.
+Here is a similar example, but with a function instead of a `struct`.
 
 ```rust
-// `<'a: 'b, 'b>` reads as lifetime `'a` is at least as long as `'b`.
-// Here, we take in an `&'a i32` and return a `&'b i32` as a result of coercion.
+fn print_ref<'a, T>(t: &'a T)
+where
+    T: Debug + 'a,
+{
+    println!("print_ref(t) is {:?}", t);
+}
+```
+
+* `T` must implement `Debug`, and all references _in_ `T` must outlive `'a`
+* Additionally, `'a` must outlive this function call
+
+
+---
+
+
+# Lifetime Bounds
+
+Putting the `Ref` and `print_ref` together:
+
+```rust
+#[derive(Debug)]
+struct Ref<'a, T: 'a>(&'a T);
+
+fn print_ref<'a, T>(t: &'a T)
+where
+    T: Debug + 'a,
+{
+    println!("print_ref(t) is {:?}", t);
+}
+
+fn main() {
+    let x = vec![9, 8, 0, 0, 8];
+    let ref_x = Ref(&x);
+    print_ref(&ref_x);
+    // Prints to stdout: print_ref(t) is Ref([9, 8, 0, 0, 8])
+}
+```
+
+
+---
+
+
+# Lifetime-bounded Lifetimes
+
+We can have lifetimes that are bounded by other lifetimes.
+
+```rust
+// Takes in a `&'a i32` and return a `&'b i32` as a result of coercion
 fn choose_first<'a: 'b, 'b>(first: &'a i32, _: &'b i32) -> &'b i32 {
     first
 }
 
 fn main() {
     let first = 2; // Longer lifetime
-
     {
         let second = 3; // Shorter lifetime
-
-        println!("The product is {}", multiply(&first, &second));
         println!("{} is the first", choose_first(&first, &second));
-    };
+    }
 }
 ```
+
+* `'a: 'b` reads as "lifetime `'a` outlives `'b`"
+
+<!--
+'a outlives 'b == 'a is at least as long as 'b
+-->
 
 
 ---
@@ -880,21 +916,40 @@ fn main() {
 
 # The `'static` Lifetime
 
-There is one special lifetime, called `'static`.
+There is a special lifetime called `'static`.
 
 ```rust
-let s: &'static str = "I have a static lifetime.";
+let s: &'static str = "I have a static lifetime";
 ```
 
-* `'static` implies that the reference will live for the entire duration of the program (it is valid until the program stops running)
-* `s` is stored in the program binary, so it will always be valid!
-* You may see suggestions to use the `'static` lifetime in error messages
-    * Before making a change, think about if your reference will _really_ live for the entire duration of the program
-    * _You may actually be trying to create a dangling reference!_
+* `'static` implies that the reference will live until the end of the program (it is valid until the program stops running)
+* Here, `s` is stored in the program binary, so it will always be valid!
 
-<!--
-Specify that all string literals have 'static lifetimes
--->
+
+---
+
+
+# `'static` Error Messages
+
+You may see suggestions to use the `'static` lifetime in error messages.
+
+```rust
+fn foo() -> &i32 {
+    let x = 5;
+    &x
+}
+```
+
+```
+help: consider using the `'static` lifetime, but this is uncommon unless you're
+      returning a borrowed value from a `const` or a `static`
+  |
+2 | fn foo() -> &'static i32 {
+  |              +++++++
+```
+
+* Before making a change, think about if your reference will _really_ live until the end of the program
+* You may actually be trying to create a dangling reference!
 
 
 ---
@@ -911,30 +966,45 @@ There are two common ways to make a variable with a `'static` lifetime.
 ---
 
 
-# `'static` Example: Coercion
+# `'static` vs `static` Example
 
 ```rust
-// Make a constant with `'static` lifetime.
-static NUM: i32 = 18;
+static NUM: i32 = 42;
+static NUM_REF: &'static i32 = &NUM;
 
-// Returns a reference to `NUM` where its `'static`
-// lifetime is coerced to that of the input argument.
-fn coerce_static<'a>(_: &'a i32) -> &'a i32 {
-    &NUM
+fn main() {
+    let msg: &'static str = "Hello World";
+    println!("{msg} {NUM_REF}!");
+}
+```
+
+```
+Hello World 42!
+```
+
+---
+
+
+# `'static` Memory Leaks
+
+We can also create `'static` values by leaking memory.
+
+```rust
+fn random_vec() -> &'static [usize; 100] {
+    let mut rng = rand::thread_rng();
+    let mut boxed = Box::new([0; 100]);
+    boxed.try_fill(&mut rng).unwrap();
+    Box::leak(boxed)
 }
 
 fn main() {
-    {
-        // Make an integer to use for `coerce_static`:
-        let lifetime_num = 9;
-
-        // Coerce `NUM` to lifetime of `lifetime_num`:
-        let coerced_static = coerce_static(&lifetime_num);
-        println!("coerced_static: {}", coerced_static);
-    }
-    println!("NUM: {} stays accessible!", NUM);
+    let first: &'static [usize; 100] = random_vec();
+    let second: &'static [usize; 100] = random_vec();
+    assert_ne!(first, second)
 }
 ```
+
+* This allows us to _dynamically_ create a `'static` reference!
 
 
 ---
@@ -942,11 +1012,15 @@ fn main() {
 
 # The `'static` Bound
 
-`'static` can be used as a bound too...
+`'static` can also be used as a type bound. However...
 
-* There is a subtle difference between the `'static` lifetime and bound
+* There is a subtle difference between the `'static` lifetime and the `'static` bound
 * The `'static` bound means that the type does not contain any non-static references
-* This means that all owned data implicitly has a `'static` bound
+* This means that all owned data implicitly has a `'static` bound, since owned data holds no references
+
+<!--
+Does not imply contrapositive
+-->
 
 
 ---
@@ -1010,10 +1084,10 @@ error[E0597]: `i` does not live long enough
 ---
 
 
-# More Examples
+# Further Reading
 
-You can find some more examples here: [Rust By Example](https://doc.rust-lang.org/rust-by-example/scope/lifetime.html)
-
+* You can find some more examples here: [Rust By Example](https://doc.rust-lang.org/rust-by-example/scope/lifetime.html)
+* If you want to go _really_ in depth, read the Rustonomicon chapter on [lifetimes](https://doc.rust-lang.org/nomicon/lifetimes.html)
 
 
 ---
@@ -1025,14 +1099,17 @@ You can find some more examples here: [Rust By Example](https://doc.rust-lang.or
 
 * This is a great video made by `leddoo` that explains another way to think about lifetimes!
 * Instead of lifetimes as regions of code or scopes, what if we thought about lifetimes as regions of memory?
+* Let's watch it together!
 
 
 ---
 
 
+# Homework 8
 
+TODO
 
-
-
+* Will likely be a quiz consisting of questions from the Brown Rust Book
+* Ask for people to do it not just for points, but so we get an understanding of where people are at + contribute to active research
 
 
