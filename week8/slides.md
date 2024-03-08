@@ -135,7 +135,7 @@ fn main() {
 }                         // ---------+
 ```
 
-* The borrow checker will compare the "size" of the two lifetimes
+- The borrow checker will compare the "size" of the two lifetimes
     * `r` has a lifetime of `'a`
     * `r` refers to a variable with lifetime `'b`
     * Rejects because `'b` is shorter than `'a`
@@ -268,7 +268,7 @@ fn longest(x: &str, y: &str) -> &str {
 }
 ```
 
-* We don't know which execution path this code will take
+- We don't know which execution path this code will take
 * We don't know the lifetimes of the input references either
 * Thus we cannot determine the lifetime we return!
 * We will need to _annotate_ these references
@@ -333,7 +333,7 @@ if x.len() > y.len() {
 ```
 
 * We return either `x` or `y`, which each have their own lifetimes
-* We want the returned reference to be valid as long as the _both_ input references `x` and `y` are valid
+* We want the returned reference to be valid as long as _both_ input references `x` and `y` are valid
 * So we want lifetimes of `x` and `y` to _outlive_ the returned lifetime
 
 
@@ -357,7 +357,7 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
 ```
 
 * This will compile now!
-* Remember that these lifetime annotations don't change the lifetimes of any values
+* _Remember that these lifetime annotations don't change the lifetimes of any values_
 
 <!--
 They just tell the borrow checker to reject any values that don't adhere to these constraints/invariants
@@ -388,7 +388,7 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 ```
 
-* When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
+- When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
 * In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
 
 <!--
@@ -506,7 +506,7 @@ let result;
 println!("The longest string is {}", result);
 ```
 
-* Even though we know (as a human) that the reference will be valid, the compiler does not know
+- Even though we know (as a human) that the reference will be valid, the compiler does not know
 * We even told the compiler that the returned lifetime would be the same as the smaller of the input lifetimes!
 
 
@@ -591,8 +591,8 @@ fn first_word<'a>(s: &'a str) -> &'a str {
 # Lifetime Elision
 
 * Lifetime elision does not provide full inference, it will only infer when it is absolutely sure it is correct
-* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_.
-* There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes.
+* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_
+* There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes
 
 
 ---
@@ -716,7 +716,7 @@ fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
 fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
 ```
 
-* The second rule doesn't apply here, because there is more than 1 input lifetime (`'a` and `'b`)
+- The second rule doesn't apply here, because there is more than 1 input lifetime (`'a` and `'b`)
 * Since Rust cannot figure out what to do, it gives a compiler error to the programmer so they can write the annotations themselves
 
 
@@ -793,7 +793,7 @@ impl<'a> ImportantExcerpt<'a> {
 ```
 
 * The first rule gives both `&self` and `announcement` their own lifetimes
-* The third rule gives the return lifetime gets the lifetime of `&self`
+* The third rule gives the return lifetime the lifetime of `&self`
 
 
 ---
@@ -987,7 +987,7 @@ Hello World 42!
 
 # `'static` Memory Leaks
 
-We can also create `'static` values by leaking memory.
+There is a third way: we can create `'static` values by _leaking memory_.
 
 ```rust
 fn random_vec() -> &'static [usize; 100] {
