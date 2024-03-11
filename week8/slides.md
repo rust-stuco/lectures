@@ -523,7 +523,7 @@ fn first<'a>(x: &'a str, y: &str) -> &'a str {
 }
 ```
 
-* We would not need to annotate `y` with `'a`, because the return value doesn't care about `y`'s lifetime
+* We don't need to annotate `y` with `'a`, because the return value doesn't care about `y`'s lifetime
 
 
 ---
@@ -1105,11 +1105,44 @@ error[E0597]: `i` does not live long enough
 ---
 
 
+# Watch Party
+
+[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
+
+
+---
+
+
+# What is `'a` lifetime?
+
+Some quick points:
+
+* Thinking about lifetimes as regions of code can be confusing
+* Instead, think about lifetimes as regions of valid memory
+* Both interpretations are valid!
+
+
+---
+
+
+# Feedback
+
+If you have 5 minutes, please fill out the [feedback form](https://forms.gle/Nu7YMFFJds9hwzWz9) (on Piazza).
+
+* It will help us make this semester better for you
+* It will also help make future offerings of this course better for others!
+* Feedback is anonymous, so please be honest
+
+
+---
+
+
 # Homework 8
 
-TODO
+Homework 8 is a quiz on Gradescope!
 
-* Will likely be a quiz consisting of questions from the Brown Rust Book
-* Ask for people to do it not just for points, but so we get an understanding of where people are at + contribute to active research
-
+* Think of homework 8 as a take-home midterm that only grades participation
+* All 15 questions come from the experimental Brown Rust Book
+    * They are doing active research in the best methods to teach Rust!
+* _Please don't spend more than 1 hour on this_
 
