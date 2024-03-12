@@ -7,13 +7,13 @@
     src: url('https://rust-stuco.github.io/assets/fonts/NikkyouSans-mLKax.ttf');
 }
 
-section.communism h2, section.communism h1 {
+section.communism h2, section.communism h1, section.communism h3 {
     font-family:'Nikkyou Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
     color: #D84A39;
     font-size: 2rem;
     text-shadow: 3px 3px 0 #000;
     line-height: 0;
-    max-width: 75%;
+    max-width: 65%;
 }
 
 section.communism h1 {
@@ -21,8 +21,19 @@ section.communism h1 {
     line-height: 1;
 }
 
+section.communism h3 {
+    font-size: 1rem;
+    line-height: 1;
+}
+
 section.communism {
     background-image: url('../images/bg2.jpg');
+    background-size: cover;
+}
+
+section.communism2 {
+    background-image: url('../images/bg3.jpg');
+    background-size: cover;
 }
 
 h6 {
