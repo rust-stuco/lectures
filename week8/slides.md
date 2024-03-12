@@ -34,14 +34,28 @@ We've used the term "lifetime" a few times before, and today we're going to expl
 ---
 
 
+# Lifetimes
+
+Lifetimes are all about references, and **nothing** else.
+
+* Informal definition:
+**Lifetimes provide a way for Rust to validate pointers at compile time**
+
+* Formal definition:
+**Lifetimes are named regions of code that a reference must be valid for**
+
+* _Remember that references are just pointers with constraints!_
+
+
+---
+
+
 # Lifetimes vs Generics and Traits
 
-Lifetimes are similar to generic types with trait bounds.
+Lifetimes are similar to trait bounds.
 
 * Traits ensure that a generic type has the behavior we want
 * Lifetimes ensure that references are valid for as long as we need them to be
-    * Remember that references are just pointers with constraints
-    * **Lifetimes are all about references, and nothing else**
 
 
 ---
@@ -241,7 +255,7 @@ help: consider introducing a named lifetime parameter
 
 # `longest` error
 
-The help text reveals some useful information:
+The help text from the compiler error reveals some useful information:
 
 ```
   = help: this function's return type contains a borrowed value,
