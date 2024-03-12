@@ -1161,3 +1161,13 @@ Homework 8 is a quiz on Gradescope!
     * They are doing active research in the best methods to teach Rust!
 * _Please don't spend more than 1 hour on this_
 
+
+---
+
+
+# Next Lecture: `Box` and Trait Objects
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for coming!
+
