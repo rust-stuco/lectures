@@ -324,16 +324,160 @@ fn main() {
 ---
 
 
-# Disclaimer
-* Rust's classifaction as an OOP language is debated
-  * Both by definers of OOP and (probably) the instructors
-* This section is not an endorsement of OOP
-* We will discuss **real** polymorphism (You're welcome type nerds)
+# What we know
+
+```rust
+pub struct AveragedCollection {
+    list: Vec<i32>,
+    average: f64,
+}
+
+impl AveragedCollection {
+  pub fn add(&mut self, value: i32) {
+      self.list.push(value);
+      self.update_average();
+  }
+}
+```
+* Encapsulation with `impl` blocks
+* Public and private methods with crates and `pub`
 
 
 ---
 
 
+# Inheritence?
+
+* Rust structs cannot inherit methods or data from another struct
+* If we want code re-use:
+  * We have traits (and even super traits)
+* If we want polymorphism:
+  * Rust has something called "trait objects"
+
+
+---
+
+
+# Polymorphism
+
+* Polymorphism != Inheritence
+* Polymorphism = "Code that can work with multiple data types"
+  * For inheritence this is usually subclases
+* Rust polymorphism:
+  * Generics - Abstract over different possible types
+  * Trait bounds - Impose constraints on what types must provide
+
+
+---
+
+
+# Trait Objects
+
+```rust
+pub trait Draw {
+  fn draw(&self);
+}
+
+pub struct Screen {
+  pub components: Vec<Box<dyn Draw>>,
+}
+```
+* We want to implement a struct `Screen`
+  * It holds a Vector of Drawable items
+  * We use the `dyn` keyword to describe any type that implements Draw
+    * We need to use a box since Rust doesn't know the size of `dyn Draw`
+
+
+---
+
+
+# Trait Objects and Closures
+
+```rust
+fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
+  Box::new(|x| x + 1)
+}
+
+fn main() {
+  let closure = returns_closure();
+  print!("{}", closure(5)); // prints 6
+}
+```
+* We can use trait objects to return dynamic types
+* A Box is needed since `dyn Fn` has no known size
+* Now with dereferencing coercion this isn't an awkward type to use!
+
+
+
+----
+
+
+# Working With Trait Objects
+
+```rust
+impl Screen {
+  pub fn run(&self) {
+    for component in self.components.iter() {
+      component.draw();
+    }
+  }
+}
+```
+* Note this is different than a struct that uses trait bounds
+* A generic parameter can only be substituted with one concrete type at a time
+* Trait objects allow for multiple concrete types to fill in for the trait object **at runtime**
+
+
+---
+
+
+# Generic Version
+
+```rust
+pub struct Screen<T: Draw> {
+    pub components: Vec<T>,
+}
+
+impl<T> Screen<T>
+where
+    T: Draw,
+{
+    pub fn run(&self) {
+        for component in self.components.iter() {
+            component.draw();
+        }
+    }
+}
+```
+* What's wrong with this version?
+  * Well if we wanted a screen with multiple different types in it, it'd be much harder
+
+
+---
+
+
+# Dynamically Sized Types
+
+* Recall that we needed a `Box<dyn Draw>` before.
+* `dyn Draw` is an example of a dynamically sized type (DST)
+* Pointers to DSTs are double the size
+  * Stores the a vtable pointer with it
+
+---
+
+
+# DST Rules
+
+* Traits may be implemented for DSTs
+  * Unlike with generic type parameters, `Self: ?Sized` is the default in trait definitions
+* They can be type arguments to generic type parameters having the special `?Sized` bound
+* Ex: `struct Bar<T: ?Sized>(T);`
+  * `?` marks an anti-trait (specifies a type **doesn't** implement a trait)
+
+---
+
+
+# **Object Safety**
 
 
 
