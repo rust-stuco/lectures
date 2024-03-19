@@ -80,13 +80,13 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 
 # Indirection with `Box<T>`
 
-* In the suggestion "indirection" means we store a *pointer* to a list rather than a list directly
-  * Because a pointer has a fixed size our enum is no longer infinite!
-* We create a `Box` with the `new` function
 ```rust
 let singleton = Cons(1, Box::new(Nil));
 let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
 ```
+* In the suggestion "indirection" means we store a *pointer* to a list rather than a list directly
+  * Because a pointer has a fixed size our enum is no longer infinite!
+* We create a `Box` with the `new` function
 
 
 ---
@@ -95,7 +95,9 @@ let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
 # Cost of `Box<T>`
 
 * `Box<T>` is a simple smart pointer, it just allocates on the heap**
-* Boxes don’t have performance overhead, other than storing their data on the heap
+* Boxes don't have performance overhead
+  * Except for the overhead of allocation and pointer indirection
+* `Box<T>` is a pointer type that fully owns the data, treated the same as any other owned value.
 * They provide no other "special" capabilities
 
 
@@ -104,7 +106,7 @@ let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
 
 # When to use `Box<T>`
 
-* When you have a type of unknown size **at compile time** and you need it's exact size
+* When you have a type of unknown size **at compile time** and you need its exact size
   * `List` from before
 
 * When you have a large amount of data and want to transfer ownership and ensure no data is copied
@@ -128,7 +130,7 @@ fn main() {
     assert_eq!(5, *y);
 }
 ```
-* Just like reference we can derefernce a `Box<T>` to get `T`
+* Just like a reference we can dereference a `Box<T>` to get `T`
 * `Box<T>` implements the `Deref` trait which customizes the behavior of `*`
 
 
@@ -155,9 +157,6 @@ pub trait Deref {
 
 
 # Deref Coercion
-* Convert a reference to a type that implements the Deref trait into a reference to another type
-  * Example: deref coercion can convert `&String` to `&str` because `String` implements the Deref trait such that it returns `&str`
-
 ```rust
 fn hello(name: &str) {
     println!("Hello, {name}!");
@@ -168,6 +167,8 @@ fn main() {
     hello(&m);
 }
 ```
+* Converts a reference to a type that implements the Deref trait into a reference to another type
+  * Example: deref coercion can convert `&String` to `&str` because `String` implements the Deref trait such that it returns `&str`
 * Here we see `Box<String>` deref coerces to `&str`
 
 
@@ -176,17 +177,16 @@ fn main() {
 
 # Deref Coercion Rules
 
+Note Rust will coerce mutable to immutable but not the reverse
 * From `&T` to `&U` when `T: Deref<Target=U>`
 * From `&mut T` to `&mut U` when `T: DerefMut<Target=U>`
 * From `&mut T` to `&U` when `T: Deref<Target=U>`
-
-Note Rust will coerce mutable to immutable but not the reverse
 
 
 ---
 
 
-# &mut T to &mut U Example
+# `&mut T` to `&mut U` Example
 ```rust
 fn foo(s: &mut [i32]) {
     // Borrow a slice for a second.
@@ -219,6 +219,13 @@ foo(&mut owned);
 
 
 # The Drop Trait
+
+```rust
+pub trait Drop {
+    // Required method
+    fn drop(&mut self);
+}
+```
 * Determines what happens when value goes out of scope (dropped)
 * You can provide an implementation of `Drop` on any type
 * This is how Rust doesn't need you to carefully clean up memory
@@ -272,14 +279,12 @@ Dropping CustomSmartPointer with data `my stuff`!
 
 ![bg right:30% 80%](../images/ferris_does_not_compile.svg)
 ```rust
-fn main() {
-  let c = CustomSmartPointer {
-      data: String::from("some data"),
-  };
-  println!("CustomSmartPointer created.");
-  c.drop();
-  println!("CustomSmartPointer dropped before the end of main.");
-}
+let c = CustomSmartPointer {
+    data: String::from("some data"),
+};
+println!("CSM created.");
+c.drop();
+println!("CSM dropped before the end of main.");
 ```
 
 ```
@@ -476,17 +481,19 @@ where
 
 ---
 
-
+<!-- >
 # **Object Safety**
 
 
 
 ---
+-->
 
 
 # Next Lecture: ISD
 
 *Instructors still debating*
+
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
