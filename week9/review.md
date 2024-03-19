@@ -535,11 +535,11 @@ fn give_and_take(v: &Vec<i32>, n: i32) -> i32 {
 ```
 
 ```rust
-// B
+// C
 let v = vec![1, 2, 3];
-let v2 = &v;
-give_and_take(&v, 4);
-println!("{}", v2[0]);
+let n = &v[0];
+let k = give_and_take(&v, 4);
+println!("{}", k);
 ```
 
 ---
@@ -783,7 +783,7 @@ fn main() {
 ---
 
 
-# Question 8 Explanation
+# Question 8 Brown Explanation
 
 This program is safe. No undefined behavior could occur if it were executed. (If `i` was outside the bounds of `v`, then Rust will panic at runtime rather than cause undefined behavior.)
 
@@ -834,8 +834,6 @@ fn main() {
 
 
 # Question 10
-
-_This question is tricky._
 
 Determine whether the program will pass the compiler.
 
