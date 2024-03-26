@@ -1,9 +1,11 @@
+// use std::cell::UnsafeCell;
+
 pub struct Cell<T> {
     value: T,
 }
 
 impl<T> Cell<T> {
-    pub fn new() -> Self {
+    pub fn new(value: T) -> Self {
         todo!()
     }
 
