@@ -19,7 +19,72 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
-# Today: Box<T> and Trait Objects
+
+# Week 10
+
+![bg right:50% 80%](../images/ferris_happy.svg)
+
+🦀🦀🦀 We're in week 10! 🦀🦀🦀
+
+Thank you all for sticking with us!
+
+
+---
+
+
+# The Story So Far...
+
+* We have covered all of the basic features of Rust, as well as many of the intermediate concepts
+* If you are confident you understand the past 9 lectures, you can probably say you are proficient with Rust!
+* Now for the _really_ interesting stuff...
+
+
+---
+
+
+# Finale
+
+Here is the plan for the last ~3.5 lectures:
+
+1) Smart Pointers and `unsafe`
+2) Parallelism
+3) Concurrency
+4) Macros
+
+
+---
+
+
+# Epilogue
+
+As much as we'd love to dive deep into each of these topics in depth, we simply do not have time.
+
+However...
+* The goal of this course was never to feed you information
+* The goal was to teach you the _core ideas_ of Rust and how to think about it
+* We hope that you will take the knowledge from this class and use it to explore more about this programming language _yourself_
+
+
+---
+
+
+# Final Project
+
+Here are the high-level details about the final project:
+
+* We would like you to spend 6-8 hours developing a project of your choosing
+    * _This means a good faith attempt at completing a project_
+    * _This bound includes time spent planning and thinking!_
+* Your project should incorporate 1 of the 4 advanced topics we will talk about
+    * _We can make exceptions if you have a specific idea_
+* _If you have less than 400 homework points, you will need to do this_
+* More details to come later!
+
+
+---
+
+
+# Box<T> and Trait Objects
 
 - `Rc<T>`
 - `RefCell<T>`
