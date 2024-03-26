@@ -84,7 +84,7 @@ Here are the high-level details about the final project:
 ---
 
 
-# Box<T> and Trait Objects
+# Smart Pointers
 
 - `Rc<T>`
 - `RefCell<T>`
