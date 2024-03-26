@@ -74,7 +74,7 @@ error[E0382]: use of moved value: `a`
 
 ```
 * `Cons` needs to **own** the data it holds (Recall: `Box`)
-* Using `a` again when creating `c`, but `a` has been moved.
+* Using `a` again when creating `c`, but `a` has been moved
 
 
 ---
@@ -99,7 +99,7 @@ fn main() {
 }
 ```
 * While it can be done, it's a little messy
-* Plus now we have to deal with lifetimes...
+* Now we have to deal with lifetimes... gross
 
 
 ---
@@ -109,17 +109,17 @@ fn main() {
 
 ```rust
 enum List {
-    Cons(i32, Rc<List>),
-    Nil,
+  Cons(i32, Rc<List>),
+  Nil,
 }
 
 use crate::List::{Cons, Nil};
 use std::rc::Rc;
 
 fn main() {
-    let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-    let b = Cons(3, Rc::clone(&a));
-    let c = Cons(4, Rc::clone(&a));
+  let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
+  let b = Cons(3, Rc::clone(&a));
+  let c = Cons(4, Rc::clone(&a));
 }
 ```
 * Short for reference counter
@@ -132,7 +132,7 @@ fn main() {
 # When to use `Rc<T>`
 
 * Allocate data on the heap for *multiple* parts of our program to *read*
-  * Can’t determine at compile time which part will finish using the data last
+  * Can’t determine at compile time which part will use the data last
 * Only used for single threaded scenarios (We'll talk about `Arc<T>` next week)
 * Use `Rc::new(T)` to create a new `Rc<T>`
   * `Rc::clone()` isn't a deep clone, it increments the ref counter
@@ -147,8 +147,10 @@ fn main() {
 fn main() {
     let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
     println!("count after creating a = {}", Rc::strong_count(&a));
+
     let b = Cons(3, Rc::clone(&a));
     println!("count after creating b = {}", Rc::strong_count(&a));
+    
     {
         let c = Cons(4, Rc::clone(&a));
         println!("count after creating c = {}", Rc::strong_count(&a));
@@ -172,13 +174,14 @@ count after c goes out of scope = 2
 
 * Great for sharing **immutable** references without lifetimes
 * Should be used when last variable to use the data is unknown
-  * Otherwise, make that variable the owner and having everything borrow
+  * Otherwise, make that variable the owner and have everything borrow
 * Provides almost no overhead
   * O(1) increment of counter
   * Potential allocation/de-allocation on heap
 
 
 ---
+
 
 
 # **`RefCell<T>` and Interior Mutability**
@@ -188,13 +191,37 @@ count after c goes out of scope = 2
 ---
 
 
+# First, `Cell<T>`
+
+```rust
+use std::cell::Cell;
+
+let c1 = Cell::new(5i32);
+c1.set(15i32);
+
+let c2 = Cell::new(10i32);
+c1.swap(&c2);
+
+assert_eq!(10, c1.into_inner()); // consumes cell
+assert_eq!(15, c2.get()); // returns copy of value
+```
+* Shareable, mutable container
+* Move values in and out of cell
+* Is used for `Copy` types
+  * where copying or moving values isn’t too resource intensive
+* If an option, should always be used for low overhead
+
+
+---
+
+
 # `RefCell<T>`
 
-* Hold's single ownership like `Box<T>`
-* Allow's borrow checkers rule to be enforced at **runtime**
-  * Use functions `.borrow()` or `borrow_mut()`
-  * If rule's are violated, `panic!`
-* Is typically used when Rust's conservative checking "get's in the way"
+* Hold's sole ownership like `Box<T>`
+* Allows borrow checker rules to be enforced at **runtime**
+  * Interface with `.borrow()` or `borrow_mut()`
+  * If borrowing rules are violated, `panic!`
+* Typically used when Rust's conservative checking "gets in the way"
 * It is **not** thread safe!
   * Use `Mutex<T>` instead
 
@@ -247,7 +274,6 @@ where
     T: Messenger,
 {
     // --- snip ---
-
     pub fn set_value(&mut self, value: usize) {
         self.value = value;
 
@@ -351,8 +377,8 @@ impl Messenger for MockMessenger {
 
 
 * `Rc<T>` - Enables multiple owners of the same data
-* `Box<T>` - Allows immutable or mutable borrows checked at compile time
-* `RefCell<T>` - Allows immutable/mutable borrows checked at runtime
+* `Box<T>` - Allows immutable or mutable borrows that are checked at compile time
+* `RefCell<T>` - Allows immutable/mutable borrows that are checked at runtime
 
 
 ---
@@ -404,8 +430,8 @@ c after = Cons(RefCell { value: 4 }, Cons(RefCell { value: 15 }, Nil))
 
 ```rust
 enum List {
-    Cons(i32, RefCell<Rc<List>>),
-    Nil,
+  Cons(i32, RefCell<Rc<List>>),
+  Nil,
 }
 
 impl List {
@@ -439,7 +465,7 @@ println!("b initial rc count = {}", Rc::strong_count(&b));
 println!("b next item = {:?}", b.tail());
 
 if let Some(link) = a.tail() {
-    *link.borrow_mut() = Rc::clone(&b);
+  *link.borrow_mut() = Rc::clone(&b);
 }
 
 println!("b rc count after changing a = {}", Rc::strong_count(&b));
@@ -467,7 +493,7 @@ a rc count after changing a = 2
 a next item = Some(RefCell { value: Cons(10, RefCell { value: Cons(5, RefCell...
 ```
 
-* We see that at the end we have a reference cycle
+* We see that at the end we have a reference cycle!
 
 
 ---
