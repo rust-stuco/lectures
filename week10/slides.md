@@ -809,6 +809,7 @@ With `unsafe`, we get 5 superpowers! We can:
 
 ---
 
+
 # Unsafe Superpowers
 
 1. Call an `unsafe` function or method
@@ -948,7 +949,7 @@ fn main() {
 Sometimes, we might need to interact with code from another language.
 
 * Rust has the keyword `extern` that facilitates the use of a _Foreign Function Interface (FFI)_
-* Since other languages will not have Rust's safety guarantees, we have no idea if they are safe to call or not!
+* Since other languages will not have Rust's safety guarantees, we will have no idea if they are safe to call or not!
 
 
 ---
@@ -1035,7 +1036,7 @@ The last 2 superpowers are implementing an `unsafe` trait and accessing fields o
 # How to use `unsafe` code
 
 * Just because a function contains `unsafe` code doesn't mean need to mark the entire function as `unsafe`
-* Often, we want to write `unsafe` code that we know is actually safe
+* Often, we want to write `unsafe` code that we _know_ is actually safe
 * A common abstraction is to wrap `unsafe` code in a safe function
 
 
@@ -1311,7 +1312,7 @@ Some primitive types have other guarantees:
 
 Here are some even more requirements:
 
-* Owned Pointer Types (like `Box` and `Vec`) are subject to optimizations assuming that pointer-to memory is not shared or aliased anywhere
+* Owned Pointer Types (like `Box` and `Vec`) are subject to optimizations assuming the pointer to memory is not shared or aliased anywhere
 * You can never assume the layout of a type when casting
 * All code must prepared to handle `panic!`s and _stack unwinding_
 * Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...
