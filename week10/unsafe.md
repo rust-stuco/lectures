@@ -474,64 +474,188 @@ The last 2 superpowers are implementing an `unsafe` trait and accessing fields o
 ---
 
 
-#
+# How to use `unsafe` code
 
-
-
----
-
-
-#
-
+* Just because a function contains `unsafe` code doesn't mean need to mark the entire function as `unsafe`
+* Often, we want to write `unsafe` code that we know is actually safe
+* A common abstraction is to wrap `unsafe` code in a safe function
 
 
 ---
 
 
-#
+# `split_at_mut`
 
+Let's take a look at `split_at_mut` from the standard library.
 
+```rust
+let mut v = vec![1, 2, 3, 4, 5, 6];
 
----
+let r = &mut v[..];
 
+let (a, b) = r.split_at_mut(3);
 
-#
-
-
-
----
-
-
-#
-
-
-
----
-
-
-#
-
+assert_eq!(a, &mut [1, 2, 3]);
+assert_eq!(b, &mut [4, 5, 6]);
+```
 
 
 ---
 
 
-#
+# `split_at_mut`
 
+```rust
+fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]);
+```
+
+* Unfortunately, we cannot write this function using only safe Rust
+* How would we attempt it?
 
 
 ---
 
 
-#
+# `split_at_mut` Implementation
 
+```rust
+fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+    let len = values.len();
+
+    assert!(mid <= len);
+
+    (&mut values[..mid], &mut values[mid..])
+}
+```
+
+* What is the issue with this?
+* Can you figure out what the compiler will tell us _just by looking at the function signature_?
 
 
 ---
 
 
-#
+# `split_at_mut` Compiler Error
 
+If we try to compile, we get this error:
+
+```
+$ cargo run
+   Compiling unsafe-example v0.1.0 (file:///projects/unsafe-example)
+error[E0499]: cannot borrow `*values` as mutable more than once at a time
+ --> src/main.rs:6:31
+  |
+1 | fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+  |                         - let's call the lifetime of this reference `'1`
+...
+6 |     (&mut values[..mid], &mut values[mid..])
+  |     --------------------------^^^^^^--------
+  |     |     |                   |
+  |     |     |                   second mutable borrow occurs here
+  |     |     first mutable borrow occurs here
+  |     returning this value requires that `*values` is borrowed for `'1`
+
+For more information about this error, try `rustc --explain E0499`.
+error: could not compile `unsafe-example` due to previous error
+```
+
+
+---
+
+
+# `split_at_mut` Implementation
+
+Let's try again with `unsafe`.
+
+```rust
+use std::slice;
+
+fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+    let len = values.len();
+    let ptr = values.as_mut_ptr();
+
+    assert!(mid <= len);
+
+    unsafe {
+        (
+            slice::from_raw_parts_mut(ptr, mid),
+            slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+        )
+    }
+}
+```
+
+
+---
+
+
+# `split_at_mut` Implementation
+
+```rust
+unsafe {
+    (
+        slice::from_raw_parts_mut(ptr, mid),
+        slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+    )
+}
+```
+
+* `from_raw_parts_mut` is `unsafe` because it takes a raw pointer and must trust it is valid
+* Since the `ptr` came from a valid slice, we know it is valid!
+
+
+---
+
+
+# `from_raw_parts_mut` Safety Contract
+
+Here is the actual safety contract for `from_raw_parts_mut`:
+
+```rust
+/// # Safety
+///
+/// Behavior is undefined if any of the following conditions are violated:
+///
+/// * `data` must be [valid] for both reads and writes for `len * mem::size_of::<T>()` many bytes,
+///   and it must be properly aligned. This means in particular:
+///
+///     * The entire memory range of this slice must be contained within a single allocated object!
+///       Slices can never span across multiple allocated objects.
+///     * `data` must be non-null and aligned even for zero-length slices. One
+///       reason for this is that enum layout optimizations may rely on references
+///       (including slices of any length) being aligned and non-null to distinguish
+///       them from other data. You can obtain a pointer that is usable as `data`
+///       for zero-length slices using [`NonNull::dangling()`].
+///
+/// * `data` must point to `len` consecutive properly initialized values of type `T`.
+///
+/// * The memory referenced by the returned slice must not be accessed through any other pointer
+///   (not derived from the return value) for the duration of lifetime `'a`.
+///   Both read and write accesses are forbidden.
+///
+/// * The total size `len * mem::size_of::<T>()` of the slice must be no larger than `isize::MAX`,
+///   and adding that size to `data` must not "wrap around" the address space.
+///   See the safety documentation of [`pointer::offset`].
+```
+
+
+---
+
+
+# `from_raw_parts_mut` Misuse
+
+We could very easily misuse `from_raw_parts_mut` if we wanted to...
+
+```rust
+use std::slice;
+
+let address: usize = 0xDEADBEEF;
+let r = address as *mut i32;
+
+let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
+```
+
+* This might seem ridiculous, but when you always assume your code is safe...
 
 
 ---
