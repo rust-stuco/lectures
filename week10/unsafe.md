@@ -66,10 +66,11 @@ Here are the high-level details about the final project:
 
 * We would like you to spend 6-8 hours developing a project of your choosing
     * _This means a good faith attempt at completing a project_
+    * _This bound includes time spent planning and thinking!_
 * Your project should incorporate 1 of the 4 advanced topics we will talk about
     * _We can make exceptions if you have a specific idea_
 * _If you have less than 400 homework points, you will need to do this_
-* More details to come soon*!
+* More details to come later!
 
 
 ---
@@ -96,7 +97,7 @@ So far, we've only seen code where memory safety is guaranteed at compile time.
 
 * Static analysis is _conservative_
 * By definition, it enforces _soundness_ rather than _completeness_
-* We need a way to tell the compiler, "Trust me, I know what I'm doing"
+* We need a way to tell the compiler: "Trust me, I know what I'm doing"
 * Additionally, computer hardware is inherently unsafe
 
 
@@ -107,10 +108,6 @@ So far, we've only seen code where memory safety is guaranteed at compile time.
 
 * Rust's precise requirements for `unsafe` code are still being determined
 * There's an entire book dedicated to `unsafe` Rust called the [Rustonomicon](https://doc.rust-lang.org/nomicon/)
-
-
-
-
 
 
 ---
@@ -365,47 +362,113 @@ unsafe {
     * A lot
 
 
-
 ---
 
 
-#
+# Calling `unsafe` Functions
 
+Calling `unsafe` functions is similar, we must call them in an `unsafe` block.
 
+```rust
+unsafe fn dangerous() {}
 
----
+fn main() {
+    unsafe {
+        dangerous();
+    }
+}
+```
 
-
-#
-
-
-
----
-
-
-#
-
-
-
----
-
-
-#
-
+* We would get an error if we called `dangerous` without the `unsafe` block!
 
 
 ---
 
 
-#
+# Using `extern` Functions
 
+Sometimes, we might need to interact with code from another language.
+
+* Rust has the keyword `extern` that facilitates the use of a _Foreign Function Interface (FFI)_
+* Since other languages will not have Rust's safety guarantees, we have no idea if they are safe to call or not!
 
 
 ---
 
 
-#
+# `extern "C"`
 
+Let's see how we would set up integration with the `abs` function from the C standard library.
+
+```rust
+extern "C" {
+    fn abs(input: i32) -> i32;
+}
+
+fn main() {
+    unsafe {
+        println!("Absolute value of -3 according to C: {}", abs(-3));
+    }
+}
+```
+
+* The `"C"` defines the _Application Binary Interface (ABI)_ that the external function uses
+* We have no idea if `abs` is doing what it is supposed to be doing, so it is on us as the programmer to ensure safety
+
+
+---
+
+
+# `extern "C"`
+
+We can also use `extern` to allow other languages to call Rust code!
+
+```rust
+#[no_mangle]
+pub extern "C" fn call_from_c() {
+    println!("Just called a Rust function from C!");
+}
+```
+
+* Note how the usage of `extern` does not require `unsafe`
+
+
+---
+
+
+# Mutable Static Variables
+
+We can mutate global static variables with `unsafe`.
+
+```rust
+static mut COUNTER: u32 = 0;
+
+fn add_to_count(inc: u32) {
+    unsafe {
+        COUNTER += inc;
+    }
+}
+
+fn main() {
+    add_to_count(3);
+
+    unsafe {
+        println!("COUNTER: {}", COUNTER);
+    }
+}
+```
+
+
+---
+
+
+# Last 2 Superpowers
+
+The last 2 superpowers are implementing an `unsafe` trait and accessing fields of a `union`.
+
+* We may or may not cover `unsafe` traits next week
+    * (specifically `Send` and `Sync`)
+* `union`s are primarily used to interface with unions in C code
 
 
 ---
