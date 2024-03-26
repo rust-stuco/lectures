@@ -353,18 +353,6 @@ unsafe {
 ---
 
 
-# TODO
-
-* Calling `unsafe` functions
-    * FFI with C
-* Writing an `unsafe` function (`split_at_mut`)
-* What could go wrong?
-    * A lot
-
-
----
-
-
 # Calling `unsafe` Functions
 
 Calling `unsafe` functions is similar, we must call them in an `unsafe` block.
@@ -661,25 +649,149 @@ let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
 ---
 
 
-#
+# With Great Power...
 
+What could go wrong?
+
+* Probably not much, _if_ you're careful
+* If you do get something wrong though...
+* With `unsafe`, you hold great responsibility
 
 
 ---
 
 
+# Undefined Behavior
+
+If you get something wrong, your program now has _undefined behavior_.
+
+* It should go without saying that undefined behavior is bad
+* The best scenario is you get a visible error:
+    * Segfaults
+    * Unexpected deadlocks
+    * Garbled output
+    * Panics that _don't_ exit the program
+* The worst case...
 
 
+---
 
 
+# Undefined Behavior
+
+The worst case scenario is that your program state is invisibly corrupted.
+
+* Data races
+* Transactions aren't atomic
+* Backups are corrupted
+* Security leaks
+* Schrödinger’s Bug
 
 
+---
 
 
+# Interacting with Safe Rust
+
+Unsafe code is not defined.
+
+* The compiler could eliminate the entire `unsafe` block if it wanted to
+* It could also miscompile surrounding, safe code!
+* In a lot of ways, `unsafe` Rust is far worse than C/C++ because it assumes _all_ of Rust's safety guarantees
 
 
+---
 
 
+# Safe `unsafe`: Valid References
 
+You may recall that all references must be valid. A valid reference:
+
+* must never dangle
+* must always be aligned
+* must always point to a valid value for their target type
+* must either be immutably shared or mutably exclusive
+* Plus more guarantees relating to lifetimes
+
+<!--
+Remember, Rust does not have a stable ABI! `repr(Rust)`
+-->
+
+
+---
+
+
+# Other Validity Requirements
+
+Some primitive types have other guarantees:
+
+* `bool` is 1 byte, but can only hold `0x00` or `0x01`
+* `char` cannot hold a value above `char::MAX`
+* Most Rust types cannot be constructed from uninitialized memory
+* If Rust didn't enforce this, it wouldn't be able to make niche optimizations
+    * `Option<&T>` is a good example
+    * What if `Option<Option<bool>>` used `0x00` through `0x03`?
+* It doesn't matter if Rust does make the optimization, all that matters is that it is _allowed_ to whenever it wants
+
+
+---
+
+
+# Even More Validity Requirements
+
+Here are some even more requirements:
+
+* Owned Pointer Types (like `Box` and `Vec`) are subject to optimizations assuming that pointer-to memory is not shared or aliased anywhere
+* You can never assume the layout of a type when casting
+* All code must prepared to handle `panic!`s and _stack unwinding_
+* Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...
+* All variables are subject to something called the _Drop Check_, and if you drop something incorrectly, you might cause undefined behavior
+
+
+---
+
+
+# Fighting with `unsafe`
+
+That was a lot, right?
+
+* Remember that it is very possible to write safe `unsafe` code
+* A lot of the time, it isn't actually that difficult
+* Being careful is half the battle
+* Being absolutely sure you actually need `unsafe` is the other half
+
+
+---
+
+
+# Working with `unsafe`
+
+It is tempting to reason about unsafety _locally_.
+
+* Consider whether the code in the `unsafe` block is safe in the context of both the rest of the codebase, and in the context of other people using your library
+* Encapsulate the unsafety as best you can
+* Read and write documentation!
+* Use tools like `Miri` to verify your code!
+* **Make sure to formally reason about your program**
+
+---
+
+
+# Recap: `unsafe`
+
+* With `unsafe`, we have great powers
+* But we must accept the responsibility of leveraging those powers
+* There are consequences to writing unsafe `unsafe` code
+* `unsafe` is a way to _promise_ to the compiler that the indicated code is safe
+
+
+---
+
+
+# Next Lecture: Parallelism
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for coming!
 
 
