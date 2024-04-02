@@ -165,6 +165,7 @@ Is that working correctly? Look at the code—it's doing exactly what it is supp
 # Synchronization
 
 To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
+* Mutual exclusion means "Only one thread can do something at a time"
 * A common tool for this is a mutex lock
 
 
