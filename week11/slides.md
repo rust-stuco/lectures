@@ -113,6 +113,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 * Dangerously overloaded term—can mean one of many things
 * For this lecture, we define it as a "stream of instructions"
+* In Rust, language threads are 1:1 with OS threads
 * **Key point:** Threads share the same resources
 
 ---
@@ -127,7 +128,7 @@ static void thread(void) {
 }
 // <!-- snip -->
 for (int i = 0; i < 20; ++i) {
-  create_thread(thread);
+  create_thread(thread); // helper function not shown
 }
 ```
 
@@ -164,7 +165,10 @@ Is that working correctly? Look at the code—it's doing exactly what it is supp
 # Synchronization
 
 To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
+* A common tool for this is a mutex lock
 
+
+<!-- Explain what mutual exclusion is, what a mutex is, high level, verbally -->
 ---
 
 
@@ -185,9 +189,14 @@ static void thread(void) {
 
 - This provides *mutual exclusion*--only one thread may access `x` at the same time.
 
+
 ---
 
-# Back to Rust
+# Threads in Rust
+
+---
+
+# Threads in Rust
 * Rust's typechecker guarantees an absence of *data races*
   * (Unless you use unsafe)
 * General race conditions are not prevented
@@ -197,23 +206,168 @@ static void thread(void) {
 
 ---
 
-# Sharing Resources in Rust
+# Creating Threads
+Threads can be created/spawned using `thread::spawn`.
+```rust
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+});
+```
+* `thread::spawn` takes in a function, implementing the `FnOnce` and `Send` traits.
+  * Closures are often used to allow capturing values, but functions work as well
+  * More on the `Send` trait later...
+* Returns a `JoinHandle` type
+
+
+---
+
+# Joining Threads
+To wait for a thread to complete, we *join* on it.
+```rust
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+});
+
+handle.join().unwrap();
+```
+* Execution of the main thread is halted until the spawned thread finishes
+
+
+---
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Here's the C code from before, turned into Rust directly.
-
+# Capturing Values in Threads
+We often want to use things outside of the the closure, but borrowing them can be problematic.
 ```rust
-let mut x = 0;
+let v = vec![1, 2, 3];
 
-for _ in 0..20 {
-    thread::spawn(|| {
-        x += 1;
-    }); // Thread bodies are closures
-}
+let handle = thread::spawn(|| {
+    println!("Here's a vector: {:?}", v);
+});
 ```
-* A sea of errors ensues, but the key idea is that this violates one of our rules.
-  * We can't have multiple mutable references at the same time!
+```
+error[E0373]: closure may outlive the current function,
+but it borrows `v`, which is owned by the current function
+```
+* In other words, what if `v` goes out of scope while the thread is still running?
+
+---
+
+# Capturing Values in Threads
+To solve this problem, we can take ownership of values, *moving* them into the closure.
+```rust
+let v = vec![1, 2, 3];
+
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v);
+});
+```
+* `v` is no longer accessible in the main thread
+* You could clone `v` to solve this problem
+  * But, what if we *wanted* to share `v`?
+
+---
+
+# Multiple Owners
+
+Recall `Rc<T>` from last lecture.
+* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value.
+* The difference is, `Rc<T>` has an internal reference count, and the heap allocated value will only be dropped when the reference count reaches zero.
+* The only problem is, `Rc<T>` is not thread safe...
+
+<!-- Make sure people know about reference counts -->
+
+---
+
+# `Arc<T>`
+
+"Arc" stands for "Atomically Reference Counted". This means, it is thread-safe, at the cost of slightly slower operations.
+* General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads
+  * The compiler will not let you use `Rc` across threads
+
+---
+
+# Sharing Resources in Rust
+We can give the vector multiple owners by using an `Arc`.
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* `v` and `v_copy` both point to the same value
+* When both  are dropped, only then will the underlying vector be dropped
+* Is this a data race?
+  * No, because we are only performing reads
+
+---
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+# Sharing Mutable Resources in Rust
+If we attempt to mutate the vector, we will indeed encounter an error
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* This prevents a data race
+  * If we allowed this, it would violate one of the rules—only one mutable reference at a time
+
+---
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+# Sharing Mutable Resources in Rust
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+
+```
+cannot borrow data in an Arc as mutable
+<!-- snip -->
+help: trait DerefMut is required to modify through a dereference,
+but it is not implemented for Arc<Vec<i32>>
+```
+
+---
+
+
+# Sharing Mutable Resources in Rust
+The solution to this is actually the same as in C—we introduce a mutex.
 
 ---
 
@@ -226,10 +380,55 @@ let x = Mutex::new(0);
 let x_data = x.lock().unwrap();
 ```
 * This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
+  * If we know this, our multiple mutable references rule is not broken!
 * `x_data` is a `MutexGuard` type.
   * It has deref coercion, so one can operate on it just like it was the actual data
 * When `x_data` is dropped, the mutex will be unlocked.
 * `lock` may return an error if another thread panics
+
+---
+
+# Sharing Mutable Resources in Rust
+```rust
+let v = Arc::new(Mutex::new(vec![1, 2, 3]));
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.lock().unwrap().push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.lock().unwrap().push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* The other thread cannot access the mutex until it is dropped (unlocked)
+* This prevents multiple mutable references, and the data race, by providing mutual exclusion!
+
+---
+
+# C to Rust Example
+
+---
+
+# C to Rust Example
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+Here's the C code from before, turned into Rust directly.
+
+```rust
+let mut x = 0;
+
+for _ in 0..20 {
+    thread::spawn(|| {
+        x += 1;
+    });
+}
+```
+* A sea of errors ensues of course, but the key idea is that this violates one of our rules.
+  * We can't have multiple mutable references at the same time!
 
 
 ---
@@ -253,24 +452,6 @@ for _ in 0..20 {
 * What is wrong now?
   * What if the main function ends? It owns `x`, so the thread references to `x` will be invalid...
 * How can we have multiple owners?
-
----
-
-# Multiple Mutable References
-
-Recall `Rc<T>` from last lecture.
-* `Rc<T>` works like `Box<T>`, providing a "spiritually heap-allocated" value.
-* The difference is, `Rc<T>` has an internal reference count, and the heap allocated value will only be dropped when the reference count reaches zero.
-* The only problem is, `Rc<T>` is not thread safe...
-
-<!-- Make sure people know about reference counts -->
-
----
-
-# `Arc<T>`
-
-"Arc" stands for "Atomically Reference Counted". This means, it is thread-safe, at the cost of slightly slower operations.
-* General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads.
 
 ---
 
@@ -512,6 +693,16 @@ Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsiz
 * Highly performant, but very difficult to use
 * Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
 * We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
+
+---
+
+# Review: "Fearless Concurrency"
+
+What we have gone over today is referred to as "fearless concurrency" in the rust community.
+* By leveraging the ownership system, we can move entire classes of concurrency bugs to compile-time
+* Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
+* Subjectively, this may be the single best reason to use this language
+* Both parallelism and concurrency, as introduced in this lecture, benefit from these guarantees
 
 ---
 
