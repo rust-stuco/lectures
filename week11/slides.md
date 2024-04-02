@@ -477,6 +477,11 @@ for _ in 0..20 {
 * Each thread has a pointer to the mutex
   * The mutex is not deallocated until all of the `Arc`s pointing to it are dropped (and the reference count is zero)
 
+
+<!--
+Q: Why not give mutex an internal Arc?
+A: What if we want to have a mutex around only some values in a struct, while others are atomic?
+-->
 ---
 
 # The Good Slide
