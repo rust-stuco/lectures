@@ -124,7 +124,9 @@ Benjamin Owad, David Rudo, and Connor Tsui
 static int x = 0;
 
 static void thread(void) {
-  x++; // load instruction + store instruction (not atomic)
+  int temp = x;
+  temp += 1;
+  x = temp;
 }
 // <!-- snip -->
 for (int i = 0; i < 20; ++i) {
@@ -147,12 +149,12 @@ When multiple threads have access to the same data, things get complicated...
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
-| %rax ←x (0)   |               |
-|               | %rax ←x (0)   |
-| %rax += 1 (1) |               |
-|               | %rax += 1 (1) |
-| x ← %rax (1)  |               |
-|               | x ← %rax (1)  |
+| temp = x (temp = 0)   |               |
+|               | temp = x (temp = 0)   |
+| temp += 1 (temp = 0 + 1) |               |
+|               | temp += 1 (temp = 0 + 1) |
+| x = temp (x = 1)  |               |
+|               | x = temp (x = 1)  |
 
 * Uh oh...
 
@@ -181,7 +183,9 @@ static mtx_t x_lock;
 
 static void thread(void) {
   mtx_lock(&x_lock);
-  x++; // load instruction + store instruction (not atomic)
+  int temp = x;
+  temp += 1;
+  x = temp;
   mtx_unlock(&x_lock);
 }
 // <!-- snip -->
