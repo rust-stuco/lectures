@@ -438,7 +438,7 @@ for _ in 0..20 {
 
 ---
 
-# Sharing Resources in Rust, with Mutexes!
+# C to Rust Example (with Mutexes)
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
@@ -460,7 +460,7 @@ for _ in 0..20 {
 
 ---
 
-# Sharing Resources in Rust, with Multiple Ownership!
+# C to Rust Example (with Multiple Ownership)
 
 ```rust
 let x = Arc::new(Mutex::new(0));
