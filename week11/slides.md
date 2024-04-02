@@ -18,15 +18,6 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
-# Agenda
-- Parallelism vs. Concurrency
-- Threading
-- Basic Synchronization
-- Message Passing
-- `Send` and `Sync`
-- More Synchronization Primitives
-
----
 # Parallelism vs. Concurrency
 
 <div class="columns">
@@ -35,7 +26,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ## Parallelism
 
 - Work on multiple tasks at the same time
-- Uses multiple processors/cores
+- Utilizes multiple processors/cores
 
 </div>
 <div>
@@ -43,7 +34,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ## Concurrency
 
 - Manage multiple tasks, but only do one thing at a time.
-- Uses only a single processor/core
+- Better utilizes a single processor/core
 
 </div>
 </div>
@@ -89,26 +80,31 @@ Benjamin Owad, David Rudo, and Connor Tsui
 ## Parallelism
 
 
-- e.g. Have one processor work on loading the webpage, while another updates the progress bar
+- Have one processor work on loading the webpage, while another updates the progress bar
 * Often used to divide tasks into smaller units that can run at the same time
-  * e.g. process 100x100px image regions on each core.
+  * e.g. Processing 100x100px regions of an image on each core
+  * "Divide and conquer"
 </div>
 <div>
 
 ## Concurrency
 
-* e.g. As we load a webpage, take a break sometimes to update the loading progress bar
+* As we load a webpage, take a break sometimes to update the loading progress bar
 * Often used to do other things while we wait for blocking I/O operations
-  * e.g. Garbage collect while we wait for a response over the network
+  * e.g. Running garbage collection while we wait for a response over the network
 
 </div>
 </div>
 
 ---
 
-# Today's topic:
-* See slide 1
-  * (It's parallelism)
+
+# Today: Parallelism
+- Threading
+- Basic Synchronization
+- Message Passing
+- `Send` and `Sync`
+- More Synchronization Primitives
 
 
 ---
@@ -129,7 +125,7 @@ static int x = 0;
 static void thread(void) {
   x++; // load instruction + store instruction (not atomic)
 }
-...
+// <!-- snip -->
 for (int i = 0; i < 20; ++i) {
   create_thread(thread);
 }
@@ -148,8 +144,9 @@ When multiple threads have access to the same data, things get complicated...
 
 # The Bad Slide
 
-| %rax ←x (0)   |               |
+| Thread 1      |   Thread 2    |
 |---------------|---------------|
+| %rax ←x (0)   |               |
 |               | %rax ←x (0)   |
 | %rax += 1 (1) |               |
 |               | %rax += 1 (1) |
@@ -166,14 +163,10 @@ Is that working correctly? Look at the code—it's doing exactly what it is supp
 
 # Synchronization
 
-To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other. There are a number of synchronization primitives available to do this:
-* Mutexes
-* Reader-writer locks
-* Condition Variables
-* Semaphores
-
+To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
 
 ---
+
 
 # Sharing Resources With Mutual Exclusion
 
@@ -186,8 +179,10 @@ static void thread(void) {
   x++; // load instruction + store instruction (not atomic)
   mtx_unlock(&x_lock);
 }
-...
+// <!-- snip -->
 ```
+- Only one thread can hold the mutex lock at a time
+
 - This provides *mutual exclusion*--only one thread may access `x` at the same time.
 
 ---
@@ -224,12 +219,13 @@ for _ in 0..20 {
 
 # Mutexes in Rust
 
-Unlike in C, mutexes in Rust actually wrap values.
+Unlike in C, mutexes in Rust actually *wrap* values.
 
 ```rust
 let x = Mutex::new(0);
 let x_data = x.lock().unwrap();
 ```
+* This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
 * `x_data` is a `MutexGuard` type.
   * It has deref coercion, so one can operate on it just like it was the actual data
 * When `x_data` is dropped, the mutex will be unlocked.
