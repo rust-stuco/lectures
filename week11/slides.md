@@ -100,11 +100,11 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 
 # Today: Parallelism
-- Threading
-- Basic Synchronization
+- Threads
+- Synchronization
 - Message Passing
 - `Send` and `Sync`
-- More Synchronization Primitives
+- More Synchronization
 
 
 ---
