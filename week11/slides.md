@@ -142,6 +142,7 @@ for (int i = 0; i < 20; ++i) {
 
 # Race Conditions
 When multiple threads have access to the same data, things get complicated...
+* Specifically, this is about *data races*
 
 ---
 
