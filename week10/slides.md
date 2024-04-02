@@ -1,14 +1,13 @@
 ---
 marp: true
 theme: rust
-class: invert
 paginate: true
 ---
 
 <!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
-# Smart Pointers
+# Smart Pointers and Unsafe
 
 <br>
 
