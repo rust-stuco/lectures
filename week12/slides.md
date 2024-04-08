@@ -30,7 +30,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 # What is Asynchronous Code?
 
-* A *concurrent* programming model supported by many languaged
+* A *concurrent* programming model supported by many languages
     * All in slightly different forms under the hood
 * Allows for a large number of tasks on a few OS threads
 * Still preserves the "feel" of synchronous programming through `async/await` syntax
@@ -42,7 +42,7 @@ Benjamin Owad, David Rudo, and Connor Tsui
 * OS threads
     * Very easy to express, but hard to synchronize and have overhead on startup
 * Event driven programming
-    * Can be perfomant with callbacks
+    * Can be performant with callbacks
     * Causes overly verbose non-linear control flow (debugging nightmare)
 * Coroutines
     * Supports many tasks like async
@@ -277,8 +277,8 @@ trait Future {
 }
 ```
 
-* `Pin` ensures that our futures are ummovable in memory
-* `Context<'_>` holds info on the wake function as well as useful metdata
+* `Pin` ensures that our futures are unmovable in memory
+* `Context<'_>` holds info on the wake function as well as useful metadata
     * "Who" called the wake function
     * Value of type `Waker`
     * etc
@@ -389,7 +389,7 @@ impl TimerFuture {
 * Futures are a very powerful tool
 * Futures and related functions can be implemented and managed in numerous ways
     * This is why Rust doesn't have a "default" runtime
-* Futures are designed to be "interruptable", to enable efficient polling
+* Futures are designed to be "interruptible", to enable efficient polling
     * Don't put large blocking code in async functions!
 * While the previous future launched a thread, this is uncommon
     * IO related async code uses `epoll` or other related polling calls
@@ -457,7 +457,7 @@ fn foo_expanded<'a>(x: &'a u8) -> impl Future<Output = u8> + 'a {
     async move { *x }
 }
 ```
-* Unlike typical funtions, `async fn` are bounded by their argument's lifetimes
+* Unlike typical functions, `async fn` are bounded by their argument's lifetimes
 * This is because we're really putting a lifetime on the `Future` trait object
 
 
@@ -634,8 +634,8 @@ Here's a common asynchronous scenario:
 * Imagine we have a web server that needs to accept connections
     * We don't want to block the main thread
 * `async_std::task::spawn` will create and run a new task that handles connections
-    * It takes a Future and returns a `JoinHandle` whichi can be `.await`ed
-    * Note that `async_std` is 
+    * It takes a Future and returns a `JoinHandle` which can be `.await`ed
+    * Note that `async_std` is
 
 
 ---
@@ -676,7 +676,7 @@ ft. Tokio
 # Why Use Async Runtimes?
 * Writing code that primarily manages multiple IO operations
 * Interfacing with libraries that depend on an async runtime
-* Need nonblocking versions of std library api functions for your async code
+* Need non-blocking versions of std library api functions for your async code
 
 
 ---
@@ -727,7 +727,7 @@ async fn main() {
 
 # Why Async Message Passsing?
 
-* An option for maintaing shared state
+* An option for maintaining shared state
 * A convenient way to link async code with sync code
     * Async server handling sends data to sync processing thread
 * Most libraries provide tailored channels for specific use cases
