@@ -77,7 +77,7 @@ C's metaprogramming is mostly restricted to C macros.
 
 * C compilers like `gcc` and `clang` come with a _C preprocessor_
 * However you define the macro is how it is expanded
-* Simple
+* Simple source code / text expansion
 
 
 ---
@@ -331,7 +331,7 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 * C++ Templates are more powerful than Rust Generics (for now)
     * _C++ Templates are even Turing-complete!_
 * Powerful, but not exactly the most ergonomic
-* Very similar to Rust in nature, can be different in practice
+* Very similar to Rust Generics in nature, can be different in practice
 
 
 ---
@@ -357,7 +357,7 @@ fn largest<T: PartialOrd>(list: &[T]) -> &T {
 }
 ```
 
-* Rust generates monomorphized versions of this function for each type that we need it for
+* Rust generates monomorphized versions of this function for each type that we need it for!
 
 
 ---
@@ -394,7 +394,7 @@ let v = vec![1, 2, 3];
 assert_eq!(2 + 2, 4, "Math broken?");
 ```
 
-* The main difference between these function-like macros and normal functions is the variadic parameters
+* The main difference between these function-like macros and normal functions is the variadic parameters (on top of other things)
 
 
 ---
@@ -407,7 +407,12 @@ assert_eq!(2 + 2, 4, "Math broken?");
   * Implement a trait on some type
   * Statically evaluate code
   * _Modify the Abstract Syntax Tree_
-* Macros are called at compile time, whereas functions are called at runtime
+* Macros are expanded into the abstract syntax tree at compile time, whereas functions are called at runtime
+
+<!--
+More precisely, macros are processed after the abstract syntax tree has been built
+This means that macro invocation must be part of the language's syntax (via syntax extensions)
+-->
 
 
 ---
@@ -438,7 +443,7 @@ vs function which you can define anywhere and call anywhere
 Rust has 2 main types of macros.
 
 * Declarative Macros
-* Procedural Macros (3 sub-categories)
+* Procedural Macros (_3 subcategories_)
   * Custom `#[derive]` macros
   * Attribute-like macros
   * Function-like macros operating on tokens
@@ -463,11 +468,11 @@ Declarative macros are the most widely used form of macros in Rust.
 We use the `macro_rules!` construct to define declarative macros.
 
 ```rust
-// This is a simple macro named `say_hello`.
+// This is a simple macro named `say_hello`
 macro_rules! say_hello {
-    // `()` indicates that the macro takes no argument.
+    // `()` indicates that the macro takes no argument
     () => {
-        // The macro will expand into the contents of this block.
+        // The macro will expand into the contents of this block
         println!("Hello!")
     };
 }
@@ -488,21 +493,22 @@ We can match literal tokens in `macro_rules!`:
 
 ```rust
 macro_rules! create_function {
-    // This macro takes an argument of designator `ident` and
-    // creates a function named `$func_name`.
-    // The `ident` designator is used for variable/function names.
     ($func_name:ident) => {
         fn $func_name() {
-            // The `stringify!` macro converts an `ident` into a string.
+            // The `stringify!` macro converts an `ident` into a string
             println!("You called {:?}()", stringify!($func_name));
         }
     };
 }
 
-// Create functions named `foo` and `bar` with the above macro.
+// Create functions named `foo` and `bar` with the `create_function` macro
 create_function!(foo);
 create_function!(bar);
 ```
+
+* The `ident` designator is used for variable / function names
+* The `create_function` macro takes 1 argument of designator `ident`
+* It will create a function named `$func_name`
 
 
 ---
@@ -543,15 +549,16 @@ We can also match valid Rust expressions:
 
 ```rust
 macro_rules! print_result {
-    // This macro takes an expression of type `expr` and prints
-    // it as a string along with its result.
-    // The `expr` designator is used for expressions.
     ($expression:expr) => {
         // `stringify!` will convert the expression *as it is* into a string.
         println!("{:?} = {:?}", stringify!($expression), $expression);
     };
 }
 ```
+
+* The `expr` designator is used for expressions
+* The `print_result` macro takes 1 argument of designator `expr`
+* It will print the expression and as well as the evaluated result
 
 
 ---
@@ -591,23 +598,23 @@ fn main() {
 Macros can match to any number of code patterns:
 
 ```rust
-// `test!` will compare `$left` and `$right`
-// in different ways depending on how you invoke it:
 macro_rules! test {
-    // Arguments don't need to be separated by a comma.
     // Any template can be used!
     ($left:expr; and $right:expr) => {
         println!("{:?} and {:?} is {:?}", stringify!($left), stringify!($right),
                  $left && $right)
     };
+//   ^ each arm must end with a semicolon.
 
-    // ^ each arm must end with a semicolon.
     ($left:expr; or $right:expr) => {
         println!("{:?} or {:?} is {:?}", stringify!($left), stringify!($right),
                  $left || $right)
     };
 }
 ```
+
+* `test!` will compare `$left` and `$right` in different ways depending on how you invoke it
+
 
 
 ---
@@ -621,7 +628,6 @@ macro_rules! test {
         println!("{:?} and {:?} is {:?}", stringify!($left), stringify!($right),
                  $left && $right)
     };
-
     ($left:expr; or $right:expr) => {
         println!("{:?} or {:?} is {:?}", stringify!($left), stringify!($right),
                  $left || $right)
@@ -648,19 +654,19 @@ fn main() {
 If we want to match to _any_ number of repeated arguments, we can use `+` and `*`.
 
 ```rust
-// `find_min!` will calculate the minimum of any number of arguments.
 macro_rules! find_min {
-    // Base case:
+    // Base case of one argument
     ($x:expr) => ($x);
 
-    // `$x` followed by at least one `$y,`
-    ($x:expr, $($y:expr),+) => (
-        // Call `find_min!` on the tail `$y`
+    // $x, followed by at least one $y
+    ( $x:expr, $( $y:expr ),+ ) => (
+        // Call `find_min!` on the tail
         std::cmp::min($x, find_min!($($y),+))
     )
 }
 ```
 
+* `find_min!` will calculate the minimum of any number of arguments
 * `+` indicates an expression can repeat at least once
 * `*` indicates an expression can repeat zero or more times
 
@@ -675,7 +681,7 @@ macro_rules! find_min {
 macro_rules! find_min {
     ($x:expr) => ($x);
 
-    ($x:expr, $($y:expr),+) => (
+    ( $x:expr, $( $y:expr ),+ ) => (
         std::cmp::min($x, find_min!($($y),+))
     )
 }
@@ -744,7 +750,7 @@ fn double() {
 
 # The Empty Vector
 
-To define the empty vector, we can just use `Vec::new()`
+To define the empty vector, we can just use `Vec::new()`.
 
 ```rust
 macro_rules! vec {
@@ -766,7 +772,7 @@ fn test_empty() {
 
 # One Element
 
-If we want a vector with one element, let's just push it onto the vector!
+If we want a vector with one element, let's just push it onto the empty vector!
 
 ```rust
 macro_rules! vec {
@@ -776,7 +782,7 @@ macro_rules! vec {
 
     ($element:expr) => {
         let mut v = Vec::new();
-        v.push($element)
+        v.push($element);
         v
     };
 }
@@ -807,7 +813,7 @@ error: expected expression, found `let` statement
 7  |         let mut v = Vec::new();
    |         ^^^
 ...
-20 |     let x: Vec<u32> = avec![42];
+20 |     let x: Vec<u32> = vec![42];
    |                       --------- in this macro invocation
    |
 ```
@@ -863,7 +869,7 @@ fn single() {
 
 # Commas in `vec!`
 
-Let's have commas delimitate elements in `vec![]`.
+Let's implement comma-separated elements in `vec![]`.
 
 ```rust
 macro_rules! vec {
@@ -880,6 +886,7 @@ macro_rules! vec {
 let x: Vec<u32> = vec![42, 43];
 ```
 
+* Might as well just hard code 2 elements separated by a comma...
 * Is this a good idea?
 
 
@@ -914,11 +921,9 @@ Instead of having separate branches for all of these cases, we can combine them 
 
 ```rust
 macro_rules! vec {
-    ( $( $element:expr ),* ) => {{
+    ($($element:expr),*) => {{
         let mut v = Vec::new();
-        $(
-            v.push($element);
-        )*
+        $(v.push($element);)*
         v
     }};
 }
@@ -980,11 +985,17 @@ fn main() {
 
 # Procedural Macros
 
-TODO
+The second form of macros is the _procedural_ macro.
 
+* Procedural macros take code as input, operate on that code, and produce code as output
+* The 3 types of procedural macros are:
+  * Custom `#[derive]` macros
+  * Attribute-like macros
+  * Function-like macros operating on tokens
 
 
 ---
+
 
 
 
