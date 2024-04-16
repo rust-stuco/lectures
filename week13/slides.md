@@ -51,7 +51,7 @@ A few things that we haven't explicitly called macros are actually macros in dis
 * 3 Levels of Metaprogramming
 * Declarative Macros
 * The `vec![]` Macro
-* Intro to Procedural Macros
+* Procedural Macros
 
 
 ---
@@ -77,7 +77,7 @@ C's metaprogramming is mostly restricted to C macros.
 
 * C compilers like `gcc` and `clang` come with a _C preprocessor_
 * However you define the macro is how it is expanded
-* Simple but powerful
+* Simple
 
 
 ---
@@ -151,7 +151,7 @@ TWICE(3)    →    2*3
 C++ is a much more expressive language than C, so how does it approach metaprogramming differently?
 
 * C++ is mostly a superset of C, so it still has `#define` 😔
-* C++ has a feature called _Template Metaprogramming_
+* C++ has a feature called _Templates_ that allows for metaprogramming
 
 
 ---
@@ -159,7 +159,7 @@ C++ is a much more expressive language than C, so how does it approach metaprogr
 
 # C++ Templates
 
-C++ offers a potential solution to writing generic code:
+C++ Templates offer a solution to writing generic code:
 
 ```cpp
 template <typename T>
@@ -328,7 +328,7 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 
 # C++ Templates
 
-* C++ Templates (right now) are more powerful than Rust Generics
+* C++ Templates are more powerful than Rust Generics (for now)
     * _C++ Templates are even Turing-complete!_
 * Powerful, but not exactly the most ergonomic
 * Very similar to Rust in nature, can be different in practice
