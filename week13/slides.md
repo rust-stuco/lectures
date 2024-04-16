@@ -337,22 +337,6 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 ---
 
 
-# TODO
-
-* Talk about Rust metaprogramming via generics and const generics
-* Errors caught at compile time... but really caught long before C++
-* Generics are type checked
-* What if we could generate our own compile-time generated code that was type safe?
-* Rust Macros fill this gap
-* Introduce declarative macros
-* Some basic patterns
-* `vec![]` macro
-* Procedural macros if I have time to write it
-
-
----
-
-
 # Level 3: Rust Metaprogramming
 
 We've already seen metaprogramming in Rust through Generics.
@@ -727,84 +711,276 @@ let v: Vec<u32> = vec![1, 2, 3];
 ---
 
 
+# `vec![]` Behavior
 
+```rust
+#[test]
+fn test_empty() {
+    let v: Vec<u32> = vec![];
+    assert!(v.is_empty());
+}
 
+#[test]
+fn single() {
+    let x: Vec<u32> = vec![42];
+    assert!(!x.is_empty());
+    assert_eq!(x.len(), 1);
+    assert_eq!(x[0], 42);
+}
 
-
----
-
-
-
-
-
-
----
-
-
-
-
-
-
----
-
-
-
-
-
-
----
-
-
-
-
+#[test]
+fn double() {
+    let x: Vec<u32> = vec![42, 43];
+    assert!(!x.is_empty());
+    assert_eq!(x.len(), 2);
+    assert_eq!(x[0], 42);
+    assert_eq!(x[1], 43);
+}
+```
 
 
 ---
 
 
+# The Empty Vector
 
+To define the empty vector, we can just use `Vec::new()`
 
+```rust
+macro_rules! vec {
+    () => {
+        Vec::new()
+    };
+}
 
-
----
-
-
-
-
-
-
----
-
-
-
-
-
-
----
-
-
-
-
+#[test]
+fn test_empty() {
+    let v: Vec<u32> = vec![];
+    assert!(v.is_empty());
+}
+```
 
 
 ---
 
 
+# One Element
 
+If we want a vector with one element, let's just push it onto the vector!
 
+```rust
+macro_rules! vec {
+    () => {
+        Vec::new()
+    };
+
+    ($element:expr) => {
+        let mut v = Vec::new();
+        v.push($element)
+        v
+    };
+}
+```
 
 
 ---
 
 
+# Expansion
 
+```rust
+    // <-- snip -->
 
+    ($element:expr) => {
+        let mut v = Vec::new();
+        v.push($element);
+        v
+    };
+```
+
+We get a compiler error when we try to compile this:
+
+```
+error: expected expression, found `let` statement
+  --> src/lib.rs:7:9
+   |
+7  |         let mut v = Vec::new();
+   |         ^^^
+...
+20 |     let x: Vec<u32> = avec![42];
+   |                       --------- in this macro invocation
+   |
+```
 
 
 ---
 
 
+# Statements
 
+The issue was that we were expanding to 3 statements, but what we really wanted to do was expand to an expression.
+
+```rust
+let v: Vec<u32> = vec![1];
+
+// Would expand to:
+let v: Vec<u32> = let mut v = Vec::new(); // ...
+```
+
+* Let's just make sure we return an expression instead of a series of statements!
+
+
+---
+
+
+# Expressions
+
+It is typical to see double brackets in macro definitions for this very reason.
+
+```rust
+macro_rules! vec {
+    () => { Vec::new() };
+
+    ($element:expr) => {{
+        let mut v = Vec::new();
+        v.push($element);
+        v
+    }};
+}
+
+#[test]
+fn single() {
+    let x: Vec<u32> = vec![42];
+    assert!(!x.is_empty());
+    assert_eq!(x.len(), 1);
+    assert_eq!(x[0], 42);
+}
+```
+
+
+---
+
+
+# Commas in `vec!`
+
+Let's have commas delimitate elements in `vec![]`.
+
+```rust
+macro_rules! vec {
+    // <-- snip -->
+
+    ($e1:expr, $e2:expr) => {{
+        let mut v = Vec::new();
+        v.push($e1);
+        v.push($e2);
+        v
+    }};
+}
+
+let x: Vec<u32> = vec![42, 43];
+```
+
+* Is this a good idea?
+
+
+---
+
+
+# Repeating Elements in `vec!`
+
+Instead of copying and pasting `v.push($ex)` however many times, we can use the `+` symbol to indicate 1 or more repeated arguments.
+
+```rust
+macro_rules! vec {
+    // <-- snip -->
+
+    ( $( $element:expr ),+ ) => {{
+        let mut v = Vec::new();
+        $(
+            v.push($element);
+        )+
+        v
+    }};
+}
+```
+
+
+---
+
+
+# Cleanup
+
+Instead of having separate branches for all of these cases, we can combine them into a single `*` repeating branch!
+
+```rust
+macro_rules! vec {
+    ( $( $element:expr ),* ) => {{
+        let mut v = Vec::new();
+        $(
+            v.push($element);
+        )*
+        v
+    }};
+}
+```
+
+* _The real standard library [`vec![]`](https://doc.rust-lang.org/std/macro.vec.html) has a few more features, including allocating memory up front and supporting array notation instantiation_
+
+
+---
+
+
+# Captures
+
+Here is a list of captures you can match on in `macro_rules!`:
+
+- `item`: an item, like a function, `struct`, module, etc
+- `block`: a block (surrounded by `{}`)
+- `stmt`: a statement
+- `pat`: a pattern
+- `expr`: an expression
+- `ty`: a type
+- `ident`: an identifier
+- `path`: a module path (`::std::mem::replace`, `transmute::<_, int>`)
+- `meta`: a meta item, the things that go inside `#[...]` and `#![...]` attributes
+- `tt`: a single token tree
+
+
+---
+
+
+# Recurrences
+
+If we had more time, we would go through this recurrence example:
+
+```rust
+fn main() {
+    let fib  = recurrence![a[n]: u64 = 0, 1;    a[n-1] + a[n-2]         ];
+    let trib = recurrence![a[n]: u64 = 0, 0, 1; a[n-1] + a[n-2] + a[n-3]];
+
+    for e in fib.take(20) {
+        print!("{} ", e)
+    }
+    for e in trib.take(20) {
+        print!("{} ", e)
+    }
+}
+```
+
+```
+0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181
+0 0 1 1 2 4 7 13 24 44 81 149 274 504 927 1705 3136 5768 10609 19513
+```
+
+* Source: [The Little book of Rust Macros](https://danielkeep.github.io/tlborm/book/pim-README.html)
+
+
+---
+
+
+# Procedural Macros
+
+TODO
 
 
 
