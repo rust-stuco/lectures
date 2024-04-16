@@ -997,93 +997,249 @@ The second form of macros is the _procedural_ macro.
 ---
 
 
+# `TokenStream`
+
+At a high level, procedural macros take on this form:
+
+```rust
+use proc_macro;
+
+#[some_attribute]
+pub fn some_name(input: TokenStream) -> TokenStream {
+    // Do something with the TokenStream
+}
+```
 
 
+---
+
+
+# Custom `#[derive]` Macros
+
+Here's a very high-level example of creating a custom `derive` macro:
+
+```rust
+use proc_macro::TokenStream;
+use quote::quote;
+use syn;
+
+#[proc_macro_derive(HelloMacro)]
+pub fn hello_macro_derive(input: TokenStream) -> TokenStream {
+    // Construct a representation of Rust code as a syntax tree
+    // that we can manipulate
+    let ast = syn::parse(input).unwrap();
+
+    // Build the trait implementation
+    impl_hello_macro(&ast)
+}
+```
+
+
+---
+
+
+# Custom `#[derive]` Macros
+
+```rust
+fn impl_hello_macro(ast: &syn::DeriveInput) -> TokenStream {
+    let name = &ast.ident;
+    let gen = quote! {
+        impl HelloMacro for #name {
+            fn hello_macro() {
+                println!("Hello, Macro! My name is {}!", stringify!(#name));
+            }
+        }
+    };
+    gen.into()
+}
+```
+
+
+---
+
+
+# Using a Custom `#[derive]` Macro
+
+Instead of manually writing out this code...
+
+```rust
+use hello_macro::HelloMacro;
+
+struct Pancakes;
+
+impl HelloMacro for Pancakes {
+    fn hello_macro() {
+        println!("Hello, Macro! My name is Pancakes!");
+    }
+}
+
+fn main() {
+    Pancakes::hello_macro();
+}
+```
+
+
+---
+
+
+# Using a Custom `#[derive]` Macro
+
+We can now use our new `#[derive(HelloMacro)]` Macro!
+
+```rust
+use hello_macro::HelloMacro;
+use hello_macro_derive::HelloMacro;
+
+#[derive(HelloMacro)]
+struct Pancakes;
+
+fn main() {
+    Pancakes::hello_macro();
+}
+```
+
+
+---
+
+
+# Attribute-like Macros
+
+Attribute-like macros allow you to create new attributes.
+
+* Different from just the `derive` attribute
+* Can be applied to items other than structs and enums
+
+
+---
+
+
+# Attribute-like Macros
+
+Suppose you have an attribute named `route` that annotates functions when using a web app framework:
+
+```rust
+#[route(GET, "/")]
+fn index() {
+    // <-- snip -->
+}
+```
+
+The signature of the `route` definition function would look like this:
+
+```rust
+#[proc_macro_attribute]
+pub fn route(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // <-- snip -->
+}
+```
+
+* You can imagine different behavior for different HTTP methods and paths!
+
+
+---
+
+
+# Function-like Procedural Macros
+
+Function-like Procedural macros define macros that look like function calls.
+
+* Different from declarative macros because they operate on a `TokenStream`
+* Recall that `macro_rules!` is just a pattern matching machine
+
+
+---
+
+
+# Function-like Procedural Macros
+
+A good example of a function-like procedural macro is a theoretical `sql!` macro:
+
+```rust
+let sql = sql!(SELECT * FROM posts WHERE id = 1);
+
+#[proc_macro]
+pub fn sql(input: TokenStream) -> TokenStream {
+    // <-- snip -->
+}
+```
+
+* This `sql` macro would parse the query inside to check the syntax
+* _You would never do SQL bindings like this in practice_
+
+
+---
+
+
+# Summary: Macros
+
+* Rust Macros are _incredibly_ powerful
+* Both similar and very different to normal Rust code
+* Very niche use cases and not super easy to write
+
+
+---
+
+
+# The End!
+
+![bg right:50% 90%](../images/ferris_happy.svg)
+
+We've reached the end of our prepared content!
 
 
 
 ---
 
 
+# Reflection
 
+We can reflect on what we've learned this semester from our course description.
 
+Students will be able to:
 
-
----
-
-
-
-
-
-
----
-
-
-
-
+* Read, write, and reason about Rust code
+* Know common Rust types and collections
+* Understand the Ownership system and Borrow Checker
+* Use advanced Rust features like iterators, closures, and lifetimes
+* Make use of advanced patterns like parallelism, concurrency, and `unsafe`
 
 
 ---
 
 
+# The Cycle Begins Again
 
-
-
-
----
-
-
-
-
+Looking back at our very first lecture, we asked a question...
 
 
 ---
 
 
-
-
-
-
----
-
-
-
-
+# **Why Rust?**
 
 
 ---
 
 
+# Why Rust?
 
+If there are only a few things to take away from this course:
 
-
-
----
-
-
-
-
-
-
----
-
-
-
-
+* Rust is Different
+* Rust is Modern
+* Rust is Fast
+* Rust is Safe
+* Rust is not a silver bullet
+* Rust is _Important_
 
 
 ---
 
 
+# Thank You!
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for sticking with us this semester!
 
 
-
-
----
-
-
-
-
-
-
----
