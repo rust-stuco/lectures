@@ -10,7 +10,7 @@ paginate: true
 
 ## Intro to Rust Lang
 
-# Macros!
+# Macros
 
 <br>
 
