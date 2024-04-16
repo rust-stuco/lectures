@@ -186,7 +186,7 @@ What happens if we're not so careful with the types?
 max(10, 20.0);
 ```
 
-```
+```cpp
 test.cpp: In function 'int main()':
 test.cpp:12:8: error: no matching function for call to 'max(int, double)'
    12 |     max(10, 20.2);
@@ -327,6 +327,8 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 
 # C++ Templates
 
+* C++ Templates (right now) are more powerful than Rust Generics
+    * _C++ Templates are even Turing-complete!_
 * Powerful, but not exactly the most ergonomic
 * Very similar to Rust in nature, can be different in practice
 
@@ -334,8 +336,7 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 ---
 
 
-# Level 3: Rust Metaprogramming
-
+# TODO
 
 * Talk about Rust metaprogramming via generics and const generics
 * Errors caught at compile time... but really caught long before C++
@@ -348,50 +349,134 @@ In file included from /usr/local/include/c++/12.2.0/vector:64:
 * Procedural macros if I have time to write it
 
 
+---
+
+
+# Level 3: Rust Metaprogramming
+
+We've already seen metaprogramming in Rust through Generics.
+
+```rust
+use std::cmp::PartialOrd;
+
+fn largest<T: PartialOrd>(list: &[T]) -> &T {
+    let mut largest = &list[0];
+
+    for item in list {
+        if item > largest {
+            largest = item;
+        }
+    }
+
+    largest
+}
+```
+
+* Rust generates monomorphized versions of this function for each type that we need it for
 
 
 ---
 
 
+# `#[derive(...)]`
 
+We have also seen metaprogramming through the `derive` attribute, which can generate trait implementations for us.
 
+```rust
+#[derive(Debug)]
+struct Student {
+    andrew_id: String,
+    attendance: Vec<bool>,
+    grade: u8,
+    stress_level: u64,
+}
+```
 
-
----
-
-
-
-
-
-
-
-
----
-
-
-
-
+* Same idea, the `Debug` trait is implemented for us at compile time
 
 
 ---
 
 
+# `println!(...)`
 
+Finally, we've seen function-like macros:
 
+```rust
+println!("hello");
+println!("hello {}", name);
+let v = vec![1, 2, 3];
+assert_eq!(2 + 2, 4, "Math broken?");
+```
 
-
+* The main difference between these function-like macros and normal functions is the variadic parameters
 
 
 ---
 
 
+# Rust Macros
 
-
+* Macros are expanded before the compiler interprets the meaning of code
+* This means that Rust macros can:
+  * Implement a trait on some type
+  * Statically evaluate code
+  * _Modify the Abstract Syntax Tree_
+* Macros are called at compile time, whereas functions are called at runtime
 
 
 ---
 
 
+# Macros Everywhere?
+
+Macros are strictly more powerful than functions because of their ability to execute during compile time.
+
+So why not just use macros everywhere?
+
+* Macro definitions are far more complex than function definitions
+  * _You're writing Rust code that writes Rust code!_
+* Macros are much more difficult to read, understand, and maintain
+
+
+<!--
+Also, you must define macros or bring them into scope before using,
+vs function which you can define anywhere and call anywhere
+-->
+
+
+---
+
+
+# 2 Types of Macros
+
+Rust has 2 main types of macros.
+
+* Declarative Macros
+* Procedural Macros (3 sub-categories)
+  * Custom `#[derive]` macros
+  * Attribute-like macros
+  * Function-like macros operating on tokens
+
+
+---
+
+
+# Declarative Macros
+
+Declarative macros are the most widely used form of macros in Rust.
+
+* At a high level, declarative macros allow you to write something similar to a `match` expression
+* The only difference is that instead of `match`ing expressions, we `match` Rust source code
+* We use the `macro_rules!` construct to define declarative macros
+
+
+---
+
+
+# `macro_rules!`
+
+TODO simple example
 
 
 
