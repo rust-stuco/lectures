@@ -138,8 +138,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust Is Memory Safe
 
-* _"C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"_
-    * Bjarne Stroustrup, creator of C++
+* _"C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"_ - Bjarne Stroustrup, creator of C++
 * Safety by default makes it much harder to shoot yourself in the foot
 * Memory accesses checked at compile-time
 * Powerful type system supports thread safety
@@ -163,12 +162,10 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust Is Modern
 
-* Rust is only 9 years old
+* Rust is only 8 years old
 * Algebraic and generic data types
-* Modern developer tooling
-<!-- Built-in unit testing and documentation, friendly errors -->
+* Modern developer tooling <!-- Built-in unit testing and documentation, friendly errors -->
 * Included build system and dependency management
-* Asynchronous execution as a first-class language feature
 * Macros / metaprogramming support
 
 
@@ -193,7 +190,7 @@ Requires thinking a lot up front before you write down code
 
 # Pitfall: Ecosystem
 
-* Rust is only 9 years old
+* Rust is only 8 years old
 * Smaller and less mature ecosystem compared to some older languages
     * _There is a lot of momentum here_
 
@@ -1371,11 +1368,10 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Grading
 
-* **Attendance is mandatory**
+* Attendance is 50% of your grade
     * We have to take attendance every lecture
-    * You only get 2 unexcused absences by StuCo guidelines
-* Programming assignments are 65% of your grade
-* The final project is worth the remaining 35%
+    * You only get 2 unexcused absences
+* Programming assignments are the other 50%
 * You need 60% to pass this course
 
 
@@ -1384,8 +1380,8 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Communication
 
-* [Discord](https://discord.com/invite/nXGE2yTckU)
-* [Piazza](https://piazza.com/cmu/fall2024/98008/home)
+* [Discord](https://discord.gg/hKSYvnvD)
+* [Piazza](https://piazza.com/cmu/spring2024/98008/home)
 * Email
 * Talk to us!
     * If you can't make it to lecture, tell us beforehand
@@ -1412,18 +1408,6 @@ We may or may not give late days out like candy :D
 Still doesn't change the fact that assignments need to be turned in
 no more than a week after they were officially due
 -->
-
-
----
-
-
-# Course Logistics: Homework Solutions
-
-* This semester, we are making homework solutions **public**
-* We **strongly encourage** students to avoid looking at these solutions
-* Give a good-faith attempt at the homework before resorting to this
-* You will not learn anything from copying and pasting our code
-    * _We will catch you_
 
 
 ---
