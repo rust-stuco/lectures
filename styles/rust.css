@@ -2,22 +2,21 @@
 
 @import 'default';
 
-@font-face {
-    font-family: 'Nikkyou Sans';
-    src: url('https://rust-stuco.github.io/assets/fonts/NikkyouSans-mLKax.ttf');
-}
+@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
 
 section.communism h2, section.communism h1, section.communism h3 {
-    font-family:'Nikkyou Sans', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    color: #D84A39;
+    font-family:'Zilla Slab', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    color: #fc9c36;
     font-size: 2rem;
+    font-weight: bold;
+    font-style: italic;
     text-shadow: 3px 3px 0 #000;
     line-height: 0;
     max-width: 65%;
 }
 
 section.communism h1 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     line-height: 1;
 }
 
@@ -26,8 +25,12 @@ section.communism h3 {
     line-height: 1;
 }
 
+section.communism h4 {
+    font-family:'Zilla Slab', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
 section.communism {
-    background-image: url('../images/bg2.jpg');
+    background-image: url('../images/bg4.jpg');
     background-size: cover;
 }
 

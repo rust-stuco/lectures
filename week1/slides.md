@@ -13,7 +13,7 @@ paginate: true
 
 <br>
 
-Benjamin Owad, David Rudo, and Connor Tsui
+#### Benjamin Owad, David Rudo, and Connor Tsui
 
 
 ---
@@ -138,7 +138,8 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust Is Memory Safe
 
-* _"C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"_ - Bjarne Stroustrup, creator of C++
+* _"C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do it blows your whole leg off"_
+    * Bjarne Stroustrup, creator of C++
 * Safety by default makes it much harder to shoot yourself in the foot
 * Memory accesses checked at compile-time
 * Powerful type system supports thread safety
@@ -162,10 +163,12 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust Is Modern
 
-* Rust is only 8 years old
+* Rust is only 9 years old
 * Algebraic and generic data types
-* Modern developer tooling <!-- Built-in unit testing and documentation, friendly errors -->
+* Modern developer tooling
+<!-- Built-in unit testing and documentation, friendly errors -->
 * Included build system and dependency management
+* Asynchronous execution as a first-class language feature
 * Macros / metaprogramming support
 
 
@@ -190,7 +193,7 @@ Requires thinking a lot up front before you write down code
 
 # Pitfall: Ecosystem
 
-* Rust is only 8 years old
+* Rust is only 9 years old
 * Smaller and less mature ecosystem compared to some older languages
     * _There is a lot of momentum here_
 
@@ -211,7 +214,10 @@ Requires thinking a lot up front before you write down code
 # Who is Rust for?
 
 * Rust is for those who benefit from its great features, and do not suffer from its pitfalls
-* **Which means Rust is _not_ for everyone.**
+
+* Rust is intended to be fast, reliable, and productive
+* Rust targets complex programs while providing stability and security
+* **Which means Rust is _not_ for everyone**
 
 <!-- Rust is not a magic bullet to solve everyone's problems -->
 
@@ -682,6 +688,32 @@ fn main() {
     // remainder / modulo
     let remainder = 43 % 5;
 }
+```
+
+
+---
+
+
+# Integer Casting
+
+
+Rust has no implicit type conversion (coercion). However, we can explicitly convert types using the `as` keyword.
+
+```rust
+fn main() {
+    let decimal: f32 = 65.4321;
+
+    let integer = decimal as u8;
+    let character = integer as char;
+
+    println!("{}, {}, {}", decimal, integer, character);
+}
+```
+
+```
+$ cargo run
+    <-- snip -->
+65.4321, 65, A
 ```
 
 
@@ -1368,10 +1400,11 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Grading
 
-* Attendance is 50% of your grade
+* **Attendance is mandatory**
     * We have to take attendance every lecture
-    * You only get 2 unexcused absences
-* Programming assignments are the other 50%
+    * You only get 2 unexcused absences by StuCo guidelines
+* Programming assignments are 65% of your grade
+* The final project is worth the remaining 35%
 * You need 60% to pass this course
 
 
@@ -1380,8 +1413,8 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Communication
 
-* [Discord](https://discord.gg/hKSYvnvD)
-* [Piazza](https://piazza.com/cmu/spring2024/98008/home)
+* [Discord](https://discord.com/invite/nXGE2yTckU)
+* [Piazza](https://piazza.com/cmu/fall2024/98008/home)
 * Email
 * Talk to us!
     * If you can't make it to lecture, tell us beforehand
@@ -1413,11 +1446,13 @@ no more than a week after they were officially due
 ---
 
 
-# Installing Rust
+# Course Logistics: Homework Solutions
 
-* Go to [rust-lang.org/tools/install](rust-lang.org/tools/install)
-* Read and follow the instructions for installing `rustup`
-* Let us know if you run into trouble!
+* This semester, we are making homework solutions **public**
+* We **strongly encourage** students to avoid looking at these solutions
+* Give a good-faith attempt at the homework before resorting to this
+* You will not learn anything from copying and pasting our code
+    * _We will catch you_
 
 
 ---
