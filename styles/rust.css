@@ -45,6 +45,10 @@ h6 {
     line-height: 0;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family:'Zilla Slab', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
 .columns {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
