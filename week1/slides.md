@@ -214,7 +214,10 @@ Requires thinking a lot up front before you write down code
 # Who is Rust for?
 
 * Rust is for those who benefit from its great features, and do not suffer from its pitfalls
-* **Which means Rust is _not_ for everyone.**
+
+* Rust is intended to be fast, reliable, and productive
+* Rust targets complex programs while providing stability and security
+* **Which means Rust is _not_ for everyone**
 
 <!-- Rust is not a magic bullet to solve everyone's problems -->
 
@@ -685,6 +688,32 @@ fn main() {
     // remainder / modulo
     let remainder = 43 % 5;
 }
+```
+
+
+---
+
+
+# Integer Casting
+
+
+Rust has no implicit type conversion (coercion). However, we can explicitly convert types using the `as` keyword.
+
+```rust
+fn main() {
+    let decimal: f32 = 65.4321;
+
+    let integer = decimal as u8;
+    let character = integer as char;
+
+    println!("{}, {}, {}", decimal, integer, character);
+}
+```
+
+```
+$ cargo run
+    <-- snip -->
+65.4321, 65, A
 ```
 
 
@@ -1424,16 +1453,6 @@ no more than a week after they were officially due
 * Give a good-faith attempt at the homework before resorting to this
 * You will not learn anything from copying and pasting our code
     * _We will catch you_
-
-
----
-
-
-# Installing Rust
-
-* Go to [rust-lang.org/tools/install](rust-lang.org/tools/install)
-* Read and follow the instructions for installing `rustup`
-* Let us know if you run into trouble!
 
 
 ---
