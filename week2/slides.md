@@ -29,14 +29,14 @@ paginate: true
 
 # Today: Ownership
 
-* Preliminary Content
-  * Review: Scopes
-  * String Introduction
-* Ownership
-  * Motivation
-  * Moving, `clone`, and `copy`
-* References and Borrowing
-* Slices and Owned Types
+- Preliminary Content
+  - Review: Scopes
+  - String Introduction
+- Ownership
+  - Motivation
+  - Moving, `clone`, and `copy`
+- References and Borrowing
+- Slices and Owned Types
 
 
 ---
@@ -159,7 +159,8 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 
 * Some languages have garbage collection to manage memory
 * Other languages require you to explicitly allocate and free memory
-* Rust has a third approach: resources are freed through a set of rules
+* Rust has a third approach:
+  * Manage resources via a set of *rules*
 
 <!-- None of the features of ownership will slow down your program when it's running -->
 
@@ -177,13 +178,13 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 ---
 
 
-# Example: `String` vs literals
+# Example: `String` vs string literals
 
 * Since we know the contents of string literals at compile time, the text is hardcoded directly into the final executable
 * To support a fully resizable piece of text, we need to allocate on the _heap_
     * This means we must request memory from the allocator at _runtime_
     * We need a way of returning the memory when we're done using it
-    * What 2 `C` functions does this remind you of?
+    * What 2 C functions does this remind you of?
 
 <!--
 - We cannot place a blob of memory into the binary for each piece of text whose size is unknown at
@@ -218,7 +219,9 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
   * Unless you are the perfect developer...
   * Who _never_ writes a bug...
   * You're bound to shoot yourself in the foot
-* It would be great if the compiler knew at what point the variable needs memory, and then at what point it doesn't need it anymore
+* It would be great if the compiler knew:
+  * At what point the variable needs memory
+  * At what point the memory is no longer needed
 * Idea: **what if we tied memory allocation to the scope of a variable?**
 
 <!-- Because developers who never write bugs definitely exist -_- -->
@@ -453,8 +456,6 @@ println!("x = {}, y = {}", x, y);
 x = 5, y = 5
 ```
 
-But it does—why?
-
 * `x` is still valid, but it looks like we moved it into `y`
 * We just said that this wasn't allowed!
 
@@ -486,7 +487,7 @@ Copies of integers are quick to make => register copy
 
 # `Copy`
 
-Certain types have a `Copy` trait, which allows implicit copying instead of moving.
+Certain types are annotated with a `Copy` trait, which allows implicit copying instead of moving.
 
 Types that are `Copy`:
 * All numeric types, including integers and floating points
@@ -505,7 +506,7 @@ Don't explain traits yet!
 
 # Ownership and Functions
 
-Passing a variable behaves just as assignment does.
+Passing a variable to a function behaves just as assignment does.
 
 Passing a `String`:
 
@@ -515,7 +516,8 @@ fn main() {
     takes_ownership(s);
 } // Because `s`'s value was moved, `s` is not dropped
 
-fn takes_ownership(some_string: String) { // `some_string` comes into scope
+               // `some_string` comes into scope
+fn takes_ownership(some_string: String) {
     println!("{} is mine now!", some_string);
 } // `some_string` goes out of scope and `drop` is called.
   // The backing memory is freed.
@@ -576,7 +578,7 @@ Returning values can also transfer ownership.
 ```rust
 fn main() {
     let s1 = gives_ownership();
-    println!("{}", s1); // s1 is valid—we have taken ownership
+    println!("{}", s1); // s1 is valid---we have taken ownership
 }
 
 fn gives_ownership() -> String {
@@ -703,7 +705,7 @@ fn calculate_length(borrowed: &String) -> usize {
 ```
 
 * `borrowed` is a reference to `s1` (i.e. `&s1`)
-* We do not own `s1` with a reference to it
+* We do not own `s1` with just a reference to it
 * This means `s1` will _not_ be dropped when `borrowed` goes out of scope
 * We call holding a reference _borrowing_
 
@@ -782,13 +784,17 @@ fn change(some_string: &mut String) {
 ![bg right:55% 85%](../images/String_reference.svg)
 
 * In memory, references are just like pointers
-* In practice, they have several constraints that make them safer
+* In practice, they have a couple of constraints that make them safer
 
 ---
 
 # Reference Constraints
 * Mutable References are Exclusive
 * No Dangling References
+
+<!--
+Outline for the next few slides
+-->
 
 ---
 
@@ -995,12 +1001,12 @@ Implemented using lifetimes
 
 # Reference Constraints
 
-- Mutable references are exclusive:
+* Mutable references are exclusive:
   * At any given time, you can have either one mutable reference or any number of immutable references
       * A book being read by multiple people is fine
       * If more than one person writes, they may overwrite each other's work
       * References are similar to Read-Write locks
-- No dangling references:
+* No dangling references:
   * References must always be valid
 
 <!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
@@ -1130,7 +1136,8 @@ let s = "Hello, world!";
 ```
 
 * The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
-* String literals are immutable, and its `&str` type reflects that
+* String literals are immutable
+  * Their `&str` immutable reference type reflects that
 
 
 ---
