@@ -472,7 +472,7 @@ let y = x;
 ```
 
 * Types such as integers have a size known at compile time
-* No data is stored on the heap here
+* Data is stored either in registers or on the stack
 * Copies of integers are very quick to make
 * There is no difference between a shallow copy and a deep copy here
   * So why not clone implicitly?
