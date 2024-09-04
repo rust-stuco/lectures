@@ -14,7 +14,7 @@ paginate: true
 
 <br>
 
-Benjamin Owad, David Rudo, and Connor Tsui
+#### Benjamin Owad, David Rudo, and Connor Tsui
 
 <!-- ![bg right:35% 65%](../images/ferris.svg) -->
 

@@ -12,7 +12,7 @@ paginate: true
 
 <br>
 
-Benjamin Owad, David Rudo, and Connor Tsui
+#### Benjamin Owad, David Rudo, and Connor Tsui
 
 
 ---
@@ -27,6 +27,19 @@ Benjamin Owad, David Rudo, and Connor Tsui
 
 ---
 
+# Today: Ownership
+
+* Preliminary Content
+  * Review: Scopes
+  * String Introduction
+* Ownership
+  * Motivation
+  * Moving, `clone`, and `copy`
+* References and Borrowing
+* Slices and Owned Types
+
+
+---
 
 # Review: Scopes
 
@@ -45,56 +58,12 @@ Recall _scopes_ in Rust.
 
 * There are two important points in time here:
     * When `s` comes _into_ scope, it is valid
-    * It remains valid until it goes _out_ of scope.
-
-
----
-
-
-# **Ownership**
-
+    * It remains valid until it goes _out_ of scope
 
 ---
 
 
-# Ownership
-
-From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html):
-
-> Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
-
-* Today we'll introduce _Ownership_, as well as several related features
-
-
----
-
-
-
-# What is Ownership?
-
-_Ownership_ is a set of rules that govern how a Rust program manages memory.
-
-* Some languages have garbage collection to manage memory
-* Other languages require you to explicitly allocate and free memory
-* Rust has a third approach: memory is managed through a set of rules
-
-<!-- None of the features of ownership will slow down your program when it's running -->
-
-
----
-
-
-# Ownership rules
-
-* Each value in Rust has an _owner_
-* There can only be one owner at a time
-* When the owner goes out of scope, the value will be _dropped_
-
-
----
-
-
-# Example: String Literals
+# String Literals
 
 We didn't explicitly talk about this last week, but every time you see a text like `"Hello, World!"` surrounded by double quotes, that is a _string literal_.
 
@@ -116,7 +85,7 @@ fn main() {
 
 # Problem: String Literals are Immutable
 
-Suppose wanted to take user input and store it. This is how we do it in Python:
+Suppose we wanted to take user input and store it. This is how we might do it in Python:
 
 ```py
 username = input("Tell me your name!")
@@ -160,15 +129,57 @@ s.push_str(", world!"); // push_str() appends a literal to a String
 println!("{}", s); // This will print `hello, world!`
 ```
 
-* Why can `String` be mutated but string literals cannot?
 
 
 ---
 
 
-# `String` vs literals
+# **Ownership**
 
-* We know the contents of string literals at compile time, so the text is hardcoded directly into the final executable
+
+---
+
+
+# Ownership
+
+From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html):
+
+> Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
+
+* Today we'll introduce _Ownership_, as well as several related features
+
+
+---
+
+
+
+# What is Ownership?
+
+_Ownership_ is a set of rules that govern how a Rust program manages memory.
+
+* Some languages have garbage collection to manage memory
+* Other languages require you to explicitly allocate and free memory
+* Rust has a third approach: resources are freed through a set of rules
+
+<!-- None of the features of ownership will slow down your program when it's running -->
+
+
+---
+
+
+# Ownership rules
+
+* Each value in Rust has an _owner_
+* There can only be one owner at a time
+* When the owner goes out of scope, the value will be _dropped_
+
+
+---
+
+
+# Example: `String` vs literals
+
+* Since we know the contents of string literals at compile time, the text is hardcoded directly into the final executable
 * To support a fully resizable piece of text, we need to allocate on the _heap_
     * This means we must request memory from the allocator at _runtime_
     * We need a way of returning the memory when we're done using it
@@ -205,7 +216,7 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
 
 * Using `malloc` and `free` can lead to all sorts of undefined behavior
   * Unless you are the perfect developer...
-  * Who _never_ writes an bugs...
+  * Who _never_ writes a bug...
   * You're bound to shoot yourself in the foot
 * It would be great if the compiler knew at what point the variable needs memory, and then at what point it doesn't need it anymore
 * Idea: **what if we tied memory allocation to the scope of a variable?**
@@ -216,7 +227,7 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
 ---
 
 
-# The Rust approach to memory
+# Rust's approach to memory
 
 Memory is returned once the variable that owns it goes out of scope.
 
@@ -241,30 +252,7 @@ Memory is returned once the variable that owns it goes out of scope.
 ---
 
 
-# Multiple variables, same integer
-
-Multiple variables can interact with the same data in different ways in Rust.
-
-```rust
-let s1 = String::from("hello");
-let s2 = s1.clone();
-
-println!("s1 = {}, s2 = {}", s1, s2);
-```
-
-Can we guess what this is doing?
-
-* Bind the value `5` to `x`
-* Make a copy of the value in `x` and bind it to `y`
-* Simple enough, right?
-
-
----
-
-
-# Multiple variables, same `String`?
-
-What about the `String` version?
+# Example: `String` "copying"
 
 ```rust
 let s1 = String::from("hello");
@@ -276,6 +264,7 @@ What is this code doing?
 * Bind the `String` containing `"hello"` to `s1`
 * Now what?
     * Do we make a copy of the `String`?
+    * What does a copy actually mean in this case?
 
 <!--
 What does a copy even mean?
@@ -297,7 +286,7 @@ let s1 = String::from("hello");
 ```
 
 * A `String` is made up of 3 fields:
-    * A pointer to text somewhere in memory
+    * A pointer to the characters somewhere in memory
     * A length
     * A capacity
 * Left diagram is on the stack
@@ -316,11 +305,11 @@ let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-Here's one option we could make:
+One way to handle this case is:
 
 * When we assign `s1` to `s2`, only the stack data is copied
 * We do _not_ create a copy of the contents of the `String`
-* Known as a "shallow copy" in some languages
+* Also known as a "shallow copy" in some languages
 
 <!--
 Shallow copy gets away from the problem of having to recreate the entire string
@@ -339,16 +328,16 @@ let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-- Suppose this was how Rust actually handled this code.
+Suppose Rust handled this case with a shallow copy.
 * Following Rust's scope rules, what would happen if we tried to drop both `s1` and `s2`?
     * Double free! 🪦
-* How can we solve this?
+* How can this be prevented?
 
 
 ---
 
 
-# One owner at a time
+# Enforcing one owner at a time
 
 ![bg right:50% 85%](../images/String_move.svg)
 
@@ -404,9 +393,24 @@ let s2 = s1;
 
 - Rust calls this shallow copy plus invalidation a _move_
 * We _moved_ `s1` into `s2`
-* This is a very intentional design choice in Rust
-  * Rust will never create a "deep" copy of your data
-  * No hidden costs!
+  * Hence `s1` can no longer be accessed
+
+
+---
+
+# Moving vs cloning
+
+```rust
+let s1 = String::from("hello");
+let s2 = s1;
+```
+
+* What if we copied all of the data instead?
+  * Known as deep copying or cloning
+* Implicitly copying all of the data would solve the problem
+  * But it can get expensive, quickly
+* In Rust, cloning must be explicitly performed by the programmer
+  * This is very intentional, to avoid accidental performance loss
 
 
 ---
@@ -414,7 +418,7 @@ let s2 = s1;
 
 # `Clone`
 
-If we do want to deep copy, we can use a common method called `clone`.
+If we do want to deep copy, we can use a method called `clone`.
 
 ```rust
 let s1 = String::from("hello");
@@ -436,7 +440,7 @@ s1 = hello, s2 = hello
 
 # What about integers?
 
-Recall this code:
+Based on what we have seen, this code should not work.
 
 ```rust
 let x = 5;
@@ -449,7 +453,7 @@ println!("x = {}, y = {}", x, y);
 x = 5, y = 5
 ```
 
-Why does this work?
+But it does—why?
 
 * `x` is still valid, but it looks like we moved it into `y`
 * We just said that this wasn't allowed!
@@ -466,33 +470,42 @@ let x = 5;
 let y = x;
 ```
 
-* Types such as integers have a known size at compile time
-* They are also stored on the stack
-* Copies of integers are quick to make
-* There is no difference between a shallow copy and a deep copy here, so there is no need to call `clone`
+* Types such as integers have a size known at compile time
+* No data is stored on the heap here
+* Copies of integers are very quick to make
+* There is no difference between a shallow copy and a deep copy here
+  * So why not clone implicitly?
 
+
+<!---
+Copies of integers are quick to make => register copy
+-->
 
 ---
 
 
 # `Copy`
 
-Rust annotates certain types with a `Copy` trait, and these types allow variables that use it to be valid even after copying it to another variable.
+Certain types have a `Copy` trait, which allows implicit copying instead of moving.
 
-Here are some of the types that are `Copy`:
-* All number types, including integers and floating points
+Types that are `Copy`:
+* All numeric types, including integers and floating points
 * Boolean type, `bool`
 * Character type, `char`
 * Tuples, if they only contain types that are `Copy`
     - `(i32, i32)` is `Copy`, but `(i32, String)` is not
 
 
+<!--
+Don't explain traits yet!
+-->
+
 ---
 
 
 # Ownership and Functions
 
-Passing a variable to a function will move or copy, just as assignment does.
+Passing a variable behaves just as assignment does.
 
 Passing a `String`:
 
@@ -500,13 +513,11 @@ Passing a `String`:
 fn main() {
     let s = String::from("hello");
     takes_ownership(s);
-    // println!("{} is invalid now!", s);
 } // Because `s`'s value was moved, `s` is not dropped
 
-               // `some_string` comes into scope
-fn takes_ownership(some_string: String) {
+fn takes_ownership(some_string: String) { // `some_string` comes into scope
     println!("{} is mine now!", some_string);
-} // Here, `some_string` goes out of scope and `drop` is called.
+} // `some_string` goes out of scope and `drop` is called.
   // The backing memory is freed.
 ```
 
@@ -514,10 +525,13 @@ fn takes_ownership(some_string: String) {
 
 # Ownership and Functions
 
+What if we tried to use a value after a function takes ownership of it?
 ```rust
-let s = String::from("hello");
-takes_ownership(s);
-println!("{} is invalid now!", s);
+fn main() {
+  let s = String::from("hello");
+  takes_ownership(s);
+  println!("{} is invalid now!", s);
+}
 ```
 
 ```
@@ -544,7 +558,7 @@ Passing an `i32`:
 fn main() {
     let x = 5;
     makes_copy(x);
-    println!("Here is {} again!", x);
+    println!("Here is {} again!", x); // x is still valid!
 }
 
 fn makes_copy(some_integer: i32) {
@@ -562,7 +576,7 @@ Returning values can also transfer ownership.
 ```rust
 fn main() {
     let s1 = gives_ownership();
-    println!("{}", s1);
+    println!("{}", s1); // s1 is valid—we have taken ownership
 }
 
 fn gives_ownership() -> String {
@@ -673,29 +687,6 @@ fn calculate_length(s: &String) -> usize {
     s.len()
 }
 ```
-
-* Let's break this down!
-
-
----
-
-
-# Reference with `&`
-
-```rust
-fn main() {
-    let s1 = String::from("hello");
-
-    let len = calculate_length(&s1);
-
-    println!("The length of '{}' is {}.", s1, len);
-}
-
-fn calculate_length(borrowed: &String) -> usize {
-    borrowed.len()
-}
-```
-
 * The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
 
 
@@ -711,21 +702,10 @@ fn calculate_length(borrowed: &String) -> usize {
 } // Here, `borrowed` goes out of scope
 ```
 
-* `borrowed == &s1`
-* We do not own `s1` if we just have a reference to it
-* This means `s1` will _not_ be dropped when we stop using `borrowed`
-* We call this _borrowing_
-
-
----
-
-
-# Reference Data Layout
-
-![bg right:55% 85%](../images/String_reference.svg)
-
-* In memory, references are just like pointers
-* But they have several constraints that make them different...
+* `borrowed` is a reference to `s1` (i.e. `&s1`)
+* We do not own `s1` with a reference to it
+* This means `s1` will _not_ be dropped when `borrowed` goes out of scope
+* We call holding a reference _borrowing_
 
 
 ---
@@ -797,7 +777,22 @@ fn change(some_string: &mut String) {
 ---
 
 
-# Mutable References are Exclusive
+# Reference Data Layout
+
+![bg right:55% 85%](../images/String_reference.svg)
+
+* In memory, references are just like pointers
+* In practice, they have several constraints that make them safer
+
+---
+
+# Reference Constraints
+* Mutable References are Exclusive
+* No Dangling References
+
+---
+
+# Constraint: Mutable References are Exclusive
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -816,7 +811,7 @@ println!("{}, {}", r1, r2);
 ---
 
 
-# Mutable References are Exclusive
+# Constraint: Mutable References are Exclusive
 
 ```rust
 let mut s = String::from("hello");
@@ -841,7 +836,7 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
 ---
 
 
-# Mutable References are Exclusive
+# Constraint: Mutable References are Exclusive
 
 * Most languages will let you mutate anything, whenever you want
 * If data can be written to from multiple places, the value can become unpredictable
@@ -861,7 +856,7 @@ The data races happen when we introduce concurrency, which we'll talk about in t
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
 
-We are allowed to have multiple mutable references, just not _simultaneously_.
+We are allowed to hold multiple mutable references, just not _simultaneously_.
 
 ```rust
 let mut s = String::from("hello");
@@ -874,6 +869,7 @@ let mut s = String::from("hello");
 let r2 = &mut s;
 ```
 
+* Notice that the scopes of these mutable references do not overlap
 ---
 
 
@@ -927,7 +923,7 @@ error[E0502]: cannot borrow `s` as mutable because
 
 # Mutable and Immutable References
 
-Note that these rules only apply for references whose scopes overlap.
+Note that exclusivity rules only apply for references whose scopes overlap.
 
 ```rust
 let mut s = String::from("hello");
@@ -950,7 +946,7 @@ println!("{}", r3);
 ---
 
 
-# Dangling References
+# Constraint: No Dangling References
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -971,7 +967,7 @@ fn dangle() -> &String {
 
 ---
 
-# Dangling References
+# Constraint: No Dangling References
 
 ```
 error[E0106]: missing lifetime specifier
@@ -989,19 +985,23 @@ help: consider using the `'static` lifetime
 Focus on this line:
 > this function's return type contains a borrowed value, but there is no value for it to be borrowed from
 
-* Again, this relies on lifetimes, so just keep this in mind!
+<!--
+Implemented using lifetimes
+-->
 
 
 ---
 
 
-# Reference Rules
+# Reference Constraints
 
-* At any given time, you can have either one mutable reference or any number of immutable references
-    * A book being read by multiple people is fine
-    * If more than one person writes, they may overwrite each other's work
-    * References are similar to Read-Write locks
-* References must always be valid
+- Mutable references are exclusive:
+  * At any given time, you can have either one mutable reference or any number of immutable references
+      * A book being read by multiple people is fine
+      * If more than one person writes, they may overwrite each other's work
+      * References are similar to Read-Write locks
+- No dangling references:
+  * References must always be valid
 
 <!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
 
@@ -1011,7 +1011,7 @@ Focus on this line:
 
 # The Borrow Checker
 
-The Borrow Checker enforces the rules of ownership and borrowing by checking:
+The Borrow Checker enforces the ownership and borrowing rules by checking:
 
 * That all variables are initialized before they are used
 * That you can't move the same value twice
@@ -1114,21 +1114,23 @@ let slice = &s[0..len];
 let slice = &s[..];
 ```
 
+<!--
+Same rules as loops
+-->
 
 ---
 
 
 # String Literals are Slices
 
-Recall that we talked about string literals being stored inside the binary. Now that we know about slices, we can explain what string literals really are:
+Recall that we talked about string literals being stored inside the binary.
 
 ```rust
 let s = "Hello, world!";
 ```
 
 * The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
-* Question: Why are string literals immutable?
-  * `&str` is an immutable reference!
+* String literals are immutable, and its `&str` type reflects that
 
 
 ---
@@ -1136,9 +1138,10 @@ let s = "Hello, world!";
 
 # Owned Types
 
-* String slices and string literals are immutable because they are a special type of immutable reference, so we can't mutate them
-* String is an owned type, we can do whatever we want with it
-* What are some other owned types?
+* String slices and string literals are immutable because they are a special type of immutable reference
+* String is an owned type
+  * i.e. a type that has an owner
+* Another owned type is a vector
 
 
 ---
@@ -1154,7 +1157,7 @@ You can create an vector with the method `new`:
 let v: Vec<i32> = Vec::new();
 ```
 
-* The `<i32>` just means that the vector stores `i32` values. We'll talk more about this syntax in the Week 4!
+* The `<i32>` just means that the vector stores `i32` values. We'll talk more about this syntax in Week 4!
 
 
 ---
@@ -1196,7 +1199,8 @@ println!("{:?}", v);
 [1, 2, 3]
 ```
 
-* We'll talk about macros in Week 12!
+* Briefly: Macros are a special type of function
+  * They can take in a variable number of arguments
 
 
 ---
@@ -1234,7 +1238,7 @@ We will talk more about `String` and `Vec<T>` in Week 4!
 
 # Homework 2
 
-* The second homework consists entirely of 10 small puzzles
+* The second homework consists of 10 small ownership puzzles
   * Refer to the `README.md` for further instructions
   * Always follow the compiler's advice!
 * We **_highly_** recommend reading the Rust Book chapter on [ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)

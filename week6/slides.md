@@ -12,7 +12,7 @@ paginate: true
 
 <br>
 
-Benjamin Owad, David Rudo, and Connor Tsui
+#### Benjamin Owad, David Rudo, and Connor Tsui
 
 
 ---
