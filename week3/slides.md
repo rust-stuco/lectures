@@ -189,7 +189,7 @@ help: consider changing this to be mutable
   |                +++
 ```
 
-* Missing one `mut` annotation
+* Missing two `mut` annotations
 
 
 ---
@@ -199,6 +199,7 @@ help: consider changing this to be mutable
 
 ```rust
 fn cool_guy() {
+//      +++ Add `mut` here
     let mut favorite_computers = Vec::new();
     add_to_list(favorite_computers, String::from("Framework Laptop"));
 }
@@ -229,7 +230,7 @@ fn add_to_list(mut fav_items: Vec<String>, item: String) {
 
 - What if we want to print the list?
 * `favorite_computers` was moved in the `add_to_list` call
-* Same issue as review question 1
+* Same issue as the previous question
 
 
 ---
