@@ -199,7 +199,7 @@ help: consider changing this to be mutable
 
 ```rust
 fn cool_guy() {
-    let favorite_computers = Vec::new();
+    let mut favorite_computers = Vec::new();
     add_to_list(favorite_computers, String::from("Framework Laptop"));
 }
 
@@ -1149,7 +1149,7 @@ We can define `impl` blocks for enums as well as structs.
 
 ```rust
 struct Message {
-    Write(string),
+    Write(String),
     // <-- snip -->
 }
 
@@ -1388,7 +1388,7 @@ fn value_in_cents(coin: Coin) -> u8 {
         Coin::Penny => {
             println!("Lucky penny!");
             1
-        }
+        },
         Coin::Nickel => 5,
         Coin::Dime => 10,
         Coin::Quarter => 25,
@@ -1438,7 +1438,7 @@ fn value_in_cents(coin: Coin) -> u8 {
         Coin::Quarter(state) => {
             println!("State quarter from {:?}!", state);
             25
-        }
+        },
     }
 }
 ```
