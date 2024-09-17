@@ -950,7 +950,8 @@ So what was the deal with the `T` in `Vec<T>`, and `K, V` in `HashMap<K, V>`?
 
 * We refer to these as _generic_ types
 * Think of it as being able to fill in any type you want in place of `T`
-* Generics allow us to replace specific types with a placeholder that represents multiple types to remove code duplication
+* Generics allow us to replace specific types with a placeholder that represents multiple types
+    * Removes code duplication
 
 ---
 
@@ -964,6 +965,7 @@ let number_list = vec![34, 50, 25, 100, 65];
 
 let mut largest = &number_list[0];
 
+// Pretend the list always has at least 1 element.
 for number in &number_list {
     if number > largest {
         largest = number;
@@ -998,7 +1000,7 @@ for number in &number_list {
         largest = number;
     }
 }
-println!("The largest number is {}", largest);
+println!("The largest number is {}", largest); // I is good programr :D
 ```
 
 
@@ -1070,7 +1072,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function is generic over `T`
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
-* `T` can be _any_ type!
+* `T` can be _any_\* type!
 
 
 ---
@@ -1089,10 +1091,11 @@ fn largest<Key>(list: &[Key]) -> &Key
 ```
 
 ```rust
-fn largest<HiThere>(list: &[HiThere]) -> &HiThere
+fn largest<Smile>(list: &[Smile]) -> &Smile
 ```
 
 * All of these essentially mean the same thing!
+    * Last one is _frowned_ upon since it might seem like a struct or enum
 
 
 ---
@@ -1164,9 +1167,7 @@ help: consider restricting type parameter `T`
 ```
 
 * We cannot compare two `&T` to each other
-* `T` can be _any_ type, even if `T` is a type that cannot be compared
-* We'll talk about type restrictions with _traits_ next week!
-* For now, all you need to know is that we need the `PartialOrd` trait to enable comparisons
+* We've stated that `T` can be _any_ type, regardless of if `T` is a type that cannot actually be compared
 * Let's just follow the compiler's advice for now!
 
 
@@ -1195,6 +1196,32 @@ fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
 The largest number is 100
 The largest char is y
 ```
+
+
+---
+
+
+# Sneak Peek: Traits
+
+```rust
+use std::cmp::PartialOrd;
+
+fn largest<T: PartialOrd>(list: &[T]) -> &T {
+    let mut largest = &list[0];
+
+    for item in list {
+        if item > largest {
+            largest = item;
+        }
+    }
+
+    largest
+}
+```
+
+* We'll talk about type restrictions with _traits_ next week!
+* For now, all you need to know is that we need the `PartialOrd` trait to enable comparisons
+
 
 ---
 
@@ -1479,19 +1506,10 @@ fn main() {
 ---
 
 
-# Generic `impl`
-
-- The purpose of these examples was to demonstrate a situation where some generic types are specified within the `impl` block, and others within the method itself
-* Take some time to understand these examples
-    * These slides were based on examples from the [book](https://doc.rust-lang.org/book/ch10-01-syntax.html)
-
-
----
-
-
 # Performance of Generics
 
 * The good news is that there is _zero_ overhead to using generics!
+    * The work is done at compile-time instead of runtime.
 * Rust accomplishes this with _monomorphization_
 
 
