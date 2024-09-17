@@ -849,7 +849,7 @@ println!("{:?}", scores);
 
 # Accessing a Hash Map with Defaults
 
-* A common pattern when accessing a `HashMap` is this:
+* A common pattern when accessing a `HashMap` is:
     * If the key exists, we want to access the value
     * If the key does not exist, insert a default value and then access it
 * `HashMap` has a special API called `Entry`
