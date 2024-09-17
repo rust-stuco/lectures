@@ -1149,7 +1149,7 @@ struct ChangeColorMessage(i32, i32, i32); // tuple struct
 We can define `impl` blocks for enums as well as structs.
 
 ```rust
-struct Message {
+enum Message {
     Write(String),
     // <-- snip -->
 }
