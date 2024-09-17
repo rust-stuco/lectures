@@ -39,8 +39,8 @@ paginate: true
 Rust's standard library contains a number of useful data structures called _collections_.
 
 * Most other data types represent a single value, but collections contain multiple values
-* Values in collections are stored on the _heap_
-    * The amount of data each has does not need to be known at compile time
+* Values in collections are (_almost always_) stored on the **heap**
+    * The size of each collection does not need to be known at compile time
     * _For more information on other standard library collections, refer to the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module_
 
 
@@ -122,7 +122,7 @@ match third {
 }
 ```
 
-* Using `get` returns `None` if the index is out of bounds, instead of panicking
+* Using `get` returns `None` if the index is out of bounds instead of panicking
 
 
 ---
@@ -185,7 +185,8 @@ To access each element in order, we can iterate through the elements with a `for
 
 ```rust
 let v = vec![100, 32, 57];
-for elem in &v { // `elem` is a reference to an i32
+
+for elem in &v { // `elem` is a reference to an i32 (&i32)
     println!("{}", elem);
 }
 ```
@@ -202,13 +203,15 @@ for elem in &v { // `elem` is a reference to an i32
 
 # Mutable iteration over a Vector
 
-We can also iterate over mutable references to each element to make changes to each element
+We can also iterate over mutable references to each element to make changes to each element.
 
 ```rust
 let mut v = vec![100, 32, 57];
+
 for elem in &mut v {  // `elem` is a mutable reference to an i32
     *elem += 50;
 }
+
 println!("{:?}", v);
 ```
 
@@ -232,9 +235,11 @@ You can also _consume_ the vector when you want to loop over it.
 
 ```rust
 let v = vec![100, 32, 57];
+
 for i in v {
     println!("{}", i);
 }
+
 // println!("{:?}", v); <-- Can't do this anymore!
 ```
 
@@ -259,8 +264,9 @@ fn largest(list: &Vec<i32>) -> &i32
 fn largest(list: &[i32]) -> &i32
 ```
 
-* The latter is more generic (and preferred)
-* We can do this because of _deref coercion_, which basically means you can turn a reference to `Vec<T>` into a reference to `[T]`, or `&Vec<T>` into `&[T]`
+* The second is more general and preferred
+* We can do this because of _deref coercion_
+    * This basically means you can turn a `&Vec<T>` into a `&[T]`
 * We'll talk more about this in week 9!
 
 
@@ -303,8 +309,8 @@ v.push(s); // move `s` into `v`
 // `s` is no longer usable here!
 ```
 
-* To insert an owned value, it must be moved
-    * In other words, ownership must be transferred into the vector
+* To insert an owned value, it must be _moved_ into the vector
+    * In other words, ownership must be transferred to the vector
 
 
 ---
@@ -318,8 +324,9 @@ Like any other struct, a vector is dropped when it goes out of scope.
 {
     let v = vec!["rust".to_string(), "is".to_string(), "great!".to_string()];
 
-    // do stuff with `v`
-} // <- `v` goes out of scope and everything it contains is freed here
+    stuff(&v); // do stuff with `v`
+
+} // <- `v` goes out of scope and everything it contains is freed
 ```
 
 * When the vector gets dropped, all of its contents are also dropped
@@ -371,7 +378,7 @@ Main idea: `&str` is a primitive more akin to a C array, while String is a manag
 
 # Creating a `String`
 
-You can create a `String` with `new`, `to_string`, or `from`.
+You can create a `String` with the methods `new`, `to_string`, or `from`.
 
 ```rust
 let mut s = String::new(); // empty mutable string
@@ -417,8 +424,10 @@ We can grow a `String` by using the `push` or `push_str` methods.
 
 ```rust
 let mut s = String::from("foo");
+
 s.push('b'); // push a char
 s.push_str("ar"); // push a &str
+
 println!("{}", s);
 ```
 
@@ -436,8 +445,11 @@ The `push_str` method takes a string slice, because we don't want to take owners
 
 ```rust
 let mut s1 = String::from("foo");
+
 let s2 = String::from("bar");
+
 s1.push_str(&s2);
+
 println!("s2 is {}", s2); // `s2` is still valid!
 ```
 
@@ -464,8 +476,8 @@ This is syntactic sugar for a function whose signature looks something like this
 fn add(self, s: &str) -> String
 ```
 
-* Notice that it takes full ownership of `self`
-* Also notice it takes `&str` and not `&String`
+* Notice that `add` takes full ownership of `self`
+* Also notice `add` takes `&str` as its second parameter and not `&String`
     * This is the same _deref coercion_ as with `&Vec<T>` to `&[T]`!
 
 
@@ -480,13 +492,13 @@ let s2 = String::from("tac");
 let s3 = String::from("toe");
 ```
 
-To combine multiple strings, you can do this:
+To combine multiple strings, you can use multiple `+`'s:
 
 ```rust
 let s = s1 + "-" + &s2 + "-" + &s3;
 ```
 
-Or you can instead use the `format!` macro to do the same thing:
+Or you can use the `format!` macro:
 
 ```rust
 let s = format!("{}-{}-{}", s1, s2, s3);
@@ -588,7 +600,7 @@ let answer = &hello[0];
 * What _should_ `answer` be?
     * It can't be `П`, internally it is represented by 2 bytes: `[208, 159]`
     * Do we return `208` instead?
-* There isn't any obvious expected behavior here
+* There isn't any obvious expected behavior here...
 
 
 ---
@@ -601,7 +613,7 @@ let hello = "Привет";
 let answer = &hello[0]; // BAD!
 ```
 
-* Anything we can return here might not be the expected result
+* Anything we can return here might not be an "expected" result
 * The philosophy of Rust is to not compile this code at all
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
@@ -627,7 +639,7 @@ let s = &hello[0..4]; // `s` == "Пр"
 
 # Slicing Strings
 
-However, if we try to slice only a part of a character's bytes, Rust would panic at runtime in the same way as if an invalid index were accessed in a vector.
+However, if we try to slice only a part of a character's bytes, Rust panics at runtime.
 
 ```rust
 let hello = "Привет";
@@ -639,6 +651,8 @@ let s = &hello[0..1];
 thread 'main' panicked at 'byte index 1 is not a char boundary;
 it is inside 'П' (bytes 0..2) of `Привет`'
 ```
+
+* This happens in the same way that an invalid index causes a panic!
 
 <!--
 Still preventing weird cases!
@@ -690,10 +704,10 @@ for b in "Пр".bytes() {
 
 # Recap: Strings
 
-* Rust chooses to have UTF-8 `String`s as the default
+* Rust chooses to use UTF-8 strings as the default (for both `String` and `&str`)
     * Programmers have to think about handling unicode upfront
     * The complexity brought on by encodings is more apparent in Rust
-    * But this prevents having to deal with non-ASCII characters later!
+    * However, this prevents having to deal with non-ASCII characters later!
 * The standard library offers many methods for [`String`](https://doc.rust-lang.org/std/string/struct.String.html) and [`&str`](https://doc.rust-lang.org/std/primitive.str.html) types to help handle these complex situations correctly
 
 
@@ -786,6 +800,8 @@ Yellow: 50
 Blue: 10
 ```
 
+* _Note that the order is non-deterministic_
+
 
 ---
 
@@ -801,7 +817,7 @@ let field_value = String::from("Blue");
 let mut map = HashMap::new();
 map.insert(field_name, field_value);
 
-// field_name and field_value are invalid at this point
+// field_name and field_value are invalid at this point!
 ```
 
 
@@ -833,10 +849,10 @@ println!("{:?}", scores);
 
 # Accessing a Hash Map with Defaults
 
-* Commonly, when accessing a map, we expect our key to be present:
-    * If the key exists, we want to access the value as expected
-    * If the key does not exist, insert it with a default value
-* `HashMap` has a special API for defaults called `Entry`
+* A common pattern when accessing a `HashMap` is this:
+    * If the key exists, we want to access the value
+    * If the key does not exist, insert a default value and then access it
+* `HashMap` has a special API called `Entry`
 
 
 ---
@@ -844,7 +860,7 @@ println!("{:?}", scores);
 
 # Hash Map Entries
 
-To insert a value if the key does not already exist, you can use the `Entry` method `or_insert`.
+To insert a value if the key does not already exist, you can use the `Entry` API and the method `or_insert`.
 
 ```rust
 let mut scores = HashMap::new();
@@ -901,7 +917,7 @@ fn or_insert(self, default: V) -> &mut V
 * It gives out a mutable reference
     * That reference are guaranteed to point to valid data
     * We need to provide a default, otherwise this data might not exist
-* Shorter and often more performant than separate conditionals
+* Shorter and more readable than separate conditionals
 
 <!--
 If the data might not exist, we would use a...OPTION TYPE
