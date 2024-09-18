@@ -43,6 +43,10 @@ Rust's standard library contains a number of useful data structures called _coll
     * The size of each collection does not need to be known at compile time
     * _For more information on other standard library collections, refer to the [documentation](https://doc.rust-lang.org/std/collections/index.html) of the `std::collections` module_
 
+<!--
+There might be small string optimizations or small vector optimizations
+-->
+
 
 ---
 
