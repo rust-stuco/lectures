@@ -24,7 +24,7 @@ paginate: true
 # Today: Error Handling and Traits
 
 * Type Aliases
-* Const Generics
+* `const` Generics
 * Error Handling
     * `panic!`
     * `Result<V,E>`
@@ -83,7 +83,6 @@ fn main() {
     stack.push(42);
 }
 ```
-
 
 
 ---
@@ -232,7 +231,6 @@ fn alternating<const ODD: bool>(nums: &[usize]) {
         print!("{} ", nums[i]);
         i += 2;
     }
-
 }
 ```
 
@@ -263,7 +261,6 @@ fn main() {
 0 2 4 6
 1 3 5 7
 ```
-
 
 
 ---
@@ -308,6 +305,7 @@ enum Result<T, E> {
 
 
 # `unwrap()`
+
 ```rust
 pub const fn unwrap(self) -> T {
     match self {
@@ -319,10 +317,11 @@ pub const fn unwrap(self) -> T {
 
 * Takes an enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
 * It should only be used when you expect an inner value, otherwise it will panic
-    * Most common source of panics in Rust programs
 
 
 ---
+
+
 # `unwrap()`
 
 Consider the following example from the Rust book:
@@ -407,7 +406,11 @@ There are other useful macros that panic:
 * `unimplemented!` / `todo!`
     * Usually used while something is in progress
 * `unreachable!`
-    * Can help the compiler optimize a code segment away
+    * Can potentially* help the compiler optimize a code segment away
+
+<!--
+`unreachable` probably won't help in optimization, but it might
+-->
 
 
 ---
@@ -415,14 +418,14 @@ There are other useful macros that panic:
 
 # Using Results 1
 
-To have recoverable errors, we should use results.
+If we want recoverable errors, we use `Result`s.
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
     if b == 0 {
         Err("Divide by zero".to_string())
     } else {
-        Ok(a/b)
+        Ok(a / b)
     }
 }
 ```
@@ -441,7 +444,7 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 ```rust
 enum ArithError {
     DivideByZero,
-    IllegalShift(i32)
+    IllegalShift(i32),
 }
 
 fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
@@ -486,7 +489,7 @@ let x = match potential_fail() {
 # The `?` Operator Example
 
 ```rust
-use std::num::ParseIntError; // a built-in error type
+use std::num::ParseIntError; // A built-in error type
 
 fn multiply(
     first_number_str: &str,
@@ -503,6 +506,9 @@ fn multiply(
 * If either of the `parse` calls fail, we return their `Err` values
 * Otherwise, we store the parsed values
 
+<!--
+Bad formatting to fit on slide better
+-->
 
 ---
 
@@ -561,7 +567,7 @@ fn read_username_from_file() -> Result<String, io::Error> {
 ---
 
 
-# Functions that never return
+# Functions that never `return`
 
 Consider the following code, what should the type of `x` be?
 
@@ -576,7 +582,7 @@ let x = loop { println!("forever"); };
 ---
 
 
-# The "Never" Type - `!`
+# The "Never" Type`!`
 
 Rust has a special type called `!`, or the "never type", for this exact reason.
 
@@ -592,7 +598,7 @@ fn bar() -> ! {
 ---
 
 
-# What's the point?
+# What's the point`!`
 
 Why have a type that never has a value? Consider the following:
 
@@ -647,8 +653,9 @@ trait Shape {
 ```
 
 * Traits are defined with the `trait` keyword
-* They act as an interface for structs
-    * They can cannot be constructed directly, only applied onto structs
+* They act as an interface for types
+    * They can cannot be constructed directly, only applied onto types
+
 
 ---
 
@@ -684,14 +691,14 @@ Traits can also provide a default implementation of functions.
 trait Shape {
     // <-- snip -->
 
-    // Default method implementation (can be overriden)
+    // Default method implementation (can be overridden)
     fn print(&self) {
         println!("{} has an area of {}", self.name(), self.area());
     }
 }
 ```
 
-* These can be overriden by any `impl Shape for MyStruct`
+* These can be overridden by any `impl Shape for MyStruct`
 
 
 ---
@@ -816,7 +823,7 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
-# Recap: Traits
+# Quick Recap: Traits
 
 * Traits define shared behavior among types in an abstract way
 * Instead of inheritance, Rust has supertraits
@@ -834,7 +841,7 @@ trait CompSciStudent: Programmer + Student {
 ---
 
 
-# Deriveable Traits
+# Derivable Traits
 
 Back in week 3, we saw this example:
 
@@ -898,11 +905,15 @@ Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_leve
 
 * _Editor's note: it was indeed tedious_
 
+<!--
+Lecturer's note: it really was...
+-->
+
 
 ---
 
 
-# Deriveable Traits
+# Derivable Traits
 
 Luckily, Rust can `derive` traits for us when there there is an obvious and common implementation.
 
@@ -915,9 +926,7 @@ Luckily, Rust can `derive` traits for us when there there is an obvious and comm
 ---
 
 
-# Deriveable Traits
-
-Let's break this down.
+# Derivable Traits
 
 ```rust
 #[derive(Debug)]
@@ -931,7 +940,7 @@ struct Student {
 
 * Every single field is printable
 * It is then reasonable that the struct itself should also be printable!
-* Are there other traits that follow the same logic with structs?
+* Are there other traits that follow similar "derivable" logic?
 
 
 ---
@@ -1005,6 +1014,7 @@ impl Clone for Student {
 # Derive Traits
 
 Here's a list of other traits that can be derived:
+
 - Comparison traits: `Eq`, `PartialEq`, `Ord`, `PartialOrd`
 - `Clone`, to create a `T` from a `&T`
 - `Copy`, to give a type "copy semantics" instead of "move semantics"
@@ -1038,7 +1048,7 @@ Here is the definition of `Copy` in the standard library:
 pub trait Copy: Clone {}
 ```
 
-* Notice how therre are no methods associated with `Copy`
+* Notice how there are no methods associated with `Copy`
     * This is because `Copy` is always a simple bitwise copy
 * `Copy` is a subtrait of `Clone`
 
@@ -1184,7 +1194,7 @@ struct SomeOptions {
 ```
 
 * Defaults for both `i32` and `f32` is `0`
-* We don't always want this behaviour
+* We don't always want this behavior...
 
 
 ---
@@ -1192,46 +1202,21 @@ struct SomeOptions {
 
 # Example: `Default`
 
-We can still manaully implement all of the derivable traits.
+We can still manually implement all of the derivable traits.
 
 ```rust
 impl Default for SomeOptions {
     fn default() -> Self {
         SomeOptions {
-            foo: 12,
-            bar: 20.0,
+            foo: 98008,
+            bar: 123.4,
         }
     }
 }
 ```
 
 * `#[derive(Default)]` would make both of those values `0`
-* Instead we manualy set them to values we want
-
-
----
-
-
-# Aside: The Orphan Rule
-
-Rust has a specific rule for trait implementations.
-
-You cannot provide implementations of a trait for a type unless:
-* You created the type
-* You created the trait
-
-
----
-
-
-# Aside: The Orphan Rule
-
-The orphan rule basically means you cannot implement someone else's trait for someone else's type.
-
-Examples:
-* You cannot implement `Hash` for `Vec<T>`
-* You cannot implement `PartialOrd` for `String`
-* _The real reason is that these trait implementations actually already exist, but this will become clearer when we talk about 3rd party crates._
+* Instead we manually set them to values we want
 
 
 ---
@@ -1267,13 +1252,11 @@ impl Pilot for Human {
         println!("This is your captain speaking.");
     }
 }
-
 impl Wizard for Human {
     fn fly(&self) {
         println!("Up!");
     }
 }
-
 impl Human {
     fn fly(&self) {
         println!("*waving arms furiously*");
@@ -1351,6 +1334,10 @@ If we want to ensure that a generic argument implements a trait, we can use _tra
 
 
 ```rust
+trait Summary {
+    fn summarize(&self) -> String;
+}
+
 pub fn notify<T: Summary>(item: &T) {
     println!("Breaking news! {}", item.summarize());
 }
@@ -1415,7 +1402,11 @@ where
     U: Clone + Debug,
 ```
 
-* Now we don't need ultrawide monitors to code in Rust!
+* Now we don't need ultra-wide monitors to code in Rust!
+
+<!--
+Note that rustfmt is going to cut it off at 100 characters regardless.
+-->
 
 
 ---
@@ -1475,7 +1466,7 @@ impl<T: Display + PartialOrd> Pair<T> {
 * Parsing strings in Rust is tricky, so you will only need to do _half_ of this homework to receive _full credit_
     * The second half is all extra credit!
 * Even though this week focused on Errors and Traits, this homework will heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
-* Please do not hesistate to reach out for help!
+* Please do not hesitate to reach out for help!
 
 
 ---
