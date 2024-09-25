@@ -648,7 +648,7 @@ trait Shape {
 
 * Traits are defined with the `trait` keyword
 * They act as an interface for types
-    * They can cannot be constructed directly, only applied onto types
+    * They cannot be constructed directly, only applied onto types
 
 
 ---
