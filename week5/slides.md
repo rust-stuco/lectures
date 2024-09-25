@@ -26,14 +26,8 @@ paginate: true
 * Type Aliases
 * `const` Generics
 * Error Handling
-    * `panic!`
-    * `Result<V,E>`
 * The Never Type
 * Traits
-    * Trait Bounds
-    * `Copy` vs `Clone`
-    * Supertraits
-    * Derivable Traits
 
 
 ---
@@ -418,7 +412,7 @@ There are other useful macros that panic:
 
 # Using Results 1
 
-If we want recoverable errors, we use `Result`s.
+If we want recoverable errors, we can use `Result`s.
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
@@ -598,7 +592,7 @@ fn bar() -> ! {
 ---
 
 
-# What's the point`!`
+# What's the point?
 
 Why have a type that never has a value? Consider the following:
 
