@@ -720,7 +720,7 @@ impl Shape for Rectangle {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-What happens we try and construct a `Shape`?
+What happens when we try and construct a `Shape`?
 
 ```rust
 let rec = Shape::new_unit();
