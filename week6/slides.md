@@ -989,7 +989,7 @@ mod tests {
 ```
 
 * This tells the compiler that this entire module should _only_ be used for testing
-* Effectively removes this module from the source code when compiling with `cargo build`
+* Removes this module from the source code when compiling with `cargo build`
 
 
 ---
@@ -1206,18 +1206,23 @@ fn it_works() -> Result<(), String> {
 
 `cargo test` compiles your code in test mode and runs the resulting test binary.
 
-* By default, it will run all tests in parallel and prevent the output (`stdout` and `stderr`) from being displayed.
+* By default, it will run all tests in parallel and capture the output (`stdout` and `stderr`)
 * Other testing configurations are available
 * _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
 
-<!-- Parallel stuff leads into next slide -->
+<!--
+"Capturing" means that is won't display any `println!`s or error messages.
+
+Parallel stuff leads into next slide...
+-->
+
 
 ---
 
 
 # Running Tests in Parallel
 
-* Suppose each of your tests all write to some shared file on disk.
+* Suppose each of your tests all write to some shared file on disk
     * All tests write to a file `output.txt`
 * They later assert that the file still contains that data they wrote
 * You probably don't want all of them to run at the same time!
@@ -1238,7 +1243,7 @@ You can use `--test-threads` to control the number of threads running the tests.
 $ cargo test -- --test-threads=1
 ```
 
-* Generally not a good idea, since the benefits of parallelism are lost
+* Only use this when you need to, otherwise the benefits of running tests in parallel are lost
 
 <!--
 Take 15-445 if you want to do this safely without losing parallelism!
@@ -1250,14 +1255,16 @@ Take 15-445 if you want to do this safely without losing parallelism!
 
 # Showing Output
 
-If you want to prevent the capturing of output, you can use `--show-output`
+If you want to prevent the capturing of output, you can use `--no-capture`.
 
 ```
+$ cargo test -- --no-capture
 $ cargo test -- --show-output
 ```
 
-* This will print the full output of every test that is run
-* With 1000 tests, this might get too verbose!
+* `--no-capture` will print the full output of every test that is run
+* Using `--show-output` will only show the output of passed tests
+* With 1000 tests, this might become verbose!
 * If only we could only run a subset of the tests...
 
 
@@ -1266,7 +1273,7 @@ $ cargo test -- --show-output
 
 # Running Tests by Name
 
-Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run that test.
+Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run  the `one_hundred` test.
 
 ```
 $ cargo test one_hundred
@@ -1329,6 +1336,10 @@ fn expensive_test() {
 * If we only want to run ignored tests, we can run `cargo test -- --ignored`
 * If we want to run all tests, we can run `cargo test -- --include-ignored`
 
+<!--
+This can be useful if you have super specialized tests that need to run by themselves
+-->
+
 
 ---
 
@@ -1358,10 +1369,9 @@ Unit tests are almost always contained within the `src` directory.
 
 # Testing Private Functions
 
-Rust allows you to test private functions.
+You can unit test private functions as long as the module the test lives in has access to it.
 
 ```rust
-// bad style for slides
 pub fn add_two(a: i32) -> i32 { internal_adder(a, 2) }
 fn internal_adder(a: i32, b: i32) -> i32 { a + b }
 
@@ -1377,6 +1387,8 @@ mod tests {
 ```
 
 <!--
+In terms of privacy, unit tests are treated just as any other function.
+
 Excerpt from the Rust Book:
 
 There's debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
@@ -1394,6 +1406,11 @@ Integration Tests use your library in the same way any other code would.
 
 * They can only call functions that are part of your library's public API
 * Useful for testing if many parts of your library work together correctly
+
+<!--
+By "any other code" we mean code that was written by some other developer using
+your library crate.
+-->
 
 
 ---
@@ -1423,7 +1440,7 @@ adder
 
 Since we are now external to our own library, we must import everything as if it were a 3rd-party crate.
 
-###### tests/integration_test.rs
+###### adder/tests/integration_test.rs
 ```rust
 use adder;
 
@@ -1446,7 +1463,11 @@ fn it_adds_two() {
 As you add more integration tests, you might want to make more files in the `tests` directory to help organize them.
 
 * You can use submodules in the `tests` directory just like in the `src` directory
-* You can also use the "alternate file path" method to define non-test code
+
+<!--
+You can treat the `tests` directory almost exactly the same as the `src` directory, and you can
+also use the alternate module file naming that we talked about earlier in the lecture.
+-->
 
 
 ---
@@ -1514,20 +1535,6 @@ We cannot create integration tests for a binary crate.
 * Unit tests examine parts of a library in isolation and can test private implementation details
 * Integration tests check that many parts of the library work together correctly
 * Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs!
-
-
----
-
-
-# Homework 6
-
-You'll be following the [Rust Book](https://doc.rust-lang.org/book/ch12-00-an-io-project.html) and implementing a mini version of `grep`!
-
-* You can do this homework in <10 minutes by copying and pasting code
-* We encourage you to actually read and follow the tutorial
-* You will still have to add some small extra feature once you are done!
-* _Remember that if you complete 4 homeworks and show up to every lecture, you pass this course!_
-* _We will only grade homework 6 at the end of the semester if your grade is not already high enough_
 
 
 ---
