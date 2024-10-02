@@ -1,6 +1,7 @@
 ---
 marp: true
 theme: rust
+class: invert
 paginate: true
 ---
 
@@ -21,12 +22,12 @@ paginate: true
 # Today: Modules and Testing
 
 
-* Packages and Crates
-* Modules
+* Modules, Packages, and Crates
     * The `use` keyword
-    * Module Paths and File System
-* Unit Testing
-* Integration Testing
+    * Module Paths and the File System
+* Testing
+    * Unit Testing
+    * Integration Testing
 
 
 ---
