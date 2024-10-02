@@ -15,6 +15,6 @@
 ### Extra Material
 - Rust Book Chapters 7, 11, and 14
 
-### Assignemnts
+### Assignments
 - Design high-level system as a module
 - Testing stuff
