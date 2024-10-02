@@ -1,20 +1,20 @@
 ## Week 6: Modules and Testing
 
 ### Lecture
-- Module system (30 min)
+- Module system (35 min)
     - Packages and Crates (5 min)
-    - Modules (25 min)
-        - Using Modules (10 min)
-        - Paths (10 min)
+    - Modules (30 min)
+        - Using Modules (20 min)
+        - Paths (5 min)
         - Misc (5 min)
-- Testing (20 min)
-    - Simple Testing (10 min)
-    - Controlled Testing (5 min)
-    - Test Organization (5 min)
+- Testing (15 min)
+    - Simple Testing (8 min)
+    - Controlled Testing (4 min)
+    - Test Organization (3 min)
 
 ### Extra Material
 - Rust Book Chapters 7, 11, and 14
 
-### Assignemnts
+### Assignments
 - Design high-level system as a module
 - Testing stuff

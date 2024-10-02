@@ -1,6 +1,7 @@
 ---
 marp: true
 theme: rust
+class: invert
 paginate: true
 ---
 
@@ -21,12 +22,12 @@ paginate: true
 # Today: Modules and Testing
 
 
-* Packages and Crates
-* Modules
+* Modules, Packages, and Crates
     * The `use` keyword
-    * Module Paths and File System
-* Unit Testing
-* Integration Testing
+    * Module Paths and the File System
+* Testing
+    * Unit Testing
+    * Integration Testing
 
 
 ---
@@ -114,7 +115,7 @@ A package is a bundle of one or more crates.
 
 * A package is defined by a `Cargo.toml` file at the root of your directory
     * `Cargo.toml` describes how to build all of the crates
-* A package can contain any number of binary crates, but at most one library crate
+* A package can contain **any number of** binary crates, but **at most one** library crate
 
 
 ---
@@ -159,7 +160,7 @@ edition = "2021"
 
 * File written in `toml`, a file format for configuration files
 * Notice how there is no explicit mention of `src/main.rs`
-* Cargo follows the convention that a`src/main.rs` file is the crate root of a _binary_ crate
+* Cargo follows the convention that a `src/main.rs` file is the crate root of a _binary_ crate
 * Similarly, a `src/lib.rs` file is the crate root of a _library_ crate
 
 <!--
@@ -172,7 +173,7 @@ You *can* have both lib.rs and main.rs
 
 # Example: `cargo`
 
-Cargo is actually a Rust package that ships with installations of Rust!
+Cargo is itself a Rust package that ships with installations of Rust!
 
 * Contains the binary crate that compiles to the executable `cargo`
 * Contains a library crate that the `cargo` binary depends on
@@ -185,7 +186,7 @@ Cargo is actually a Rust package that ships with installations of Rust!
 
 * "Package" is the only term of these three with a formal definition in Rust
 * "Project" is a very overloaded term
-    * Meaningful in the context of an _IDE_
+    * More meaningful in the context of an _IDE_
 * "Program"
     * Ask the mathematicians ¯\\_(ツ)_/¯
 
@@ -326,7 +327,7 @@ src
 └── main.rs
 ```
 
-* Allows us to represent the module structure in the file system
+* Allows us to represent our module structure in the file system
 * Let's try moving the `kitchen` module to its own file!
 
 
@@ -337,7 +338,7 @@ src
 
 ###### src/main.rs
 ```rust
-mod kitchen; // The compiler will look for kitchen.rs
+mod kitchen; // The compiler will look for `kitchen.rs`
 
 fn main() {
     kitchen::stove::cook();
@@ -353,7 +354,7 @@ pub mod stove {
 fn examine_ingredients() {}
 ```
 
-* What about moving the `stove` submodule to its own file?
+* What about moving the `stove` submodule to its own file as well?
 
 
 ---
@@ -432,6 +433,65 @@ src
 * Consistency with surrounding codebase is ___always___ most important
 
 
+---
+
+
+# File Structure Comparison: Choice 1
+
+```sh
+src
+├── bathroom
+│  ├── mod.rs
+│  ├── sink.rs
+│  └── toilet.rs
+├── dining_room
+│  ├── guests.rs
+│  ├── mod.rs
+│  ├── seats.rs
+│  └── tables.rs
+├── garden
+│  ├── dirt.rs
+│  ├── mod.rs
+│  ├── plants.rs
+│  └── water.rs
+├── kitchen
+│  ├── dish_washer.rs
+│  ├── mod.rs
+│  ├── oven.rs
+│  └── stove.rs
+└── lib.rs
+```
+
+
+---
+
+
+# File Structure Comparison: Choice 2
+
+```sh
+src
+├── bathroom
+│  ├── sink.rs
+│  └── toilet.rs
+├── dining_room
+│  ├── guests.rs
+│  ├── seats.rs
+│  └── tables.rs
+├── garden
+│  ├── dirt.rs
+│  ├── plants.rs
+│  └── water.rs
+├── kitchen
+│  ├── dish_washer.rs
+│  ├── oven.rs
+│  └── stove.rs
+├── bathroom.rs
+├── dining_room.rs
+├── kitchen.rs
+├── garden.rs
+└── lib.rs
+```
+
 
 ---
 
@@ -449,7 +509,7 @@ crate restaurant
 └── fn main: pub(crate)
 ```
 
-* We can customize our file structure without changing any behavior
+* We can customize our file structure without changing any behavior!
 
 
 ---
@@ -564,7 +624,12 @@ use std::io::Write;
 
 * `HashMap` and `Bytes` are structs, and `Write` is a trait
 * It is idiomatic to import structs, enums, traits, etc. directly
-    * No real reason behind this besides convention
+
+<!--
+The reason this is idiomatic is because you generally shouldn't have multiple different types that
+are named exactly the same. If you do have that, you need to bring in the types relative to their
+parent modules anyways.
+-->
 
 
 ---
@@ -577,14 +642,19 @@ We can combine those 2 `std::io` imports into one statement:
 ```rust
 use std::collections::HashMap;
 use std::io::{Bytes, Write};
+
+use std::io::*; // Also possible!
 ```
 
 * You could also write `use std::io::*` to bring in everything from the `std::io` module (including `Bytes` and `Write`)
     * Called the "glob operator"
-    * Generally not recommended (increases compilation cost)
+    * Generally not recommended since it clutters the namespace
 
 <!--
 The one case where glob is idiomatic is with the prelude pattern
+
+It does not actually increase compilation cost, it just makes dealing with namespace collisions
+annoying, so it is good practice to only bring in what you actually need.
 -->
 
 
@@ -612,7 +682,7 @@ src
 
 # Aside: Binary and Library Crate Paths
 
-Typically when you have both a binary and library crate in the same package, you want to call functions defined in `lib.rs` from `main.rs`.
+Typically when you have both a binary and library crate in the same package, you want to use functions and types defined in `lib.rs` from `main.rs`.
 
 ```
 src
@@ -638,12 +708,12 @@ Since both are crate roots, there are technically 2 separate module trees
 
 Let's try to refactor our previous example:
 
-###### src/lib.rs
+###### restaurant/src/lib.rs
 ```rust
 pub mod kitchen; // Now marked `pub`!
 ```
 
-###### src/main.rs
+###### restaurant/src/main.rs
 ```rust
 fn main() {
     ???::kitchen::stove::cook();
@@ -661,7 +731,7 @@ fn main() {
 
 We treat our library crate as an _external_ crate, with the same name as our package.
 
-###### src/main.rs
+###### restaurant/src/main.rs
 ```rust
 fn main() {
     restaurant::kitchen::stove::cook();
@@ -718,7 +788,12 @@ pub fn cook() {
 
 * `examine_ingredients` does not need to be public in this case
 * `stove` can access anything in its parent module `kitchen`
-* Privacy only applies to parent modules and above
+    * Note that privacy only applies upwards, not downwards
+
+<!--
+Child modules can access anything the parent module has access to, but not the other way around.
+This means child modules can also access any public item in a sibling module.
+-->
 
 
 ---
@@ -915,7 +990,7 @@ mod tests {
 ```
 
 * This tells the compiler that this entire module should _only_ be used for testing
-* Effectively removes this module from the source code when compiling with `cargo build`
+* Removes this module from the source code when compiling with `cargo build`
 
 
 ---
@@ -1132,18 +1207,23 @@ fn it_works() -> Result<(), String> {
 
 `cargo test` compiles your code in test mode and runs the resulting test binary.
 
-* By default, it will run all tests in parallel and prevent the output (`stdout` and `stderr`) from being displayed.
+* By default, it will run all tests in parallel and will not print any test output
 * Other testing configurations are available
 * _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
 
-<!-- Parallel stuff leads into next slide -->
+<!--
+Formally, "capturing" means that is won't display any `println!`s or error messages.
+
+Parallel stuff leads into next slide...
+-->
+
 
 ---
 
 
 # Running Tests in Parallel
 
-* Suppose each of your tests all write to some shared file on disk.
+* Suppose each of your tests all write to some shared file on disk
     * All tests write to a file `output.txt`
 * They later assert that the file still contains that data they wrote
 * You probably don't want all of them to run at the same time!
@@ -1164,7 +1244,7 @@ You can use `--test-threads` to control the number of threads running the tests.
 $ cargo test -- --test-threads=1
 ```
 
-* Generally not a good idea, since the benefits of parallelism are lost
+* Only use this when you need to, otherwise the benefits of running tests in parallel are lost
 
 <!--
 Take 15-445 if you want to do this safely without losing parallelism!
@@ -1176,14 +1256,16 @@ Take 15-445 if you want to do this safely without losing parallelism!
 
 # Showing Output
 
-If you want to prevent the capturing of output, you can use `--show-output`
+If you want to prevent the capturing of output, you can use `--no-capture`.
 
 ```
+$ cargo test -- --no-capture
 $ cargo test -- --show-output
 ```
 
-* This will print the full output of every test that is run
-* With 1000 tests, this might get too verbose!
+* `--no-capture` will print the full output of every test that is run
+* Using `--show-output` will only show the output of passed tests
+* With 1000 tests, this might become verbose!
 * If only we could only run a subset of the tests...
 
 
@@ -1192,7 +1274,7 @@ $ cargo test -- --show-output
 
 # Running Tests by Name
 
-Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run that test.
+Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run  the `one_hundred` test.
 
 ```
 $ cargo test one_hundred
@@ -1255,6 +1337,10 @@ fn expensive_test() {
 * If we only want to run ignored tests, we can run `cargo test -- --ignored`
 * If we want to run all tests, we can run `cargo test -- --include-ignored`
 
+<!--
+This can be useful if you have super specialized tests that need to run by themselves
+-->
+
 
 ---
 
@@ -1284,10 +1370,9 @@ Unit tests are almost always contained within the `src` directory.
 
 # Testing Private Functions
 
-Rust allows you to test private functions.
+You can unit test private functions as long as the module the test lives in has access to it.
 
 ```rust
-// bad style for slides
 pub fn add_two(a: i32) -> i32 { internal_adder(a, 2) }
 fn internal_adder(a: i32, b: i32) -> i32 { a + b }
 
@@ -1303,6 +1388,8 @@ mod tests {
 ```
 
 <!--
+In terms of privacy, unit tests are treated just as any other function.
+
 Excerpt from the Rust Book:
 
 There's debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
@@ -1320,6 +1407,11 @@ Integration Tests use your library in the same way any other code would.
 
 * They can only call functions that are part of your library's public API
 * Useful for testing if many parts of your library work together correctly
+
+<!--
+By "any other code" we mean code that was written by some other developer using
+your library crate.
+-->
 
 
 ---
@@ -1349,7 +1441,7 @@ adder
 
 Since we are now external to our own library, we must import everything as if it were a 3rd-party crate.
 
-###### tests/integration_test.rs
+###### adder/tests/integration_test.rs
 ```rust
 use adder;
 
@@ -1372,7 +1464,11 @@ fn it_adds_two() {
 As you add more integration tests, you might want to make more files in the `tests` directory to help organize them.
 
 * You can use submodules in the `tests` directory just like in the `src` directory
-* You can also use the "alternate file path" method to define non-test code
+
+<!--
+You can treat the `tests` directory almost exactly the same as the `src` directory, and you can
+also use the alternate module file naming that we talked about earlier in the lecture.
+-->
 
 
 ---
@@ -1440,20 +1536,6 @@ We cannot create integration tests for a binary crate.
 * Unit tests examine parts of a library in isolation and can test private implementation details
 * Integration tests check that many parts of the library work together correctly
 * Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs!
-
-
----
-
-
-# Homework 6
-
-You'll be following the [Rust Book](https://doc.rust-lang.org/book/ch12-00-an-io-project.html) and implementing a mini version of `grep`!
-
-* You can do this homework in <10 minutes by copying and pasting code
-* We encourage you to actually read and follow the tutorial
-* You will still have to add some small extra feature once you are done!
-* _Remember that if you complete 4 homeworks and show up to every lecture, you pass this course!_
-* _We will only grade homework 6 at the end of the semester if your grade is not already high enough_
 
 
 ---
