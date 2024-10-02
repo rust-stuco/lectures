@@ -114,7 +114,7 @@ A package is a bundle of one or more crates.
 
 * A package is defined by a `Cargo.toml` file at the root of your directory
     * `Cargo.toml` describes how to build all of the crates
-* A package can contain **any number** of binary crates, but **at most one** library crate
+* A package can contain **any number of** binary crates, but **at most one** library crate
 
 
 ---
@@ -172,7 +172,7 @@ You *can* have both lib.rs and main.rs
 
 # Example: `cargo`
 
-Cargo is simply a Rust package that ships with installations of Rust!
+Cargo is itself a Rust package that ships with installations of Rust!
 
 * Contains the binary crate that compiles to the executable `cargo`
 * Contains a library crate that the `cargo` binary depends on
@@ -681,7 +681,7 @@ src
 
 # Aside: Binary and Library Crate Paths
 
-Typically when you have both a binary and library crate in the same package, you want to use items (like functions and types) defined in `lib.rs` from `main.rs`.
+Typically when you have both a binary and library crate in the same package, you want to use functions and types defined in `lib.rs` from `main.rs`.
 
 ```
 src
@@ -787,7 +787,7 @@ pub fn cook() {
 
 * `examine_ingredients` does not need to be public in this case
 * `stove` can access anything in its parent module `kitchen`
-* Privacy only applies upwards (to a module's parent and any ancestors)
+    * Note that privacy only applies upwards, not downwards
 
 <!--
 Child modules can access anything the parent module has access to, but not the other way around.
@@ -1206,12 +1206,12 @@ fn it_works() -> Result<(), String> {
 
 `cargo test` compiles your code in test mode and runs the resulting test binary.
 
-* By default, it will run all tests in parallel and capture the output (`stdout` and `stderr`)
+* By default, it will run all tests in parallel and will not print any test output
 * Other testing configurations are available
 * _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
 
 <!--
-"Capturing" means that is won't display any `println!`s or error messages.
+Formally, "capturing" means that is won't display any `println!`s or error messages.
 
 Parallel stuff leads into next slide...
 -->
