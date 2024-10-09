@@ -25,7 +25,6 @@ paginate: true
 - Crate Highlights
 - Closures
 - Iterators
-- Loops vs. Iterators
 
 
 ---
@@ -204,19 +203,6 @@ Other `anyhow` features include:
 ---
 
 
-# `tracing`
-
-Framework for instrumenting Rust programs
-* Collects structured, event-based diagnostic information
-* First class support for async programs
-* Manages execution through periods of computation known as *spans*
-* Provides distinction of program events in terms of severity and custom messages
-* Extremely flexible for reformatting/changing
-
-
----
-
-
 # `flamegraph`
 
 ![bg right:60% 90%](../images/example_flame.png)
@@ -242,8 +228,8 @@ With a bit of setup, you can generate this with `cargo flamegraph`
 
 Closures are anonymous functions that can capture values from the scope in which they're defined.
 
-* Known as lambdas in "lesser languages"
-* You can save closures in a variable or pass as an argument to other functions
+* Known as lambdas in "lesser languages" ;)
+* You can save closures in variables or pass them as arguments to other functions
 
 
 ---
@@ -256,7 +242,7 @@ let annotated_closure = |num: u32| -> u32 {
     num
 };
 ```
-* This looks very similar to functions, but Rust is smarter than this
+* This looks very similar to functions we've seen
 * Like normal variables, rust can derive closure type annotations from context!
 
 
@@ -294,6 +280,7 @@ let example_closure = |x| x;
 let s = example_closure(String::from("hello"));
 let n = example_closure(5);
 ```
+* How would we describe the type of `example_closure`?
 
 
 ---
@@ -353,7 +340,7 @@ Closures can capture values from their environment in three ways:
 * Borrowing immutably
 * Borrowing mutably
 * Taking ownership
-    * i.e. _moving_ the value to the closure
+    * _moving_ the value to the closure
 
 
 ---
@@ -368,7 +355,7 @@ println!("Before defining closure: {:?}", list);
 let only_borrows = || println!("From closure: {:?}", list);
 
 println!("Before calling closure: {:?}", list);
-only_borrows();
+only_borrows(); // Prints "From closure: [1, 2, 3]"
 println!("After calling closure: {:?}", list);
 ```
 
@@ -420,7 +407,9 @@ help: consider changing this to be mutable
 ```
 
 * Mutability must always be explicitly stated
+  * Mutating the closure's internal state matters!
 * Rust only considers the **invocation** a borrow, not the definition
+  * Closures are lazy in this sense
 
 
 ---
@@ -497,6 +486,7 @@ println!("Mystery value is {}", mystery(5));
 ```
 
 * We can tell a closure to own a value using the `move` keyword
+  * You can't selectively `move` certain parameters unless you explicitly borrow
 * This is important for thread safety in Rust!
 
 
@@ -633,7 +623,7 @@ where
 
 * This method is generic over `F`
 * `F` is the type of the closure we provide when calling `unwrap_or_else`
-* `F` must be able to be called once, take no arguments, and return a `T`
+* `F` must be able to be called once, take no arguments, and return a `T` for `Option<T>`
 
 
 ---
@@ -670,8 +660,9 @@ let mut add_two_to_x = || x += 2;
 add_two_to_x();
 ```
 
-* Note that this will not compile without the `mut add_two_to_x`
+* Note that this will not compile without the `mut` in `let mut add_two_to_x`
   * `mut` signals that we are mutating our closure's environment
+    * Key idea: how variables within scope at invocation change between calls
 
 
 ---
@@ -798,7 +789,7 @@ fn main() {
 
 # **Iterators**
 
-* Sorry functional haters
+* Sorry functional haters... it's show time!
 
 
 ---
