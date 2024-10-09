@@ -229,7 +229,7 @@ With a bit of setup, you can generate this with `cargo flamegraph`
 Closures are anonymous functions that can capture values from the scope in which they're defined.
 
 * Known as lambdas in "lesser languages" ;)
-* You can save closures in a variable or pass it as an argument to other functions
+* You can save closures in variables or pass them as arguments to other functions
 
 
 ---
