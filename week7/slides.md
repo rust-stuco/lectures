@@ -25,7 +25,6 @@ paginate: true
 - Crate Highlights
 - Closures
 - Iterators
-- Loops vs. Iterators
 
 
 ---
