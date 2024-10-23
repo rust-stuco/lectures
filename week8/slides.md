@@ -44,7 +44,7 @@ Lifetimes are all about references, and **nothing** else.
 * Formal definition:
 **Lifetimes are named regions of code that a reference must be valid for**
 
-* _Remember that references are just pointers with constraints!_
+* Remember that references are just pointers with constraints!
 
 
 ---
@@ -129,7 +129,6 @@ fn main() {
 ```
 
 
-
 ---
 
 
@@ -176,7 +175,7 @@ fn main() {
 }                         // ----------+
 ```
 
-* `x` "outlives" `r`, so `r` can reference `x`
+* `x` now "outlives" `r`, so `r` can reference `x`
 
 
 ---
@@ -284,7 +283,7 @@ fn longest(x: &str, y: &str) -> &str {
 ```
 
 - We don't know which execution path this code will take
-* We don't know the lifetimes of the input references either
+* We also don't know the lifetimes of the input references
 * Thus we cannot determine the lifetime we return!
 * We will need to _annotate_ these references
 
@@ -306,7 +305,7 @@ We can annotate lifetimes with generic parameters that start with a `'`, like `'
 ```
 
 * Annotations do not change the how long references live, they only describe the relationship between lifetimes of references
-* One annotation by itself has little meaning
+    * An annotation by itself has little meaning
 
 
 ---
@@ -351,6 +350,10 @@ if x.len() > y.len() {
 * We want the returned reference to be valid as long as _both_ input references `x` and `y` are valid
 * So we want lifetimes of `x` and `y` to _outlive_ the returned lifetime
 
+<!--
+In other words, we do not want the thing we return to outlive `x` or `y`
+-->
+
 
 ---
 
@@ -390,7 +393,7 @@ We can extrapolate a lot from a function's signature, even without the body.
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 ```
 
-* This function takes two string slices (`x` and `y`) that live at least as long as lifetime `'a`
+* This function takes two string slices (`x` and `y`) that live at least as long as the lifetime `'a`
 * The string slice returned (the longer of `x` or `y`) will also live at least as long as `'a`
 
 
@@ -407,11 +410,15 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 * In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
 
 <!--
-Be clear that functions do not "return" lifetimes, this is just for slide space
+Be clear that functions do not "return" lifetimes, this is just for slide space.
 
-In general, lifetimes and scope do not overlap in some parts and not in others
+In general, the relationship between lifetimes and scope is total,
+basically they do not overlap in some parts but not in others.
+
+However, there are some cases where this might be the case, usually quite complex
 
 Note that the longest function doesn’t need to know exactly how long x and y will live, only that some scope can be substituted for 'a that will satisfy this signature.
+This is a more complicated topic that probably shouldn't be brought up.
 -->
 
 
@@ -511,6 +518,8 @@ println!("The longest string is {}", result);
 
 # Borrow Checker Example 3
 
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
 ```rust
 let string1 = String::from("long string is long");
 let result;
@@ -521,8 +530,11 @@ let result;
 println!("The longest string is {}", result);
 ```
 
-- Even though we know (as a human) that the reference will be valid, the compiler does not know
+* Even though we know (as a human) that the reference will be valid, the compiler does not know
+
+<!--
 * We even told the compiler that the returned lifetime would be the same as the smaller of the input lifetimes!
+-->
 
 
 ---
@@ -545,6 +557,8 @@ fn first<'a>(x: &'a str, y: &str) -> &'a str {
 
 
 # Lifetimes of Return Values
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
 
 The lifetime of a return value _must_ match the lifetime of one of the inputs.
 
@@ -707,7 +721,6 @@ fn longest(x: &str, y: &str) -> &str;
 ```
 
 
-
 ---
 
 
@@ -735,7 +748,6 @@ fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
 * Since Rust cannot figure out what to do, it gives a compiler error to the programmer so they can write the annotations themselves
 
 
-
 ---
 
 
@@ -748,6 +760,7 @@ If we want a `struct` to hold a reference, we need to annotate them.
 ```rust
 struct ImportantExcerpt<'a> {
     part: &'a str,
+    importance: i32,
 }
 
 fn main() {
@@ -755,6 +768,7 @@ fn main() {
     let first_sentence = novel.split('.').next().expect("Could not find a '.'");
     let i = ImportantExcerpt {
         part: first_sentence,
+        importance: 42,
     };
 }
 ```
@@ -768,6 +782,7 @@ fn main() {
 ```rust
 struct ImportantExcerpt<'a> {
     part: &'a str,
+    importance: i32,
 }
 ```
 
@@ -784,8 +799,8 @@ Similarly, we need to annotate `impl` blocks with lifetime parameters.
 
 ```rust
 impl<'a> ImportantExcerpt<'a> {
-    fn level(&self) -> i32 {
-        3
+    fn importance(&self) -> i32 {
+        self.importance
     }
 }
 ```
@@ -824,6 +839,7 @@ where
     T: Display,
 {
     println!("Announcement! {}", ann);
+
     if x.len() > y.len() {
         x
     } else {
@@ -895,6 +911,10 @@ fn main() {
     // Prints to stdout: print_ref(t) is Ref([9, 8, 0, 0, 8])
 }
 ```
+
+<!--
+This is quite difficult to understand, don't spend too much time here.
+-->
 
 
 ---
@@ -1142,24 +1162,12 @@ Some quick points:
 
 # Feedback
 
-If you have 5 minutes, please fill out the [feedback form](https://forms.gle/Nu7YMFFJds9hwzWz9) (on Piazza).
+Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Piazza).
 
 * It will help us make this semester better for you
 * It will also help make future offerings of this course better for others!
 * Feedback is anonymous, so please be honest
-
-
----
-
-
-# Homework 8
-
-Homework 8 is a quiz on Gradescope!
-
-* Think of homework 8 as a take-home midterm that only grades participation
-* All 15 questions come from the experimental Brown Rust Book
-    * They are doing active research in the best methods to teach Rust!
-* _Please don't spend more than 1 hour on this_
+* You will receive a homework's worth of extra credit!
 
 
 ---
