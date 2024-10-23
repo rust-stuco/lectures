@@ -6,7 +6,7 @@ paginate: true
 ---
 
 
-<!-- _class: communism invert  -->
+<!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
 # Lifetimes
