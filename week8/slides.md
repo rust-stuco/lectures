@@ -6,9 +6,8 @@ paginate: true
 ---
 
 
-<!-- _class: communism communism2 invert  -->
+<!-- _class: communism invert  -->
 
-### Spring 2024
 ## Intro to Rust Lang
 # Lifetimes
 
