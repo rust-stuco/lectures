@@ -1162,19 +1162,12 @@ Some quick points:
 
 # Feedback
 
-If you have 5 minutes, please fill out the [feedback form](https://forms.gle/Nu7YMFFJds9hwzWz9) (on Piazza).
+Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Piazza).
 
 * It will help us make this semester better for you
 * It will also help make future offerings of this course better for others!
 * Feedback is anonymous, so please be honest
-
-
----
-
-
-# Homework 8
-
-Homework 8 TBD
+* You will receive a homework's worth of extra credit!
 
 
 ---
