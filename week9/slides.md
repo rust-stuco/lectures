@@ -131,13 +131,11 @@ won't need to be copied to another stack for example, just the pointer.
 # Using Values in the `Box`
 
 ```rust
-fn main() {
-    let x = 5;
-    let y = Box::new(x);
+let x = 5;
+let y = Box::new(x);
 
-    assert_eq!(5, x);
-    assert_eq!(5, *y);
-}
+assert_eq!(5, x);
+assert_eq!(5, *y);
 ```
 * Just like a reference we can dereference a `Box<T>` to get `T`
 * `Box<T>` implements the `Deref` trait which customizes the behavior of `*`
@@ -300,15 +298,13 @@ impl Drop for CustomSmartPointer {
 # `Drop` Trait Example
 
 ```rust
-fn main() {
-    let c = CustomSmartPointer {
-        data: String::from("my stuff"),
-    };
-    let d = CustomSmartPointer {
-        data: String::from("other stuff"),
-    };
-    println!("CustomSmartPointers created.");
-}
+let c = CustomSmartPointer {
+    data: String::from("my stuff"),
+};
+let d = CustomSmartPointer {
+    data: String::from("other stuff"),
+};
+println!("CustomSmartPointers created.");
 ```
 ```
 CustomSmartPointers created.
@@ -525,20 +521,19 @@ fn main() {
 # Working With Trait Objects
 
 ```rust
-struct Chrome {
+struct ChromeWindow {
     width: u32,
     height: u32,
     evil_tracking: bool
 }
 
-struct QBittorrent {
+struct FirefoxWindow {
     width: u32,
     height: u32,
-    color: String,
 }
 
-impl Window for Button { fn draw(&self) { ... } }
-impl Window for SelectBox { fn draw(&self) { .. } }
+impl Window for ChromeWindow { fn draw(&self) { ... } }
+impl Window for FirefoxWindow { fn draw(&self) { .. } }
 ```
 
 * Say we have **multiple** types that implement `Window`
@@ -560,7 +555,7 @@ impl LaptopScreen {
 }
 ```
 
-* This is different than if `windows` was `Vec<Chrome>`
+* This is different than if `windows` was `Vec<ChromeWindow>`
   * The generic parameter (in `Vec`) is known at compile time.
 * Trait objects allow for types to fill in for the trait object **at runtime**
 
@@ -596,37 +591,34 @@ where
 # Trait Objects: Mixing Objects
 
 ```rust
-fn main() {
-    let screen = LaptopScreen {
-        windows: vec![
-            Box::new(Chrome {
-                width: 1280,
-                width: 720,
-                evil_tracking: true,
-            }),
-            Box::new(QBitTorrent {
-                <-- snip -->
-            }),
-        ],
-    };
-    screen.run();
-}
+let screen = LaptopScreen {
+    windows: vec![
+        Box::new(ChromeWindow {
+            width: 1280,
+            width: 720,
+            evil_tracking: true,
+        }),
+        Box::new(FirefoxWindow {
+            <-- snip -->
+        }),
+    ],
+};
+screen.run();
 ```
 
 * This is not possible with the version using generics
+
 
 ---
 
 
 # Aside: Dynamically Sized Types
 
-* Recall that we needed a `Box<dyn Window>` before
 * `dyn Window` is an example of a dynamically sized type (DST)
 * DSTs have to be in a `Box`, because we don't know the size at compile time
-    * A `dyn Window` could be a `Chrome` or `QBittorrent` object
+    * A `dyn Window` could be a `ChromeWindow` or `FirefoxWindow` object
     * How much space should we make on the stack?
 * Pointers to DSTs are double the size (wide pointers)
-  * Stores both a pointer to memory and a **vtable** pointer
     * If you're interested in more information, ask us after lecture!
 
 
@@ -660,8 +652,6 @@ enum List {
   Cons(i32, Box<List>),
   Nil,
 }
-
-use crate::List::{Cons, Nil};
 
 fn main() {
   let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
@@ -768,8 +758,8 @@ fn main() {
 * Share one instance of allocated memory throughout the program
     * We can only access the data as read-only
     * We don't need to know what part of the program is going to use it last
-* Only used for single threaded scenarios
-    * `Arc<T>` for multi threaded (more on that soon)
+* Only used for single-threaded scenarios
+    * `Arc<T>` for multi-threaded (more on that soon)
 
 
 ---
@@ -804,14 +794,15 @@ fn main() {
 # `Rc<T>` Recap
 
 * Allows sharing ***immutable*** references without lifetimes
-* Should be used when last user of the data is unknown
-  * Otherwise, the last user can own the data and others can borrow it
+* Should be used when the last user of the data is unknown
 * Very low overhead for providing this capability
   * O(1) increment/decrement of counter
   * Potential allocation/de-allocation on heap
-* Implemented using `Drop` trait and `unsafe`!
+* Implemented using the `Drop` trait and `unsafe`!
 
-
+<!---
+second line: Should be used when last user of the data is unknown
+-->
 ---
 
 
@@ -840,7 +831,6 @@ assert_eq!(15, c2.get()); // returns copy of value
 * Values can be moved in and out of a cell
 * Used for `Copy` types
   * (where copying or moving values isn’t too resource intensive)
-* If an option, should always be used for low overhead
 
 
 ---
@@ -881,7 +871,8 @@ fn main() {
 
 ```rust
 pub trait Messenger {
-    fn send(&self, msg: &str); // Note how this takes an &self NOT &mut self
+    // Note this takes &self and not &mut self
+    fn send(&self, msg: &str);
 }
 
 pub struct LimitTracker<'a, T: Messenger> {
