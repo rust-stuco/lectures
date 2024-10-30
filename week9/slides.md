@@ -455,14 +455,40 @@ fn main() {
 * Deref coercion happening in the background to keep ergonomics clean!
 
 
-----
+---
 
 
 # Working With Trait Objects
 
 ```rust
+struct Button {
+    width: u32,
+    height: u32,
+    label: String,
+}
+
+struct SelectBox {
+    width: u32,
+    height: u32,
+    options: Vec<String>,
+}
+
+impl Draw for Button { ... }
+impl Draw for SelectBox { ... }
+```
+
+* Say we have **multiple** types that implement `Draw`
+
+
+---
+
+
+# Working With Trait Objects: Dynamic Dispatch
+
+```rust
 impl Screen {
     pub fn run(&self) {
+        // Recall components is Vec<Box<dyn Draw>>
         for component in self.components.iter() {
             component.draw();
         }
@@ -473,6 +499,36 @@ impl Screen {
 * Note that this is different than a struct that uses trait bounds
   * A generic parameter can only be substituted with one type at a time
 * Trait objects allow for many types to fill in for the trait object **at runtime**
+
+
+---
+
+
+# Working With Trait Objects: Mixing Objects
+
+```rust
+fn main() {
+    let screen = Screen {
+        components: vec![
+            Box::new(SelectBox {
+                width: 75,
+                height: 10,
+                options: vec![
+                    String::from("David"),
+                    String::from("Ben"),
+                    String::from("Connor"),
+                ],
+            }),
+            Box::new(Button {
+                width: 420,
+                height: 69,
+                label: String::from("OK"),
+            }),
+        ],
+    };
+    screen.run();
+}
+```
 
 
 ---
