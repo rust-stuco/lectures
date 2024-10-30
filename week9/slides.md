@@ -41,7 +41,7 @@ paginate: true
 
 ![bg right:30% 80%](../images/ferris_does_not_compile.svg)
 
-Let's say we wanted to make recursive-style list:
+Let's say we wanted to make a recursive-style list:
 
 ```rust
 enum List {
@@ -75,7 +75,7 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 2 |     Cons(i32, Box<List>),
   |               ++++    +
 ```
-* Rust is upset because we've defined a type with _infinite size_
+* The compiler is complaining because we've defined a type with _infinite size_
 * The suggestion is to use a `Box<List>`
 
 
@@ -92,7 +92,7 @@ let list = Cons(1, Box::new(Cons(2,
 ```
 
 * In the suggestion, "indirection" means we store a _pointer_ to a `List` rather than an entire `List`
-  * Pointers have fixed size, so our enum is no longer infinite!
+  * Pointers have fixed size, so our enum is no longer of infinite size!
 * We create a `Box<List>` with the `Box::new` associated function
 
 
@@ -103,7 +103,7 @@ let list = Cons(1, Box::new(Cons(2,
 
 * `Box<T>` is a simple "smart" pointer to memory allocated on the heap*
   * It is "smart" because it frees the memory when dropped
-* Other than the cost of allocation and pointer indirection, `Box`es has no performance overhead
+* Other than the cost of allocation and pointer indirection, `Box` has no performance overhead
 * `Box<T>` fully owns the data it points to (just like `Vec<T>`)
 
 
@@ -114,11 +114,15 @@ let list = Cons(1, Box::new(Cons(2,
 
 * When you have a type of unknown size **at compile time** (like `List`)
 * When you have a large amount of data and want to transfer ownership
-  * Copying a pointer is faster than copying a large chunk of data
-  * Moving a `Box<T>` ensures no data is cloned
+  * Transferring ownership of a pointer is faster than a large chunk of data
 * Trait Objects
   * We'll get to this soon...
 
+
+<!--
+The reasoning for why transferring ownership is faster is that data
+won't need to be copied to another stack for example, just the pointer.
+-->
 
 ---
 
@@ -186,7 +190,7 @@ fn main() {
 
 # Deref Coercion Rules
 
-Note that Rust will coerce mutable to immutable but not the reverse.
+Rust is able to coerce mutable to immutable but not the reverse.
 
 * From `&T` to `&U` when `T: Deref<Target=U>`
 * From `&mut T` to `&mut U` when `T: DerefMut<Target=U>`
@@ -196,6 +200,28 @@ Note that Rust will coerce mutable to immutable but not the reverse.
 
 ---
 
+# `&T` to `&U` Example
+
+```rust
+fn foo(s: &[i32]) {
+    print(s[0])
+}
+
+// Vec<T> implements Deref<Target=[T]>.
+let owned = vec![1, 2, 3];
+
+// Here we coerce &Vec<T> to &[T]
+foo(&owned);
+
+println!("{:?}", owned);
+```
+
+```
+[1]
+[1, 2, 3]
+```
+
+---
 
 # `&mut T` to `&mut U` Example
 
@@ -207,6 +233,7 @@ fn foo(s: &mut [i32]) {
 // Vec<T> implements DerefMut<Target=[T]>.
 let mut owned = vec![1, 2, 3];
 
+// Here we coerce &mut Vec<T> to &mut [T]
 foo(&mut owned);
 
 println!("{:?}", owned);
@@ -216,15 +243,16 @@ println!("{:?}", owned);
 [2, 2, 3]
 ```
 
-* The immutable `Deref` would look similar, but with an immutable `&` reference
+* `DerefMut` also allows coercing to &[T]
 
+<!--
+
+-->
 
 ---
 
 
 # The `Drop` Trait
-
-We've talked about how things magically get freed when they go out of scope, but in reality, it is the work of the `Drop` trait.
 
 ```rust
 pub trait Drop {
@@ -232,10 +260,16 @@ pub trait Drop {
 }
 ```
 
-* Determines what happens when value goes out of scope (dropped)
-* You can provide an implementation of `Drop` on any type you create
-* With `Drop`, you never have to manually clean up your memory!
+* Values are dropped when they go out of scope
+* Dropping a value will recursively drop all its fields by default
+    * This mechanism allows automatically freeing memory
+* You can also provide a custom implementation of `Drop` on your types
+    * Allows us to run user code when values are dropped
 
+<!--
+first bullet: RAII
+your types -> specifically types declared in the crate per the orphan rule
+-->
 
 ---
 
@@ -253,6 +287,10 @@ impl Drop for CustomSmartPointer {
     }
 }
 ```
+
+* This is a custom implementation that simply prints the data on drop
+* The data will still be freed automatically
+    * This method does not include automatic memory freeing logic
 
 
 ---
@@ -277,6 +315,17 @@ Dropping CustomSmartPointer with data `other stuff`!
 Dropping CustomSmartPointer with data `my stuff`!
 ```
 * Notice how values are dropped in reverse order of creation
+
+---
+# `Drop` Trait Usage
+
+`Drop` trait implementations are typically not needed unless:
+- You are manually managing memory
+    - This likely involves using `unsafe` under the hood
+- You need to do something special before a value is dropped
+    - Might involve managing OS resources
+    - Might involve signalling other parts of your codebase
+
 
 
 ---
@@ -316,7 +365,7 @@ error[E0040]: explicit use of destructor method
    |     help: consider using `drop` function: `drop(c)`
 ```
 
-* Rust won't let you explicitly call the drop function to avoid double drops
+* Rust won't let you explicitly call the drop trait method to avoid double drops
 
 
 ---
@@ -336,8 +385,7 @@ println!("CSM dropped before the end of the scope");
 ```
 
 * This code works since we use `std::mem::drop` instead
-  * This is different that calling `c.drop()`
-* You can think of this as `drop` taking ownership of `c` and dropping it...
+* What's the difference?
 
 
 ---
@@ -351,7 +399,14 @@ Here is the actual source code of `std::mem::drop` in the standard library:
 pub fn drop<T>(_x: T) {}
 ```
 
-* https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
+* It takes ownership of `_x`, and then `_x` reaches the end of the scope and is dropped
+    * Hence, calling this function drops it, on demand!
+
+<!--
+This is beautiful!!
+https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
+-->
+
 
 
 ---
@@ -359,7 +414,8 @@ pub fn drop<T>(_x: T) {}
 
 # **Object Oriented Programming**
 
-* oops!
+* Well...
+    * Not quite...
 
 
 ---
@@ -382,20 +438,23 @@ impl AveragedCollection {
     <-- snip -->
 }
 ```
-* Encapsulation with `impl` blocks
-* Public and private methods with crates and `pub`
+* Encapsulation within `impl` blocks and crates
+* Public and private functions and methods with `pub`
 
 
 ---
 
 
 # Inheritence?
-
-* Rust structs cannot "inherit" the implementations of methods or data fields from another struct
-* If we want to re-use code, we use traits
+Rust structs cannot "inherit" the implementations of methods or data fields from another struct...
+* If we want to wrap another struct's functionality, we can use composition
+* If we want to define interfaces, we can use traits
 * If we want polymorphism...
-  * Rust has something called "trait objects"
+    * Rust has something called "trait objects"
 
+<!--
+Composition is usually preferred in other languages nowadays too
+--->
 
 ---
 
@@ -404,10 +463,10 @@ impl AveragedCollection {
 
 * Polymorphism != Inheritance
 * Polymorphism == "Code that can work with multiple data types"
-* For OOP languages, polymorphism is usually seen in the form of `Class`es
-* Rust polymorphism includes generics and traits:
-  * Generics are abstract over different possible monomorphized types
-  * Trait bounds impose constraints on what behaviors types must have
+* In object oriented languages, polymorphism is usually expressed with classes
+* Rust expresses polymorphism with generics and traits:
+  * Generics are abstract over different possible types
+  * Traits impose constraints on what behaviors types must have
 
 
 ---
@@ -418,20 +477,24 @@ impl AveragedCollection {
 Trait objects allow us to store objects that implement a trait.
 
 ```rust
-pub trait Draw {
+pub trait Window {
     fn draw(&self);
 }
 
-pub struct Screen {
-    pub components: Vec<Box<dyn Draw>>,
+pub struct LaptopScreen {
+    pub windows: Vec<Box<dyn Window>>,
 }
 ```
 
-* In this example, `Screen` holds a vector of `Draw`able objects
-* We use the `dyn` keyword to describe any type that implements `Draw`
-* We need to use a `Box` since Rust doesn't know the size of the type implementing `Draw`
-* Note that converting a type into a trait object _erases_ the original type
+* In this example, `LaptopScreen` holds a vector of `Window` objects
+* We use the `dyn` keyword to describe any type that implements `Window`
+    * In a `Box`, since objects implementing `Window` could be of any size at runtime
 
+
+<!--
+key: Not size at compile time
+Note that converting a type into a trait object _erases_ the original type
+-->
 
 ---
 
@@ -461,23 +524,23 @@ fn main() {
 # Working With Trait Objects
 
 ```rust
-struct Button {
+struct Chrome {
     width: u32,
     height: u32,
-    label: String,
+    evil_tracking: bool
 }
 
-struct SelectBox {
+struct QBittorrent {
     width: u32,
     height: u32,
-    options: Vec<String>,
+    color: String,
 }
 
-impl Draw for Button { ... }
-impl Draw for SelectBox { ... }
+impl Window for Button { fn draw(&self) { ... } }
+impl Window for SelectBox { fn draw(&self) { .. } }
 ```
 
-* Say we have **multiple** types that implement `Draw`
+* Say we have **multiple** types that implement `Window`
 
 
 ---
@@ -486,49 +549,19 @@ impl Draw for SelectBox { ... }
 # Working With Trait Objects: Dynamic Dispatch
 
 ```rust
-impl Screen {
+impl LaptopScreen {
     pub fn run(&self) {
-        // Recall components is Vec<Box<dyn Draw>>
-        for component in self.components.iter() {
-            component.draw();
+        // `windows` is of type Vec<Box<dyn Window>>
+        for window in self.windows.iter() {
+            window.draw();
         }
     }
 }
 ```
 
-* Note that this is different than a struct that uses trait bounds
-  * A generic parameter can only be substituted with one type at a time
-* Trait objects allow for many types to fill in for the trait object **at runtime**
-
-
----
-
-
-# Working With Trait Objects: Mixing Objects
-
-```rust
-fn main() {
-    let screen = Screen {
-        components: vec![
-            Box::new(SelectBox {
-                width: 75,
-                height: 10,
-                options: vec![
-                    String::from("David"),
-                    String::from("Ben"),
-                    String::from("Connor"),
-                ],
-            }),
-            Box::new(Button {
-                width: 420,
-                height: 69,
-                label: String::from("OK"),
-            }),
-        ],
-    };
-    screen.run();
-}
-```
+* This is different than if `windows` was `Vec<Chrome>`
+  * The generic parameter (in `Vec`) is known at compile time.
+* Trait objects allow for types to fill in for the trait object **at runtime**
 
 
 ---
@@ -536,44 +569,71 @@ fn main() {
 
 # Generic Version
 
+What about a version implemented with generics?
+
 ```rust
-pub struct Screen<T: Draw> {
-    pub components: Vec<T>,
+pub struct LaptopScreen<T: Window> {
+    pub windows: Vec<T>,
 }
 
-impl<T> Screen<T>
+impl<T> LaptopScreen<T>
 where
-    T: Draw,
+    T: Window,
 {
     pub fn run(&self) {
-        for component in self.components.iter() {
-            component.draw();
+        for window in self.windows.iter() {
+            window.draw();
         }
     }
 }
 ```
-* What's wrong with this version?
-  * We can't draw a screen with different types of components on it
+* What is wrong with this version?
+  * We can't create a `LaptopScreen` with two different types of windows in it
 
+---
+
+# Trait Objects: Mixing Objects
+
+```rust
+fn main() {
+    let screen = LaptopScreen {
+        windows: vec![
+            Box::new(Chrome {
+                width: 1280,
+                width: 720,
+                evil_tracking: true,
+            }),
+            Box::new(QBitTorrent {
+                <-- snip -->
+            }),
+        ],
+    };
+    screen.run();
+}
+```
+
+* This is not possible with the version using generics
 
 ---
 
 
-# Dynamically Sized Types
+# Aside: Dynamically Sized Types
 
-* Recall that we needed a `Box<dyn Draw>` before.
-* `dyn Draw` is an example of a dynamically sized type (DST)
+* Recall that we needed a `Box<dyn Window>` before
+* `dyn Window` is an example of a dynamically sized type (DST)
+* DSTs have to be in a `Box`, because we don't know the size at compile time
+    * A `dyn Window` could be a `Chrome` or `QBittorrent` object
+    * How much space should we make on the stack?
 * Pointers to DSTs are double the size (wide pointers)
   * Stores both a pointer to memory and a **vtable** pointer
-    * If you're interested in what this is, ask us after lecture!
+    * If you're interested in more information, ask us after lecture!
 
 
 ---
 
 
-# Next Lecture: ISD
+# Next Lecture: Parallelism (probably)
 
-*Instructors still debating*
 
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
