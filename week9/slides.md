@@ -8,7 +8,7 @@ paginate: true
 <!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
-# Box<T> and Trait Objects
+# Smart Pointers and Trait Objects
 
 <br>
 
@@ -19,12 +19,14 @@ paginate: true
 
 ---
 
-# Today: Box<T> and Trait Objects
+
+# Today: Smart Pointers and Trait Objects
 
 - `Box<T>`
 - The `Deref` and `Drop` trait
 - Trait Objects
-- Object Safety
+- Smart Pointers
+
 
 ---
 
@@ -38,7 +40,9 @@ paginate: true
 # Let's Make a List
 
 ![bg right:30% 80%](../images/ferris_does_not_compile.svg)
-Let's say we wanted to make recursive-style list
+
+Let's say we wanted to make recursive-style list:
+
 ```rust
 enum List {
   Cons(i32, List),
@@ -46,7 +50,7 @@ enum List {
 }
 
 fn main() {
-  // List of 1,2,3
+  // List of [1, 2, 3]
   let list = Cons(1, Cons(2, Cons(3, Nil)));
 }
 ```
@@ -55,7 +59,7 @@ fn main() {
 ---
 
 
-# Cargo's Suggestion
+# The Compiler's Suggestion
 
 ```
 error[E0072]: recursive type `List` has infinite size
@@ -71,8 +75,8 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 2 |     Cons(i32, Box<List>),
   |               ++++    +
 ```
-- Rust is upset because we've defined a type with infinite size
-- The suggestion provided is to use a `Box<List>`
+* Rust is upset because we've defined a type with _infinite size_
+* The suggestion is to use a `Box<List>`
 
 
 ---
@@ -82,23 +86,25 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 
 ```rust
 let singleton = Cons(1, Box::new(Nil));
-let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+let list = Cons(1, Box::new(Cons(2,
+                     Box::new(Cons(3,
+                       Box::new(Nil))))));
 ```
-* In the suggestion "indirection" means we store a *pointer* to a list rather than a list directly
-  * Because a pointer has a fixed size our enum is no longer infinite!
-* We create a `Box` with the `new` function
+
+* In the suggestion, "indirection" means we store a _pointer_ to a `List` rather than an entire `List`
+  * Pointers have fixed size, so our enum is no longer infinite!
+* We create a `Box<List>` with the `Box::new` associated function
 
 
 ---
 
 
-# Cost of `Box<T>`
+# More about `Box<T>`
 
-* `Box<T>` is a simple smart pointer, it just allocates on the heap**
-* Boxes don't have performance overhead
-  * Except for the overhead of allocation and pointer indirection
-* `Box<T>` is a pointer type that fully owns the data, treated the same as any other owned value.
-* They provide no other "special" capabilities
+* `Box<T>` is a simple "smart" pointer to memory allocated on the heap*
+  * It is "smart" because it frees the memory when dropped
+* Other than the cost of allocation and pointer indirection, `Box`es has no performance overhead
+* `Box<T>` fully owns the data it points to (just like `Vec<T>`)
 
 
 ---
@@ -106,14 +112,12 @@ let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
 
 # When to use `Box<T>`
 
-* When you have a type of unknown size **at compile time** and you need its exact size
-  * `List` from before
-
-* When you have a large amount of data and want to transfer ownership and ensure no data is copied
+* When you have a type of unknown size **at compile time** (like `List`)
+* When you have a large amount of data and want to transfer ownership
   * Copying a pointer is faster than copying a large chunk of data
-
-* When you want to own a value and you care only that it’s a type that implements a particular trait rather than being of a specific type
-  * We'll get to this *soon*
+  * Moving a `Box<T>` ensures no data is cloned
+* Trait Objects
+  * We'll get to this soon...
 
 
 ---
@@ -150,13 +154,16 @@ pub trait Deref {
 ```
 * Behind the scenes `*y` is actually `*(y.deref())`
 * Note this does not recurse infinitely
-* We are now able to treat smart pointers just like regular pointers!
+* We can treat anything that implements `Deref` like a pointer!
 
 
 ---
 
 
 # Deref Coercion
+
+Recall that we were able to coerce a `&String` into a `&str`. We can also coerce a `&Box<String>` into a `&str`!
+
 ```rust
 fn hello(name: &str) {
     println!("Hello, {name}!");
@@ -167,9 +174,11 @@ fn main() {
     hello(&m);
 }
 ```
-* Converts a reference to a type that implements the Deref trait into a reference to another type
-  * Example: deref coercion can convert `&String` to `&str` because `String` implements the Deref trait such that it returns `&str`
-* Here we see `Box<String>` deref coerces to `&str`
+
+* Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
+* Example: Deref coercion can convert a `&String` into `&str`
+  * `String` implements the `Deref` trait such that `Deref::Target = &str`
+
 
 
 ---
@@ -177,64 +186,61 @@ fn main() {
 
 # Deref Coercion Rules
 
-Note Rust will coerce mutable to immutable but not the reverse
+Note that Rust will coerce mutable to immutable but not the reverse.
+
 * From `&T` to `&U` when `T: Deref<Target=U>`
 * From `&mut T` to `&mut U` when `T: DerefMut<Target=U>`
 * From `&mut T` to `&U` when `T: Deref<Target=U>`
+* For more information, consult the [Rustonomicon](https://doc.rust-lang.org/nomicon/dot-operator.html)
 
 
 ---
 
 
 # `&mut T` to `&mut U` Example
+
 ```rust
 fn foo(s: &mut [i32]) {
-    // Borrow a slice for a second.
+    s[0] += 1;
 }
 
-// Vec<T> implements Deref<Target=[T]>.
+// Vec<T> implements DerefMut<Target=[T]>.
 let mut owned = vec![1, 2, 3];
 
 foo(&mut owned);
+
+println!("{:?}", owned);
 ```
+
+```
+[2, 2, 3]
+```
+
+* The immutable `Deref` would look similar, but with an immutable `&` reference
 
 
 ---
 
 
-# &mut T to &U Example
+# The `Drop` Trait
 
-```rust
-fn foo(s: &[i32]) {
-    // Borrow a slice for a second.
-}
-
-// Vec<T> implements Deref<Target=[T]>.
-let mut owned = vec![1, 2, 3];
-
-foo(&mut owned);
-```
-
----
-
-
-# The Drop Trait
+We've talked about how things magically get freed when they go out of scope, but in reality, it is the work of the `Drop` trait.
 
 ```rust
 pub trait Drop {
-    // Required method
     fn drop(&mut self);
 }
 ```
+
 * Determines what happens when value goes out of scope (dropped)
-* You can provide an implementation of `Drop` on any type
-* This is how Rust doesn't need you to carefully clean up memory
+* You can provide an implementation of `Drop` on any type you create
+* With `Drop`, you never have to manually clean up your memory!
 
 
 ---
 
 
-# Drop Trait Example
+# `Drop` Trait Example
 
 ```rust
 struct CustomSmartPointer {
@@ -243,7 +249,7 @@ struct CustomSmartPointer {
 
 impl Drop for CustomSmartPointer {
     fn drop(&mut self) {
-        println!("Dropping CustomSmartPointer with data `{}`!", self.data);
+        println!("Dropping `CustomSmartPointer` with data `{}`!", self.data);
     }
 }
 ```
@@ -252,7 +258,8 @@ impl Drop for CustomSmartPointer {
 ---
 
 
-# Drop Trait In
+# `Drop` Trait Example
+
 ```rust
 fn main() {
     let c = CustomSmartPointer {
@@ -269,23 +276,34 @@ CustomSmartPointers created.
 Dropping CustomSmartPointer with data `other stuff`!
 Dropping CustomSmartPointer with data `my stuff`!
 ```
-* Items are dropped in reverse order of creation
+* Notice how values are dropped in reverse order of creation
 
 
 ---
 
 
-# Dropping Manually
+# Manual Drop
 
 ![bg right:30% 80%](../images/ferris_does_not_compile.svg)
+
+What if we want to manually drop a value before the end of the scope?
+
 ```rust
-let c = CustomSmartPointer {
+let csm = CustomSmartPointer {
     data: String::from("some data"),
 };
 println!("CSM created.");
-c.drop();
-println!("CSM dropped before the end of main.");
+
+csm.drop();
+
+println!("CSM dropped before the end of the scope");
 ```
+
+
+---
+
+
+# Manual Drop
 
 ```
 error[E0040]: explicit use of destructor method
@@ -297,39 +315,57 @@ error[E0040]: explicit use of destructor method
    |     | explicit destructor calls not allowed
    |     help: consider using `drop` function: `drop(c)`
 ```
+
 * Rust won't let you explicitly call the drop function to avoid double drops
 
 
 ---
 
 
-# Dropping Manually
+# Manual Drop
+
 ```rust
-fn main() {
-  let c = CustomSmartPointer {
-      data: String::from("some data"),
-  };
-  println!("CustomSmartPointer created.");
-  drop(c);
-  println!("CustomSmartPointer dropped before the end of main.");
-}
+let csm = CustomSmartPointer {
+    data: String::from("some data"),
+};
+println!("CSM created.");
+
+std::mem::drop(csm);
+
+println!("CSM dropped before the end of the scope");
 ```
+
 * This code works since we use `std::mem::drop` instead
   * This is different that calling `c.drop()`
-* You can think of this as `drop` taking ownership of `c` and dropping it
-  * Actual source code: `pub fn drop<T>(_x: T) {}`
+* You can think of this as `drop` taking ownership of `c` and dropping it...
 
 
 ---
 
 
-# **Object-Oriented Features of Rust**
+# `std::mem::drop`
+
+Here is the actual source code of `std::mem::drop` in the standard library:
+
+```rust
+pub fn drop<T>(_x: T) {}
+```
+
+* https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
 
 
 ---
 
 
-# What we know
+# **Object Oriented Programming**
+
+* oops!
+
+
+---
+
+
+# What We Know So Far...
 
 ```rust
 pub struct AveragedCollection {
@@ -338,10 +374,12 @@ pub struct AveragedCollection {
 }
 
 impl AveragedCollection {
-  pub fn add(&mut self, value: i32) {
-      self.list.push(value);
-      self.update_average();
-  }
+    pub fn add(&mut self, value: i32) {
+        self.list.push(value);
+        self.update_average();
+    }
+
+    <-- snip -->
 }
 ```
 * Encapsulation with `impl` blocks
@@ -353,10 +391,9 @@ impl AveragedCollection {
 
 # Inheritence?
 
-* Rust structs cannot inherit methods or data from another struct
-* If we want code re-use:
-  * We have traits (and even super traits)
-* If we want polymorphism:
+* Rust structs cannot "inherit" the implementations of methods or data fields from another struct
+* If we want to re-use code, we use traits
+* If we want polymorphism...
   * Rust has something called "trait objects"
 
 
@@ -365,12 +402,12 @@ impl AveragedCollection {
 
 # Polymorphism
 
-* Polymorphism != Inheritence
-* Polymorphism = "Code that can work with multiple data types"
-  * For inheritence this is usually subclases
-* Rust polymorphism:
-  * Generics - Abstract over different possible types
-  * Trait bounds - Impose constraints on what types must provide
+* Polymorphism != Inheritance
+* Polymorphism == "Code that can work with multiple data types"
+* For OOP languages, polymorphism is usually seen in the form of `Class`es
+* Rust polymorphism includes generics and traits:
+  * Generics are abstract over different possible monomorphized types
+  * Trait bounds impose constraints on what behaviors types must have
 
 
 ---
@@ -378,19 +415,22 @@ impl AveragedCollection {
 
 # Trait Objects
 
+Trait objects allow us to store objects that implement a trait.
+
 ```rust
 pub trait Draw {
-  fn draw(&self);
+    fn draw(&self);
 }
 
 pub struct Screen {
-  pub components: Vec<Box<dyn Draw>>,
+    pub components: Vec<Box<dyn Draw>>,
 }
 ```
-* We want to implement a struct `Screen`
-  * It holds a Vector of Drawable items
-  * We use the `dyn` keyword to describe any type that implements Draw
-    * We need to use a box since Rust doesn't know the size of `dyn Draw`
+
+* In this example, `Screen` holds a vector of `Draw`able objects
+* We use the `dyn` keyword to describe any type that implements `Draw`
+* We need to use a `Box` since Rust doesn't know the size of the type implementing `Draw`
+* Note that converting a type into a trait object _erases_ the original type
 
 
 ---
@@ -398,20 +438,21 @@ pub struct Screen {
 
 # Trait Objects and Closures
 
+Since closures implement the `Fn` traits, they can be represented as trait objects!
+
 ```rust
 fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
-  Box::new(|x| x + 1)
+    Box::new(|x| x + 1)
 }
 
 fn main() {
-  let closure = returns_closure();
-  print!("{}", closure(5)); // prints 6
+    let closure = returns_closure();
+    print!("{}", closure(5)); // prints 6
 }
 ```
-* We can use trait objects to return dynamic types
-* A Box is needed since `dyn Fn` has no known size
-* Now with dereferencing coercion this isn't an awkward type to use!
 
+* We can use trait objects to return dynamic types
+* Deref coercion happening in the background to keep ergonomics clean!
 
 
 ----
@@ -421,16 +462,17 @@ fn main() {
 
 ```rust
 impl Screen {
-  pub fn run(&self) {
-    for component in self.components.iter() {
-      component.draw();
+    pub fn run(&self) {
+        for component in self.components.iter() {
+            component.draw();
+        }
     }
-  }
 }
 ```
-* Note this is different than a struct that uses trait bounds
-* A generic parameter can only be substituted with one concrete type at a time
-* Trait objects allow for multiple concrete types to fill in for the trait object **at runtime**
+
+* Note that this is different than a struct that uses trait bounds
+  * A generic parameter can only be substituted with one type at a time
+* Trait objects allow for many types to fill in for the trait object **at runtime**
 
 
 ---
@@ -455,7 +497,7 @@ where
 }
 ```
 * What's wrong with this version?
-  * Well if we wanted a screen with multiple different types in it, it'd be much harder
+  * We can't draw a screen with different types of components on it
 
 
 ---
@@ -465,29 +507,12 @@ where
 
 * Recall that we needed a `Box<dyn Draw>` before.
 * `dyn Draw` is an example of a dynamically sized type (DST)
-* Pointers to DSTs are double the size
-  * Stores the a vtable pointer with it
-
----
-
-
-# DST Rules
-
-* Traits may be implemented for DSTs
-  * Unlike with generic type parameters, `Self: ?Sized` is the default in trait definitions
-* They can be type arguments to generic type parameters having the special `?Sized` bound
-* Ex: `struct Bar<T: ?Sized>(T);`
-  * `?` marks an anti-trait (specifies a type **doesn't** implement a trait)
-
----
-
-<!-- >
-# **Object Safety**
-
+* Pointers to DSTs are double the size (wide pointers)
+  * Stores both a pointer to memory and a **vtable** pointer
+    * If you're interested in what this is, ask us after lecture!
 
 
 ---
--->
 
 
 # Next Lecture: ISD
