@@ -195,73 +195,6 @@ enum Poll<T> {
 
 ---
 
-# **Futures in depth**
-May not need to know all this
-
----
-
-
-# Socket Read Future Example
-```rust
-pub struct SocketRead<'a> {
-    socket: &'a Socket,
-}
-
-impl SimpleFuture for SocketRead<'_> {
-    type Output = Vec<u8>;
-
-    fn poll(&mut self, wake: fn()) -> Poll<Self::Output> {
-        if self.socket.has_data_to_read() {
-            // The socket has data -- read it into a buffer and return it.
-            Poll::Ready(self.socket.read_buf())
-        } else {
-            // The socket does not yet have data.
-            //
-            // Arrange for `wake` to be called once data is available.
-            // When data becomes available, `wake` will be called, and the
-            // user of this `Future` will know to call `poll` again and
-            // receive data.
-            self.socket.set_readable_callback(wake);
-            Poll::Pending
-        }
-    }
-}
-```
-
-
----
-
-
-# Composing Futures Example
-
-```rust
-pub struct AndThenFut<FutureA, FutureB> {
-    first: Option<FutureA>,
-    second: FutureB,
-}
-
-impl<FutureA, FutureB> SimpleFuture for AndThenFut<FutureA, FutureB>
-where
-    FutureA: SimpleFuture<Output = ()>,
-    FutureB: SimpleFuture<Output = ()>,
-{
-    type Output = ();
-    fn poll(&mut self, wake: fn()) -> Poll<Self::Output> {
-        if let Some(first) = &mut self.first {
-            match first.poll(wake) {
-                // We've completed the first future -- remove it and start on the second!
-                Poll::Ready(()) => self.first.take(),
-                Poll::Pending => return Poll::Pending, // Couldn't yet complete the first future
-            };
-        }
-        // Now that the first future is done, attempt to complete the second.
-        self.second.poll(wake)
-    }
-}
-```
-
-
----
 
 # Let's Talk Real Futures
 
@@ -344,38 +277,8 @@ impl Future for TimerFuture {
 ---
 
 
-# TimerFuture Implementation
-```rust
-impl TimerFuture {
-    /// Create a new `TimerFuture` which will complete after the provided timeout
-    pub fn new(duration: Duration) -> Self {
-        let shared_state = Arc::new(Mutex::new(SharedState {
-            completed: false,
-            waker: None,
-        }));
-
-        let thread_shared_state = shared_state.clone();
-        thread::spawn(move || {
-            thread::sleep(duration);
-            let mut shared_state = thread_shared_state.lock().unwrap();
-            // Signal that the timer has completed and wake up the latest task
-            shared_state.completed = true;
-            if let Some(waker) = shared_state.waker.take() {
-                waker.wake()
-            }
-        });
-
-        TimerFuture { shared_state }
-    }
-}
-```
-
-
----
-
-
-# What Just Happened?
-* Our TimerFuture launches a thread with access to a shared state variable
+# How Could This Work?
+* TimerFuture launches a thread with access to a shared state variable `Arc<Mutex<_>>`
 * In this thread, we sleep for a duration
 * Once that time has passed we update the shared state `completed=true`
 * We then tell the waker in our shared state to wake up the last future that polled it
@@ -765,6 +668,31 @@ async fn increment_and_do_stuff(mutex: &Mutex<i32>) {
     do_something_async().await;
 } // lock goes out of scope here
 ```
+* Using a `tokio::Mutex` in an async block isn't *always* required
+  * But it is here
+* Using a synchronous mutex from within async code is ok if:
+  * Contention remains low and t
+  * The lock is not held across calls to .await
+
+
+---
+
+# Sync Mutex in Async
+
+```rust
+// No tokio:sync:Mutex now!
+async fn increment_and_do_stuff(mutex: &Mutex<i32>) {
+    {
+        let mut lock: MutexGuard<i32> = mutex.lock().unwrap();
+        *lock += 1;
+    } // lock goes out of scope here
+
+    do_something_async().await;
+}
+```
+* We've now restructured the code so that the MutexGuard isn't held during the `.await`
+* The issue we're avoiding is that `MutexGuard` isn't `Send`
+  * Tokio wants the ability to move tasks between threads at any given `.await` call
 
 
 ---
@@ -854,6 +782,95 @@ pub fn spawn_task(&self, task: Task) {
 ```
 
 * Message passing from async to sync code and vice versa
+
+
+---
+
+
+# Some Nice Tokio Features
+
+
+---
+
+
+# Channel Types
+* Usually provide both async and blocking versions of calls for bridging code
+* Types available:
+  * `mpsc` - Multi-producer, single-consumer channel where many values can be sent
+  * `oneshot` - single-producer, single consumer channel where a single value can be sent
+  * `broadcast` - multi-producer, multi-consumer where many values can be sent and each receiver sees every value
+  * `watch` - Multi-producer, multi-consumer where many values can be sent but no history is kept i.e. receivers only see the most recent value
+
+
+---
+
+
+# `Notify`
+```rust
+async fn delay(dur: Duration) {
+    let when = Instant::now() + dur;
+    let notify = Arc::new(Notify::new());
+    let notify_clone = notify.clone();
+
+    thread::spawn(move || {
+        let now = Instant::now();
+        if now < when {
+            thread::sleep(when - now);
+        }
+        notify_clone.notify_one();
+    });
+    notify.notified().await;
+}
+```
+
+* Allows us to not have to deal with `Waker`s for simple tasks!
+* Task notification mechanism
+  * Handles the details of wakers
+
+
+---
+
+
+# Async File Read/Write
+```rust
+use tokio::fs::File;
+use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let mut f = File::open("foo.txt").await?;
+    let mut buffer = [0; 10];
+
+    // read up to 10 bytes
+    let n = f.read(&mut buffer[..]).await?;
+    let n = f.write(b"some bytes").await?
+
+    // copy reader into file
+    let mut reader: &[u8] = b"Async is awesome!";
+    io::copy(&mut reader, &mut f).await?;
+
+    Ok(())
+}
+```
+
+
+---
+
+
+# Tracing
+```rust
+let subscriber = tracing_subscriber::FmtSubscriber::new();
+tracing::subscriber::set_global_default(subscriber)?;
+
+#[tracing::instrument]
+fn trace_me(a: u32, b:u32) -> u32 {
+    tracing::event!(Level::WARN, "Event occurred");
+}
+
+```
+
+* Could be it's own lecture
+* Uses subscribers and macros nicely log asynchronous events in a meaningful way
+  * Uses the notion of Spans (sections of code/processes)
 
 
 ---
