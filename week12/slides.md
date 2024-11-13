@@ -18,12 +18,69 @@ paginate: true
 
 ---
 
-# Async is Complicated
-* Rust is a **systems** programming language -- different design choices were made
-    * Rust async != JavaScript async != C# async
-* Async is still evolving both as a feature in Rust and as a programming paradigm
-* Async is not a mutually exclusive feature, parallelism and concurrency can mix in Rust
-* We're going to keep this lecture primarily focused on the high level details of using async rather than creating your own Futures
+
+# Recap: Parallelism vs. Concurrency
+
+<div class="columns">
+<div>
+
+## Parallelism
+
+- Work on multiple tasks at the same time
+- Utilizes multiple processors/cores
+
+</div>
+<div>
+
+## Concurrency
+
+- Manage multiple tasks, but only do one thing at a time.
+- Better utilizes a single processor/core
+
+</div>
+</div>
+
+<center>
+
+These terms are used (and abused) interchangeably
+
+</center>
+
+
+---
+
+
+# Concurrency
+
+Today, we'll be talking about Rust's mechanism for concurrency.
+
+* Different from how other languages approach concurrency
+* Rust has specific keywords `async` and `await`
+* When we say something is **asynchronous**, we generally also mean it is **concurrent**
+* When we mention **cooperative multitasking**, we mean **asynchronous**
+
+
+---
+
+
+# Concurrency is Complicated
+
+* Asynchronous execution in _any_ language is complicated
+* Async is not a mutually exclusive feature to parallelism
+    * Parallelism and concurrency can "mix" in Rust
+
+
+
+---
+
+
+# Rust's Concurrency is Even More Complicated!
+
+Due to the high complexity of Rust's rules and features, `async` is _even harder_ to implement and use in Rust.
+
+* Asynchronous execution is still evolving both as a feature in Rust and as a programming paradigm
+* _We're going to keep this lecture primarily focused on the high level details of using `async` rather than creating your own `Future`s_
+
 
 ---
 
@@ -32,8 +89,10 @@ paginate: true
 
 * A *concurrent* programming model supported by many languages
     * All in slightly different forms under the hood
-* Allows for a large number of tasks on a few OS threads
-* Still preserves the "feel" of synchronous programming through `async/await` syntax
+* Allows for a large number of tasks on only a few threads
+    * You can imagine "lightweight" tasks on "heavyweight" OS-backed threads
+* Still preserves the "feel" of synchronous programming through the `async` / `await` syntax
+
 
 ---
 
@@ -48,7 +107,7 @@ paginate: true
     * Supports many tasks like async
     * Abstract away low-level details needed for systems programmers
 * Actor Model
-    * A fine solution for many distributed systems using message passing 
+    * A fine solution for many distributed systems using message passing
     * Leaves practical issues such as control flow and retry logic up to the user
 
 
@@ -161,6 +220,23 @@ fn main() {
 * `block_on` blocks the current thread until the provided future has finished
 * Other executors may provide more complex behavior
     * like scheduling multiple futures onto the same thread
+
+---
+
+
+# The `Future` Trait
+
+
+---
+
+# The `Future` Trait
+
+When you use the keyword `async`, what you are really doing is creating a state machine that implements the `Future` trait.
+
+* For now, you can think of `async` as syntax sugar for `impl Future`
+    * _This is a wildly incorrect statement, but we're omitting details today_
+* The next few slides are very technically complex, so don't worry if you don't understand everything
+
 
 ---
 
@@ -301,9 +377,9 @@ impl Future for TimerFuture {
 ---
 
 
-# High Level Usage of Async/Await
-You can wake up now
+# High Level Usage of `async` / `await`
 
+_You can wake up now_
 
 ---
 
