@@ -43,7 +43,7 @@ However...
 ---
 
 
-# Unsafe Rust
+# **Unsafe Rust**
 
 
 ---
@@ -94,7 +94,7 @@ If you take anything away from today, it should be this:
 
 # What `unsafe` is not
 
-It's important to understand that `unsafe` is not a way to skirt the rules of Rust.
+It's important to understand that `unsafe` is _not_ just a way to skirt the rules of Rust.
 
 * Ownership
 * Borrow Checking
@@ -225,13 +225,9 @@ These 4 things aren't all that interesting, so why the big fuss?
 
 The **biggest** superpower of all is superpower 5!
 
-* **Dereference a raw pointer**
-* 🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀
-🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀
-🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀 `That's it` 🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀
-🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀
-🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀🦀
-* _But honestly, it's enough to wreak all sorts of havoc_
+* **DEREFERENCE A RAW POINTER**
+    * That's it!
+    * _But honestly, it's enough to wreak all sorts of havoc..._
 
 
 ---
@@ -244,7 +240,7 @@ Unsafe Rust has 2 types of Raw Pointers:
 * `*const T` is an immutable raw pointer
 * `*mut T` is a mutable raw pointer
 * _Note that the asterisk `*` is part of the type name_
-* _Immutable_ here means that the pointer can't directly be reassigned after being dereferenced
+* _Immutable_ here means that the pointer can't be reassigned directly after being dereferenced
 
 
 ---
@@ -316,7 +312,7 @@ unsafe {
 
 * There's no undefined behavior here? Right?
 * _Right?_
-* 🦀 Right 🦀
+* Right! 🦀
 
 
 ---
@@ -324,7 +320,7 @@ unsafe {
 
 # Calling `unsafe` Functions
 
-Calling `unsafe` functions is similar, we must call them in an `unsafe` block.
+We must also call `unsafe` functions in an `unsafe` block.
 
 ```rust
 unsafe fn dangerous() {}
@@ -347,7 +343,7 @@ fn main() {
 Sometimes, we might need to interact with code from another language.
 
 * Rust has the keyword `extern` that facilitates the use of a _Foreign Function Interface (FFI)_
-* Since other languages will not have Rust's safety guarantees, we will have no idea if they are safe to call or not!
+* Since other languages do not have Rust's safety guarantees, we have no idea if they are safe to call or not!
 
 
 ---
@@ -371,6 +367,8 @@ fn main() {
 
 * The `"C"` defines the _Application Binary Interface (ABI)_ that the external function uses
 * We have no idea if `abs` is doing what it is supposed to be doing, so it is on us as the programmer to ensure safety
+
+<!-- Really emphasize here that `abs` is allowed to completely obliterate your program -->
 
 
 ---
@@ -424,6 +422,7 @@ fn main() {
 The last 2 superpowers are implementing an `unsafe` trait and accessing fields of a `union`.
 
 * `Send` and `Sync` are both `unsafe` traits
+    * The developer must provide their own proof of thread safety
 * `union`s are primarily used to interface with unions in C code
 
 
@@ -622,7 +621,8 @@ let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
 What could go wrong?
 
 * Probably not much, _if_ you're careful
-* If you do get something wrong though...
+    * By careful, we mean writing a proof for every use of `unsafe`
+* If you do get something wrong...
 * With `unsafe`, you hold great responsibility
 
 
@@ -741,6 +741,20 @@ It is tempting to reason about unsafety _locally_.
 * Read and write documentation!
 * Use tools like `Miri` to verify your code!
 * **Make sure to formally reason about your program**
+
+
+---
+
+
+# Miri
+
+Miri is an undefined behavior detection tool for Rust.
+
+* An interpreter for Rust's mid-level intermediate representation
+* Can detect out-of-bounds memory accesses and use-after-free
+* Invalid use of uninitialized data
+* Not sufficiently aligned memory accesses and references
+
 
 ---
 
