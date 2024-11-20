@@ -64,8 +64,9 @@ Metaprogramming is essentially writing code that writes code.
 More precisely, it is a programming technique where computer programs treat other programs as their data.
 
 * This can mean generating a program from a program (code generation)
-* Or it could mean a program modifying itself
-* _Today we will focus on the latter example_
+* Or it could mean a program modifying itself (reflection)
+* It could even be something in between...
+* _Today we will focus on the last example_
 
 
 ---
@@ -1187,7 +1188,6 @@ pub fn sql(input: TokenStream) -> TokenStream {
 We've reached the end of our prepared content!
 
 
-
 ---
 
 
@@ -1195,7 +1195,7 @@ We've reached the end of our prepared content!
 
 We can reflect on what we've learned this semester from our course description.
 
-Students will be able to:
+_Students will be able to:_
 
 * Read, write, and reason about Rust code
 * Know common Rust types and collections
@@ -1225,12 +1225,11 @@ Looking back at our very first lecture, we asked a question...
 
 If there are only a few things to take away from this course:
 
-* Rust is Different
-* Rust is Modern
-* Rust is Fast
-* Rust is Safe
-* Rust is not a silver bullet
-* Rust is _Important_
+* Rust is modern
+* Rust is fast
+* Rust is safe
+* Rust is _not_ a silver bullet
+* Rust is _important_
 
 
 ---
