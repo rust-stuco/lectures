@@ -239,50 +239,104 @@ By the end of the semester, we want you all to:
 
 # **Cargo Basics**
 
+---
+
+![bg right:50% 80%](./images/cargo-ship.avif)
+
+You may notice a nautical theme...
+
+* Ferris is a crab,
+* everything is a crate,
+* crates are managed by Cargo
 
 ---
 
+![bg right:50% 80%](./images/cargo-ship.avif)
 
-# Hello World!
+# "Everything is a crate"
 
-To create an executable, we need a `main` function:
+Programs are crates
 
-```rust
-// main.rs
-
-fn main() {
-    println!("Hello, world!");
-}
-```
-
-<br>
-
-To compile `main.rs`, use `rustc`.
-
-```sh
-$ rustc main.rs
-```
-
+Libraries are crates
 
 ---
-
 
 # Cargo
 
+We're making our first crate today!
+
+Before we begin, let's open our eyes and see what exciting crates we can make
+
+---
+
+![bg](./images/Cargo-IsOdd1.png)
+
+---
+
+![bg](./images/Cargo-IsOdd2.png)
+
+---
+
+![bg](./images/Cargo-IsOdd3.png)
+
+---
+
+![bg](./images/Cargo-IsOdd4.png)
+
+---
+
+![bg](./images/Cargo-IsOdd5.png)
+
+---
+
+![bg](./images/Cargo-IsOdd6.png)
+
+---
+
+![bg](./images/Cargo-IsOdd7.png)
+
+---
+
+![bg](./images/Cargo-IsOdd8.png)
+
+---
+
+![bg](./images/Cargo-IsOdd9.png)
+
+---
+
+![bg](./images/Cargo-IsOdd9.png)
+![w:580 h:415](./images/vintage-this-can-be-you.png)
+
+---
+
+![bg right:50% 80%](./images/cargo-ship.avif)
+
+# Cargo
 
 <!--
 Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmake
 -->
 
-
 Rust has its own build system and package manager called **Cargo**.
 
-* Cargo is included with all Rust distributions, so no `make` files or third-party build systems
-* Manages packages similar to `pip` for `python` or `npm` for `node.js`
-
+* Build system: Takes all the ingredients (your code, libraries, and config) and builds them into a crate
+* Package manager: Like an app store for code, helps you download, update, and organize your crates
+<!-- Speaker note: "Similar to `pip` for Python or `npm` for Node.js" -->
 
 ---
 
+# Cargo: One Ring to Rule Them All
+
+Simplifies development!
+
+C/C++ build systems: "Many, and they're all awful"
+
+C/C++ package managers: "Many, and they're not as awful but still frustrating"
+
+Cargo is included with all Rust distributions, eliminates the need for `make` files or third-party build systems.
+
+---
 
 # Creating a new project
 
@@ -298,7 +352,6 @@ $ cd hello_cargo
     * `Cargo.toml`
     * `src/main.rs`
 * We will come back `Cargo.toml` in future weeks
-
 
 ---
 
