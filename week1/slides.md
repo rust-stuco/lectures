@@ -267,8 +267,8 @@ Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmak
 
 Rust has its own build system and package manager called **Cargo**.
 
-* Build system: Takes your code, libraries, and config, and builds them into a crate
-* Package manager: Like an app store for code, helps you download, update, and organize your crates
+* Build system: Takes your code and builds it into a crate
+* Package manager: Like an app store for code, helps you download and update your crates
 <!-- Speaker note: "Similar to `pip` for Python or `npm` for Node.js" -->
 
 
@@ -283,7 +283,7 @@ C/C++ build systems: "Many, and they're all awful"
 
 C/C++ package managers: "Many, and they're not as awful but still frustrating"
 
-Cargo is included with all Rust distributions, eliminates the need for `make` files or third-party build systems.
+Cargo is included with all Rust distributions, eliminates the need for third-party build systems.
 
 
 ---
