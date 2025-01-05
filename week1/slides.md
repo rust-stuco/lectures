@@ -253,65 +253,6 @@ You may notice a nautical theme...
 
 ![bg right:50% 80%](./images/cargo-ship.avif)
 
-# "Everything is a crate"
-
-Programs are crates
-
-Libraries are crates
-
----
-
-# Cargo
-
-We're making our first crate today!
-
-Before we begin, let's open our eyes and see what exciting crates we can make
-
----
-
-![bg](./images/Cargo-IsOdd1.png)
-
----
-
-![bg](./images/Cargo-IsOdd2.png)
-
----
-
-![bg](./images/Cargo-IsOdd3.png)
-
----
-
-![bg](./images/Cargo-IsOdd4.png)
-
----
-
-![bg](./images/Cargo-IsOdd5.png)
-
----
-
-![bg](./images/Cargo-IsOdd6.png)
-
----
-
-![bg](./images/Cargo-IsOdd7.png)
-
----
-
-![bg](./images/Cargo-IsOdd8.png)
-
----
-
-![bg](./images/Cargo-IsOdd9.png)
-
----
-
-![bg](./images/Cargo-IsOdd9.png)
-![w:580 h:415](./images/vintage-this-can-be-you.png)
-
----
-
-![bg right:50% 80%](./images/cargo-ship.avif)
-
 # Cargo
 
 <!--
@@ -320,7 +261,7 @@ Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmak
 
 Rust has its own build system and package manager called **Cargo**.
 
-* Build system: Takes all the ingredients (your code, libraries, and config) and builds them into a crate
+* Build system: Takes your code, libraries, and config, and builds them into a crate
 * Package manager: Like an app store for code, helps you download, update, and organize your crates
 <!-- Speaker note: "Similar to `pip` for Python or `npm` for Node.js" -->
 
@@ -338,6 +279,74 @@ Cargo is included with all Rust distributions, eliminates the need for `make` fi
 
 ---
 
+# is-number: The Lore
+
+There's this npm package called is-number.
+
+* 5.5 billion downloads
+* 246 million downloads / month
+
+What does it do?
+* >"Returns true if the value is a finite number."
+* (there's actually a not so silly reason for this)
+
+---
+
+# is-number: The Legacy
+
+Its legacy: 2807 dependents, and *their* dependents.
+
+* is-odd
+* is-even
+* is-odd-or-even
+* is-odd-and-even
+* is-is-odd
+* is-is-is-odd
+* cant-even
+
+
+---
+
+# is-odd: Your Mission
+
+Your mission is to uncover the Cargo equivalent.
+
+1. Go to crates.io
+2. Search is-odd
+3. Tell me its dependents
+
+...and not just its dependents, but the dependents of its dependents!
+
+---
+
+![bg](./images/Cargo-IsOdd1.png)
+
+---
+
+![bg](./images/Cargo-IsOdd2.png)
+
+---
+
+![bg](./images/Cargo-IsOdd3.png)
+
+---
+
+![bg](./images/Cargo-IsOdd4.png)
+
+<!-- censor the dependents with "this can be you" -->
+<style>
+.center {
+  transform: scale(0.5);
+  justify: center
+}
+</style>
+
+<div class="center">
+<img src="./images/vintage-this-can-be-you.png"/>
+</div>
+
+---
+
 # Creating a new project
 
 To create a new cargo project called `hello_cargo`, use `cargo new`.
@@ -351,7 +360,6 @@ $ cd hello_cargo
     * `.git` repository and `.gitignore`
     * `Cargo.toml`
     * `src/main.rs`
-* We will come back `Cargo.toml` in future weeks
 
 ---
 
@@ -368,8 +376,7 @@ $ cargo build
 
 * This creates an executable file at `target/debug/hello_cargo`
 <!-- * To build for release, run `cargo build --release` -->
-* What if we want to actually run this executable?
-    * We could run `./target/debug/hello_cargo`, but this is a lot to type...
+* We can run `./target/debug/hello_cargo`, but this is a lot to type...
 
 
 ---
