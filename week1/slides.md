@@ -249,9 +249,9 @@ By the end of the semester, we want you all to:
 
 You may notice a nautical theme...
 
-* Ferris is a crab,
-* everything is a crate,
-* crates are managed by Cargo
+* Ferris is a crab
+* Everything is a crate
+* Crates are managed by Cargo
 
 
 ---
@@ -267,8 +267,8 @@ Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmak
 
 Rust has its own build system and package manager called **Cargo**.
 
-* Build system: Takes your code and builds it into a crate
-* Package manager: Like an app store for code, helps you download and update your crates
+* Build system: builds your code into a crate
+* Package manager: downloads and manages dependencies
 <!-- Speaker note: "Similar to `pip` for Python or `npm` for Node.js" -->
 
 
@@ -279,11 +279,9 @@ Rust has its own build system and package manager called **Cargo**.
 
 Simplifies development!
 
-C/C++ build systems: "Many, and they're all awful"
+* C/C++ build systems and package managers: "Many, and they're all awful"
 
-C/C++ package managers: "Many, and they're not as awful but still frustrating"
-
-Cargo is included with all Rust distributions, eliminates the need for third-party build systems.
+* Cargo is included with all Rust distributions, eliminates the need for third-party build systems
 
 
 ---
@@ -323,6 +321,7 @@ $ cd hello_cargo
     * `Cargo.toml`
     * `src/main.rs`
 
+We'll cover more in our Crates and Testing lecture!
 
 ---
 
