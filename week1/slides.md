@@ -322,18 +322,6 @@ fn main() {
 ---
 
 
-# Cargo: One Ring to Rule Them All
-
-Simplifies development!
-
-* C/C++ build systems and package managers: "Many, and they're all awful"
-
-* Cargo is included with all Rust distributions, eliminates the need for third-party build systems
-
-
----
-
-
 # Building your project
 
 To build your project, use `cargo build`.
