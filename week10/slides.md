@@ -8,7 +8,7 @@ paginate: true
 <!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
-# Parallelism
+# Smart Pointers and Trait Objects
 
 <br>
 
@@ -16,710 +16,1208 @@ paginate: true
 
 <!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
----
-
-# Parallelism vs. Concurrency
-
-<div class="columns">
-<div>
-
-## Parallelism
-
-- Work on multiple tasks at the same time
-- Utilizes multiple processors/cores
-
-</div>
-<div>
-
-## Concurrency
-
-- Manage multiple tasks, but only do one thing at a time.
-- Better utilizes a single processor/core
-
-</div>
-</div>
-<center>
-
-* These terms are used (and abused) interchangably
-
-</center>
-
----
-
-# Parallelism vs. Concurrency
-
-
-<img src="img/concvspar.jpg" style="width: 85%; margin-left: auto; margin-right: auto;">
-
----
-
-# Parallelism vs. Concurrency
-<div class="columns">
-<div>
-
-## Parallelism
-
-<img src="img/psychotic-chefs.jpg" style="width: 88%">
-
-</div>
-<div>
-
-## Concurrency
-
-<img src="img/lonely-chef.jpg" style="width: 88%">
-
-</div>
-</div>
-
----
-
-# Parallelism vs. Concurrency (Examples)
-<div class="columns">
-<div>
-
-## Parallelism
-
-
-- Have one processor work on loading the webpage, while another updates the progress bar
-* Often used to divide tasks into smaller units that can run at the same time
-  * e.g. Processing 100x100px regions of an image on each core
-  * "Divide and conquer"
-</div>
-<div>
-
-## Concurrency
-
-* As we load a webpage, take a break sometimes to update the loading progress bar
-* Often used to do other things while we wait for blocking I/O operations
-  * e.g. Running garbage collection while we wait for a response over the network
-
-</div>
-</div>
 
 ---
 
 
-# Today: Parallelism
-- Threads
-- Synchronization
-- Message Passing
-- `Send` and `Sync`
-- More Synchronization
+# Today: Smart Pointers and Trait Objects
+
+- `Box<T>`
+- The `Deref` trait
+- The `Drop` trait
+- Trait Objects
+- Smart Pointers
 
 
 ---
 
-# Terminology: Threads
 
-* Dangerously overloaded term—can mean one of many things
-* For this lecture, we define it as a "stream of instructions"
-* In Rust, language threads are 1:1 with OS threads
-* **Key point:** Threads share the same resources
+# **Motivation for `Box<T>`**
+
 
 ---
 
-# Sharing Resources
 
-```c
-static int x = 0;
+# Let's Make a List
 
-static void thread(void) {
-  int temp = x;
-  temp += 1;
-  x = temp;
+![bg right:30% 80%](../images/ferris_does_not_compile.svg)
+
+Let's say we wanted to make a recursive-style list:
+
+```rust
+enum List {
+  Cons(i32, List),
+  Nil,
 }
-// <!-- snip -->
-for (int i = 0; i < 20; ++i) {
-  create_thread(thread); // helper function not shown
+
+fn main() {
+  // List of [1, 2, 3]
+  let list = Cons(1, Cons(2, Cons(3, Nil)));
 }
 ```
 
-* What is the value of `x` after we join on all 20 threads?
-  * What is the next slide's title going to be?
-
-<!-- Define atomic verbally -->
----
-
-# Race Conditions
-When multiple threads have access to the same data, things get complicated...
-* Specifically, this is about *data races*
 
 ---
 
-# The Bad Slide
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x (temp = 0)   |               |
-|               | temp = x (temp = 0)   |
-| temp += 1 (temp = 0 + 1) |               |
-|               | temp += 1 (temp = 0 + 1) |
-| x = temp (x = 1)  |               |
-|               | x = temp (x = 1)  |
+# The Compiler's Suggestion
 
-* Uh oh...
+```
+error[E0072]: recursive type `List` has infinite size
+ --> src/main.rs:1:1
+  |
+1 | enum List {
+  | ^^^^^^^^^
+2 |     Cons(i32, List),
+  |               ---- recursive without indirection
+  |
+help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
+  |
+2 |     Cons(i32, Box<List>),
+  |               ++++    +
+```
+* The compiler is complaining because we've defined a type with _infinite size_
+* The suggestion is to use a `Box<List>`
+
+
+---
+
+
+# Indirection with `Box<T>`
+
+```rust
+let singleton = Cons(1, Box::new(Nil));
+let list = Cons(1, Box::new(Cons(2,
+                     Box::new(Cons(3,
+                       Box::new(Nil))))));
+```
+
+* In the suggestion, "indirection" means we store a _pointer_ to a `List` rather than an entire `List`
+  * Pointers have fixed size, so our enum is no longer of infinite size!
+* We create a `Box<List>` with the `Box::new` associated function
+
+
+---
+
+
+# More about `Box<T>`
+
+* `Box<T>` is a simple "smart" pointer to memory allocated on the heap*
+  * It is "smart" because it frees the memory when dropped
+* Other than the cost of allocation and pointer indirection, `Box` has no performance overhead
+* `Box<T>` fully owns the data it points to (just like `Vec<T>`)
+
+
+---
+
+
+# When to use `Box<T>`
+
+* When you have a type of unknown size **at compile time** (like `List`)
+* When you have a large amount of data and want to transfer ownership
+  * Transferring ownership of a pointer is faster than a large chunk of data
+* Trait Objects
+  * We'll get to this soon...
+
 
 <!--
-Is that working correctly? Look at the code—it's doing exactly what it is supposed to do. Maybe we weren't specific enough...
+The reasoning for why transferring ownership is faster is that data
+won't need to be copied to another stack for example, just the pointer.
 -->
 
 ---
 
-# Synchronization
 
-To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
-* Mutual exclusion means "Only one thread can do something at a time"
-* A common tool for this is a mutex lock
+# Using Values in the `Box`
 
-
-<!-- Explain what mutual exclusion is, what a mutex is, high level, verbally -->
----
-
-
-# Sharing Resources With Mutual Exclusion
-
-```c
-static int x = 0;
-static mtx_t x_lock;
-
-static void thread(void) {
-  mtx_lock(&x_lock);
-  int temp = x;
-  temp += 1;
-  x = temp;
-  mtx_unlock(&x_lock);
-}
-// <!-- snip -->
-```
-- Only one thread can hold the mutex lock at a time
-
-- This provides *mutual exclusion*--only one thread may access `x` at the same time.
-
-
----
-
-# Threads in Rust
-
----
-
-# Threads in Rust
-* Rust's typechecker guarantees an absence of *data races*
-  * (Unless you use unsafe)
-* General race conditions are not prevented
-* Deadlocks are still allowed
-
-<!-- In my opinion, this is the single best reason to use this language -->
-
----
-
-# Creating Threads
-Threads can be created/spawned using `thread::spawn`.
 ```rust
-let handle = thread::spawn(|| {
-    for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
-        thread::sleep(Duration::from_millis(1));
+let x = 5;
+let y = Box::new(x);
+
+assert_eq!(5, x);
+assert_eq!(5, *y);
+```
+* Just like a reference we can dereference a `Box<T>` to get `T`
+* `Box<T>` implements the `Deref` trait which customizes the behavior of `*`
+
+
+---
+
+
+# `Deref` Trait
+
+The deref trait is defined as follows:
+```rust
+pub trait Deref {
+    type Target: ?Sized;
+
+    // Required method
+    fn deref(&self) -> &Self::Target;
+}
+```
+* Behind the scenes `*y` is actually `*(y.deref())`
+* Note this does not recurse infinitely
+* We can treat anything that implements `Deref` like a pointer!
+
+
+---
+
+
+# Deref Coercion
+
+Recall that we were able to coerce a `&String` into a `&str`. We can also coerce a `&Box<String>` into a `&str`!
+
+```rust
+fn hello(name: &str) {
+    println!("Hello, {name}!");
+}
+
+fn main() {
+    let m = Box::new(String::from("Rust"));
+    hello(&m);
+}
+```
+
+* Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
+* Example: Deref coercion can convert a `&String` into `&str`
+  * `String` implements the `Deref` trait such that `Deref::Target = &str`
+
+
+
+---
+
+
+# Deref Coercion Rules
+
+Rust is able to coerce mutable to immutable but not the reverse.
+
+* From `&T` to `&U` when `T: Deref<Target=U>`
+* From `&mut T` to `&mut U` when `T: DerefMut<Target=U>`
+* From `&mut T` to `&U` when `T: Deref<Target=U>`
+* For more information, consult the [Rustonomicon](https://doc.rust-lang.org/nomicon/dot-operator.html)
+
+
+---
+
+# `&T` to `&U` Example
+
+```rust
+fn foo(s: &[i32]) {
+    print(s[0])
+}
+
+// Vec<T> implements Deref<Target=[T]>.
+let owned = vec![1, 2, 3];
+
+// Here we coerce &Vec<T> to &[T]
+foo(&owned);
+
+println!("{:?}", owned);
+```
+
+```
+[1]
+[1, 2, 3]
+```
+
+---
+
+# `&mut T` to `&mut U` Example
+
+```rust
+fn foo(s: &mut [i32]) {
+    s[0] += 1;
+}
+
+// Vec<T> implements DerefMut<Target=[T]>.
+let mut owned = vec![1, 2, 3];
+
+// Here we coerce &mut Vec<T> to &mut [T]
+foo(&mut owned);
+
+println!("{:?}", owned);
+```
+
+```
+[2, 2, 3]
+```
+
+* `DerefMut` also allows coercing to &[T]
+
+<!--
+
+-->
+
+---
+
+
+# The `Drop` Trait
+
+```rust
+pub trait Drop {
+    fn drop(&mut self);
+}
+```
+
+* Values are dropped when they go out of scope
+* Dropping a value will recursively drop all its fields by default
+    * This mechanism allows automatically freeing memory
+* You can also provide a custom implementation of `Drop` on your types
+    * Allows us to run user code when values are dropped
+
+<!--
+first bullet: RAII
+your types -> specifically types declared in the crate per the orphan rule
+-->
+
+---
+
+
+# `Drop` Trait Example
+
+```rust
+struct CustomSmartPointer {
+    data: String,
+}
+
+impl Drop for CustomSmartPointer {
+    fn drop(&mut self) {
+        println!("Dropping `CustomSmartPointer` with data `{}`!", self.data);
     }
-});
+}
 ```
-* `thread::spawn` takes in a function, implementing the `FnOnce` and `Send` traits.
-  * Closures are often used to allow capturing values, but functions work as well
-  * More on the `Send` trait later...
-* Returns a `JoinHandle` type
+
+* This is a custom implementation that simply prints the data on drop
+* The data will still be freed automatically
+    * This method does not include automatic memory freeing logic
 
 
 ---
 
-# Joining Threads
-To wait for a thread to complete, we *join* on it.
+
+# `Drop` Trait Example
+
 ```rust
-let handle = thread::spawn(|| {
-    for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
-        thread::sleep(Duration::from_millis(1));
+let c = CustomSmartPointer {
+    data: String::from("my stuff"),
+};
+let d = CustomSmartPointer {
+    data: String::from("other stuff"),
+};
+println!("CustomSmartPointers created.");
+```
+```
+CustomSmartPointers created.
+Dropping CustomSmartPointer with data `other stuff`!
+Dropping CustomSmartPointer with data `my stuff`!
+```
+* Notice how values are dropped in reverse order of creation
+
+---
+# `Drop` Trait Usage
+
+`Drop` trait implementations are typically not needed unless:
+- You are manually managing memory
+    - This likely involves using `unsafe` under the hood
+- You need to do something special before a value is dropped
+    - Might involve managing OS resources
+    - Might involve signalling other parts of your codebase
+
+
+
+---
+
+
+# Manual Drop
+
+![bg right:30% 80%](../images/ferris_does_not_compile.svg)
+
+What if we want to manually drop a value before the end of the scope?
+
+```rust
+let csm = CustomSmartPointer {
+    data: String::from("some data"),
+};
+println!("CSM created.");
+
+csm.drop();
+
+println!("CSM dropped before the end of the scope");
+```
+
+
+---
+
+
+# Manual Drop
+
+```
+error[E0040]: explicit use of destructor method
+  --> src/main.rs:16:7
+   |
+16 |     c.drop();
+   |     --^^^^--
+   |     | |
+   |     | explicit destructor calls not allowed
+   |     help: consider using `drop` function: `drop(c)`
+```
+
+* Rust won't let you explicitly call the drop trait method to avoid double drops
+
+
+---
+
+
+# Manual Drop
+
+```rust
+let csm = CustomSmartPointer {
+    data: String::from("some data"),
+};
+println!("CSM created.");
+
+std::mem::drop(csm);
+
+println!("CSM dropped before the end of the scope");
+```
+
+* This code works since we use `std::mem::drop` instead
+* What's the difference?
+
+
+---
+
+
+# `std::mem::drop`
+
+Here is the actual source code of `std::mem::drop` in the standard library:
+
+```rust
+pub fn drop<T>(_x: T) {}
+```
+
+* It takes ownership of `_x`, and then `_x` reaches the end of the scope and is dropped
+    * Hence, calling this function drops it, on demand!
+
+<!--
+This is beautiful!!
+https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
+-->
+
+
+
+---
+
+
+# **Object Oriented Programming**
+
+* Well...
+    * Not quite...
+
+
+---
+
+
+# What We Know So Far...
+
+```rust
+pub struct AveragedCollection {
+    list: Vec<i32>,
+    average: f64,
+}
+
+impl AveragedCollection {
+    pub fn add(&mut self, value: i32) {
+        self.list.push(value);
+        self.update_average();
     }
-});
 
-handle.join().unwrap();
-```
-* Execution of the main thread is halted until the spawned thread finishes
-
-
----
-
-![bg right:20% 75%](../images/ferris_does_not_compile.svg)
-
-# Capturing Values in Threads
-We often want to use things outside of the the closure, but borrowing them can be problematic.
-```rust
-let v = vec![1, 2, 3];
-
-let handle = thread::spawn(|| {
-    println!("Here's a vector: {:?}", v);
-});
-```
-```
-error[E0373]: closure may outlive the current function,
-but it borrows `v`, which is owned by the current function
-```
-* In other words, what if `v` goes out of scope while the thread is still running?
-
----
-
-# Capturing Values in Threads
-To solve this problem, we can take ownership of values, *moving* them into the closure.
-```rust
-let v = vec![1, 2, 3];
-
-let handle = thread::spawn(move || {
-    println!("Here's a vector: {:?}", v);
-});
-```
-* `v` is no longer accessible in the main thread
-* You could clone `v` to solve this problem
-  * But, what if we *wanted* to share `v`?
-
----
-
-# Multiple Owners
-
-Recall `Rc<T>` from last lecture.
-* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value.
-* The difference is, `Rc<T>` has an internal reference count, and the heap allocated value will only be dropped when the reference count reaches zero.
-* The only problem is, `Rc<T>` is not thread safe...
-
-<!-- Make sure people know about reference counts -->
-
----
-
-# `Arc<T>`
-
-"Arc" stands for "Atomically Reference Counted". This means, it is thread-safe, at the cost of slightly slower operations.
-* General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads
-  * The compiler will not let you use `Rc` across threads
-
----
-
-# Sharing Resources in Rust
-We can give the vector multiple owners by using an `Arc`.
-```rust
-let v = Arc::new(vec![1, 2, 3]);
-
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
-* `v` and `v_copy` both point to the same value
-* When both  are dropped, only then will the underlying vector be dropped
-* Is this a data race?
-  * No, because we are only performing reads
-
----
-
-![bg right:20% 75%](../images/ferris_does_not_compile.svg)
-
-# Sharing Mutable Resources in Rust
-If we attempt to mutate the vector, we will indeed encounter an error
-```rust
-let v = Arc::new(vec![1, 2, 3]);
-
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    v_copy.push(4);
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-v.push(5);
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
-* This prevents a data race
-  * If we allowed this, it would violate one of the rules—only one mutable reference at a time
-
----
-
-![bg right:20% 75%](../images/ferris_does_not_compile.svg)
-
-# Sharing Mutable Resources in Rust
-```rust
-let v = Arc::new(vec![1, 2, 3]);
-
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    v_copy.push(4);
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-v.push(5);
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
-
-```
-cannot borrow data in an Arc as mutable
-<!-- snip -->
-help: trait DerefMut is required to modify through a dereference,
-but it is not implemented for Arc<Vec<i32>>
-```
-
----
-
-
-# Sharing Mutable Resources in Rust
-The solution to this is actually the same as in C—we introduce a mutex.
-
----
-
-# Mutexes in Rust
-
-Unlike in C, mutexes in Rust actually *wrap* values.
-
-```rust
-let x = Mutex::new(0);
-let x_data = x.lock().unwrap();
-```
-* This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
-  * If we know this, our multiple mutable references rule is not broken!
-* `x_data` is a `MutexGuard` type.
-  * It has deref coercion, so one can operate on it just like it was the actual data
-* When `x_data` is dropped, the mutex will be unlocked.
-* `lock` may return an error if another thread panics
-
----
-
-# Sharing Mutable Resources in Rust
-```rust
-let v = Arc::new(Mutex::new(vec![1, 2, 3]));
-
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    v_copy.lock().unwrap().push(4);
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-v.lock().unwrap().push(5);
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
-* The other thread cannot access the mutex until it is dropped (unlocked)
-* This prevents multiple mutable references, and the data race, by providing mutual exclusion!
-
----
-
-# C to Rust Example
-
----
-
-# C to Rust Example
-
-![bg right:20% 75%](../images/ferris_does_not_compile.svg)
-
-Here's the C code from before, turned into Rust directly.
-
-```rust
-let mut x = 0;
-
-for _ in 0..20 {
-    thread::spawn(|| {
-        x += 1;
-    });
+    <-- snip -->
 }
 ```
-* A sea of errors ensues of course, but the key idea is that this violates one of our rules.
-  * We can't have multiple mutable references at the same time!
+* Encapsulation within `impl` blocks and crates
+* Public and private functions and methods with `pub`
 
 
 ---
 
-# C to Rust Example (with Mutexes)
 
-![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+# Inheritence?
+Rust structs cannot "inherit" the implementations of methods or data fields from another struct...
+* If we want to wrap another struct's functionality, we can use composition
+* If we want to define interfaces, we can use traits
+* If we want polymorphism...
+    * Rust has something called "trait objects"
 
-Here's our code from before, with mutexes incorporated
-
-```rust
-let x = Mutex::new(0);
-
-for _ in 0..20 {
-    thread::spawn(|| {
-        let mut data = x.lock().unwrap();
-        *data += 1;
-    });
-}
-```
-* What is wrong now?
-  * What if the main function ends? It owns `x`, so the thread references to `x` will be invalid...
-* How can we have multiple owners?
+<!--
+Composition is usually preferred in other languages nowadays too
+--->
 
 ---
 
-# C to Rust Example (with Multiple Ownership)
+
+# Polymorphism
+
+* Polymorphism != Inheritance
+* Polymorphism == "Code that can work with multiple data types"
+* In object oriented languages, polymorphism is usually expressed with classes
+* Rust expresses polymorphism with generics and traits:
+  * Generics are abstract over different possible types
+  * Traits impose constraints on what behaviors types must have
+
+
+---
+
+
+# Trait Objects
+
+Trait objects allow us to store objects that implement a trait.
 
 ```rust
-let x = Arc::new(Mutex::new(0));
+pub trait Window {
+    fn draw(&self);
+}
 
-for _ in 0..20 {
-    let x_clone = Arc::clone(&x);
-    thread::spawn(move || {
-        let mut data = x_clone.lock().unwrap();
-        *data += 1;
-    });
+pub struct LaptopScreen {
+    pub windows: Vec<Box<dyn Window>>,
 }
 ```
-* Notice that we `move` each clone of `x` into each thread, taking ownership of it
-* Each thread has a pointer to the mutex
-  * The mutex is not deallocated until all of the `Arc`s pointing to it are dropped (and the reference count is zero)
+
+* In this example, `LaptopScreen` holds a vector of `Window` objects
+* We use the `dyn` keyword to describe any type that implements `Window`
+    * In a `Box`, since objects implementing `Window` could be of any size at runtime
 
 
 <!--
-Q: Why not give mutex an internal Arc?
-A: What if we want to have a mutex around only some values in a struct, while others are atomic?
+key: Not size at compile time
+Note that converting a type into a trait object _erases_ the original type
+-->
+
+---
+
+
+# Trait Objects and Closures
+
+Since closures implement the `Fn` traits, they can be represented as trait objects!
+
+```rust
+fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
+    Box::new(|x| x + 1)
+}
+
+fn main() {
+    let closure = returns_closure();
+    print!("{}", closure(5)); // prints 6
+}
+```
+
+* We can use trait objects to return dynamic types
+* Deref coercion happening in the background to keep ergonomics clean!
+
+
+---
+
+
+# Working With Trait Objects
+
+```rust
+struct ChromeWindow {
+    width: u32,
+    height: u32,
+    evil_tracking: bool
+}
+
+struct FirefoxWindow {
+    width: u32,
+    height: u32,
+}
+
+impl Window for ChromeWindow { fn draw(&self) { ... } }
+impl Window for FirefoxWindow { fn draw(&self) { .. } }
+```
+
+* Say we have **multiple** types that implement `Window`
+
+
+---
+
+
+# Working With Trait Objects: Dynamic Dispatch
+
+```rust
+impl LaptopScreen {
+    pub fn run(&self) {
+        // `windows` is of type Vec<Box<dyn Window>>
+        for window in self.windows.iter() {
+            window.draw();
+        }
+    }
+}
+```
+
+* This is different than if `windows` was `Vec<ChromeWindow>`
+  * The generic parameter (in `Vec`) is known at compile time.
+* Trait objects allow for types to fill in for the trait object **at runtime**
+
+
+---
+
+
+# Generic Version
+
+What about a version implemented with generics?
+
+```rust
+pub struct LaptopScreen<T: Window> {
+    pub windows: Vec<T>,
+}
+
+impl<T> LaptopScreen<T>
+where
+    T: Window,
+{
+    pub fn run(&self) {
+        for window in self.windows.iter() {
+            window.draw();
+        }
+    }
+}
+```
+* What is wrong with this version?
+  * We can't create a `LaptopScreen` with two different types of windows in it
+
+---
+
+# Trait Objects: Mixing Objects
+
+```rust
+let screen = LaptopScreen {
+    windows: vec![
+        Box::new(ChromeWindow {
+            width: 1280,
+            width: 720,
+            evil_tracking: true,
+        }),
+        Box::new(FirefoxWindow {
+            <-- snip -->
+        }),
+    ],
+};
+screen.run();
+```
+
+* This is not possible with the version using generics
+
+
+---
+
+
+# Aside: Dynamically Sized Types
+
+* `dyn Window` is an example of a dynamically sized type (DST)
+* DSTs have to be in a `Box`, because we don't know the size at compile time
+    * A `dyn Window` could be a `ChromeWindow` or `FirefoxWindow` object
+    * How much space should we make on the stack?
+* Pointers to DSTs are double the size (wide pointers)
+    * If you're interested in more information, ask us after lecture!
+
+
+---
+
+# Smart Pointers
+
+---
+
+
+# Smart Pointers
+- `Rc<T>`
+- `RefCell<T>`
+- Interior Mutability
+- Memory Leaks
+
+---
+
+
+# **Motivation for `Rc<T>`**
+
+
+---
+
+
+# Let's Make a List (again)
+Let's continue making the recursive-style list from the beginning of lecture with `Box<T>`.
+
+```rust
+enum List {
+  Cons(i32, Box<List>),
+  Nil,
+}
+
+fn main() {
+  let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+  let b = Cons(3, Box::new(a));
+  let c = Cons(4, Box::new(a));
+}
+```
+
+![bg right:30% 80%](../images/ferris_does_not_compile.svg)
+
+---
+
+
+# Cargo's Suggestion
+
+```
+   Compiling cons-list v0.1.0 (file:///projects/cons-list)
+error[E0382]: use of moved value: `a`
+  --> src/main.rs:11:30
+   |
+9  |     let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+   |         - move occurs because `a` has type `List`, which does not implement the `Copy` trait
+10 |     let b = Cons(3, Box::new(a));
+   |                              - value moved here
+11 |     let c = Cons(4, Box::new(a));
+   |                              ^ value used here after move
+
+```
+* `Cons` needs to **own** the data it holds
+* We want both `b` and `c` to point to the same instance `a`
+    * `a` was already moved into `b` when we create `c`
+
+<!--
+Cloning is expensive + then b and c refer to different tails---no cloning!
+-->
+
+
+---
+
+
+# References?
+
+```rust
+enum List<'a> {
+    Cons(i32, &'a List<'a>),
+    Nil,
+}
+
+use crate::List::{Cons, Nil};
+
+fn main() {
+  let nil = Nil;
+  let a = Cons(10, &nil);
+  let b = Cons(5, &a);
+  let c = Cons(3, &a);
+  let d = Cons(4, &a);
+}
+```
+* While it can be done, it's a little messy
+
+
+---
+
+
+# Introducing `Rc<T>`
+
+```rust
+enum List {
+  Cons(i32, Rc<List>),
+  Nil,
+}
+
+use crate::List::{Cons, Nil};
+use std::rc::Rc;
+
+fn main() {
+  let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
+  let b = Cons(3, Rc::clone(&a));
+  let c = Cons(4, Rc::clone(&a));
+}
+```
+* Short for reference counted
+* Keeps track of the number of references to a value
+
+
+
+---
+
+
+# `Rc<T>`: Reference Counted
+
+* Use `Rc::new(T)` to create a new `Rc<T>`
+  * `Rc::clone()` isn't a deep clone, it increments the ref counter
+* When an `Rc` is cloned, increment reference count
+* When an `Rc` is dropped, decrement reference count
+* When the reference count reaches zero, free the memory
+
+
+---
+
+
+# When to use `Rc<T>`
+
+* Share one instance of allocated memory throughout the program
+    * We can only access the data as read-only
+    * We don't need to know what part of the program is going to use it last
+* Only used for single-threaded scenarios
+    * `Arc<T>` for multi-threaded (more on that soon)
+
+
+---
+
+
+# `Rc<T>` Reference Counting Demonstrated
+
+
+```rust
+fn main() {
+    let a = Rc::new(String::new("TODO: Steal Connor's identity"));
+    // Ref count after creating a: 1
+
+    let b = Rc::clone(&a);
+    // Ref count after creating b: 2
+
+    {
+        let c = Rc::clone(&a);
+        // Ref count after creating c: 3
+    }
+    // Ref count after dropping c: 2
+}
+// Ref count after dropping b and c: 0
+```
+* The ref count is incremented on each clone
+* The ref count is decremented on each drop
+* Once the ref count reaches 0, the stored string data is deallocated.
+
+---
+
+
+# `Rc<T>` Recap
+
+* Allows sharing ***immutable*** references without lifetimes
+* Should be used when the last user of the data is unknown
+* Very low overhead for providing this capability
+  * O(1) increment/decrement of counter
+  * Potential allocation/de-allocation on heap
+* Implemented using the `Drop` trait and `unsafe`!
+
+<!---
+second line: Should be used when last user of the data is unknown
 -->
 ---
 
-# The Good Slide
+
+
+# **`RefCell<T>` and Interior Mutability**
+
+
+---
+
+
+# First, `Cell<T>`
 
 ```rust
-let x = Arc::new(Mutex::new(0));
-let mut handles = vec![];
+use std::cell::Cell;
 
-for _ in 0..20 {
-    let x_clone = Arc::clone(&x);
-    handles.push(thread::spawn(move || {
-        let mut data = x_clone.lock().unwrap();
-        *data += 1;
-    }));
-}
+let c1 = Cell::new(5i32);
+c1.set(15i32);
 
-for handle in handles { handle.join().unwrap(); } // Wait for all threads
-println!("Final value of x: {}", *x.lock().unwrap());
+let c2 = Cell::new(10i32);
+c1.swap(&c2);
+
+assert_eq!(10, c1.into_inner()); // consumes cell
+assert_eq!(15, c2.get()); // returns copy of value
 ```
-* `x` is 20, *every time*.
-  * And it is illegal for it to be anything else in safe Rust.
-
----
-
-# Parallelism Checkpoint
-Up until now, we have been talking about parallelism with *shared state*. Let's shift gears and talk about *message passing*.
-
----
-
-# Message Passing
-
-Rather than sharing state between threads, an increasingly popular approach to safe concurrency is message passing.
-* In this approach, threads communicate with each other through channels
-* Golang famously utilizes this approach
+* Shareable, mutable container
+* Values can be moved in and out of a cell
+* Used for `Copy` types
+  * (where copying or moving values isn’t too resource intensive)
 
 
 ---
 
-# Message Passing Example
+
+# `RefCell<T>`
+
+* Hold's sole ownership like `Box<T>`
+* Allows borrow checker rules to be enforced at **runtime**
+  * Interface with `.borrow()` or `borrow_mut()`
+  * If borrowing rules are violated, `panic!`
+* Typically used when Rust's conservative compile-time checking "gets in the way"
+* It is **not** thread safe!
+  * Use `Mutex<T>` instead
+
+
+---
+
+
+# Interior Mutability
 
 ```rust
-let (tx, rx) = mpsc::channel();
-```
-* Channels have two halves, a transmitter and a receiver
-* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
-  * Ben finds the duck downstream, and reads the message (receiver)
-* Note that communication is one-way here
-* Note also that each channel can only transmit/receive one type
-  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
-
----
-
-# Message Passing Example
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-});
-
-let received = rx.recv().unwrap(); // receive val through the receiver
-println!("I am too busy to {}!", received);
-```
-* Note that, after we send `val`, we no longer have ownership of it!
-
----
-
-# Message Passing Example
-We can also use receivers as iterators!
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-    tx.send("buy Connor lunch".into()).unwrap();
-});
-
-for msg in rx {
-  println!("I am too busy to {}!", msg);
-}
-```
-* Wait, what does `mpsc` stand for?
-
----
-
-# `mpsc` ⟹ Multiple Producer, Single Consumer
-
-This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-let tx1 = tx.clone();
-thread::spawn(move || { // owns tx1
-      tx1.send("yo".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-thread::spawn(move || { // owns tx
-      tx.send("hello".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-for received in rx {
-    println!("Got: {}", received);
+fn main() {
+  let x = 5;
+  let y = &mut x; // cannot borrow immutable x as mutable
 }
 ```
 
----
-
-# `Send` and `Sync`
-
----
-
-# `Send` and `Sync`
-
-Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
-
-
-<!-- Marker trait == no implementation, signal to the compiler -->
-
----
-
-# `Send` vs. `Sync`
-
-
-## `Send`
-
-* Indicates that the type is safe to *send* between threads.
-* `Rc<T>` does not implement this trait, because it is not thread safe.
-
-
-## `Sync`
-
-* Indicates that the type implementing `Send` can be referenced from multiple threads
-* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
-* `Rc<T>` does not implement `Sync` either
-
-<!-- MutexGuard implements Sync, but not Send, actually! -->
+* It would be useful for a value to mutate itself in its methods but appear immutable to other code
+* Code outside the value's methods wouldn't be able to mutate it
+* This can be achieved with `RefCell<T>`
 
 
 ---
 
-# Using `Send` and `Sync`
-* It is generally rare that you would implement these traits yourself
-  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
-  * Explicitly implementing either one requires using `unsafe`
-* This would be an example of a trait you might want to *unimplement*
-  * e.g. If you are doing something with `unsafe` that is not thread-safe
-  * `impl !Send for CoolType<T> {}`
 
-<!-- Notice this negative impl is not unsafe-->
-
----
-
-# More Shared State Primitives
-
----
-
-# `RwLock<T>` (Reader-Writer Lock)
-
-A reader-writer lock is like a mutex, except it allows concurrent access between readers (not writers).
-* We can acquire a read lock (or shared lock)
-  * Can be held by multiple readers at once
-  * No writers can hold the lock
-* We can acquire a write lock (or exclusive lock),
-  * Can be held by only one writer
-  * No readers can hold the lock
-
----
-
-# `RwLock<T>` Example
+# Interior Mutability with Mock Objects
 
 ```rust
-let shared_data = Arc::new(RwLock::new(Vec::<i32>::new()));
-
-// All of the readers can hold the read lock simultaneously
-for _ in 0..5 {
-    let shared_data_clone = Arc::clone(&shared_data);
-    thread::spawn(move || {
-        let data = shared_data_clone.read().unwrap();
-        println!("Reader: {:?}", *data);
-    });
+pub trait Messenger {
+    // Note this takes &self and not &mut self
+    fn send(&self, msg: &str);
 }
 
-// The writer has to be the only one with the lock
-let shared_data_clone = Arc::clone(&shared_data);
-thread::spawn(move || {
-    let mut data = shared_data_clone.write().unwrap();
-    data.push(42);
-    println!("Writer: {:?}", *data);
-});
+pub struct LimitTracker<'a, T: Messenger> {
+    messenger: &'a T,
+    value: usize,
+    max: usize,
+}
+```
+
+* `LimitTracker` tracks a value against a maximum value and sends messages based on how close to the maximum value the current value is
+* We want to mock a messenger for our limit tracker to keep track of messages for testing
+
+
+---
+
+
+# Limit Tracker
+```rust
+impl<'a, T> LimitTracker<'a, T>
+where
+    T: Messenger,
+{
+    // --- snip ---
+    pub fn set_value(&mut self, value: usize) {
+        self.value = value;
+
+        let percentage_of_max = self.value as f64 / self.max as f64;
+
+        if percentage_of_max >= 1.0 {
+            self.messenger.send("Error: You are over your quota!");
+        } else if percentage_of_max >= 0.9 {
+            self.messenger
+                .send("Urgent warning: You've used up over 90% of your quota!");
+        } else if percentage_of_max >= 0.75 {
+            self.messenger
+                .send("Warning: You've used up over 75% of your quota!");
+        }
+    }
+}
+```
+
+
+---
+
+
+# Our Mock Messenger
+
+```rust
+struct MockMessenger {
+  sent_messages: Vec<String>,
+}
+
+impl MockMessenger {
+  fn new() -> MockMessenger {
+    MockMessenger { sent_messages: vec![] }
+  }
+}
+
+impl Messenger for MockMessenger {
+  fn send(&self, message: &str) {
+    self.sent_messages.push(String::from(message));
+  }
+}
+```
+
+* This code won't compile! `self.sent_messages.push` requires `&mut self`
+
+
+---
+
+
+# Let's Use Interior Mutability
+
+```rust
+use std::cell::RefCell;
+
+struct MockMessenger {
+  sent_messages: RefCell<Vec<String>>,
+}
+
+impl MockMessenger {
+  fn new() -> MockMessenger {
+    MockMessenger {
+      sent_messages: RefCell::new(vec![]),
+    }
+  }
+}
+
+impl Messenger for MockMessenger {
+  fn send(&self, message: &str) {
+    self.sent_messages.borrow_mut().push(String::from(message));
+  }
+}
+```
+
+
+---
+
+
+# Managing Borrows
+
+![bg right:30% 80%](../images/ferris_panics.svg)
+```rust
+impl Messenger for MockMessenger {
+  fn send(&self, message: &str) {
+    let mut one_borrow = self.sent_messages.borrow_mut();
+    let mut two_borrow = self.sent_messages.borrow_mut();
+
+    one_borrow.push(String::from(message));
+    two_borrow.push(String::from(message));
+  }
+}
+```
+
+* We still use the `&` and `mut` syntax for `RefCell`
+* `borrow` returns either a `Ref` or `RefMut` which implement `Deref`/`DerefMut`
+  * Deref coercion applies: Can be treated as standard references
+
+
+---
+
+
+# What Makes Each Smart Pointer Unique
+
+
+* `Rc<T>` - Enables multiple read-only owners of the same data
+* `Box<T>` - Allows immutable or mutable borrows that are checked at compile time
+* `RefCell<T>` - Allows immutable/mutable borrows that are checked at ***runtime***
+
+
+---
+
+
+# Combining Smart Pointers: `Rc<RefCell<T>>`
+
+```rust
+#[derive(Debug)]
+enum List {
+  Cons(Rc<RefCell<i32>>, Rc<List>),
+  Nil,
+}
+```
+
+* Common type seen in Rust
+* Enables multiple owners of mutable data (with runtime checks)
+* Extremely powerful, but comes with some overhead
+
+
+---
+
+# `Rc<RefCell<T>>` List
+
+```rust
+let value = Rc::new(RefCell::new(5));
+
+let a = Rc::new(Cons(Rc::clone(&value), Rc::new(Nil)));
+
+let b = Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
+let c = Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
+
+*value.borrow_mut() += 10;
+
+println!("a after = {:?}", a);
+println!("b after = {:?}", b);
+println!("c after = {:?}", c);
+```
+```
+a after = Cons(RefCell { value: 15 }, Nil)
+b after = Cons(RefCell { value: 3 }, Cons(RefCell { value: 15 }, Nil))
+c after = Cons(RefCell { value: 4 }, Cons(RefCell { value: 15 }, Nil))
 ```
 
 ---
 
-# Even More  Primitives
 
-* `CondVar<T>`—release a mutex and atomically wait to be signaled to re-acquire it
-* `Barrier`—Memory barrier, allows multiple threads to wait at a certain point, until all relevant threads reach that point
-* `Weak<T>`—downgraded version of `Rc` or `Arc` that holds a pointer, but does not count as an owner.
-  * Retrieving the value can fail, if it has been deallocated already.
+# Let's Try Another List
 
----
+```rust
+enum List {
+  Cons(i32, RefCell<Rc<List>>),
+  Nil,
+}
 
-# One more thing...
+impl List {
+  fn tail(&self) -> Option<&RefCell<Rc<List>>> {
+    match self {
+      Cons(_, item) => Some(item),
+      Nil => None,
+    }
+  }
+}
+```
+* This implementation allows modifying the list structure instead of list values
+* Now we have a function `tail` that gets the rest of our list
 
----
-
-# `std::sync::atomic`
-
-Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
-* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
-* 100% lock free, using bespoke assembly instructions
-* Highly performant, but very difficult to use
-* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
-* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
-
----
-
-# Review: "Fearless Concurrency"
-
-What we have gone over today is referred to as "fearless concurrency" in the rust community.
-* By leveraging the ownership system, we can move entire classes of concurrency bugs to compile-time
-* Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
-* Subjectively, this may be the single best reason to use this language
-* Both parallelism and concurrency, as introduced in this lecture, benefit from these guarantees
 
 ---
 
-# Next Lecture: Concurrency
+
+# What Happens?
+
+```rust
+let a = Rc::new(Cons(5, RefCell::new(Rc::new(Nil))));
+
+println!("a initial rc count = {}", Rc::strong_count(&a));
+println!("a next item = {:?}", a.tail());
+
+let b = Rc::new(Cons(10, RefCell::new(Rc::clone(&a))));
+
+println!("a rc count after b creation = {}", Rc::strong_count(&a));
+println!("b initial rc count = {}", Rc::strong_count(&b));
+println!("b next item = {:?}", b.tail());
+
+if let Some(link) = a.tail() {
+  *link.borrow_mut() = Rc::clone(&b);
+}
+
+println!("b rc count after changing a = {}", Rc::strong_count(&b));
+println!("a rc count after changing a = {}", Rc::strong_count(&a));
+
+println!("a next item = {:?}", a.tail());
+```
+
+
+---
+
+
+# Answer
+
+```
+Exited with signal 6 (SIGABRT): abort program
+
+a initial rc count = 1
+a next item = Some(RefCell { value: Nil })
+a rc count after b creation = 2
+b initial rc count = 1
+b next item = Some(RefCell { value: Cons(5, RefCell { value: Nil }) })
+b rc count after changing a = 2
+a rc count after changing a = 2
+a next item = Some(RefCell { value: Cons(10, RefCell { value: Cons(5, RefCell...
+```
+
+* We see that at the end we have a reference cycle!
+
+
+---
+
+
+# Let's Look Closer
+```rust
+let a = Rc::new(Cons(5, RefCell::new(Rc::new(Nil))));
+// a is Cons(5, Nil)
+
+let b = Rc::new(Cons(10, RefCell::new(Rc::clone(&a))));
+// b is Cons(10, a) = Cons(10, Cons(5, Nil))
+
+if let Some(link) = a.tail() {
+    // link is Nil (pointed to by a)
+    *link.borrow_mut() = Rc::clone(&b);
+    // link is now b = Cons(10, a)
+}
+// a = Cons(5, link) = Cons(5, b) = Cons(5, Cons(10, a))
+// ^^^ reference cycle of a made!
+```
+
+* This can cause a memory leak!
+  * `Rc` only frees when the `strong_count` is 0
+
+
+---
+
+
+# Avoiding Reference Cycles
+
+* We know `Rc::clone` increases the `strong_count`
+* You can create a `Weak<T>` reference to a value with `Rc::downgrade`
+  * This increases the `weak_count` and can be nonzero when the `Rc` is freed
+* To ensure valid references, `Weak<T>` must be upgraded before any use
+  * Returns an `Option<Rc<T>>`
+
+
+---
+
+
+# `Weak<T>` Trees
+
+```rust
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
+#[derive(Debug)]
+struct Node {
+  value: i32,
+  parent: RefCell<Weak<Node>>,
+  children: RefCell<Vec<Rc<Node>>>,
+}
+```
+
+
+---
+
+
+# `Weak<T>` Trees In Action
+
+```rust
+fn main() {
+  let leaf = Rc::new(Node {
+    value: 3,
+    parent: RefCell::new(Weak::new()),
+    children: RefCell::new(vec![]),
+  });
+
+  println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+
+  let branch = Rc::new(Node {
+    value: 5,
+    parent: RefCell::new(Weak::new()),
+    children: RefCell::new(vec![Rc::clone(&leaf)]),
+  });
+
+  *leaf.parent.borrow_mut() = Rc::downgrade(&branch);
+
+  println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+} // Tree is effectively dropped even with parent references!
+```
+
+
+---
+
+
+# Recap
+
+- `Box<T>`
+- The `Deref` trait
+- The `Drop` trait
+- Trait Objects
+- Smart Pointers
+
+---
+
+
+# Next Lecture: Parallelism (probably)
+
+
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-- Including `async`/`await`!
-- Thank you for coming!
+* Thanks for coming!

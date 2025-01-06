@@ -5,603 +5,255 @@ class: invert
 paginate: true
 ---
 
+
 <!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
-# Crates, Closures, and Iterators
-###### (oh my)
+# Modules and Testing
 
 <br>
 
 #### Benjamin Owad, David Rudo, and Connor Tsui
 
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
-
-
----
-
-# Today: Crates, Closures, and Iterators
-
-- Crate Highlights
-- Closures
-- Iterators
-
 
 ---
 
 
-# **Crate Highlights**
+# Today: Modules and Testing
+
+
+* Modules, Packages, and Crates
+    * The `use` keyword
+    * Module Paths and the File System
+* Testing
+    * Unit Testing
+    * Integration Testing
 
 
 ---
 
 
-# `rand`
+# Large Programs
 
-The standard library includes many things... but a random number generator isn't one of them*.
+As your programs get larger, the organization of the code becomes increasingly important.
 
-Here's an example of using the `rand` crate:
+It is generally good practice to:
 
-```rust
-use rand::prelude::*;
-
-let mut rng = rand::thread_rng();
-let y: f64 = rng.gen(); // generates a float between 0 and 1
-
-let mut nums: Vec<i32> = (1..100).collect();
-nums.shuffle(&mut rng);
-```
+* Split code into multiple folders and files
+* Group related functionality
+* Separate code with distinct features
+* Encapsulate implementation details
+* _Modularize_ your program
 
 
 ---
 
 
-# `rand`
+# Module System
 
-```rust
-use rand::prelude::*;
+Rust implements a number of organizational features, collectively referred to as the _module system_.
 
-let mut rng = rand::thread_rng();
-let y: f64 = rng.gen(); // generates a float between 0 and 1
+* **Packages**: A Cargo feature that lets you build, test, and share crates
+* **Crates**: A tree of modules that produces a library or executable
+* **Modules**: Lets you control the organization, scope, and privacy of paths
+* **Paths**: A way of naming an item, such as a struct, function, or module
 
-let mut nums: Vec<i32> = (1..100).collect();
-nums.shuffle(&mut rng);
-```
-
-* `rand` is the de facto crate for:
-    * Generating random numbers
-    * Creating probabilistic distributions
-    * Providing randomness related algorithms (like vector shuffling)
-
-
----
-
-
-# `clap`
-
-Often, we want our binary to take in command line arguments.
-
-A very popular argument parser used in Rust programs is `clap`.
-
-```rust
-use clap::Parser;
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(short, long)]
-    name: String, // Name of the person to greet
-
-    #[arg(short, long, default_value_t = 1)]
-    count: u8, // Number of times to greet
-}
-```
-
-* Makes use of Rust's macro system to generate boilerplate code for us!
-
-
----
-
-
-# `clap`
-
-Here's how you would use a `clap` struct called `Args`:
-
-```rust
-use clap::Parser;
-
-// <-- snip -->
-struct Args {
-    // <-- snip -->
-}
-
-fn main() {
-    let args = Args::parse(); // get-opt could never
-    for _ in 0..args.count {
-        println!("Hello {}!", args.name)
-    }
-}
-```
-
-
----
-
-
-# `clap`
-
-If we run the binary called `demo`:
-
-```
-$ demo --help
-A simple to use, efficient, and full-featured Command Line Argument Parser
-
-Usage: demo[EXE] [OPTIONS] --name <NAME>
-
-Options:
-  -n, --name <NAME>    Name of the person to greet
-  -c, --count <COUNT>  Number of times to greet [default: 1]
-  -h, --help           Print help
-  -V, --version        Print version
-
-$ demo --name Me
-Hello Me!
-```
-
-* Note that `clap` is not the only 3rd-party crate option!
 
 <!--
-clap can be pretty heavyweight if you don't need too much functionality
+Paths are what we've been calling namespaces this whole time basically
+-->
+
+---
+
+
+# **Packages and Crates**
+
+
+---
+
+
+# Crate
+
+A _crate_ is the smallest amount of code that the Rust compiler considers at a time.
+
+* The equivalent in C/C++ is a _compilation unit_
+* Running `rustc` on a single file also builds a crate
+* Crates contain modules
+    * Modules can be defined in other files
+    * Paths allow modules to refer to other modules
+
+
+<!--
+You've probably never heard of compilation units---
+Think of it as adding a .o to your makefile. When you add it,
+the preprocessor will logically pull in all of the headers. The
+source c/cxx/cpp file and all of its dependents is one compilation unit.
+-->
+
+---
+
+
+
+# Crate
+
+There are two types of crates: binary crates and library crates.
+
+* A binary crate can be compiled to an executable
+    * Contains a `main` function
+    * Examples include command-line utilities or servers
+* A library crate has no `main` function, and does not compile to an executable
+    * Defines functionality intended to be shared with multiple projects
+* Each crate also has a file referred to as the _crate root_
+    * _The Rust compiler looks at this file first, and it is also the root module of the crate (more on modules later!)_
+
+---
+
+
+# Package
+
+A package is a bundle of one or more crates.
+
+* A package is defined by a `Cargo.toml` file at the root of your directory
+    * `Cargo.toml` describes how to build all of the crates
+* A package can contain **any number of** binary crates, but **at most one** library crate
+
+
+---
+
+
+# `cargo new`
+
+Let's walk through what happens when we create a package with `cargo new`.
+
+```sh
+$ cargo new my-project
+     Created binary (application) `my-project` package
+
+$ ls my-project
+Cargo.toml
+src
+
+$ ls my-project/src
+main.rs
+```
+
+* Creates a new package called `my-project`
+* Creates a `src/main.rs` file that prints `"Hello, world!"`
+* Creates a `Cargo.toml` in the root directory
+
+
+---
+
+
+# `Cargo.toml`
+
+Let's take a look inside the `Cargo.toml`.
+
+```toml
+[package]
+name = "my-project"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+```
+
+* File written in `toml`, a file format for configuration files
+* Notice how there is no explicit mention of `src/main.rs`
+* Cargo follows the convention that a `src/main.rs` file is the crate root of a _binary_ crate
+* Similarly, a `src/lib.rs` file is the crate root of a _library_ crate
+
+<!--
+You *can* have both lib.rs and main.rs
 -->
 
 
 ---
 
 
-# `anyhow`
+# Example: `cargo`
 
-Have code that can throw multiple error types that you wish was one? Use this!
-```rust
-use anyhow::Result;
+Cargo is itself a Rust package that ships with installations of Rust!
 
-fn get_cluster_info() -> Result<ClusterMap> {
-    let config = std::fs::read_to_string("cluster.json")?;
-    let map: ClusterMap = serde_json::from_str(&config)?;
-    Ok(map)
-}
-
-```
-
-* Both lines return different error types, but `anyhow` allows us to return both!
-* Makes errors more dynamic and ergonomic
+* Contains the binary crate that compiles to the executable `cargo`
+* Contains a library crate that the `cargo` binary depends on
 
 
 ---
 
 
-# `anyhow`
+# Aside: Package vs Project vs Program
 
-Another example:
-
-```rust
-use anyhow::{Context, Result};
-
-fn main() -> Result<()> {
-    // <-- snip -->
-    it.detach().context("Failed to detach the important thing")?;
-
-    let content = std::fs::read(path)
-        .with_context(|| format!("Failed to read instrs from {}", path))?;
-}
-```
-
-Other `anyhow` features include:
-* Downcasting to the original error types
-* Attaching custom context / error messages
-* More expressive custom errors
+* "Package" is the only term of these three with a formal definition in Rust
+* "Project" is a very overloaded term
+    * More meaningful in the context of an _IDE_
+* "Program"
+    * Ask the mathematicians ¯\\_(ツ)_/¯
 
 
 ---
 
 
-# `flamegraph`
-
-![bg right:60% 90%](../images/example_flame.png)
-
-Rust powered flamegraph generator with Cargo support!
-
-With a bit of setup, you can generate this with `cargo flamegraph`
-
-* Can support non-Rust projects too
-* Relies on perf/dtrace
+# **Modules**
 
 
 ---
 
 
-# **Closures**
+# Modules
+
+_Modules_ let us organize code within a crate for readability and easy reuse.
+
+* Modules are collections of _items_
+    * Items are functions, structs, traits, etc.
+* Allows us to control the privacy of items
+* Mitigates namespace collisions
+* Here is a [cheat sheet](https://doc.rust-lang.org/book/ch07-02-defining-modules-to-control-scope-and-privacy.html) from the Rust Book!
 
 
----
-
-
-# What Is A Closure?
-
-Closures are anonymous functions that can capture values from the scope in which they're defined.
-
-* Known as lambdas in "lesser languages" ;)
-* You can save closures in variables or pass them as arguments to other functions
-
-
----
-
-
-# Closure Syntax
-
-```rust
-let annotated_closure = |num: u32| -> u32 {
-    num
-};
-```
-* This looks very similar to functions we've seen
-* Like normal variables, rust can derive closure type annotations from context!
-
+<!--
+Generally, a mechanism for encapsulation
+-->
 
 ---
 
 
-# Closures Simplified
+# Root Module
 
-```rust
-fn  add_one_v1   (x: u32) -> u32 { x + 1 }
-let add_one_v2 = |x: u32| -> u32 { x + 1 };
-let add_one_v3 = |x|             { x + 1 };
-let add_one_v4 = |x|               x + 1  ;
+The root module is in our `main.rs` (for a binary crate) or `lib.rs` (for a library crate).
 
-let _ = add_one_v3(3);
-let _ = add_one_v4(4);
+```sh
+$ cargo new restaurant
 ```
 
-* `v1` is the equivalent function
-* We can remove type parameters in `v3`
-  * This is similar to eliding the type parameter in `let v = Vec::new()`
-* For `v4`, we can remove the `{}` since the body is only one line
-
-
----
-
-
-# How about this?
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-```rust
-let example_closure = |x| x;
-
-let s = example_closure(String::from("hello"));
-let n = example_closure(5);
-```
-* How would we describe the type of `example_closure`?
-
-
----
-
-
-# Annotations Are Still Important
-
-```rust
-let example_closure = |x| x;
-
-let s = example_closure(String::from("hello"));
-let n = example_closure(5);
-```
-
-```
-error[E0308]: mismatched types
- --> src/main.rs:5:29
-  |
-5 |     let n = example_closure(5);
-  |             --------------- ^- help: try using a conversion method: `.to_string()`
-  |             |               |
-  |             |               expected struct `String`, found integer
-  |             arguments to this function are incorrect
-  |
-note: closure parameter defined here
- --> src/main.rs:2:28
-  |
-2 |     let example_closure = |x| x;
-  |                            ^
-```
-
-
----
-
-
-# So What Happened Here?
-
-```rust
-let example_closure = |x| x;
-
-let s = example_closure(String::from("hello"));
-let n = example_closure(5);
-```
-
-* The first time we called `example_closure` with a `String`
-* Rust inferred the type of `x` and the return type to be `String`
-* Those types are now bound to the closure
-    * `example_closure(5)` will not type check
-
-
----
-
-
-# Capturing References
-
-Closures can capture values from their environment in three ways:
-* Borrowing immutably
-* Borrowing mutably
-* Taking ownership
-    * _moving_ the value to the closure
-
-
----
-
-
-# Immutable Borrowing in Closures
-
-```rust
-let list = vec![1, 2, 3];
-println!("Before defining closure: {:?}", list);
-
-let only_borrows = || println!("From closure: {:?}", list);
-
-println!("Before calling closure: {:?}", list);
-only_borrows(); // Prints "From closure: [1, 2, 3]"
-println!("After calling closure: {:?}", list);
-```
-
-* Note how once a closure is defined, it's invoked in the same manner as a function
-* Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
-
-<!-- println! implicitly takes references to anything passed in, that's why this works -->
-
-
----
-
-
-# Mutable Borrowing in Closures
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-```rust
-let mut list = vec![1, 2, 3];
-println!("Before defining closure: {:?}", list);
-
-let borrows_mutably = || list.push(7);
-
-borrows_mutably();
-println!("After calling closure: {:?}", list);
-```
-* This seems like it would work...
-
-
----
-
-
-# Mutable Borrowing in Closures
-
-```
-error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared as mutable
- --> src/main.rs:7:5
-  |
-5 |     let borrows_mutably = || list.push(7);
-  |                              ---- calling `borrows_mutably` requires mutable
-  |                                    binding due to mutable borrow of `list`
-6 |
-7 |     borrows_mutably();
-  |     ^^^^^^^^^^^^^^^ cannot borrow as mutable
-  |
-help: consider changing this to be mutable
-  |
-5 |     let mut borrows_mutably = || list.push(7);
-  |         +++
-```
-
-* Mutability must always be explicitly stated
-  * Mutating the closure's internal state matters!
-* Rust only considers the **invocation** a borrow, not the definition
-  * Closures are lazy in this sense
-
-
----
-
-
-# Mutable Borrowing in Closures
-
-```rust
-let mut list = vec![1, 2, 3];
-println!("Before defining closure: {:?}", list);
-
-let mut borrows_mutably = || list.push(7);
-
-borrows_mutably();
-println!("After calling closure: {:?}", list);
-```
-
-```
-Before defining closure: [1, 2, 3]
-After calling closure: [1, 2, 3, 7]
-```
-* Note how we can't have a `println!` before invoking `borrows_mutably` like before
-* `borrows_mutably` isn't called again, so Rust knows the borrowing has ended
-  * This is why we can call `println!` after
-
-
----
-
-
-# Giving Closures Ownership
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-```rust
-let mystery = {
-    let x = rand::random::<u32>();
-    |y: u32| -> u32 { x + y }
-};
-
-println!("Mystery value is {}", mystery(5));
-```
-```
-error[E0373]: closure may outlive the current block, but it borrows `x`,
- which is owned by the current block
- --> src/main.rs:6:9
-  |
-6 |         |y: u32| -> u32 { x + y }
-  |         ^^^^^^^^^^^^^^^   - `x` is borrowed here
-  |         |
-  |         may outlive borrowed value `x`
-  |
-  |
-4 |     let mystery = {
-  |         ^^^^^^^
-help: to force the closure to take ownership of `x`, use the `move` keyword
-  |
-6 |         move |y: u32| -> u32 { x + y }
-  |         ++++
-```
-
-
----
-
-
-# Giving Closures Ownership
-
-![bg right:25% 75%](../images/ferris_happy.svg)
-```rust
-let mystery = {
-    let x = rand::random::<u32>();
-    move |y: u32| -> u32 { x + y }
-};
-
-println!("Mystery value is {}", mystery(5));
-```
-
-* We can tell a closure to own a value using the `move` keyword
-  * You can't selectively `move` certain parameters unless you explicitly borrow
-* This is important for thread safety in Rust!
-
-
----
-
-
-# Thread sneak peek
-
-Let's briefly explore spawning a new thread with a closure.
-
+###### src/main.rs
 ```rust
 fn main() {
-    let list = vec![1, 2, 3];
-    println!("Before defining closure: {:?}", list);
-
-    std::thread::spawn(move || println!("From thread: {:?}", list))
-        .join()
-        .unwrap();
+    println!("Hello, world!");
 }
 ```
 
-* The `println!` technically only needs an immutable reference to `list`
-* But what would happen if the parent thread dropped `list` before the child thread ran?
-* Use after free! ☠️
-
-
----
-
-
-# Handling Captured Values
-
-* A closure body can do any of the following to a value:
-  * Move a captured value out of the closure
-  * Mutate a captured value
-  * Neither of the above
-* It could also have captured nothing to begin with!
-* The properties a closure has determines its function _trait_
-
+<!--
+Root module is implicit here, no `mod` keyword
+-->
 
 ---
 
 
-# The `Fn` traits
+# Declaring Modules
 
-What do you mean, function _trait_???
+We can declare a new module with the keyword `mod`.
 
-* Rust has 3 special traits that define the _kind_ of closure we want to use
-* The 3 traits are:
-  * `FnOnce`
-  * `FnMut`
-  * `Fn`
-
-
----
-
-
-# The `Fn` traits
-
-
-* `FnOnce` applies to closures that can be called once
-  * If a closure moves captured values out of its body, it can only be called once, thus it implements `FnOnce`
-* `FnMut` applies to closures that might mutate the captured values
-  * These closures can be called more than once
-* `Fn` applies to all other types of closures
-  * Closures that don't move values out
-  * Closures that don't mutate
-  * Closures that don't capture anything
-
-
----
-
-
-# Closure Traits Visualized
-
-![bg right:50% 120%](../images/closure_traits.svg)
-
-* `Fn` is also `FnMut` and `FnOnce`
-* `FnMut` is also `FnOnce`
-
----
-
-
-# `FnOnce`
-
-Let's look at some examples of `FnOnce`.
-
+###### src/main.rs
 ```rust
-let my_str = String::from("x");
-let consume_and_return = move || my_str;
-```
+fn main() {
+    println!("Hello, World!");
+}
 
-* Recall that Rust will never implicitly clone `my_str`
-  * This closure consumes `my_str` by giving ownership back to the caller
-* Closures that can be called once implement `FnOnce`
-* All closures implement this trait, since all closures can be called
-* A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`
-
-
----
-
-
-# `unwrap_or_else`
-
-Let's look at the definition of the `unwrap_or_else` method on `Option<T>`.
-
-```rust
-impl<T> Option<T> {
-    pub fn unwrap_or_else<F>(self, f: F) -> T
-    where
-        F: FnOnce() -> T
-    {
-        match self {
-            Some(x) => x,
-            None => f(),
-        }
+mod kitchen {
+    // `cook` is defined in the module `kitchen`
+    fn cook() {
+        println!("I'm cooking");
     }
 }
 ```
@@ -610,540 +262,1286 @@ impl<T> Option<T> {
 ---
 
 
-# `unwrap_or_else`
+# Using Modules
 
-First let's observe the function definition.
+To use items outside of a module, we must declare them as `pub`.
 
+###### src/main.rs
 ```rust
-pub fn unwrap_or_else<F>(self, f: F) -> T
-where
-    F: FnOnce() -> T
-// <-- snip -->
+fn main() {
+    kitchen::cook();
+}
+
+mod kitchen {
+    pub fn cook() { println!("I'm cooking"); }
+
+    // Only items internal to the `kitchen` should be able to access this
+    fn examine_ingredients() {}
+}
 ```
 
-* This method is generic over `F`
-* `F` is the type of the closure we provide when calling `unwrap_or_else`
-* `F` must be able to be called once, take no arguments, and return a `T` for `Option<T>`
+* By default, all module items are private in Rust
+
+<!--
+In fact, generally everything is private by default in Rust
+Private by default is very very good
+-->
 
 
 ---
 
 
-# `unwrap_or_else`
+# Declaring Submodules
 
-Now let's observe the function body.
+We can declare submodules inside of other modules.
+
+###### src/main.rs
+```rust
+fn main() {
+    kitchen::stove::cook();
+}
+
+mod kitchen {
+    pub mod stove {
+        pub fn cook() { println!("I'm cooking"); }
+    }
+
+    fn examine_ingredients() {}
+}
+```
+
+* Submodules also have to be declared as `pub mod` to be accessible
+* The module system is a tree, just like a file system
+
+
+---
+
+
+# Modules as Files
+
+In addition to declaring modules _within_ files, creating a file named `module_name.rs` declares a corresponding module named `module_name`.
+
+```sh
+src
+├── module_name.rs
+└── main.rs
+```
+
+* Allows us to represent our module structure in the file system
+* Let's try moving the `kitchen` module to its own file!
+
+
+---
+
+
+# Modules as Files
+
+###### src/main.rs
+```rust
+mod kitchen; // The compiler will look for `kitchen.rs`
+
+fn main() {
+    kitchen::stove::cook();
+}
+```
+
+###### src/kitchen.rs
+```rust
+pub mod stove {
+    pub fn cook() { println!("I'm cooking"); }
+}
+
+fn examine_ingredients() {}
+```
+
+* What about moving the `stove` submodule to its own file as well?
+
+
+---
+
+
+# Submodules as Files
+
+We can move the `stove` submodule into a file  `src/kitchen/stove.rs` to indicate that `stove` is a submodule of `kitchen`.
+
+###### src/kitchen.rs
+```rust
+pub mod stove; // note this still has to be `pub`
+
+fn examine_ingredients() {}
+```
+
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    println!("I'm cooking");
+}
+```
+
+* `main.rs` is unchanged (omitted for slide real estate)
+
+
+---
+
+
+# Alternate Submodule File Naming
+
+We could also replace `src/kitchen.rs` with `src/kitchen/mod.rs`.
+
+###### src/kitchen/mod.rs
+```rust
+pub mod stove;
+
+fn examine_ingredients() {}
+```
+
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    println!("I'm cooking");
+}
+```
+
+* The only difference is in which file the `kitchen` module is defined
+
+
+---
+
+
+# Alternate Submodule File Naming
+
+In terms of Rust's module system, these two file trees are (essentially) identical.
+
+```sh
+src
+├── kitchen
+│  └── stove.rs
+├── kitchen.rs
+└── main.rs
+```
+
+```sh
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+└── main.rs
+```
+
+* This is a stylistic choice that each instructor has a very strong opinion on
+    * Ask at your own peril...
+* Consistency with surrounding codebase is ___always___ most important
+
+
+---
+
+
+# File Structure Comparison: Choice 1
+
+```sh
+src
+├── bathroom
+│  ├── mod.rs
+│  ├── sink.rs
+│  └── toilet.rs
+├── dining_room
+│  ├── guests.rs
+│  ├── mod.rs
+│  ├── seats.rs
+│  └── tables.rs
+├── garden
+│  ├── dirt.rs
+│  ├── mod.rs
+│  ├── plants.rs
+│  └── water.rs
+├── kitchen
+│  ├── dish_washer.rs
+│  ├── mod.rs
+│  ├── oven.rs
+│  └── stove.rs
+└── lib.rs
+```
+
+
+---
+
+
+# File Structure Comparison: Choice 2
+
+```sh
+src
+├── bathroom
+│  ├── sink.rs
+│  └── toilet.rs
+├── dining_room
+│  ├── guests.rs
+│  ├── seats.rs
+│  └── tables.rs
+├── garden
+│  ├── dirt.rs
+│  ├── plants.rs
+│  └── water.rs
+├── kitchen
+│  ├── dish_washer.rs
+│  ├── oven.rs
+│  └── stove.rs
+├── bathroom.rs
+├── dining_room.rs
+├── kitchen.rs
+├── garden.rs
+└── lib.rs
+```
+
+
+---
+
+
+# The Module Tree, Visualized
+
+Even with our file system changes, the module tree stays the same!
 
 ```rust
-{
-    match self {
-        Some(x) => x,
-        None => f(),
+crate restaurant
+├── mod kitchen: pub(crate)
+│   ├── fn examine_ingredients: pub(self)
+│   └── mod stove: pub
+│       └── fn cook: pub
+└── fn main: pub(crate)
+```
+
+* We can customize our file structure without changing any behavior!
+
+
+---
+
+
+# Module Paths
+
+To use any item in a module, we need to know its _path_, just like a filesystem.
+
+There are two types of paths:
+
+* An _absolute path_ is the full path starting from the crate root
+* A _relative path_ starts from the current module and use `self`, `super`, or an identifier in the current module
+* Components of paths are separated by double colons (`::`)
+
+
+---
+
+
+# Paths for Referring to Modules
+
+You may have noticed a path from the previous sequence:
+
+```rust
+kitchen::stove::cook();
+```
+
+This is saying:
+* In the module `kitchen`
+    * In the submodule `stove`
+        * Call the function `cook`
+* This is a path relative to the crate root
+
+
+---
+
+
+# Using Paths
+
+###### src/main.rs
+```rust
+mod kitchen;
+
+fn main() {
+    kitchen::stove::cook();
+}
+```
+
+* Not too hard to write...
+
+
+---
+
+
+# Using Verbose Paths
+
+What if we had a deeper module tree?
+
+###### src/main.rs
+```rust
+fn main() {
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
+    kitchen::stove::stovetop::burner::gas::gasknob::pot::cook();
+}
+```
+
+* A lot more verbose...
+    * Especially if we need to write this multiple times
+
+
+---
+
+
+# The `use` Keyword
+
+We can bring paths into scope with the `use` keyword.
+
+###### src/main.rs
+```rust
+mod kitchen;
+
+use kitchen::stove::stovetop::burner::gas::gasknob::pot;
+
+fn main() {
+    pot::cook();
+    pot::cook();
+    pot::cook();
+}
+```
+
+* It is idiomatic to `use` up to the _parent_ of a function, rather than the function item itself
+
+
+<!--
+It is idiomatic to do it this way, because it makes it clear that the item is not locally defined
+-->
+
+
+---
+
+
+# More `use` Syntax
+
+We can also import items from the Rust standard library (`std`).
+
+```rust
+use std::collections::HashMap;
+use std::io::Bytes;
+use std::io::Write;
+```
+
+* `HashMap` and `Bytes` are structs, and `Write` is a trait
+* It is idiomatic to import structs, enums, traits, etc. directly
+
+<!--
+The reason this is idiomatic is because you generally shouldn't have multiple different types that
+are named exactly the same. If you do have that, you need to bring in the types relative to their
+parent modules anyways.
+-->
+
+
+---
+
+
+# More `use` Syntax
+
+We can combine those 2 `std::io` imports into one statement:
+
+```rust
+use std::collections::HashMap;
+use std::io::{Bytes, Write};
+
+use std::io::*; // Also possible!
+```
+
+* You could also write `use std::io::*` to bring in everything from the `std::io` module (including `Bytes` and `Write`)
+    * Called the "glob operator"
+    * Generally not recommended since it clutters the namespace
+
+<!--
+The one case where glob is idiomatic is with the prelude pattern
+
+It does not actually increase compilation cost, it just makes dealing with namespace collisions
+annoying, so it is good practice to only bring in what you actually need.
+-->
+
+
+---
+
+
+# Aside: Binary and Library Crate Paths
+
+In the past examples, we were using a binary crate (`src/main.rs`). All the same principles apply to using a library crate.
+
+However, if you use _both_ a binary _and_ a library crate, things are slightly different.
+
+```sh
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+├── lib.rs <- What happens when we add this?
+└── main.rs
+```
+
+
+---
+
+
+# Aside: Binary and Library Crate Paths
+
+Typically when you have both a binary and library crate in the same package, you want to use functions and types defined in `lib.rs` from `main.rs`.
+
+```
+src
+├── kitchen
+│  ├── mod.rs
+│  └── stove.rs
+├── lib.rs
+└── main.rs (wants to call functions from lib.rs)
+```
+
+* If you have both a `main.rs` file and a `lib.rs` file, _both_ are crate roots
+* So how can we get items from a separate module tree?
+
+<!--
+Since both are crate roots, there are technically 2 separate module trees
+-->
+
+
+---
+
+
+# Accessing Library from Binary
+
+Let's try to refactor our previous example:
+
+###### restaurant/src/lib.rs
+```rust
+pub mod kitchen; // Now marked `pub`!
+```
+
+###### restaurant/src/main.rs
+```rust
+fn main() {
+    ???::kitchen::stove::cook();
+}
+```
+
+* All files in `src/kitchen` remain unchanged
+* What do we put in `???`?
+
+
+---
+
+
+# Accessing Library from Binary
+
+We treat our library crate as an _external_ crate, with the same name as our package.
+
+###### restaurant/src/main.rs
+```rust
+fn main() {
+    restaurant::kitchen::stove::cook();
+}
+```
+
+* Similar to how you would treat `std` as an external crate
+* We'll talk about external crates more next week!
+
+
+---
+
+
+# The `super` Keyword
+
+We can also construct relative paths that begin in the parent module with `super`.
+
+```rust
+crate restaurant
+├── mod kitchen: pub(crate)
+│   ├── fn examine_ingredients: pub(self)
+│   └── mod stove: pub
+│       └── fn cook: pub
+└── fn main: pub(crate)
+```
+
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    super::examine_ingredients(); // Make sure you do this before cooking!
+    println!("I'm cooking");
+}
+```
+
+
+---
+
+
+# Privacy
+
+```rust
+mod kitchen: pub(crate)
+├── fn examine_ingredients: pub(self)
+└── mod stove: pub
+    └── fn cook: pub
+```
+###### src/kitchen/stove.rs
+```rust
+pub fn cook() {
+    super::examine_ingredients(); // Make sure you do this before cooking!
+    println!("I'm cooking");
+}
+```
+
+* `examine_ingredients` does not need to be public in this case
+* `stove` can access anything in its parent module `kitchen`
+    * Note that privacy only applies upwards, not downwards
+
+<!--
+Child modules can access anything the parent module has access to, but not the other way around.
+This means child modules can also access any public item in a sibling module.
+-->
+
+
+---
+
+
+# Privacy of Types
+
+We can also use `pub` to designate structs and enums as public.
+
+```rust
+pub struct Breakfast {
+    pub toast: String,
+    seasonal_fruit: String,
+}
+
+pub enum Appetizer {
+    Soup,
+    Salad,
+}
+```
+
+* We can mark specific fields of structs public, allowing direct access
+* If an enum is public, so are its variants!
+
+
+---
+
+
+# Recap: Modules
+
+* You can split a package into crates, and crates into modules
+* You can refer to items defined in other modules with paths
+* All module components are private by default, unless you mark them as `pub`
+
+
+---
+
+
+# **Testing**
+
+
+---
+
+
+# Testing
+
+> Program testing can be a very effective way to show the presence of bugs, but it is hopelessly inadequate for showing their absence.
+
+* Edsger W. Dijkstra, _The Humble Programmer_
+
+
+---
+
+
+# Testing
+
+Correctness of a program is complex and not easy to prove.
+
+* Rust's type system helps with this, but it certainly cannot catch everything
+* Rust includes a testing framework for this reason!
+
+
+---
+
+
+# What is a Test?
+
+Generally we want to perform at least 3 actions when running a test:
+
+1) Set up needed data or state
+2) Run the evaluated code
+3) Determine if the results are as expected
+
+
+---
+
+
+# Writing Tests
+
+In Rust, a test is a function annotated with the `#[test]` attribute.
+
+###### src/lib.rs
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        let result = 2 + 2;
+        assert_eq!(result, 4);
     }
 }
 ```
 
-* If the `Option` is `Some`, then extract the inner value
-* Otherwise, call `f` once and return the value
-* Note that `f` is not _required_ to only be `FnOnce` here, it could be `FnMut` or `Fn`
+* After running `cargo new adder --lib`, this code will be in `src/lib.rs`
 
 
 ---
 
 
-# `FnMut`
+# Writing Tests
 
-Recall that `FnMut` applies to closures that might mutate the captured values.
-
-```rust
-let mut x: usize = 1;
-let mut add_two_to_x = || x += 2;
-add_two_to_x();
-```
-
-* Note that this will not compile without the `mut` in `let mut add_two_to_x`
-  * `mut` signals that we are mutating our closure's environment
-    * Key idea: how variables within scope at invocation change between calls
-
-
----
-
-
-# `FnMut`
-
-Another simple example:
+Let's break this down.
 
 ```rust
-let mut base = String::from("");
-let mut build_string = |addition| base.push_str(addition);
-
-build_string("Ferris is ");
-build_string("happy!");
-
-println!("{}", base);
-```
-
-```
-Ferris is happy!
-```
-
-
----
-
-
-# `FnMut`
-
-Just like in `unwrap_or_else`, we can pass a `FnMut` closure to a function.
-
-```rust
-fn do_twice<F>(mut func: F)
-where
-    F: FnMut(),
-{
-    func();
-    func();
+#[test]
+fn it_works() {
+    let result = 2 + 2;
+    assert_eq!(result, 4);
 }
 ```
 
+* The `#[test]` attribute indicates that this is a test function
+* We set up the value `result` by adding `2 + 2`
+* We use the `assert_eq!` macro to assert that `result` is correct
+* We don't need to return anything, since not panicking _is_ the test!
+
 
 ---
 
 
-# `Fn`
+# Running Tests
 
-Finally, the `Fn` trait is a superset of `FnOnce` and `FnMut`.
+We run tests with `cargo test`.
 
-```rust
-let double = |x| x * 2; // captures nothing
+```
+$ cargo test
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.57s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
 
-let mascot = String::from("Ferris");
-let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+running 1 test
+test tests::it_works ... ok
 
-let my_sanity = ();
-let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests adder
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-* `Fn` applies to closures that:
-  * Don't move captured values out of their body
-  * Don't mutate captured values
-  * Don't capture anything from their environment
-* Can be called more than once without mutating the environment
+
+---
+
+
+# Running Tests
+
+Let's break down the output of `cargo test`.
+
+```
+running 1 test
+test tests::it_works ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+* We see `test result: ok`, meaning we have passed all the tests
+* In this case, only 1 test has run, and it has passed
+* The `0 measured` statistic is for benchmark tests, which are currently only available in "nightly" versions of Rust
 
 
 ---
 
 
-# `Fn`
+# Documentation Tests
+
+You may have seen something similar to this in your homework:
+
+```
+   Doc-tests adder
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```
+
+* All of the code examples in documentation comments are treated as tests!
+* This is useful for keeping your docs and code in sync
+
+
+---
+
+
+# `#[cfg(test)]`
+
+You may have also noticed this `#[cfg(test)]` attribute in your homework:
 
 ```rust
-fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
-where
-    F: Fn(T, T) -> T,
-{
+#[cfg(test)]
+mod tests {
     // <-- snip -->
 }
 ```
 
-* We can specify the arguments and return types for `Fn`
-* While this example is generic, we could've replaced `T` with a concrete type
+* This tells the compiler that this entire module should _only_ be used for testing
+* Removes this module from the source code when compiling with `cargo build`
 
 
 ---
 
 
-# `fn`?
+# Writing Better Tests
 
-Rust also has function pointers, denoted `fn` (instead of `Fn`).
+Let's try and be more creative with our tests.
 
 ```rust
-fn add_one(x: i32) -> i32 {
-    x + 1
-}
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn exploration() {
+        assert_eq!(2 + 2, 4);
+    }
 
-fn do_twice(f: fn(i32) -> i32, arg: i32) -> i32 {
-    f(arg) + f(arg)
-}
-
-fn main() {
-    let answer = do_twice(add_one, 5);
-}
-```
-
-* `fn` is a **type*** that implements all 3 closure traits `Fn`, `FnMut`, and `FnOnce`
-
-
----
-
-
-# Recap: Closure Traits
-
-* `Fn`, `FnMut`, `FnOnce` describe different groups of closures
-  * You don't `impl` them, they apply to a closure automatically if appropriate
-  * A single closure can implement one or multiple of these traits
-* `FnOnce` - call at least once, environment may be consumed
-* `FnMut` - call multiple times, environment may change
-* `Fn` - call multiple times, environment doesn't change
-
-
----
-
-
-# **Iterators**
-
-* Sorry functional haters... it's show time!
-
-
----
-
-
-# What is an Iterator?
-
-* Iterators allow you to perform some task on a sequence of elements
-* Iterators manage iterating over each item and determining termination
-* Rust iterators are *lazy*
-  * This means we don't pay a cost until we consume the iterator
-
-
----
-
-
-# The `Iterator` Trait
-
-All iterators must implement the `Iterator` trait:
-
-```rust
-pub trait Iterator {
-  type Item;
-
-  fn next(&mut self) -> Option<Self::Item>;
-
-  // methods with default implementations elided
-}
-```
-
-* Keep generating `Some(item)`
-* When the `Iterator` is finished, `None` is returned
-
-
----
-
-# `type Item`
-
-What's going on with the `type Item`?
-
-```rust
-pub trait Iterator {
-  type Item;
-
-  fn next(&mut self) -> Option<Self::Item>;
-
-  // methods with default implementations elided
-}
-```
-
-* This is an _associated type_
-* To define `Iterator` you must define the `Item` you're iterating over
-* _Different from generic types!_
-  * There can only be one way to iterate over something
-
-
----
-
-
-# Custom Iterator Example
-
-Let's say we want to implement an iterator that generates the Fibonacci sequence.
-
-```rust
-struct Fibonacci {
-  curr: u32,
-  next: u32,
-}
-```
-
-* First need to declare the `struct` that can implement `Iterator`
-* We need to store two numbers to compute the next element
-
-
----
-
-
-# Fibonacci Example
-
-```rust
-impl Iterator for Fibonacci {
-    type Item = u32;
-
-    // We use Self::Item in the return type, so we can change
-    // the type without having to update the function signatures.
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.curr;
-
-        self.curr = self.next;
-        self.next = current + self.next;
-
-        // No endpoint to a Fibonacci sequence - `Some` is always returned.
-        Some(current)
+    #[test]
+    fn another() {
+        panic!("Make this test fail");
     }
 }
 ```
-* Notice `Self::Item` is aliased to `u32`
-
 
 
 ---
 
 
-# `Vec` Iterators
+# Failing Tests
+
+Let's see what we get:
+
+```
+$ cargo test
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.72s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 2 tests
+test tests::another ... FAILED
+test tests::exploration ... ok
+
+failures:
+
+---- tests::another stdout ----
+thread 'tests::another' panicked at 'Make this test fail', src/lib.rs:10:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::another
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+```
+
+
+---
+
+
+# Failing Tests
+
+
+```
+failures:
+
+---- tests::another stdout ----
+thread 'tests::another' panicked at 'Make this test fail', src/lib.rs:10:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::another
+
+test result: FAILED. 1 passed; 1 failed; <-- snip -->
+
+error: test failed, to rerun pass `--lib`
+```
+
+* Instead of `ok`, we get that the result of `tests:another` is `FAILED`
+
+
+---
+
+
+# Checking Results
+
+We can use the `assert!` macro to ensure that something is `true`.
 
 ```rust
-let v1 = vec![1, 2, 3];
-
-let v1_iter = v1.iter();
-for val in v1_iter {
-    println!("Got: {}", val);
-}
-
-for val in v1 {
-    println!("Got: {}", val);
-}
-```
-
-* These do the same thing!
-* We saw this code before in lecture 4
-  * Except now we explicitly create the iterator that Rust did for us
-
-
----
-
-
-# Iterating Explicitly
-
-```rust
-let v1 = vec![1, 2, 3];
-
-let mut v1_iter = v1.iter();
-
-assert_eq!(v1_iter.next(), Some(&1));
-assert_eq!(v1_iter.next(), Some(&2));
-assert_eq!(v1_iter.next(), Some(&3));
-assert_eq!(v1_iter.next(), None);
-```
-
-* Here we see how the required `next` function operates
-* Notice how `v1_iter` is mutable
-  * When we call `next()` we've **consumed** that iterator element
-  * The iterator's internal state has changed
-  * Note that `iter()` provides immutable borrows to `v1`'s elements
-
-
----
-
-
-# Iterators and Mutable Borrows
-
-```rust
-let mut vec = vec![1, 2, 3]; // Note we need vec to be mutable
-let mut mutable_iter = vec.iter_mut();
-
-while let Some(val) = mutable_iter.next() {
-    *val += 1;
-}
-
-println!("{:?}", vec);
-```
-
-```
-[2, 3, 4]
-```
-
-* Before we saw that `v1.iter()` gave us references to elements
-* We can use `iter_mut()` for `&mut`
-
-
----
-
-
-# Iterators and Ownership
-
-```rust
-let mut vec = vec![1, 2, 3];
-let owned_iter = vec.into_iter(); // vec is *consumed*
-for val in owned_iter {
-    println!("{}", val);
-}
-// owned_iter is consumed
-```
-
-* To make an iterator that owns its values we have `into_iter()`
-* This is what consuming for loops do under the hood
-
-
----
-
-
-# Consuming Iterators
-
-```rust
-let v1 = vec![1, 2, 3];
-
-let v1_iter = v1.iter();
-
-let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
-
-assert_eq!(total, 6);
-```
-
-* The standard library has many functions for iterators
-* Some of these functions *consume* the iterator
-
-
----
-
-
-# Other consuming functions
-
-* `collect(self)` - Coming soon
-* `fold(self, init: B, f: F)`
-* `count(self)`
-
-
----
-
-
-# Producing Iterators
-
-![bg right:25% 75%](../images/ferris_not_desired_behavior.svg)
-```rust
-let v1: Vec<i32> = vec![1, 2, 3];
-
-v1.iter().map(|x| x + 1);
-```
-
-* This code seems fine...
-
-
----
-
-
-# Producing Iterators
-
-```
-warning: unused `Map` that must be used
- --> src/main.rs:4:5
-  |
-4 |     v1.iter().map(|x| x + 1);
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = note: iterators are lazy and do nothing unless consumed
-  = note: `#[warn(unused_must_use)]` on by default
-
-warning: `iterators` (bin "iterators") generated 1 warning
-    Finished dev [unoptimized + debuginfo] target(s) in 0.47s
-     Running `target/debug/iterators`
-```
-
-* Zero-cost abstractions at work
-* Rust won't make us pay for our iterator until we use it
-  * It will compile and warn us of unused data
-
-
----
-
-
-# Producing Iterators
-
-```rust
-let v2: Vec<_> = (1..4).map(|x| x + 1).collect();
-
-println!("{:?}", v2);
-```
-
-```
-[2, 3, 4]
-```
-* We use `collect()` to tell Rust we're done modifying our iterator and want to convert our changes to a `Vec`
-
-
----
-
-
-# Filter
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-```rust
-fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
-    list.into_iter().filter(|x| x == val).collect()
+#[test]
+fn larger_can_hold_smaller() {
+    let larger = Rectangle {
+        width: 8,
+        height: 7,
+    };
+    let smaller = Rectangle {
+        width: 5,
+        height: 1,
+    };
+
+    assert!(larger.can_hold(&smaller));
 }
 ```
 
-```
---> src/main.rs:2:35
-  |
-2 |     list.into_iter().filter(|x| x == val).collect()
-  |                                   ^^ no implementation for `&i32 == i32`
-  |
-```
-
-* Some iterator functions take a reference instead of ownership
-* Note how our filter closure captures `val` for our filtering needs
+<!--
+Say in lecture that `assert!` will give you a nicer error message
+than if you did an if check and panic manually
+-->
 
 
 ---
 
 
-# Filter
+# Testing Equality
 
-![bg right:25% 75%](../images/ferris_happy.svg)
-```rust
-list.into_iter().filter(|&x| x == val).collect()
-```
-
-or
+Rust also provides a way to check equality between two values.
 
 ```rust
-list.into_iter().filter(|x| *x == val).collect()
-```
-* We either explicitly match on the reference or dereference
-
-
----
-
-
-# Chaining It Together
-
-```rust
-let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
-println!("{:?}", iter);
-// Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 2 } }
-for x in iter.take(5) {
-    print!("{}, ", x); // 9, 36, 81, 144, 225,
+#[test]
+fn it_adds_two() {
+    assert_eq!(4, add_two(2));
 }
 ```
-* Read as: Print first 5 squares skipping 0 divisible by 3
-* Note filter doesn't need a deref here for `%`
 
 
 ---
 
 
-# Iterator Recap
+# Testing Equality
 
-* Iterators is an extremely powerful structure in Rust
-* View std library for more info on functions
-* Rules regarding closures and ownership still apply
-  * `iter`
-  * `iter_mut`
-  * `into_iter`
-* Iterators are *lazy*
-  * Remember `.collect()`!
+If `add_two(2)` somehow evaluated to `5`, we would get this output:
+
+```
+---- tests::it_adds_two stdout ----
+thread 'tests::it_adds_two' panicked at 'assertion failed: `(left == right)`
+  left: `4`,
+ right: `5`', src/lib.rs:11:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+* You get a nicer error message from `assert_eq!` versus using
+`assert!(left == right)`
 
 
 ---
 
 
-# Next Lecture: ISD
+# Custom Error Messages
 
-*Instructors still debating*
+We can also write our own custom error messages in `assert!`
+
+```rust
+#[test]
+fn greeting_contains_name() {
+    let result = greeting("Carol");
+    assert!(
+        result.contains("Carol"),
+        "Greeting did not contain name, value was `{}`",
+        result
+    );
+}
+```
+
+
+---
+
+
+# `#[should_panic]`
+
+You may have seen something similar in your homework:
+
+```rust
+#[test]
+#[should_panic(expected = "not less than 100")]
+fn greater_than_100() {
+    this_better_be_less_than_100(200);
+}
+```
+
+* The `#[should_panic]` attribute says that this test expects a panic!
+* Adding the `expected = "..."` means we want a specific panic message
+
+
+---
+
+
+
+# Using `Result<T, E>` in Tests
+
+We can also use `Result` in our tests.
+
+```rust
+#[test]
+fn it_works() -> Result<(), String> {
+    if 2 + 2 == 4 {
+        Ok(())
+    } else {
+        Err(String::from("two plus two does not equal four"))
+    }
+}
+```
+
+* The test will now fail if it returns `Err`
+* Allows convenient usage of `?` in tests
+* Note that you can't use `#[should_panic]` on tests that return a `Result`
+
+
+---
+
+
+# Controlling Test Behavior
+
+`cargo test` compiles your code in test mode and runs the resulting test binary.
+
+* By default, it will run all tests in parallel and will not print any test output
+* Other testing configurations are available
+* _Note that you can run `cargo test --help`, and `cargo test -- --help` for help_
+
+<!--
+Formally, "capturing" means that is won't display any `println!`s or error messages.
+
+Parallel stuff leads into next slide...
+-->
+
+
+---
+
+
+# Running Tests in Parallel
+
+* Suppose each of your tests all write to some shared file on disk
+    * All tests write to a file `output.txt`
+* They later assert that the file still contains that data they wrote
+* You probably don't want all of them to run at the same time!
+
+
+---
+
+
+# Test Threads
+
+
+By default, Rust will run all of the tests in parallel, on different threads.
+
+You can use `--test-threads` to control the number of threads running the tests.
+
+
+```
+$ cargo test -- --test-threads=1
+```
+
+* Only use this when you need to, otherwise the benefits of running tests in parallel are lost
+
+<!--
+Take 15-445 if you want to do this safely without losing parallelism!
+-->
+
+
+---
+
+
+# Showing Output
+
+If you want to prevent the capturing of output, you can use `--no-capture`.
+
+```
+$ cargo test -- --no-capture
+$ cargo test -- --show-output
+```
+
+* `--no-capture` will print the full output of every test that is run
+* Using `--show-output` will only show the output of passed tests
+* With 1000 tests, this might become verbose!
+* If only we could only run a subset of the tests...
+
+
+---
+
+
+# Running Tests by Name
+
+Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `cargo test one_hundred` to only run  the `one_hundred` test.
+
+```
+$ cargo test one_hundred
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.69s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 1 test
+test tests::one_hundred ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 999 filtered out; finished in 0.00s
+```
+
+* Notice how there are now `999 filtered out` tests, these were the tests that didn't match the name `one_hundred`
+
+
+---
+
+
+# Multiple Tests by Name
+
+`cargo` will actually find any test that matches the name you passed in.
+
+```
+$ cargo test add
+   Compiling adder v0.1.0 (file:///projects/adder)
+    Finished test [unoptimized + debuginfo] target(s) in 0.61s
+     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
+
+running 2 tests
+test tests::add_three_and_two ... ok
+test tests::add_two_and_two ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 998 filtered out; finished in 0.00s
+```
+
+* If you want an exact name, use `cargo test {name} -- --exact`
+
+
+---
+
+
+# Ignoring Tests
+
+We can ignore some tests by using the `#[ignore]` attribute.
+
+```rust
+#[test]
+fn it_works() {
+    assert_eq!(2 + 2, 4);
+}
+
+#[test]
+#[ignore]
+fn expensive_test() {
+    // code that takes an hour to run
+}
+```
+
+* If we only want to run ignored tests, we can run `cargo test -- --ignored`
+* If we want to run all tests, we can run `cargo test -- --include-ignored`
+
+<!--
+This can be useful if you have super specialized tests that need to run by themselves
+-->
+
+
+---
+
+
+# Test Organization
+
+The Rust community thinks about tests in terms of two main categories: unit tests and integration tests.
+
+* Unit tests test each unit of code in isolation
+* Integration tests are external to your library, testing the entire system
+
+
+---
+
+
+# Unit Tests
+
+Unit tests are almost always contained within the `src` directory.
+
+* The convention is to create a submodule named `tests` annotated with `#[cfg(test)]` for every module you want to test
+* Recall that `#[cfg(test)]` attribute on items will only compile those items when running `cargo test`, and not `cargo build`
+* Prevents deploying extra code in production that is only used for testing
+
+
+---
+
+
+# Testing Private Functions
+
+You can unit test private functions as long as the module the test lives in has access to it.
+
+```rust
+pub fn add_two(a: i32) -> i32 { internal_adder(a, 2) }
+fn internal_adder(a: i32, b: i32) -> i32 { a + b }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn internal() {
+        assert_eq!(4, internal_adder(2, 2));
+    }
+}
+```
+
+<!--
+In terms of privacy, unit tests are treated just as any other function.
+
+Excerpt from the Rust Book:
+
+There's debate within the testing community about whether or not private functions should be tested directly, and other languages make it difficult or impossible to test private functions.
+
+If you don't think private functions should be tested, there's nothing in Rust that will compel you to do so.
+-->
+
+
+---
+
+
+# Integration Tests
+
+Integration Tests use your library in the same way any other code would.
+
+* They can only call functions that are part of your library's public API
+* Useful for testing if many parts of your library work together correctly
+
+<!--
+By "any other code" we mean code that was written by some other developer using
+your library crate.
+-->
+
+
+---
+
+
+# Integration Tests
+
+To create integration tests, we need a `tests` directory.
+
+```
+adder
+├── Cargo.lock
+├── Cargo.toml
+├── src
+│   └── lib.rs
+└── tests
+    └── integration_test.rs
+```
+
+* Notice how `tests` is _outside_ of `src`
+
+
+---
+
+
+# Integration Tests
+
+Since we are now external to our own library, we must import everything as if it were a 3rd-party crate.
+
+###### adder/tests/integration_test.rs
+```rust
+use adder;
+
+#[test]
+fn it_adds_two() {
+    assert_eq!(4, adder::add_two(2));
+}
+```
+
+* Note that we don't need to annotate anything with `#[cfg(tests)]`
+* We can now also run test files using the _name_ of the file with
+`cargo test --test integration_test`
+
+
+---
+
+
+# Submodules in Integration Tests
+
+As you add more integration tests, you might want to make more files in the `tests` directory to help organize them.
+
+* You can use submodules in the `tests` directory just like in the `src` directory
+
+<!--
+You can treat the `tests` directory almost exactly the same as the `src` directory, and you can
+also use the alternate module file naming that we talked about earlier in the lecture.
+-->
+
+
+---
+
+
+# Submodules in Integration Tests
+
+Using the alternate naming convention with `common/mod.rs` tells Rust not to treat the `common` module as an integration test file.
+
+```
+├── Cargo.lock
+├── Cargo.toml
+├── src
+│   └── lib.rs
+└── tests
+    ├── common
+    │   └── mod.rs
+    └── integration_test.rs
+```
+
+
+---
+
+
+# Submodules in Integration Tests
+
+Here is an example of using `common` in an integration test:
+
+```
+└── tests
+    ├── common
+    │   └── mod.rs
+    └── integration_test.rs
+```
+
+```rust
+use adder;
+
+mod common;
+
+#[test]
+fn it_adds_two() {
+    common::setup();
+    assert_eq!(4, adder::add_two(2));
+}
+```
+
+
+---
+
+
+# Integration Tests for Binary Crates
+
+We cannot create integration tests for a binary crate.
+
+* Binary crates do not expose their functions
+* This is why most binary crates will be paired with a library crate, even if they don't _need_ to expose any functions
+
+
+---
+
+
+# Recap: Testing
+
+* Unit tests examine parts of a library in isolation and can test private implementation details
+* Integration tests check that many parts of the library work together correctly
+* Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs!
+
+
+---
+
+
+# Next Lecture: Crates, Closures, and Iterators
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 

@@ -5,10 +5,11 @@ class: invert
 paginate: true
 ---
 
+
 <!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
-# Smart Pointers and Trait Objects
+# Lifetimes
 
 <br>
 
@@ -20,1204 +21,1160 @@ paginate: true
 ---
 
 
-# Today: Smart Pointers and Trait Objects
+# Today: Lifetimes
 
-- `Box<T>`
-- The `Deref` trait
-- The `Drop` trait
-- Trait Objects
-- Smart Pointers
+We've used the term "lifetime" a few times before, and today we're going to explore what exactly it means.
 
-
----
-
-
-# **Motivation for `Box<T>`**
+* What is `'a` lifetime?
+* How to think about lifetimes
+* Other perspectives...
 
 
 ---
 
 
-# Let's Make a List
+# Lifetimes
 
-![bg right:30% 80%](../images/ferris_does_not_compile.svg)
+Lifetimes are all about references, and **nothing** else.
 
-Let's say we wanted to make a recursive-style list:
+* Informal definition:
+**Lifetimes provide a way for Rust to validate pointers at compile time**
 
-```rust
-enum List {
-  Cons(i32, List),
-  Nil,
-}
+* Formal definition:
+**Lifetimes are named regions of code that a reference must be valid for**
 
-fn main() {
-  // List of [1, 2, 3]
-  let list = Cons(1, Cons(2, Cons(3, Nil)));
-}
-```
+* Remember that references are just pointers with constraints!
 
 
 ---
 
 
-# The Compiler's Suggestion
+# Lifetimes vs Generics and Traits
 
-```
-error[E0072]: recursive type `List` has infinite size
- --> src/main.rs:1:1
-  |
-1 | enum List {
-  | ^^^^^^^^^
-2 |     Cons(i32, List),
-  |               ---- recursive without indirection
-  |
-help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
-  |
-2 |     Cons(i32, Box<List>),
-  |               ++++    +
-```
-* The compiler is complaining because we've defined a type with _infinite size_
-* The suggestion is to use a `Box<List>`
+Lifetimes are similar to trait bounds.
+
+* Traits ensure that a generic type has the behavior we want
+* Lifetimes ensure that references are valid for as long as we need them to be
 
 
 ---
 
 
-# Indirection with `Box<T>`
+# Validating References
 
-```rust
-let singleton = Cons(1, Box::new(Nil));
-let list = Cons(1, Box::new(Cons(2,
-                     Box::new(Cons(3,
-                       Box::new(Nil))))));
-```
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-* In the suggestion, "indirection" means we store a _pointer_ to a `List` rather than an entire `List`
-  * Pointers have fixed size, so our enum is no longer of infinite size!
-* We create a `Box<List>` with the `Box::new` associated function
-
-
----
-
-
-# More about `Box<T>`
-
-* `Box<T>` is a simple "smart" pointer to memory allocated on the heap*
-  * It is "smart" because it frees the memory when dropped
-* Other than the cost of allocation and pointer indirection, `Box` has no performance overhead
-* `Box<T>` fully owns the data it points to (just like `Vec<T>`)
-
-
----
-
-
-# When to use `Box<T>`
-
-* When you have a type of unknown size **at compile time** (like `List`)
-* When you have a large amount of data and want to transfer ownership
-  * Transferring ownership of a pointer is faster than a large chunk of data
-* Trait Objects
-  * We'll get to this soon...
-
-
-<!--
-The reasoning for why transferring ownership is faster is that data
-won't need to be copied to another stack for example, just the pointer.
--->
-
----
-
-
-# Using Values in the `Box`
-
-```rust
-let x = 5;
-let y = Box::new(x);
-
-assert_eq!(5, x);
-assert_eq!(5, *y);
-```
-* Just like a reference we can dereference a `Box<T>` to get `T`
-* `Box<T>` implements the `Deref` trait which customizes the behavior of `*`
-
-
----
-
-
-# `Deref` Trait
-
-The deref trait is defined as follows:
-```rust
-pub trait Deref {
-    type Target: ?Sized;
-
-    // Required method
-    fn deref(&self) -> &Self::Target;
-}
-```
-* Behind the scenes `*y` is actually `*(y.deref())`
-* Note this does not recurse infinitely
-* We can treat anything that implements `Deref` like a pointer!
-
-
----
-
-
-# Deref Coercion
-
-Recall that we were able to coerce a `&String` into a `&str`. We can also coerce a `&Box<String>` into a `&str`!
-
-```rust
-fn hello(name: &str) {
-    println!("Hello, {name}!");
-}
-
-fn main() {
-    let m = Box::new(String::from("Rust"));
-    hello(&m);
-}
-```
-
-* Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
-* Example: Deref coercion can convert a `&String` into `&str`
-  * `String` implements the `Deref` trait such that `Deref::Target = &str`
-
-
-
----
-
-
-# Deref Coercion Rules
-
-Rust is able to coerce mutable to immutable but not the reverse.
-
-* From `&T` to `&U` when `T: Deref<Target=U>`
-* From `&mut T` to `&mut U` when `T: DerefMut<Target=U>`
-* From `&mut T` to `&U` when `T: Deref<Target=U>`
-* For more information, consult the [Rustonomicon](https://doc.rust-lang.org/nomicon/dot-operator.html)
-
-
----
-
-# `&T` to `&U` Example
-
-```rust
-fn foo(s: &[i32]) {
-    print(s[0])
-}
-
-// Vec<T> implements Deref<Target=[T]>.
-let owned = vec![1, 2, 3];
-
-// Here we coerce &Vec<T> to &[T]
-foo(&owned);
-
-println!("{:?}", owned);
-```
-
-```
-[1]
-[1, 2, 3]
-```
-
----
-
-# `&mut T` to `&mut U` Example
-
-```rust
-fn foo(s: &mut [i32]) {
-    s[0] += 1;
-}
-
-// Vec<T> implements DerefMut<Target=[T]>.
-let mut owned = vec![1, 2, 3];
-
-// Here we coerce &mut Vec<T> to &mut [T]
-foo(&mut owned);
-
-println!("{:?}", owned);
-```
-
-```
-[2, 2, 3]
-```
-
-* `DerefMut` also allows coercing to &[T]
-
-<!--
-
--->
-
----
-
-
-# The `Drop` Trait
-
-```rust
-pub trait Drop {
-    fn drop(&mut self);
-}
-```
-
-* Values are dropped when they go out of scope
-* Dropping a value will recursively drop all its fields by default
-    * This mechanism allows automatically freeing memory
-* You can also provide a custom implementation of `Drop` on your types
-    * Allows us to run user code when values are dropped
-
-<!--
-first bullet: RAII
-your types -> specifically types declared in the crate per the orphan rule
--->
-
----
-
-
-# `Drop` Trait Example
-
-```rust
-struct CustomSmartPointer {
-    data: String,
-}
-
-impl Drop for CustomSmartPointer {
-    fn drop(&mut self) {
-        println!("Dropping `CustomSmartPointer` with data `{}`!", self.data);
-    }
-}
-```
-
-* This is a custom implementation that simply prints the data on drop
-* The data will still be freed automatically
-    * This method does not include automatic memory freeing logic
-
-
----
-
-
-# `Drop` Trait Example
-
-```rust
-let c = CustomSmartPointer {
-    data: String::from("my stuff"),
-};
-let d = CustomSmartPointer {
-    data: String::from("other stuff"),
-};
-println!("CustomSmartPointers created.");
-```
-```
-CustomSmartPointers created.
-Dropping CustomSmartPointer with data `other stuff`!
-Dropping CustomSmartPointer with data `my stuff`!
-```
-* Notice how values are dropped in reverse order of creation
-
----
-# `Drop` Trait Usage
-
-`Drop` trait implementations are typically not needed unless:
-- You are manually managing memory
-    - This likely involves using `unsafe` under the hood
-- You need to do something special before a value is dropped
-    - Might involve managing OS resources
-    - Might involve signalling other parts of your codebase
-
-
-
----
-
-
-# Manual Drop
-
-![bg right:30% 80%](../images/ferris_does_not_compile.svg)
-
-What if we want to manually drop a value before the end of the scope?
-
-```rust
-let csm = CustomSmartPointer {
-    data: String::from("some data"),
-};
-println!("CSM created.");
-
-csm.drop();
-
-println!("CSM dropped before the end of the scope");
-```
-
-
----
-
-
-# Manual Drop
-
-```
-error[E0040]: explicit use of destructor method
-  --> src/main.rs:16:7
-   |
-16 |     c.drop();
-   |     --^^^^--
-   |     | |
-   |     | explicit destructor calls not allowed
-   |     help: consider using `drop` function: `drop(c)`
-```
-
-* Rust won't let you explicitly call the drop trait method to avoid double drops
-
-
----
-
-
-# Manual Drop
-
-```rust
-let csm = CustomSmartPointer {
-    data: String::from("some data"),
-};
-println!("CSM created.");
-
-std::mem::drop(csm);
-
-println!("CSM dropped before the end of the scope");
-```
-
-* This code works since we use `std::mem::drop` instead
-* What's the difference?
-
-
----
-
-
-# `std::mem::drop`
-
-Here is the actual source code of `std::mem::drop` in the standard library:
-
-```rust
-pub fn drop<T>(_x: T) {}
-```
-
-* It takes ownership of `_x`, and then `_x` reaches the end of the scope and is dropped
-    * Hence, calling this function drops it, on demand!
-
-<!--
-This is beautiful!!
-https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
--->
-
-
-
----
-
-
-# **Object Oriented Programming**
-
-* Well...
-    * Not quite...
-
-
----
-
-
-# What We Know So Far...
-
-```rust
-pub struct AveragedCollection {
-    list: Vec<i32>,
-    average: f64,
-}
-
-impl AveragedCollection {
-    pub fn add(&mut self, value: i32) {
-        self.list.push(value);
-        self.update_average();
-    }
-
-    <-- snip -->
-}
-```
-* Encapsulation within `impl` blocks and crates
-* Public and private functions and methods with `pub`
-
-
----
-
-
-# Inheritence?
-Rust structs cannot "inherit" the implementations of methods or data fields from another struct...
-* If we want to wrap another struct's functionality, we can use composition
-* If we want to define interfaces, we can use traits
-* If we want polymorphism...
-    * Rust has something called "trait objects"
-
-<!--
-Composition is usually preferred in other languages nowadays too
---->
-
----
-
-
-# Polymorphism
-
-* Polymorphism != Inheritance
-* Polymorphism == "Code that can work with multiple data types"
-* In object oriented languages, polymorphism is usually expressed with classes
-* Rust expresses polymorphism with generics and traits:
-  * Generics are abstract over different possible types
-  * Traits impose constraints on what behaviors types must have
-
-
----
-
-
-# Trait Objects
-
-Trait objects allow us to store objects that implement a trait.
-
-```rust
-pub trait Window {
-    fn draw(&self);
-}
-
-pub struct LaptopScreen {
-    pub windows: Vec<Box<dyn Window>>,
-}
-```
-
-* In this example, `LaptopScreen` holds a vector of `Window` objects
-* We use the `dyn` keyword to describe any type that implements `Window`
-    * In a `Box`, since objects implementing `Window` could be of any size at runtime
-
-
-<!--
-key: Not size at compile time
-Note that converting a type into a trait object _erases_ the original type
--->
-
----
-
-
-# Trait Objects and Closures
-
-Since closures implement the `Fn` traits, they can be represented as trait objects!
-
-```rust
-fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
-    Box::new(|x| x + 1)
-}
-
-fn main() {
-    let closure = returns_closure();
-    print!("{}", closure(5)); // prints 6
-}
-```
-
-* We can use trait objects to return dynamic types
-* Deref coercion happening in the background to keep ergonomics clean!
-
-
----
-
-
-# Working With Trait Objects
-
-```rust
-struct ChromeWindow {
-    width: u32,
-    height: u32,
-    evil_tracking: bool
-}
-
-struct FirefoxWindow {
-    width: u32,
-    height: u32,
-}
-
-impl Window for ChromeWindow { fn draw(&self) { ... } }
-impl Window for FirefoxWindow { fn draw(&self) { .. } }
-```
-
-* Say we have **multiple** types that implement `Window`
-
-
----
-
-
-# Working With Trait Objects: Dynamic Dispatch
-
-```rust
-impl LaptopScreen {
-    pub fn run(&self) {
-        // `windows` is of type Vec<Box<dyn Window>>
-        for window in self.windows.iter() {
-            window.draw();
-        }
-    }
-}
-```
-
-* This is different than if `windows` was `Vec<ChromeWindow>`
-  * The generic parameter (in `Vec`) is known at compile time.
-* Trait objects allow for types to fill in for the trait object **at runtime**
-
-
----
-
-
-# Generic Version
-
-What about a version implemented with generics?
-
-```rust
-pub struct LaptopScreen<T: Window> {
-    pub windows: Vec<T>,
-}
-
-impl<T> LaptopScreen<T>
-where
-    T: Window,
-{
-    pub fn run(&self) {
-        for window in self.windows.iter() {
-            window.draw();
-        }
-    }
-}
-```
-* What is wrong with this version?
-  * We can't create a `LaptopScreen` with two different types of windows in it
-
----
-
-# Trait Objects: Mixing Objects
-
-```rust
-let screen = LaptopScreen {
-    windows: vec![
-        Box::new(ChromeWindow {
-            width: 1280,
-            width: 720,
-            evil_tracking: true,
-        }),
-        Box::new(FirefoxWindow {
-            <-- snip -->
-        }),
-    ],
-};
-screen.run();
-```
-
-* This is not possible with the version using generics
-
-
----
-
-
-# Aside: Dynamically Sized Types
-
-* `dyn Window` is an example of a dynamically sized type (DST)
-* DSTs have to be in a `Box`, because we don't know the size at compile time
-    * A `dyn Window` could be a `ChromeWindow` or `FirefoxWindow` object
-    * How much space should we make on the stack?
-* Pointers to DSTs are double the size (wide pointers)
-    * If you're interested in more information, ask us after lecture!
-
-
----
-
-# Smart Pointers
-
----
-
-
-# Smart Pointers
-- `Rc<T>`
-- `RefCell<T>`
-- Interior Mutability
-- Memory Leaks
-
----
-
-
-# **Motivation for `Rc<T>`**
-
-
----
-
-
-# Let's Make a List (again)
-Let's continue making the recursive-style list from the beginning of lecture with `Box<T>`.
-
-```rust
-enum List {
-  Cons(i32, Box<List>),
-  Nil,
-}
-
-fn main() {
-  let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
-  let b = Cons(3, Box::new(a));
-  let c = Cons(4, Box::new(a));
-}
-```
-
-![bg right:30% 80%](../images/ferris_does_not_compile.svg)
-
----
-
-
-# Cargo's Suggestion
-
-```
-   Compiling cons-list v0.1.0 (file:///projects/cons-list)
-error[E0382]: use of moved value: `a`
-  --> src/main.rs:11:30
-   |
-9  |     let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
-   |         - move occurs because `a` has type `List`, which does not implement the `Copy` trait
-10 |     let b = Cons(3, Box::new(a));
-   |                              - value moved here
-11 |     let c = Cons(4, Box::new(a));
-   |                              ^ value used here after move
-
-```
-* `Cons` needs to **own** the data it holds
-* We want both `b` and `c` to point to the same instance `a`
-    * `a` was already moved into `b` when we create `c`
-
-<!--
-Cloning is expensive + then b and c refer to different tails---no cloning!
--->
-
-
----
-
-
-# References?
-
-```rust
-enum List<'a> {
-    Cons(i32, &'a List<'a>),
-    Nil,
-}
-
-use crate::List::{Cons, Nil};
-
-fn main() {
-  let nil = Nil;
-  let a = Cons(10, &nil);
-  let b = Cons(5, &a);
-  let c = Cons(3, &a);
-  let d = Cons(4, &a);
-}
-```
-* While it can be done, it's a little messy
-
-
----
-
-
-# Introducing `Rc<T>`
-
-```rust
-enum List {
-  Cons(i32, Rc<List>),
-  Nil,
-}
-
-use crate::List::{Cons, Nil};
-use std::rc::Rc;
-
-fn main() {
-  let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-  let b = Cons(3, Rc::clone(&a));
-  let c = Cons(4, Rc::clone(&a));
-}
-```
-* Short for reference counted
-* Keeps track of the number of references to a value
-
-
-
----
-
-
-# `Rc<T>`: Reference Counted
-
-* Use `Rc::new(T)` to create a new `Rc<T>`
-  * `Rc::clone()` isn't a deep clone, it increments the ref counter
-* When an `Rc` is cloned, increment reference count
-* When an `Rc` is dropped, decrement reference count
-* When the reference count reaches zero, free the memory
-
-
----
-
-
-# When to use `Rc<T>`
-
-* Share one instance of allocated memory throughout the program
-    * We can only access the data as read-only
-    * We don't need to know what part of the program is going to use it last
-* Only used for single-threaded scenarios
-    * `Arc<T>` for multi-threaded (more on that soon)
-
-
----
-
-
-# `Rc<T>` Reference Counting Demonstrated
-
+The main goal of lifetimes it to prevent _dangling references_.
 
 ```rust
 fn main() {
-    let a = Rc::new(String::new("TODO: Steal Connor's identity"));
-    // Ref count after creating a: 1
-
-    let b = Rc::clone(&a);
-    // Ref count after creating b: 2
+    let r;
 
     {
-        let c = Rc::clone(&a);
-        // Ref count after creating c: 3
+        let x = 5;
+        r = &x;
     }
-    // Ref count after dropping c: 2
+
+    println!("r: {}", r);
 }
-// Ref count after dropping b and c: 0
 ```
-* The ref count is incremented on each clone
-* The ref count is decremented on each drop
-* Once the ref count reaches 0, the stored string data is deallocated.
 
----
-
-
-# `Rc<T>` Recap
-
-* Allows sharing ***immutable*** references without lifetimes
-* Should be used when the last user of the data is unknown
-* Very low overhead for providing this capability
-  * O(1) increment/decrement of counter
-  * Potential allocation/de-allocation on heap
-* Implemented using the `Drop` trait and `unsafe`!
-
-<!---
-second line: Should be used when last user of the data is unknown
--->
----
-
-
-
-# **`RefCell<T>` and Interior Mutability**
+* What is the issue with this code?
 
 
 ---
 
 
-# First, `Cell<T>`
+# Validating References
 
+```
+error[E0597]: `x` does not live long enough
+ --> src/main.rs:6:13
+  |
+6 |         r = &x;
+  |             ^^ borrowed value does not live long enough
+7 |     }
+  |     - `x` dropped here while still borrowed
+8 |
+9 |     println!("r: {}", r);
+  |                       - borrow later used here
+```
+
+* The value that `r` refers to has gone out of scope before we could use it
+* The scope of `r` is "larger" than the scope of `x`
+
+
+---
+
+
+# The Borrow Checker
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+The Rust compiler's borrow checker will compare scopes to determine whether all borrows are valid.
+
+Here is the same code, but with a lifetime diagram:
 ```rust
-use std::cell::Cell;
-
-let c1 = Cell::new(5i32);
-c1.set(15i32);
-
-let c2 = Cell::new(10i32);
-c1.swap(&c2);
-
-assert_eq!(10, c1.into_inner()); // consumes cell
-assert_eq!(15, c2.get()); // returns copy of value
+fn main() {
+    let r;                // ---------+-- 'a
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {}", r); //          |
+}                         // ---------+
 ```
-* Shareable, mutable container
-* Values can be moved in and out of a cell
-* Used for `Copy` types
-  * (where copying or moving values isn’t too resource intensive)
 
 
 ---
 
 
-# `RefCell<T>`
+# The Borrow Checker
 
-* Hold's sole ownership like `Box<T>`
-* Allows borrow checker rules to be enforced at **runtime**
-  * Interface with `.borrow()` or `borrow_mut()`
-  * If borrowing rules are violated, `panic!`
-* Typically used when Rust's conservative compile-time checking "gets in the way"
-* It is **not** thread safe!
-  * Use `Mutex<T>` instead
-
-
----
-
-
-# Interior Mutability
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 ```rust
 fn main() {
-  let x = 5;
-  let y = &mut x; // cannot borrow immutable x as mutable
-}
+    let r;                // ---------+-- 'a
+                          //          |
+    {                     //          |
+        let x = 5;        // -+-- 'b  |
+        r = &x;           //  |       |
+    }                     // -+       |
+                          //          |
+    println!("r: {}", r); //          |
+}                         // ---------+
 ```
 
-* It would be useful for a value to mutate itself in its methods but appear immutable to other code
-* Code outside the value's methods wouldn't be able to mutate it
-* This can be achieved with `RefCell<T>`
+- The borrow checker will compare the "size" of the two lifetimes
+    * `r` has a lifetime of `'a`
+    * `r` refers to a variable with lifetime `'b`
+    * Rejects because `'b` is shorter than `'a`
 
 
 ---
 
 
-# Interior Mutability with Mock Objects
+# Placating the Borrow Checker
+
+![bg right:25% 75%](../images/ferris_happy.svg)
+
+We can fix this code by removing the scope.
 
 ```rust
-pub trait Messenger {
-    // Note this takes &self and not &mut self
-    fn send(&self, msg: &str);
-}
-
-pub struct LimitTracker<'a, T: Messenger> {
-    messenger: &'a T,
-    value: usize,
-    max: usize,
-}
+fn main() {
+    let x = 5;            // ----------+-- 'b
+                          //           |
+    let r = &x;           // --+-- 'a  |
+                          //   |       |
+    println!("r: {}", r); //   |       |
+                          // --+       |
+}                         // ----------+
 ```
 
-* `LimitTracker` tracks a value against a maximum value and sends messages based on how close to the maximum value the current value is
-* We want to mock a messenger for our limit tracker to keep track of messages for testing
+* `x` now "outlives" `r`, so `r` can reference `x`
 
 
 ---
 
 
-# Limit Tracker
+# Generic Lifetimes
+
+Let's try to write some string functions.
+
 ```rust
-impl<'a, T> LimitTracker<'a, T>
-where
-    T: Messenger,
+fn main() {
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {}", result);
+}
+```
+
+We want this output:
+
+```
+The longest string is abcd
+```
+
+* Let's implement `longest`!
+
+
+---
+
+
+# `longest`
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Here's a first attempt:
+
+```rust
+fn longest(x: &str, y: &str) -> &str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+```
+
+* _We don't want to take ownership, so we take `&str` inputs_
+
+
+---
+
+
+# `longest` error
+
+Unfortunately, our attempt will not compile:
+
+```
+error[E0106]: missing lifetime specifier
+ --> src/main.rs:9:33
+  |
+9 | fn longest(x: &str, y: &str) -> &str {
+  |               ----     ----     ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value,
+    but the signature does not say whether it is borrowed from `x` or `y`
+help: consider introducing a named lifetime parameter
+  |
+9 | fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+  |           ++++     ++          ++          ++
+```
+
+
+---
+
+
+# `longest` error
+
+The help text from the compiler error reveals some useful information:
+
+```
+  = help: this function's return type contains a borrowed value,
+    but the signature does not say whether it is borrowed from `x` or `y`
+```
+
+* Rust can't figure out if the reference returned refers to `x` or `y`
+* In fact, neither do we!
+
+
+---
+
+
+# `longest` error
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+```rust
+fn longest(x: &str, y: &str) -> &str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+```
+
+- We don't know which execution path this code will take
+* We also don't know the lifetimes of the input references
+* Thus we cannot determine the lifetime we return!
+* We will need to _annotate_ these references
+
+
+---
+
+
+# Lifetime Annotation Syntax
+
+We can annotate lifetimes with generic parameters that start with a `'`, like `'a`.
+
+```rust
+&i32          // a reference
+&'a i32       // a reference with an explicit annotated lifetime
+&'a mut i32   // a mutable reference with an explicit lifetime
+
+&'hello usize // annotations can be any word or character,
+&'world bool  // as long as it starts with a tick (')
+```
+
+* Annotations do not change the how long references live, they only describe the relationship between lifetimes of references
+    * An annotation by itself has little meaning
+
+
+---
+
+
+# `longest` Lifetimes
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+Let's return back to our `longest` function.
+
+```rust
+fn longest(x: &str, y: &str) -> &str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+```
+
+* What do we want the function signature to express?
+* What should the relationship be between the lifetimes of the references?
+
+
+---
+
+
+# `longest` Lifetimes
+
+What exactly are we returning?
+
+```rust
+if x.len() > y.len() {
+    x
+} else {
+    y
+}
+```
+
+* We return either `x` or `y`, which each have their own lifetimes
+* We want the returned reference to be valid as long as _both_ input references `x` and `y` are valid
+* So we want lifetimes of `x` and `y` to _outlive_ the returned lifetime
+
+<!--
+In other words, we do not want the thing we return to outlive `x` or `y`
+-->
+
+
+---
+
+
+# `longest` Lifetimes
+
+![bg right:25% 75%](../images/ferris_happy.svg)
+
+Since lifetimes are a kind of generic parameter, we must declare them like normal generic type parameters.
+
+```rust
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+```
+
+* This will compile now!
+* _Remember that these lifetime annotations don't change the lifetimes of any values_
+
+<!--
+They just tell the borrow checker to reject any values that don't adhere to these constraints/invariants
+-->
+
+
+---
+
+
+# Lifetime Annotations in Functions
+
+We can extrapolate a lot from a function's signature, even without the body.
+
+```rust
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
+```
+
+* This function takes two string slices (`x` and `y`) that live at least as long as the lifetime `'a`
+* The string slice returned (the longer of `x` or `y`) will also live at least as long as `'a`
+
+
+---
+
+
+# Lifetime Annotations in Functions
+
+```rust
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
+```
+
+- When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
+* In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
+
+<!--
+Be clear that functions do not "return" lifetimes, this is just for slide space.
+
+In general, the relationship between lifetimes and scope is total,
+basically they do not overlap in some parts but not in others.
+
+However, there are some cases where this might be the case, usually quite complex
+
+Note that the longest function doesn’t need to know exactly how long x and y will live, only that some scope can be substituted for 'a that will satisfy this signature.
+This is a more complicated topic that probably shouldn't be brought up.
+-->
+
+
+---
+
+
+# Borrow Checker Example 1
+
+Let's look at some examples where the borrow checker is and isn't happy.
+
+```rust
+fn main() {
+    let string1 = String::from("long string is long");
+
+    {
+        let string2 = String::from("xyz");
+        let result = longest(string1.as_str(), string2.as_str());
+        println!("The longest string is {}", result);
+    }
+}
+```
+
+* `string1` is valid in the outer scope
+* `string2` is valid in the inner scope
+* `result` should only be  valid in the smaller scope (by our lifetime annotations)
+    * Since `println!` is in the smaller (inner) scope, this works!
+
+
+---
+
+
+# Borrow Checker Example 2
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+Let's reorder some things around.
+
+```rust
+fn main() {
+    let string1 = String::from("xyz");
+    let result;
+    {
+        let string2 = String::from("long string is long");
+        result = longest(string1.as_str(), string2.as_str());
+    }
+    println!("The longest string is {}", result);
+}
+```
+
+* `result` should only be valid in the smaller (inner) scope, but we try to reference it in the outer scope
+
+
+---
+
+
+# Borrow Checker Example 2
+
+Sure enough, this does not compile, and Rust gives us this error:
+
+```
+error[E0597]: `string2` does not live long enough
+ --> src/main.rs:6:44
+  |
+6 |         result = longest(string1.as_str(), string2.as_str());
+  |                                            ^^^^^^^^^^^^^^^^
+                       borrowed value does not live long enough
+7 |     }
+  |     - `string2` dropped here while still borrowed
+8 |     println!("The longest string is {}", result);
+  |                                          ------ borrow later used here
+```
+
+
+---
+
+
+# Borrow Checker Example 3
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+What if we knew (as the programmer) that `string1` is always longer than `string2`?
+
+Let's switch the strings around:
+```rust
+let string1 = String::from("long string is long");
+let result;
 {
-    // --- snip ---
-    pub fn set_value(&mut self, value: usize) {
-        self.value = value;
+    let string2 = String::from("xyz");
+    result = longest(string1.as_str(), string2.as_str());
+}
+println!("The longest string is {}", result);
+```
 
-        let percentage_of_max = self.value as f64 / self.max as f64;
 
-        if percentage_of_max >= 1.0 {
-            self.messenger.send("Error: You are over your quota!");
-        } else if percentage_of_max >= 0.9 {
-            self.messenger
-                .send("Urgent warning: You've used up over 90% of your quota!");
-        } else if percentage_of_max >= 0.75 {
-            self.messenger
-                .send("Warning: You've used up over 75% of your quota!");
+---
+
+
+# Borrow Checker Example 3
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+```rust
+let string1 = String::from("long string is long");
+let result;
+{
+    let string2 = String::from("xyz");
+    result = longest(string1.as_str(), string2.as_str());
+}
+println!("The longest string is {}", result);
+```
+
+* Even though we know (as a human) that the reference will be valid, the compiler does not know
+
+<!--
+* We even told the compiler that the returned lifetime would be the same as the smaller of the input lifetimes!
+-->
+
+
+---
+
+
+# Avoiding Lifetime Annotations
+
+Suppose we wanted to always return the first input, `x`.
+
+```rust
+fn first<'a>(x: &'a str, y: &str) -> &'a str {
+    x
+}
+```
+
+* We don't need to annotate `y` with `'a`, because the return value doesn't care about `y`'s lifetime
+
+
+---
+
+
+# Lifetimes of Return Values
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+The lifetime of a return value _must_ match the lifetime of one of the inputs.
+
+```rust
+fn dangling<'a>(x: &str, y: &str) -> &'a str {
+    let result = String::from("really long string");
+    result.as_str()
+}
+```
+
+* If it didn't depend on an input, then it would _always_ be a dangling reference!
+
+
+---
+
+
+# Lifetime Elision
+
+All references must have a lifetime. But we've seen many references without lifetime annotations...
+
+This is a version of a function we saw back in week 2:
+
+```rust
+fn first_word(s: &str) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
         }
     }
+
+    &s[..]
 }
 ```
+
+* There are no lifetime annotations here!
 
 
 ---
 
 
-# Our Mock Messenger
+# Story Time
+
+_Long ago, in the dark ages of the 2010s, every reference needed an explicit lifetime._
 
 ```rust
-struct MockMessenger {
-  sent_messages: Vec<String>,
-}
-
-impl MockMessenger {
-  fn new() -> MockMessenger {
-    MockMessenger { sent_messages: vec![] }
-  }
-}
-
-impl Messenger for MockMessenger {
-  fn send(&self, message: &str) {
-    self.sent_messages.push(String::from(message));
-  }
-}
+fn first_word<'a>(s: &'a str) -> &'a str {
 ```
 
-* This code won't compile! `self.sent_messages.push` requires `&mut self`
+* Before Rust 1.0, every single `&` needed an explicit `'something` annotation
+* This became incredibly repetitive, and so the Rust team programmed the borrow checker to infer lifetime annotation patterns of certain situations
+* These patterns are called the _lifetime elision rules_
 
 
 ---
 
 
-# Let's Use Interior Mutability
+# Lifetime Elision
+
+* Lifetime elision does not provide full inference, it will only infer when it is absolutely sure it is correct
+* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_
+* There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes
+
+
+---
+
+
+# Lifetime Elision Rule 1
+
+The first rule is that the compiler will assign a different lifetime parameter for each input lifetime.
 
 ```rust
-use std::cell::RefCell;
+fn foo(x: &i32);
+fn foo<'a>(x: &'a i32);
 
-struct MockMessenger {
-  sent_messages: RefCell<Vec<String>>,
-}
-
-impl MockMessenger {
-  fn new() -> MockMessenger {
-    MockMessenger {
-      sent_messages: RefCell::new(vec![]),
-    }
-  }
-}
-
-impl Messenger for MockMessenger {
-  fn send(&self, message: &str) {
-    self.sent_messages.borrow_mut().push(String::from(message));
-  }
-}
+fn bar(x: &i32, y: &i32);
+fn bar<'a, 'b>(x: &'a i32, y: &'b i32);
 ```
 
 
----
-
-
-# Managing Borrows
-
-![bg right:30% 80%](../images/ferris_panics.svg)
-```rust
-impl Messenger for MockMessenger {
-  fn send(&self, message: &str) {
-    let mut one_borrow = self.sent_messages.borrow_mut();
-    let mut two_borrow = self.sent_messages.borrow_mut();
-
-    one_borrow.push(String::from(message));
-    two_borrow.push(String::from(message));
-  }
-}
-```
-
-* We still use the `&` and `mut` syntax for `RefCell`
-* `borrow` returns either a `Ref` or `RefMut` which implement `Deref`/`DerefMut`
-  * Deref coercion applies: Can be treated as standard references
-
 
 ---
 
 
-# What Makes Each Smart Pointer Unique
+# Lifetime Elision Rule 2
 
-
-* `Rc<T>` - Enables multiple read-only owners of the same data
-* `Box<T>` - Allows immutable or mutable borrows that are checked at compile time
-* `RefCell<T>` - Allows immutable/mutable borrows that are checked at ***runtime***
-
-
----
-
-
-# Combining Smart Pointers: `Rc<RefCell<T>>`
+The second rule is that if there is only 1 input lifetime parameter, then it is assigned to all output lifetimes.
 
 ```rust
-#[derive(Debug)]
-enum List {
-  Cons(Rc<RefCell<i32>>, Rc<List>),
-  Nil,
-}
-```
+fn foo(x: &i32) -> &i32;
+fn foo<'a>(x: &'a i32) -> &'a i32;
 
-* Common type seen in Rust
-* Enables multiple owners of mutable data (with runtime checks)
-* Extremely powerful, but comes with some overhead
+fn bar(arr: &[i32]) -> (&i32, &i32);
+fn bar<'a>(arr: &'a [i32]) -> (&'a i32, &'a i32);
+```
 
 
 ---
 
-# `Rc<RefCell<T>>` List
+
+# Lifetime Elision Rule 3
+
+If there are multiple input lifetime parameters, but the first parameter is `&self` or `&mut self`, the lifetime of `&self` is assigned to all output lifetimes.
+
+* This only applies to methods
+* Makes writing methods much nicer!
+* _Examples to come later..._
+
+
+---
+
+
+# Lifetime Elision Example 1
+
+Let's pretend we are the compiler, and let's attempt to apply the lifetime elision rules to `first_word`.
 
 ```rust
-let value = Rc::new(RefCell::new(5));
-
-let a = Rc::new(Cons(Rc::clone(&value), Rc::new(Nil)));
-
-let b = Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
-let c = Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
-
-*value.borrow_mut() += 10;
-
-println!("a after = {:?}", a);
-println!("b after = {:?}", b);
-println!("c after = {:?}", c);
+fn first_word(s: &str) -> &str;
 ```
-```
-a after = Cons(RefCell { value: 15 }, Nil)
-b after = Cons(RefCell { value: 3 }, Cons(RefCell { value: 15 }, Nil))
-c after = Cons(RefCell { value: 4 }, Cons(RefCell { value: 15 }, Nil))
-```
+
 
 ---
 
 
-# Let's Try Another List
+# Lifetime Elision Example 1
+
+We apply the first rule, which specifies that each parameter gets its own lifetime.
 
 ```rust
-enum List {
-  Cons(i32, RefCell<Rc<List>>),
-  Nil,
-}
-
-impl List {
-  fn tail(&self) -> Option<&RefCell<Rc<List>>> {
-    match self {
-      Cons(_, item) => Some(item),
-      Nil => None,
-    }
-  }
-}
+fn first_word<'a>(s: &'a str) -> &str;
 ```
-* This implementation allows modifying the list structure instead of list values
-* Now we have a function `tail` that gets the rest of our list
 
 
 ---
 
 
-# What Happens?
+# Lifetime Elision Example 1
+
+The second rule specifies that the lifetime of the single input parameter gets assigned to all output lifetimes, so the signature becomes this:
 
 ```rust
-let a = Rc::new(Cons(5, RefCell::new(Rc::new(Nil))));
-
-println!("a initial rc count = {}", Rc::strong_count(&a));
-println!("a next item = {:?}", a.tail());
-
-let b = Rc::new(Cons(10, RefCell::new(Rc::clone(&a))));
-
-println!("a rc count after b creation = {}", Rc::strong_count(&a));
-println!("b initial rc count = {}", Rc::strong_count(&b));
-println!("b next item = {:?}", b.tail());
-
-if let Some(link) = a.tail() {
-  *link.borrow_mut() = Rc::clone(&b);
-}
-
-println!("b rc count after changing a = {}", Rc::strong_count(&b));
-println!("a rc count after changing a = {}", Rc::strong_count(&a));
-
-println!("a next item = {:?}", a.tail());
+fn first_word<'a>(s: &'a str) -> &'a str;
 ```
+
+* Since all references have lifetime annotations, we're done!
 
 
 ---
 
 
-# Answer
+# Lifetime Elision Example 2
 
-```
-Exited with signal 6 (SIGABRT): abort program
+So why didn't elision work with `longest`? Let's trace it out!
 
-a initial rc count = 1
-a next item = Some(RefCell { value: Nil })
-a rc count after b creation = 2
-b initial rc count = 1
-b next item = Some(RefCell { value: Cons(5, RefCell { value: Nil }) })
-b rc count after changing a = 2
-a rc count after changing a = 2
-a next item = Some(RefCell { value: Cons(10, RefCell { value: Cons(5, RefCell...
-```
-
-* We see that at the end we have a reference cycle!
-
-
----
-
-
-# Let's Look Closer
-```rust
-let a = Rc::new(Cons(5, RefCell::new(Rc::new(Nil))));
-// a is Cons(5, Nil)
-
-let b = Rc::new(Cons(10, RefCell::new(Rc::clone(&a))));
-// b is Cons(10, a) = Cons(10, Cons(5, Nil))
-
-if let Some(link) = a.tail() {
-    // link is Nil (pointed to by a)
-    *link.borrow_mut() = Rc::clone(&b);
-    // link is now b = Cons(10, a)
-}
-// a = Cons(5, link) = Cons(5, b) = Cons(5, Cons(10, a))
-// ^^^ reference cycle of a made!
-```
-
-* This can cause a memory leak!
-  * `Rc` only frees when the `strong_count` is 0
-
-
----
-
-
-# Avoiding Reference Cycles
-
-* We know `Rc::clone` increases the `strong_count`
-* You can create a `Weak<T>` reference to a value with `Rc::downgrade`
-  * This increases the `weak_count` and can be nonzero when the `Rc` is freed
-* To ensure valid references, `Weak<T>` must be upgraded before any use
-  * Returns an `Option<Rc<T>>`
-
-
----
-
-
-# `Weak<T>` Trees
+We start with this signature without annotations:
 
 ```rust
-use std::cell::RefCell;
-use std::rc::{Rc, Weak};
-
-#[derive(Debug)]
-struct Node {
-  value: i32,
-  parent: RefCell<Weak<Node>>,
-  children: RefCell<Vec<Rc<Node>>>,
-}
+fn longest(x: &str, y: &str) -> &str;
 ```
 
 
 ---
 
 
-# `Weak<T>` Trees In Action
+# Lifetime Elision Example 2
+
+Let's apply the first rule and get annotations for all inputs.
 
 ```rust
+fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
+```
+
+* What now?
+
+
+---
+
+
+# Lifetime Elision Example 2
+
+```rust
+fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
+```
+
+- The second rule doesn't apply here, because there is more than 1 input lifetime (`'a` and `'b`)
+* Since Rust cannot figure out what to do, it gives a compiler error to the programmer so they can write the annotations themselves
+
+
+---
+
+
+# Lifetimes in Structs
+
+So far, all of the `struct`s we've looked at have held _owned_ type fields.
+
+If we want a `struct` to hold a reference, we need to annotate them.
+
+```rust
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+    importance: i32,
+}
+
 fn main() {
-  let leaf = Rc::new(Node {
-    value: 3,
-    parent: RefCell::new(Weak::new()),
-    children: RefCell::new(vec![]),
-  });
-
-  println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
-
-  let branch = Rc::new(Node {
-    value: 5,
-    parent: RefCell::new(Weak::new()),
-    children: RefCell::new(vec![Rc::clone(&leaf)]),
-  });
-
-  *leaf.parent.borrow_mut() = Rc::downgrade(&branch);
-
-  println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
-} // Tree is effectively dropped even with parent references!
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
+    let i = ImportantExcerpt {
+        part: first_sentence,
+        importance: 42,
+    };
+}
 ```
 
 
 ---
 
 
-# Recap
+# Lifetimes in Structs
 
-- `Box<T>`
-- The `Deref` trait
-- The `Drop` trait
-- Trait Objects
-- Smart Pointers
+```rust
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+    importance: i32,
+}
+```
+
+- As with generic data types, we declare the name of the generic lifetime parameter inside angle brackets
+* This annotation means an instance of `ImportantExcerpt` can’t outlive the reference it holds in its `part` field
+
 
 ---
 
 
-# Next Lecture: Parallelism (probably)
+# Lifetimes in `impl` Blocks
+
+Similarly, we need to annotate `impl` blocks with lifetime parameters.
+
+```rust
+impl<'a> ImportantExcerpt<'a> {
+    fn importance(&self) -> i32 {
+        self.importance
+    }
+}
+```
 
 
+---
+
+
+# Lifetimes in Methods
+
+Here is an example where the third elision rule is applied:
+
+```rust
+impl<'a> ImportantExcerpt<'a> {
+    fn announce_and_return_part(&self, announcement: &str) -> &str {
+        println!("Attention please: {}", announcement);
+        self.part
+    }
+}
+```
+
+* The first rule gives both `&self` and `announcement` their own lifetimes
+* The third rule gives the return lifetime the lifetime of `&self`
+
+
+---
+
+
+# Putting it all together...
+
+Let’s briefly look at the syntax of specifying generic type parameters, trait bounds, and lifetimes all in one function!
+
+```rust
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
+where
+    T: Display,
+{
+    println!("Announcement! {}", ann);
+
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+```
+
+
+---
+
+
+# Lifetime Bounds
+
+Lifetimes can be bounds, just like traits.
+
+```rust
+#[derive(Debug)]
+struct Ref<'a, T: 'a>(&'a T);
+```
+
+* `Ref` contains a reference, with a lifetime of `'a`, to a generic type `T`
+* `T` is bounded such that any references _in_ `T` must live at least as long as `'a`
+* Additionally, the lifetime of `Ref` may not exceed `'a`
+
+
+---
+
+
+# Lifetime Bounds
+
+Here is a similar example, but with a function instead of a `struct`.
+
+```rust
+fn print_ref<'a, T>(t: &'a T)
+where
+    T: Debug + 'a,
+{
+    println!("print_ref(t) is {:?}", t);
+}
+```
+
+* `T` must implement `Debug`, and all references _in_ `T` must outlive `'a`
+* Additionally, `'a` must outlive this function call
+
+
+---
+
+
+# Lifetime Bounds
+
+Putting the `Ref` and `print_ref` together:
+
+```rust
+#[derive(Debug)]
+struct Ref<'a, T: 'a>(&'a T);
+
+fn print_ref<'a, T>(t: &'a T)
+where
+    T: Debug + 'a,
+{
+    println!("print_ref(t) is {:?}", t);
+}
+
+fn main() {
+    let x = vec![9, 8, 0, 0, 8];
+    let ref_x = Ref(&x);
+    print_ref(&ref_x);
+    // Prints to stdout: print_ref(t) is Ref([9, 8, 0, 0, 8])
+}
+```
+
+<!--
+This is quite difficult to understand, don't spend too much time here.
+-->
+
+
+---
+
+
+# Lifetime-bounded Lifetimes
+
+We can have lifetimes that are bounded by other lifetimes.
+
+```rust
+// Takes in a `&'a i32` and return a `&'b i32` as a result of coercion
+fn choose_first<'a: 'b, 'b>(first: &'a i32, _: &'b i32) -> &'b i32 {
+    first
+}
+
+fn main() {
+    let first = 2; // Longer lifetime
+    {
+        let second = 3; // Shorter lifetime
+        println!("{} is the first", choose_first(&first, &second));
+    }
+}
+```
+
+* `'a: 'b` reads as "lifetime `'a` outlives `'b`"
+
+<!--
+'a outlives 'b == 'a is at least as long as 'b
+-->
+
+
+---
+
+
+# The `'static` Lifetime
+
+There is a special lifetime called `'static`.
+
+```rust
+let s: &'static str = "I have a static lifetime";
+```
+
+* `'static` implies that the reference will live until the end of the program (it is valid until the program stops running)
+* Here, `s` is stored in the program binary, so it will always be valid!
+
+
+---
+
+
+# `'static` Error Messages
+
+You may see suggestions to use the `'static` lifetime in error messages.
+
+```rust
+fn foo() -> &i32 {
+    let x = 5;
+    &x
+}
+```
+
+```
+help: consider using the `'static` lifetime, but this is uncommon unless you're
+      returning a borrowed value from a `const` or a `static`
+  |
+2 | fn foo() -> &'static i32 {
+  |              +++++++
+```
+
+* Before making a change, think about if your reference will _really_ live until the end of the program
+* You may actually be trying to create a dangling reference!
+
+
+---
+
+
+# `'static` vs `static`
+
+There are two common ways to make a variable with a `'static` lifetime.
+
+1) Make a string literal with has type `&'static str`
+2) Make a constant with the `static` declaration
+
+
+---
+
+
+# `'static` vs `static` Example
+
+```rust
+static NUM: i32 = 42;
+static NUM_REF: &'static i32 = &NUM;
+
+fn main() {
+    let msg: &'static str = "Hello World";
+    println!("{msg} {NUM_REF}!");
+}
+```
+
+```
+Hello World 42!
+```
+
+---
+
+
+# `'static` Memory Leaks
+
+There is a third way: we can create `'static` values by _leaking memory_.
+
+```rust
+fn random_vec() -> &'static [usize; 100] {
+    let mut rng = rand::thread_rng();
+    let mut boxed = Box::new([0; 100]);
+    boxed.try_fill(&mut rng).unwrap();
+    Box::leak(boxed)
+}
+
+fn main() {
+    let first: &'static [usize; 100] = random_vec();
+    let second: &'static [usize; 100] = random_vec();
+    assert_ne!(first, second)
+}
+```
+
+* This allows us to _dynamically_ create a `'static` reference!
+
+
+---
+
+
+# The `'static` Bound
+
+`'static` can also be used as a type bound. However...
+
+* There is a subtle difference between the `'static` lifetime and the `'static` bound
+* The `'static` bound means that the type does not contain any non-static references
+* This means that all owned data implicitly has a `'static` bound, since owned data holds no references
+
+<!--
+Does not imply contrapositive
+-->
+
+
+---
+
+
+# `'static` Bound Example
+
+![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+
+Here's an example of using a `'static` bound.
+
+```rust
+fn print_it(input: impl Debug + 'static) {
+    println!("'static value passed in is: {:?}", input);
+}
+
+fn main() {
+    // i is owned and contains no references,
+    // thus it has a 'static bound
+    let i = 5;
+    print_it(i);
+
+    // oops, &i only has the lifetime defined by
+    // the scope of main, so it's not 'static
+    print_it(&i);
+}
+```
+
+
+---
+
+
+# `'static` Bound Example
+
+We get a compiler error:
+
+```
+error[E0597]: `i` does not live long enough
+  --> src/lib.rs:15:15
+   |
+15 |     print_it(&i);
+   |     ---------^^--
+   |     |         |
+   |     |         borrowed value does not live long enough
+   |     argument requires that `i` is borrowed for `'static`
+16 | }
+   | - `i` dropped here while still borrowed
+```
+
+
+---
+
+
+# Review
+
+* Rust has lifetimes to prevent dangling references
+* The borrow checker will ensure that lifetimes are always valid
+* Rust will allow you elide lifetime annotations in some situations
+
+
+---
+
+
+# Further Reading
+
+* You can find some more examples here: [Rust By Example](https://doc.rust-lang.org/rust-by-example/scope/lifetime.html)
+* If you want to go _really_ in depth, read the Rustonomicon chapter on [lifetimes](https://doc.rust-lang.org/nomicon/lifetimes.html)
+
+
+---
+
+
+# Another Perspective
+
+[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
+
+* This is a great video made by `leddoo` that explains another way to think about lifetimes!
+* Instead of lifetimes as regions of code or scopes, what if we thought about lifetimes as regions of memory?
+* Let's watch it together!
+
+
+---
+
+
+# Watch Party
+
+[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
+
+
+---
+
+
+# What is `'a` lifetime?
+
+Some quick points:
+
+* Thinking about lifetimes as regions of code can be confusing
+* Instead, think about lifetimes as regions of valid memory
+* Both interpretations are valid!
+
+
+---
+
+
+# Feedback
+
+Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Piazza).
+
+* It will help us make this semester better for you
+* It will also help make future offerings of this course better for others!
+* Feedback is anonymous, so please be honest
+* You will receive a homework's worth of extra credit!
+
+
+---
+
+
+# Next Lecture: `Box` and Trait Objects
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
 * Thanks for coming!
+

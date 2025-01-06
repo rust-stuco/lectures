@@ -8,7 +8,7 @@ paginate: true
 <!-- _class: communism communism2 invert  -->
 
 ## Intro to Rust Lang
-# Unsafe
+# Parallelism
 
 <br>
 
@@ -16,766 +16,710 @@ paginate: true
 
 <!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
+---
+
+# Parallelism vs. Concurrency
+
+<div class="columns">
+<div>
+
+## Parallelism
+
+- Work on multiple tasks at the same time
+- Utilizes multiple processors/cores
+
+</div>
+<div>
+
+## Concurrency
+
+- Manage multiple tasks, but only do one thing at a time.
+- Better utilizes a single processor/core
+
+</div>
+</div>
+<center>
+
+* These terms are used (and abused) interchangably
+
+</center>
+
+---
+
+# Parallelism vs. Concurrency
+
+
+<img src="img/concvspar.jpg" style="width: 85%; margin-left: auto; margin-right: auto;">
+
+---
+
+# Parallelism vs. Concurrency
+<div class="columns">
+<div>
+
+## Parallelism
+
+<img src="img/psychotic-chefs.jpg" style="width: 88%">
+
+</div>
+<div>
+
+## Concurrency
+
+<img src="img/lonely-chef.jpg" style="width: 88%">
+
+</div>
+</div>
+
+---
+
+# Parallelism vs. Concurrency (Examples)
+<div class="columns">
+<div>
+
+## Parallelism
+
+
+- Have one processor work on loading the webpage, while another updates the progress bar
+* Often used to divide tasks into smaller units that can run at the same time
+  * e.g. Processing 100x100px regions of an image on each core
+  * "Divide and conquer"
+</div>
+<div>
+
+## Concurrency
+
+* As we load a webpage, take a break sometimes to update the loading progress bar
+* Often used to do other things while we wait for blocking I/O operations
+  * e.g. Running garbage collection while we wait for a response over the network
+
+</div>
+</div>
 
 ---
 
 
-# The Story So Far...
-
-* We have covered all of the basic features of Rust, as well as many of the intermediate concepts
-* If you are confident you understand the past 11 lectures, you can probably say you are proficient with Rust!
-
-
----
-
-
-# Epilogue
-
-As much as we'd love to dive deep into each of these topics in depth, we simply do not have time.
-
-However...
-
-* The goal of this course was never to feed you information
-* The goal was to teach you the _core ideas_ of Rust and how to think about it
-* We hope that you will take the knowledge from this class and use it to explore more about this programming language _yourself_
+# Today: Parallelism
+- Threads
+- Synchronization
+- Message Passing
+- `Send` and `Sync`
+- More Synchronization
 
 
 ---
 
+# Terminology: Threads
 
-# **Unsafe Rust**
-
-
----
-
-
-# Into the Woods
-
-So far, we've only seen code where memory safety is guaranteed at compile time.
-
-* Rust has a second language hidden inside called _unsafe Rust_
-* `unsafe` Rust does not enforce memory safety guarantees
-
+* Dangerously overloaded term—can mean one of many things
+* For this lecture, we define it as a "stream of instructions"
+* In Rust, language threads are 1:1 with OS threads
+* **Key point:** Threads share the same resources
 
 ---
 
+# Sharing Resources
 
-# Why `unsafe`?
+```c
+static int x = 0;
 
-* Static analysis is _conservative_
-* By definition, it enforces _soundness_ rather than _completeness_
-* We need a way to tell the compiler: "Trust me, I know what I'm doing"
-* Additionally, computer hardware is inherently unsafe
+static void thread(void) {
+  int temp = x;
+  temp += 1;
+  x = temp;
+}
+// <!-- snip -->
+for (int i = 0; i < 20; ++i) {
+  create_thread(thread); // helper function not shown
+}
+```
 
+* What is the value of `x` after we join on all 20 threads?
+  * What is the next slide's title going to be?
+
+<!-- Define atomic verbally -->
+---
+
+# Race Conditions
+When multiple threads have access to the same data, things get complicated...
+* Specifically, this is about *data races*
 
 ---
 
+# The Bad Slide
 
-# `unsafe` in 2024
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| temp = x (temp = 0)   |               |
+|               | temp = x (temp = 0)   |
+| temp += 1 (temp = 0 + 1) |               |
+|               | temp += 1 (temp = 0 + 1) |
+| x = temp (x = 1)  |               |
+|               | x = temp (x = 1)  |
 
-* Rust's precise requirements for `unsafe` code are still being determined
-* There's an entire book dedicated to `unsafe` Rust called the [Rustonomicon](https://doc.rust-lang.org/nomicon/)
-
-
----
-
-
-# What is `unsafe`, really?
-
-If you take anything away from today, it should be this:
-
-**Unsafe code is the mechanism Rust gives developers for taking advantage of invariants that, for whatever reason, the compiler cannot check.**
-
-- _Jon Gjengset, Rust for Rustaceans_
-
-
----
-
-
-# What `unsafe` is not
-
-It's important to understand that `unsafe` is _not_ just a way to skirt the rules of Rust.
-
-* Ownership
-* Borrow Checking
-* Lifetimes
-* `unsafe` is a way to _enforce_ these rules using reasoning beyond the compiler
-* The onus is on _you_ to ensure the code is **safe**
+* Uh oh...
 
 <!--
-unsafe is a misleading keyword: it's not that the code _is_ unsafe, it is that the
-code is allowed to perform otherwise unsafe operations because in this particular context,
-those operations _are_ safe
+Is that working correctly? Look at the code—it's doing exactly what it is supposed to do. Maybe we weren't specific enough...
 -->
 
+---
 
+# Synchronization
+
+To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
+* Mutual exclusion means "Only one thread can do something at a time"
+* A common tool for this is a mutex lock
+
+
+<!-- Explain what mutual exclusion is, what a mutex is, high level, verbally -->
 ---
 
 
-# The `unsafe` Keyword
+# Sharing Resources With Mutual Exclusion
 
-There are 2 ways to use the `unsafe` keyword in Rust. The first is marking a _function_ as `unsafe`.
+```c
+static int x = 0;
+static mtx_t x_lock;
 
+static void thread(void) {
+  mtx_lock(&x_lock);
+  int temp = x;
+  temp += 1;
+  x = temp;
+  mtx_unlock(&x_lock);
+}
+// <!-- snip -->
+```
+- Only one thread can hold the mutex lock at a time
+
+- This provides *mutual exclusion*--only one thread may access `x` at the same time.
+
+
+---
+
+# Threads in Rust
+
+---
+
+# Threads in Rust
+* Rust's typechecker guarantees an absence of *data races*
+  * (Unless you use unsafe)
+* General race conditions are not prevented
+* Deadlocks are still allowed
+
+<!-- In my opinion, this is the single best reason to use this language -->
+
+---
+
+# Creating Threads
+Threads can be created/spawned using `thread::spawn`.
 ```rust
-impl<T> SomeType<T> {
-    //  vvvvvv
-    pub unsafe fn decr(&self) {
-        self.some_usize -= 1;
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
     }
-}
+});
 ```
-
-* Here, the `unsafe` keyword serves as a warning to the caller
-* There may be additional invariants that must be upheld _before_ calling `decr`
+* `thread::spawn` takes in a function, implementing the `FnOnce` and `Send` traits.
+  * Closures are often used to allow capturing values, but functions work as well
+  * More on the `Send` trait later...
+* Returns a `JoinHandle` type
 
 
 ---
 
-
-# The `unsafe` Keyword
-
-The second way is marking an _expression_ as `unsafe`
-
+# Joining Threads
+To wait for a thread to complete, we *join* on it.
 ```rust
-impl<T> SomeType<T> {
-    pub fn as_ref(&self) -> &T {
-        unsafe { &*self.ptr }
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
     }
+});
+
+handle.join().unwrap();
+```
+* Execution of the main thread is halted until the spawned thread finishes
+
+
+---
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+# Capturing Values in Threads
+We often want to use things outside of the the closure, but borrowing them can be problematic.
+```rust
+let v = vec![1, 2, 3];
+
+let handle = thread::spawn(|| {
+    println!("Here's a vector: {:?}", v);
+});
+```
+```
+error[E0373]: closure may outlive the current function,
+but it borrows `v`, which is owned by the current function
+```
+* In other words, what if `v` goes out of scope while the thread is still running?
+
+---
+
+# Capturing Values in Threads
+To solve this problem, we can take ownership of values, *moving* them into the closure.
+```rust
+let v = vec![1, 2, 3];
+
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v);
+});
+```
+* `v` is no longer accessible in the main thread
+* You could clone `v` to solve this problem
+  * But, what if we *wanted* to share `v`?
+
+---
+
+# Multiple Owners
+
+Recall `Rc<T>` from last lecture.
+* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value.
+* The difference is, `Rc<T>` has an internal reference count, and the heap allocated value will only be dropped when the reference count reaches zero.
+* The only problem is, `Rc<T>` is not thread safe...
+
+<!-- Make sure people know about reference counts -->
+
+---
+
+# `Arc<T>`
+
+"Arc" stands for "Atomically Reference Counted". This means, it is thread-safe, at the cost of slightly slower operations.
+* General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads
+  * The compiler will not let you use `Rc` across threads
+
+---
+
+# Sharing Resources in Rust
+We can give the vector multiple owners by using an `Arc`.
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* `v` and `v_copy` both point to the same value
+* When both  are dropped, only then will the underlying vector be dropped
+* Is this a data race?
+  * No, because we are only performing reads
+
+---
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+# Sharing Mutable Resources in Rust
+If we attempt to mutate the vector, we will indeed encounter an error
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* This prevents a data race
+  * If we allowed this, it would violate one of the rules—only one mutable reference at a time
+
+---
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+# Sharing Mutable Resources in Rust
+```rust
+let v = Arc::new(vec![1, 2, 3]);
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+
+```
+cannot borrow data in an Arc as mutable
+<!-- snip -->
+help: trait DerefMut is required to modify through a dereference,
+but it is not implemented for Arc<Vec<i32>>
+```
+
+---
+
+
+# Sharing Mutable Resources in Rust
+The solution to this is actually the same as in C—we introduce a mutex.
+
+---
+
+# Mutexes in Rust
+
+Unlike in C, mutexes in Rust actually *wrap* values.
+
+```rust
+let x = Mutex::new(0);
+let x_data = x.lock().unwrap();
+```
+* This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
+  * If we know this, our multiple mutable references rule is not broken!
+* `x_data` is a `MutexGuard` type.
+  * It has deref coercion, so one can operate on it just like it was the actual data
+* When `x_data` is dropped, the mutex will be unlocked.
+* `lock` may return an error if another thread panics
+
+---
+
+# Sharing Mutable Resources in Rust
+```rust
+let v = Arc::new(Mutex::new(vec![1, 2, 3]));
+
+let v_copy = v.clone();
+let handle = thread::spawn(move || {
+    v_copy.lock().unwrap().push(4);
+    println!("Here's a vector: {:?}", v_copy);
+});
+
+v.lock().unwrap().push(5);
+println!("Here's a vector: {:?}", v);
+
+handle.join().unwrap();
+```
+* The other thread cannot access the mutex until it is dropped (unlocked)
+* This prevents multiple mutable references, and the data race, by providing mutual exclusion!
+
+---
+
+# C to Rust Example
+
+---
+
+# C to Rust Example
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+Here's the C code from before, turned into Rust directly.
+
+```rust
+let mut x = 0;
+
+for _ in 0..20 {
+    thread::spawn(|| {
+        x += 1;
+    });
 }
 ```
+* A sea of errors ensues of course, but the key idea is that this violates one of our rules.
+  * We can't have multiple mutable references at the same time!
 
 
 ---
 
+# C to Rust Example (with Mutexes)
 
-# The `unsafe` Contracts
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+Here's our code from before, with mutexes incorporated
 
 ```rust
-impl<T> SomeType<T> {
-    pub unsafe fn decr(&self) {
-        self.some_usize -= 1;
-    }
+let x = Mutex::new(0);
 
-    pub fn as_ref(&self) -> &T {
-        unsafe { &*self.ptr }
-    }
+for _ in 0..20 {
+    thread::spawn(|| {
+        let mut data = x.lock().unwrap();
+        *data += 1;
+    });
 }
 ```
-
-* The first requires the caller to be careful
-* The second assumes the caller _was_ careful when invoking `decr`
-
+* What is wrong now?
+  * What if the main function ends? It owns `x`, so the thread references to `x` will be invalid...
+* How can we have multiple owners?
 
 ---
 
-
-# The `unsafe` Contracts
-
-Imagine is `SomeType<T>` was really `Rc<T>`:
+# C to Rust Example (with Multiple Ownership)
 
 ```rust
-impl<T> Rc<T> {
-    pub unsafe fn decr(&self) {
-        self.count -= 1;
-    }
+let x = Arc::new(Mutex::new(0));
 
-    pub fn as_ref(&self) -> &T {
-        unsafe { &*self.ptr }
-    }
+for _ in 0..20 {
+    let x_clone = Arc::clone(&x);
+    thread::spawn(move || {
+        let mut data = x_clone.lock().unwrap();
+        *data += 1;
+    });
 }
 ```
+* Notice that we `move` each clone of `x` into each thread, taking ownership of it
+* Each thread has a pointer to the mutex
+  * The mutex is not deallocated until all of the `Arc`s pointing to it are dropped (and the reference count is zero)
 
-* When `self.count` hits 0, `T` is dropped
-* What if someone else constructed `&T` without incrementing `count`?
-* As long as nobody corrupts the reference count, this code is safe
-
-
----
-
-
-# Unsafe Superpowers
-
-So what can we do with `unsafe`?
-
-With `unsafe`, we get 5 superpowers! We can:
-
-1) Call an `unsafe` function or method
-2) Access or modify a mutable static variable
-3) Implement an `unsafe` trait
-4) Access fields of `union`s
-
-
----
-
-
-# Unsafe Superpowers
-
-1. Call an `unsafe` function or method
-2. Access or modify a mutable static variable
-3. Implement an `unsafe` trait
-4. Access fields of `union`s
-
-These 4 things aren't all that interesting, so why the big fuss?
-
-
----
-
-
-# **THE** UNSAFE SUPERPOWER
-
-The **biggest** superpower of all is superpower 5!
-
-* **DEREFERENCE A RAW POINTER**
-    * That's it!
-    * _But honestly, it's enough to wreak all sorts of havoc..._
-
-
----
-
-
-# Raw Pointers
-
-Unsafe Rust has 2 types of Raw Pointers:
-
-* `*const T` is an immutable raw pointer
-* `*mut T` is a mutable raw pointer
-* _Note that the asterisk `*` is part of the type name_
-* _Immutable_ here means that the pointer can't be reassigned directly after being dereferenced
-
-
----
-
-
-# Pointers vs References
-
-Raw Pointers themselves are allowed to do some special things:
-
-* They can ignore borrowing rules by have multiple immutable and mutable pointers to the same location
-* They are not guaranteed to point to valid memory
-* They don't implement any automatic cleanup
-* They can be `NULL` 💀
-
-
----
-
-
-# Raw Pointers Example
-
-Here's an example of creating raw pointers.
-
-```rust
-let mut num = 5;
-
-let r1 = &num as *const i32;
-let r2 = &mut num as *mut i32;
-```
-
-* We have both an immutable and mutable pointer pointing to the same place
-* Notice how there is no `unsafe` keyword here
-* We can _create_ raw pointers safely, we just cannot _dereference_ them
-
-
----
-
-
-# Raw Pointers Example
-
-Here is another example of creating a raw pointer.
-
-```rust
-let address: usize = 0xDEADBEEF;
-let r = address as *const i32;
-```
-
-* We construct a pointer to (likely) invalid memory
-* Again, no `unsafe` keyword necessary here!
-
-
----
-
-
-# Raw Pointers and `unsafe`
-
-Let's actually try and dereference these pointers.
-
-```rust
-let mut num = 5;
-
-let r1 = &num as *const i32;
-let r2 = &mut num as *mut i32;
-
-unsafe {
-    println!("r1 is: {}", *r1);
-    println!("r2 is: {}", *r2);
-}
-```
-
-* There's no undefined behavior here? Right?
-* _Right?_
-* Right! 🦀
-
-
----
-
-
-# Calling `unsafe` Functions
-
-We must also call `unsafe` functions in an `unsafe` block.
-
-```rust
-unsafe fn dangerous() {}
-
-fn main() {
-    unsafe {
-        dangerous();
-    }
-}
-```
-
-* We would get an error if we called `dangerous` without the `unsafe` block!
-
-
----
-
-
-# Using `extern` Functions
-
-Sometimes, we might need to interact with code from another language.
-
-* Rust has the keyword `extern` that facilitates the use of a _Foreign Function Interface (FFI)_
-* Since other languages do not have Rust's safety guarantees, we have no idea if they are safe to call or not!
-
-
----
-
-
-# `extern "C"`
-
-Let's see how we would set up integration with the `abs` function from the C standard library.
-
-```rust
-extern "C" {
-    fn abs(input: i32) -> i32;
-}
-
-fn main() {
-    unsafe {
-        println!("Absolute value of -3 according to C: {}", abs(-3));
-    }
-}
-```
-
-* The `"C"` defines the _Application Binary Interface (ABI)_ that the external function uses
-* We have no idea if `abs` is doing what it is supposed to be doing, so it is on us as the programmer to ensure safety
-
-<!-- Really emphasize here that `abs` is allowed to completely obliterate your program -->
-
-
----
-
-
-# `extern "C"`
-
-We can also use `extern` to allow other languages to call Rust code!
-
-```rust
-#[no_mangle]
-pub extern "C" fn call_from_c() {
-    println!("Just called a Rust function from C!");
-}
-```
-
-* Note how the usage of `extern` does not require `unsafe`
-
-
----
-
-
-# Mutable Static Variables
-
-We can mutate global static variables with `unsafe`.
-
-```rust
-static mut COUNTER: u32 = 0;
-
-fn add_to_count(inc: u32) {
-    unsafe {
-        COUNTER += inc;
-    }
-}
-
-fn main() {
-    add_to_count(3);
-
-    unsafe {
-        println!("COUNTER: {}", COUNTER);
-    }
-}
-```
-
-
----
-
-
-# Last 2 Superpowers
-
-The last 2 superpowers are implementing an `unsafe` trait and accessing fields of a `union`.
-
-* `Send` and `Sync` are both `unsafe` traits
-    * The developer must provide their own proof of thread safety
-* `union`s are primarily used to interface with unions in C code
-
-
----
-
-
-# How to use `unsafe` code
-
-* Just because a function contains `unsafe` code doesn't mean you need to mark the entire function as `unsafe`
-* Often, we want to write `unsafe` code that we _know_ is actually safe
-* A common abstraction is to wrap `unsafe` code in a safe function
-
-
----
-
-
-# `split_at_mut`
-
-Let's take a look at `split_at_mut` from the standard library.
-
-```rust
-let mut v = vec![1, 2, 3, 4, 5, 6];
-
-let r = &mut v[..];
-
-let (a, b) = r.split_at_mut(3);
-
-assert_eq!(a, &mut [1, 2, 3]);
-assert_eq!(b, &mut [4, 5, 6]);
-```
-
-
----
-
-
-# `split_at_mut`
-
-```rust
-fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]);
-```
-
-* Unfortunately, we cannot write this function using only safe Rust
-* How would we attempt it?
-
-
----
-
-
-# `split_at_mut` Implementation
-
-```rust
-fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
-    let len = values.len();
-
-    assert!(mid <= len);
-
-    (&mut values[..mid], &mut values[mid..])
-}
-```
-
-* What is the issue with this?
-* Can you figure out what the compiler will tell us _just by looking at the function signature_?
-
-
----
-
-
-# `split_at_mut` Compiler Error
-
-If we try to compile, we get this error:
-
-```
-$ cargo run
-   Compiling unsafe-example v0.1.0 (file:///projects/unsafe-example)
-error[E0499]: cannot borrow `*values` as mutable more than once at a time
- --> src/main.rs:6:31
-  |
-1 | fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
-  |                         - let's call the lifetime of this reference `'1`
-...
-6 |     (&mut values[..mid], &mut values[mid..])
-  |     --------------------------^^^^^^--------
-  |     |     |                   |
-  |     |     |                   second mutable borrow occurs here
-  |     |     first mutable borrow occurs here
-  |     returning this value requires that `*values` is borrowed for `'1`
-
-For more information about this error, try `rustc --explain E0499`.
-error: could not compile `unsafe-example` due to previous error
-```
-
-
----
-
-
-# `split_at_mut` Implementation
-
-Let's try again with `unsafe`.
-
-```rust
-use std::slice;
-
-fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
-    let len = values.len();
-    let ptr = values.as_mut_ptr();
-
-    assert!(mid <= len);
-
-    unsafe {
-        (
-            slice::from_raw_parts_mut(ptr, mid),
-            slice::from_raw_parts_mut(ptr.add(mid), len - mid),
-        )
-    }
-}
-```
-
-
----
-
-
-# `split_at_mut` Implementation
-
-```rust
-unsafe {
-    (
-        slice::from_raw_parts_mut(ptr, mid),
-        slice::from_raw_parts_mut(ptr.add(mid), len - mid),
-    )
-}
-```
-
-* `from_raw_parts_mut` is `unsafe` because it takes a raw pointer and must trust it is valid
-* Since the `ptr` came from a valid slice, we know it is valid!
-
-
----
-
-
-# `from_raw_parts_mut` Safety Contract
-
-Here is the actual safety contract for `from_raw_parts_mut`:
-
-```rust
-/// # Safety
-///
-/// Behavior is undefined if any of the following conditions are violated:
-///
-/// * `data` must be [valid] for both reads and writes for `len * mem::size_of::<T>()` many bytes,
-///   and it must be properly aligned. This means in particular:
-///
-///     * The entire memory range of this slice must be contained within a single allocated object!
-///       Slices can never span across multiple allocated objects.
-///     * `data` must be non-null and aligned even for zero-length slices. One
-///       reason for this is that enum layout optimizations may rely on references
-///       (including slices of any length) being aligned and non-null to distinguish
-///       them from other data. You can obtain a pointer that is usable as `data`
-///       for zero-length slices using [`NonNull::dangling()`].
-///
-/// * `data` must point to `len` consecutive properly initialized values of type `T`.
-///
-/// * The memory referenced by the returned slice must not be accessed through any other pointer
-///   (not derived from the return value) for the duration of lifetime `'a`.
-///   Both read and write accesses are forbidden.
-///
-/// * The total size `len * mem::size_of::<T>()` of the slice must be no larger than `isize::MAX`,
-///   and adding that size to `data` must not "wrap around" the address space.
-///   See the safety documentation of [`pointer::offset`].
-```
-
-
----
-
-
-# `from_raw_parts_mut` Misuse
-
-We could very easily misuse `from_raw_parts_mut` if we wanted to...
-
-```rust
-use std::slice;
-
-let address: usize = 0xDEADBEEF;
-let r = address as *mut i32;
-
-let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
-```
-
-* This might seem ridiculous, but when you always assume your code is safe...
-
-
----
-
-
-# With Great Power...
-
-What could go wrong?
-
-* Probably not much, _if_ you're careful
-    * By careful, we mean writing a proof for every use of `unsafe`
-* If you do get something wrong...
-* With `unsafe`, you hold great responsibility
-
-
----
-
-
-# Undefined Behavior
-
-If you get something wrong, your program now has _undefined behavior_.
-
-* It should go without saying that undefined behavior is bad
-* The best scenario is you get a visible error:
-    * Segfaults
-    * Unexpected deadlocks
-    * Garbled output
-    * Panics that _don't_ exit the program
-* The worst case...
-
-
----
-
-
-# Undefined Behavior
-
-The worst case scenario is that your program state is invisibly corrupted.
-
-* Data races
-* Transactions aren't atomic
-* Backups are corrupted
-* Security leaks
-* Schrödinger’s Bug
-
-
----
-
-
-# Interacting with Safe Rust
-
-Unsafe code is not defined.
-
-* The compiler could eliminate the entire `unsafe` block if it wanted to
-* It could also miscompile surrounding, safe code!
-* In a lot of ways, `unsafe` Rust is far worse than C/C++ because it assumes _all_ of Rust's safety guarantees
-
-
----
-
-
-# Safe `unsafe`: Valid References
-
-You may recall that all references must be valid. A valid reference:
-
-* must never dangle
-* must always be aligned
-* must always point to a valid value for their target type
-* must either be immutably shared or mutably exclusive
-* Plus more guarantees relating to lifetimes
 
 <!--
-Remember, Rust does not have a stable ABI! `repr(Rust)`
+Q: Why not give mutex an internal Arc?
+A: What if we want to have a mutex around only some values in a struct, while others are atomic?
 -->
+---
+
+# The Good Slide
+
+```rust
+let x = Arc::new(Mutex::new(0));
+let mut handles = vec![];
+
+for _ in 0..20 {
+    let x_clone = Arc::clone(&x);
+    handles.push(thread::spawn(move || {
+        let mut data = x_clone.lock().unwrap();
+        *data += 1;
+    }));
+}
+
+for handle in handles { handle.join().unwrap(); } // Wait for all threads
+println!("Final value of x: {}", *x.lock().unwrap());
+```
+* `x` is 20, *every time*.
+  * And it is illegal for it to be anything else in safe Rust.
+
+---
+
+# Parallelism Checkpoint
+Up until now, we have been talking about parallelism with *shared state*. Let's shift gears and talk about *message passing*.
+
+---
+
+# Message Passing
+
+Rather than sharing state between threads, an increasingly popular approach to safe concurrency is message passing.
+* In this approach, threads communicate with each other through channels
+* Golang famously utilizes this approach
 
 
 ---
 
+# Message Passing Example
 
-# Other Validity Requirements
+```rust
+let (tx, rx) = mpsc::channel();
+```
+* Channels have two halves, a transmitter and a receiver
+* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
+  * Ben finds the duck downstream, and reads the message (receiver)
+* Note that communication is one-way here
+* Note also that each channel can only transmit/receive one type
+  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
 
-Some primitive types have other guarantees:
+---
 
-* `bool` is 1 byte, but can only hold `0x00` or `0x01`
-* `char` cannot hold a value above `char::MAX`
-* Most Rust types cannot be constructed from uninitialized memory
-* If Rust didn't enforce this, it wouldn't be able to make niche optimizations
-    * `Option<&T>` is a good example
-    * What if `Option<Option<bool>>` used `0x00` through `0x03`?
-* It doesn't matter if Rust does make the optimization, all that matters is that it is _allowed_ to whenever it wants
+# Message Passing Example
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+});
+
+let received = rx.recv().unwrap(); // receive val through the receiver
+println!("I am too busy to {}!", received);
+```
+* Note that, after we send `val`, we no longer have ownership of it!
+
+---
+
+# Message Passing Example
+We can also use receivers as iterators!
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+    tx.send("buy Connor lunch".into()).unwrap();
+});
+
+for msg in rx {
+  println!("I am too busy to {}!", msg);
+}
+```
+* Wait, what does `mpsc` stand for?
+
+---
+
+# `mpsc` ⟹ Multiple Producer, Single Consumer
+
+This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+let tx1 = tx.clone();
+thread::spawn(move || { // owns tx1
+      tx1.send("yo".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+thread::spawn(move || { // owns tx
+      tx.send("hello".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+for received in rx {
+    println!("Got: {}", received);
+}
+```
+
+---
+
+# `Send` and `Sync`
+
+---
+
+# `Send` and `Sync`
+
+Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
+
+
+<!-- Marker trait == no implementation, signal to the compiler -->
+
+---
+
+# `Send` vs. `Sync`
+
+
+## `Send`
+
+* Indicates that the type is safe to *send* between threads.
+* `Rc<T>` does not implement this trait, because it is not thread safe.
+
+
+## `Sync`
+
+* Indicates that the type implementing `Send` can be referenced from multiple threads
+* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
+* `Rc<T>` does not implement `Sync` either
+
+<!-- MutexGuard implements Sync, but not Send, actually! -->
 
 
 ---
 
+# Using `Send` and `Sync`
+* It is generally rare that you would implement these traits yourself
+  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
+  * Explicitly implementing either one requires using `unsafe`
+* This would be an example of a trait you might want to *unimplement*
+  * e.g. If you are doing something with `unsafe` that is not thread-safe
+  * `impl !Send for CoolType<T> {}`
 
-# Even More Validity Requirements
-
-Here are some even more requirements:
-
-* Owned Pointer Types (like `Box` and `Vec`) are subject to optimizations assuming the pointer to memory is not shared or aliased anywhere
-* You can never assume the layout of a type when casting
-* All code must prepared to handle `panic!`s and _stack unwinding_
-* Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...
-* All variables are subject to something called the _Drop Check_, and if you drop something incorrectly, you might cause undefined behavior
-
+<!-- Notice this negative impl is not unsafe-->
 
 ---
 
-
-# Fighting with `unsafe`
-
-That was a lot, right?
-
-* Remember that it is very possible to write safe `unsafe` code
-* A lot of the time, it isn't actually that difficult
-* Being careful is half the battle
-* Being absolutely sure you actually need `unsafe` is the other half
-
+# More Shared State Primitives
 
 ---
 
+# `RwLock<T>` (Reader-Writer Lock)
 
-# Working with `unsafe`
-
-It is tempting to reason about unsafety _locally_.
-
-* Consider whether the code in the `unsafe` block is safe in the context of both the rest of the codebase, and in the context of other people using your library
-* Encapsulate the unsafety as best you can
-* Read and write documentation!
-* Use tools like `Miri` to verify your code!
-* **Make sure to formally reason about your program**
-
+A reader-writer lock is like a mutex, except it allows concurrent access between readers (not writers).
+* We can acquire a read lock (or shared lock)
+  * Can be held by multiple readers at once
+  * No writers can hold the lock
+* We can acquire a write lock (or exclusive lock),
+  * Can be held by only one writer
+  * No readers can hold the lock
 
 ---
 
+# `RwLock<T>` Example
 
-# Miri
+```rust
+let shared_data = Arc::new(RwLock::new(Vec::<i32>::new()));
 
-Miri is an undefined behavior detection tool for Rust.
+// All of the readers can hold the read lock simultaneously
+for _ in 0..5 {
+    let shared_data_clone = Arc::clone(&shared_data);
+    thread::spawn(move || {
+        let data = shared_data_clone.read().unwrap();
+        println!("Reader: {:?}", *data);
+    });
+}
 
-* An interpreter for Rust's mid-level intermediate representation
-* Can detect out-of-bounds memory accesses and use-after-free
-* Invalid use of uninitialized data
-* Not sufficiently aligned memory accesses and references
-
+// The writer has to be the only one with the lock
+let shared_data_clone = Arc::clone(&shared_data);
+thread::spawn(move || {
+    let mut data = shared_data_clone.write().unwrap();
+    data.push(42);
+    println!("Writer: {:?}", *data);
+});
+```
 
 ---
 
+# Even More  Primitives
 
-# Recap: `unsafe`
-
-* With `unsafe`, we have great powers
-* But we must accept the responsibility of leveraging those powers
-* There are consequences to writing unsafe `unsafe` code
-* `unsafe` is a way to _promise_ to the compiler that the indicated code is safe
-
+* `CondVar<T>`—release a mutex and atomically wait to be signaled to re-acquire it
+* `Barrier`—Memory barrier, allows multiple threads to wait at a certain point, until all relevant threads reach that point
+* `Weak<T>`—downgraded version of `Rc` or `Arc` that holds a pointer, but does not count as an owner.
+  * Retrieving the value can fail, if it has been deallocated already.
 
 ---
 
+# One more thing...
 
-# Next Lecture: ISD
+---
 
-_Instructors still debating_
+# `std::sync::atomic`
+
+Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
+* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
+* 100% lock free, using bespoke assembly instructions
+* Highly performant, but very difficult to use
+* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
+* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
+
+---
+
+# Review: "Fearless Concurrency"
+
+What we have gone over today is referred to as "fearless concurrency" in the rust community.
+* By leveraging the ownership system, we can move entire classes of concurrency bugs to compile-time
+* Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
+* Subjectively, this may be the single best reason to use this language
+* Both parallelism and concurrency, as introduced in this lecture, benefit from these guarantees
+
+---
+
+# Next Lecture: Concurrency
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-* Thanks for coming!
-
-
+- Including `async`/`await`!
+- Thank you for coming!

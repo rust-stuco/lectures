@@ -5,11 +5,11 @@ class: invert
 paginate: true
 ---
 
-
-<!-- _class: communism communism2 invert  -->
+<!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
-# Lifetimes
+# Crates, Closures, and Iterators
+###### (oh my)
 
 <br>
 
@@ -20,1161 +20,1131 @@ paginate: true
 
 ---
 
+# Today: Crates, Closures, and Iterators
 
-# Today: Lifetimes
-
-We've used the term "lifetime" a few times before, and today we're going to explore what exactly it means.
-
-* What is `'a` lifetime?
-* How to think about lifetimes
-* Other perspectives...
+- Crate Highlights
+- Closures
+- Iterators
 
 
 ---
 
 
-# Lifetimes
-
-Lifetimes are all about references, and **nothing** else.
-
-* Informal definition:
-**Lifetimes provide a way for Rust to validate pointers at compile time**
-
-* Formal definition:
-**Lifetimes are named regions of code that a reference must be valid for**
-
-* Remember that references are just pointers with constraints!
+# **Crate Highlights**
 
 
 ---
 
 
-# Lifetimes vs Generics and Traits
+# `rand`
 
-Lifetimes are similar to trait bounds.
+The standard library includes many things... but a random number generator isn't one of them*.
 
-* Traits ensure that a generic type has the behavior we want
-* Lifetimes ensure that references are valid for as long as we need them to be
-
-
----
-
-
-# Validating References
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-The main goal of lifetimes it to prevent _dangling references_.
+Here's an example of using the `rand` crate:
 
 ```rust
-fn main() {
-    let r;
+use rand::prelude::*;
 
-    {
-        let x = 5;
-        r = &x;
-    }
+let mut rng = rand::thread_rng();
+let y: f64 = rng.gen(); // generates a float between 0 and 1
 
-    println!("r: {}", r);
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+```
+
+
+---
+
+
+# `rand`
+
+```rust
+use rand::prelude::*;
+
+let mut rng = rand::thread_rng();
+let y: f64 = rng.gen(); // generates a float between 0 and 1
+
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+```
+
+* `rand` is the de facto crate for:
+    * Generating random numbers
+    * Creating probabilistic distributions
+    * Providing randomness related algorithms (like vector shuffling)
+
+
+---
+
+
+# `clap`
+
+Often, we want our binary to take in command line arguments.
+
+A very popular argument parser used in Rust programs is `clap`.
+
+```rust
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    name: String, // Name of the person to greet
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8, // Number of times to greet
 }
 ```
 
-* What is the issue with this code?
+* Makes use of Rust's macro system to generate boilerplate code for us!
 
 
 ---
 
 
-# Validating References
+# `clap`
+
+Here's how you would use a `clap` struct called `Args`:
+
+```rust
+use clap::Parser;
+
+// <-- snip -->
+struct Args {
+    // <-- snip -->
+}
+
+fn main() {
+    let args = Args::parse(); // get-opt could never
+    for _ in 0..args.count {
+        println!("Hello {}!", args.name)
+    }
+}
+```
+
+
+---
+
+
+# `clap`
+
+If we run the binary called `demo`:
 
 ```
-error[E0597]: `x` does not live long enough
- --> src/main.rs:6:13
+$ demo --help
+A simple to use, efficient, and full-featured Command Line Argument Parser
+
+Usage: demo[EXE] [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    Name of the person to greet
+  -c, --count <COUNT>  Number of times to greet [default: 1]
+  -h, --help           Print help
+  -V, --version        Print version
+
+$ demo --name Me
+Hello Me!
+```
+
+* Note that `clap` is not the only 3rd-party crate option!
+
+<!--
+clap can be pretty heavyweight if you don't need too much functionality
+-->
+
+
+---
+
+
+# `anyhow`
+
+Have code that can throw multiple error types that you wish was one? Use this!
+```rust
+use anyhow::Result;
+
+fn get_cluster_info() -> Result<ClusterMap> {
+    let config = std::fs::read_to_string("cluster.json")?;
+    let map: ClusterMap = serde_json::from_str(&config)?;
+    Ok(map)
+}
+
+```
+
+* Both lines return different error types, but `anyhow` allows us to return both!
+* Makes errors more dynamic and ergonomic
+
+
+---
+
+
+# `anyhow`
+
+Another example:
+
+```rust
+use anyhow::{Context, Result};
+
+fn main() -> Result<()> {
+    // <-- snip -->
+    it.detach().context("Failed to detach the important thing")?;
+
+    let content = std::fs::read(path)
+        .with_context(|| format!("Failed to read instrs from {}", path))?;
+}
+```
+
+Other `anyhow` features include:
+* Downcasting to the original error types
+* Attaching custom context / error messages
+* More expressive custom errors
+
+
+---
+
+
+# `flamegraph`
+
+![bg right:60% 90%](../images/example_flame.png)
+
+Rust powered flamegraph generator with Cargo support!
+
+With a bit of setup, you can generate this with `cargo flamegraph`
+
+* Can support non-Rust projects too
+* Relies on perf/dtrace
+
+
+---
+
+
+# **Closures**
+
+
+---
+
+
+# What Is A Closure?
+
+Closures are anonymous functions that can capture values from the scope in which they're defined.
+
+* Known as lambdas in "lesser languages" ;)
+* You can save closures in variables or pass them as arguments to other functions
+
+
+---
+
+
+# Closure Syntax
+
+```rust
+let annotated_closure = |num: u32| -> u32 {
+    num
+};
+```
+* This looks very similar to functions we've seen
+* Like normal variables, rust can derive closure type annotations from context!
+
+
+---
+
+
+# Closures Simplified
+
+```rust
+fn  add_one_v1   (x: u32) -> u32 { x + 1 }
+let add_one_v2 = |x: u32| -> u32 { x + 1 };
+let add_one_v3 = |x|             { x + 1 };
+let add_one_v4 = |x|               x + 1  ;
+
+let _ = add_one_v3(3);
+let _ = add_one_v4(4);
+```
+
+* `v1` is the equivalent function
+* We can remove type parameters in `v3`
+  * This is similar to eliding the type parameter in `let v = Vec::new()`
+* For `v4`, we can remove the `{}` since the body is only one line
+
+
+---
+
+
+# How about this?
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+```rust
+let example_closure = |x| x;
+
+let s = example_closure(String::from("hello"));
+let n = example_closure(5);
+```
+* How would we describe the type of `example_closure`?
+
+
+---
+
+
+# Annotations Are Still Important
+
+```rust
+let example_closure = |x| x;
+
+let s = example_closure(String::from("hello"));
+let n = example_closure(5);
+```
+
+```
+error[E0308]: mismatched types
+ --> src/main.rs:5:29
   |
-6 |         r = &x;
-  |             ^^ borrowed value does not live long enough
-7 |     }
-  |     - `x` dropped here while still borrowed
-8 |
-9 |     println!("r: {}", r);
-  |                       - borrow later used here
+5 |     let n = example_closure(5);
+  |             --------------- ^- help: try using a conversion method: `.to_string()`
+  |             |               |
+  |             |               expected struct `String`, found integer
+  |             arguments to this function are incorrect
+  |
+note: closure parameter defined here
+ --> src/main.rs:2:28
+  |
+2 |     let example_closure = |x| x;
+  |                            ^
 ```
-
-* The value that `r` refers to has gone out of scope before we could use it
-* The scope of `r` is "larger" than the scope of `x`
 
 
 ---
 
 
-# The Borrow Checker
+# So What Happened Here?
+
+```rust
+let example_closure = |x| x;
+
+let s = example_closure(String::from("hello"));
+let n = example_closure(5);
+```
+
+* The first time we called `example_closure` with a `String`
+* Rust inferred the type of `x` and the return type to be `String`
+* Those types are now bound to the closure
+    * `example_closure(5)` will not type check
+
+
+---
+
+
+# Capturing References
+
+Closures can capture values from their environment in three ways:
+* Borrowing immutably
+* Borrowing mutably
+* Taking ownership
+    * _moving_ the value to the closure
+
+
+---
+
+
+# Immutable Borrowing in Closures
+
+```rust
+let list = vec![1, 2, 3];
+println!("Before defining closure: {:?}", list);
+
+let only_borrows = || println!("From closure: {:?}", list);
+
+println!("Before calling closure: {:?}", list);
+only_borrows(); // Prints "From closure: [1, 2, 3]"
+println!("After calling closure: {:?}", list);
+```
+
+* Note how once a closure is defined, it's invoked in the same manner as a function
+* Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
+
+<!-- println! implicitly takes references to anything passed in, that's why this works -->
+
+
+---
+
+
+# Mutable Borrowing in Closures
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-The Rust compiler's borrow checker will compare scopes to determine whether all borrows are valid.
-
-Here is the same code, but with a lifetime diagram:
 ```rust
-fn main() {
-    let r;                // ---------+-- 'a
-                          //          |
-    {                     //          |
-        let x = 5;        // -+-- 'b  |
-        r = &x;           //  |       |
-    }                     // -+       |
-                          //          |
-    println!("r: {}", r); //          |
-}                         // ---------+
+let mut list = vec![1, 2, 3];
+println!("Before defining closure: {:?}", list);
+
+let borrows_mutably = || list.push(7);
+
+borrows_mutably();
+println!("After calling closure: {:?}", list);
 ```
+* This seems like it would work...
 
 
 ---
 
 
-# The Borrow Checker
+# Mutable Borrowing in Closures
+
+```
+error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared as mutable
+ --> src/main.rs:7:5
+  |
+5 |     let borrows_mutably = || list.push(7);
+  |                              ---- calling `borrows_mutably` requires mutable
+  |                                    binding due to mutable borrow of `list`
+6 |
+7 |     borrows_mutably();
+  |     ^^^^^^^^^^^^^^^ cannot borrow as mutable
+  |
+help: consider changing this to be mutable
+  |
+5 |     let mut borrows_mutably = || list.push(7);
+  |         +++
+```
+
+* Mutability must always be explicitly stated
+  * Mutating the closure's internal state matters!
+* Rust only considers the **invocation** a borrow, not the definition
+  * Closures are lazy in this sense
+
+
+---
+
+
+# Mutable Borrowing in Closures
+
+```rust
+let mut list = vec![1, 2, 3];
+println!("Before defining closure: {:?}", list);
+
+let mut borrows_mutably = || list.push(7);
+
+borrows_mutably();
+println!("After calling closure: {:?}", list);
+```
+
+```
+Before defining closure: [1, 2, 3]
+After calling closure: [1, 2, 3, 7]
+```
+* Note how we can't have a `println!` before invoking `borrows_mutably` like before
+* `borrows_mutably` isn't called again, so Rust knows the borrowing has ended
+  * This is why we can call `println!` after
+
+
+---
+
+
+# Giving Closures Ownership
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
 ```rust
-fn main() {
-    let r;                // ---------+-- 'a
-                          //          |
-    {                     //          |
-        let x = 5;        // -+-- 'b  |
-        r = &x;           //  |       |
-    }                     // -+       |
-                          //          |
-    println!("r: {}", r); //          |
-}                         // ---------+
-```
+let mystery = {
+    let x = rand::random::<u32>();
+    |y: u32| -> u32 { x + y }
+};
 
-- The borrow checker will compare the "size" of the two lifetimes
-    * `r` has a lifetime of `'a`
-    * `r` refers to a variable with lifetime `'b`
-    * Rejects because `'b` is shorter than `'a`
+println!("Mystery value is {}", mystery(5));
+```
+```
+error[E0373]: closure may outlive the current block, but it borrows `x`,
+ which is owned by the current block
+ --> src/main.rs:6:9
+  |
+6 |         |y: u32| -> u32 { x + y }
+  |         ^^^^^^^^^^^^^^^   - `x` is borrowed here
+  |         |
+  |         may outlive borrowed value `x`
+  |
+  |
+4 |     let mystery = {
+  |         ^^^^^^^
+help: to force the closure to take ownership of `x`, use the `move` keyword
+  |
+6 |         move |y: u32| -> u32 { x + y }
+  |         ++++
+```
 
 
 ---
 
 
-# Placating the Borrow Checker
+# Giving Closures Ownership
 
 ![bg right:25% 75%](../images/ferris_happy.svg)
+```rust
+let mystery = {
+    let x = rand::random::<u32>();
+    move |y: u32| -> u32 { x + y }
+};
 
-We can fix this code by removing the scope.
+println!("Mystery value is {}", mystery(5));
+```
+
+* We can tell a closure to own a value using the `move` keyword
+  * You can't selectively `move` certain parameters unless you explicitly borrow
+* This is important for thread safety in Rust!
+
+
+---
+
+
+# Thread sneak peek
+
+Let's briefly explore spawning a new thread with a closure.
 
 ```rust
 fn main() {
-    let x = 5;            // ----------+-- 'b
-                          //           |
-    let r = &x;           // --+-- 'a  |
-                          //   |       |
-    println!("r: {}", r); //   |       |
-                          // --+       |
-}                         // ----------+
-```
+    let list = vec![1, 2, 3];
+    println!("Before defining closure: {:?}", list);
 
-* `x` now "outlives" `r`, so `r` can reference `x`
-
-
----
-
-
-# Generic Lifetimes
-
-Let's try to write some string functions.
-
-```rust
-fn main() {
-    let string1 = String::from("abcd");
-    let string2 = "xyz";
-
-    let result = longest(string1.as_str(), string2);
-    println!("The longest string is {}", result);
+    std::thread::spawn(move || println!("From thread: {:?}", list))
+        .join()
+        .unwrap();
 }
 ```
 
-We want this output:
-
-```
-The longest string is abcd
-```
-
-* Let's implement `longest`!
+* The `println!` technically only needs an immutable reference to `list`
+* But what would happen if the parent thread dropped `list` before the child thread ran?
+* Use after free! ☠️
 
 
 ---
 
 
-# `longest`
+# Handling Captured Values
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+* A closure body can do any of the following to a value:
+  * Move a captured value out of the closure
+  * Mutate a captured value
+  * Neither of the above
+* It could also have captured nothing to begin with!
+* The properties a closure has determines its function _trait_
 
-Here's a first attempt:
+
+---
+
+
+# The `Fn` traits
+
+What do you mean, function _trait_???
+
+* Rust has 3 special traits that define the _kind_ of closure we want to use
+* The 3 traits are:
+  * `FnOnce`
+  * `FnMut`
+  * `Fn`
+
+
+---
+
+
+# The `Fn` traits
+
+
+* `FnOnce` applies to closures that can be called once
+  * If a closure moves captured values out of its body, it can only be called once, thus it implements `FnOnce`
+* `FnMut` applies to closures that might mutate the captured values
+  * These closures can be called more than once
+* `Fn` applies to all other types of closures
+  * Closures that don't move values out
+  * Closures that don't mutate
+  * Closures that don't capture anything
+
+
+---
+
+
+# Closure Traits Visualized
+
+![bg right:50% 120%](../images/closure_traits.svg)
+
+* `Fn` is also `FnMut` and `FnOnce`
+* `FnMut` is also `FnOnce`
+
+---
+
+
+# `FnOnce`
+
+Let's look at some examples of `FnOnce`.
 
 ```rust
-fn longest(x: &str, y: &str) -> &str {
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
-}
+let my_str = String::from("x");
+let consume_and_return = move || my_str;
 ```
 
-* _We don't want to take ownership, so we take `&str` inputs_
+* Recall that Rust will never implicitly clone `my_str`
+  * This closure consumes `my_str` by giving ownership back to the caller
+* Closures that can be called once implement `FnOnce`
+* All closures implement this trait, since all closures can be called
+* A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`
 
 
 ---
 
 
-# `longest` error
+# `unwrap_or_else`
 
-Unfortunately, our attempt will not compile:
-
-```
-error[E0106]: missing lifetime specifier
- --> src/main.rs:9:33
-  |
-9 | fn longest(x: &str, y: &str) -> &str {
-  |               ----     ----     ^ expected named lifetime parameter
-  |
-  = help: this function's return type contains a borrowed value,
-    but the signature does not say whether it is borrowed from `x` or `y`
-help: consider introducing a named lifetime parameter
-  |
-9 | fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-  |           ++++     ++          ++          ++
-```
-
-
----
-
-
-# `longest` error
-
-The help text from the compiler error reveals some useful information:
-
-```
-  = help: this function's return type contains a borrowed value,
-    but the signature does not say whether it is borrowed from `x` or `y`
-```
-
-* Rust can't figure out if the reference returned refers to `x` or `y`
-* In fact, neither do we!
-
-
----
-
-
-# `longest` error
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
+Let's look at the definition of the `unwrap_or_else` method on `Option<T>`.
 
 ```rust
-fn longest(x: &str, y: &str) -> &str {
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
-}
-```
-
-- We don't know which execution path this code will take
-* We also don't know the lifetimes of the input references
-* Thus we cannot determine the lifetime we return!
-* We will need to _annotate_ these references
-
-
----
-
-
-# Lifetime Annotation Syntax
-
-We can annotate lifetimes with generic parameters that start with a `'`, like `'a`.
-
-```rust
-&i32          // a reference
-&'a i32       // a reference with an explicit annotated lifetime
-&'a mut i32   // a mutable reference with an explicit lifetime
-
-&'hello usize // annotations can be any word or character,
-&'world bool  // as long as it starts with a tick (')
-```
-
-* Annotations do not change the how long references live, they only describe the relationship between lifetimes of references
-    * An annotation by itself has little meaning
-
-
----
-
-
-# `longest` Lifetimes
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-Let's return back to our `longest` function.
-
-```rust
-fn longest(x: &str, y: &str) -> &str {
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
-}
-```
-
-* What do we want the function signature to express?
-* What should the relationship be between the lifetimes of the references?
-
-
----
-
-
-# `longest` Lifetimes
-
-What exactly are we returning?
-
-```rust
-if x.len() > y.len() {
-    x
-} else {
-    y
-}
-```
-
-* We return either `x` or `y`, which each have their own lifetimes
-* We want the returned reference to be valid as long as _both_ input references `x` and `y` are valid
-* So we want lifetimes of `x` and `y` to _outlive_ the returned lifetime
-
-<!--
-In other words, we do not want the thing we return to outlive `x` or `y`
--->
-
-
----
-
-
-# `longest` Lifetimes
-
-![bg right:25% 75%](../images/ferris_happy.svg)
-
-Since lifetimes are a kind of generic parameter, we must declare them like normal generic type parameters.
-
-```rust
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
-}
-```
-
-* This will compile now!
-* _Remember that these lifetime annotations don't change the lifetimes of any values_
-
-<!--
-They just tell the borrow checker to reject any values that don't adhere to these constraints/invariants
--->
-
-
----
-
-
-# Lifetime Annotations in Functions
-
-We can extrapolate a lot from a function's signature, even without the body.
-
-```rust
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
-```
-
-* This function takes two string slices (`x` and `y`) that live at least as long as the lifetime `'a`
-* The string slice returned (the longer of `x` or `y`) will also live at least as long as `'a`
-
-
----
-
-
-# Lifetime Annotations in Functions
-
-```rust
-fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
-```
-
-- When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
-* In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
-
-<!--
-Be clear that functions do not "return" lifetimes, this is just for slide space.
-
-In general, the relationship between lifetimes and scope is total,
-basically they do not overlap in some parts but not in others.
-
-However, there are some cases where this might be the case, usually quite complex
-
-Note that the longest function doesn’t need to know exactly how long x and y will live, only that some scope can be substituted for 'a that will satisfy this signature.
-This is a more complicated topic that probably shouldn't be brought up.
--->
-
-
----
-
-
-# Borrow Checker Example 1
-
-Let's look at some examples where the borrow checker is and isn't happy.
-
-```rust
-fn main() {
-    let string1 = String::from("long string is long");
-
+impl<T> Option<T> {
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+    where
+        F: FnOnce() -> T
     {
-        let string2 = String::from("xyz");
-        let result = longest(string1.as_str(), string2.as_str());
-        println!("The longest string is {}", result);
-    }
-}
-```
-
-* `string1` is valid in the outer scope
-* `string2` is valid in the inner scope
-* `result` should only be  valid in the smaller scope (by our lifetime annotations)
-    * Since `println!` is in the smaller (inner) scope, this works!
-
-
----
-
-
-# Borrow Checker Example 2
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-Let's reorder some things around.
-
-```rust
-fn main() {
-    let string1 = String::from("xyz");
-    let result;
-    {
-        let string2 = String::from("long string is long");
-        result = longest(string1.as_str(), string2.as_str());
-    }
-    println!("The longest string is {}", result);
-}
-```
-
-* `result` should only be valid in the smaller (inner) scope, but we try to reference it in the outer scope
-
-
----
-
-
-# Borrow Checker Example 2
-
-Sure enough, this does not compile, and Rust gives us this error:
-
-```
-error[E0597]: `string2` does not live long enough
- --> src/main.rs:6:44
-  |
-6 |         result = longest(string1.as_str(), string2.as_str());
-  |                                            ^^^^^^^^^^^^^^^^
-                       borrowed value does not live long enough
-7 |     }
-  |     - `string2` dropped here while still borrowed
-8 |     println!("The longest string is {}", result);
-  |                                          ------ borrow later used here
-```
-
-
----
-
-
-# Borrow Checker Example 3
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-What if we knew (as the programmer) that `string1` is always longer than `string2`?
-
-Let's switch the strings around:
-```rust
-let string1 = String::from("long string is long");
-let result;
-{
-    let string2 = String::from("xyz");
-    result = longest(string1.as_str(), string2.as_str());
-}
-println!("The longest string is {}", result);
-```
-
-
----
-
-
-# Borrow Checker Example 3
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-```rust
-let string1 = String::from("long string is long");
-let result;
-{
-    let string2 = String::from("xyz");
-    result = longest(string1.as_str(), string2.as_str());
-}
-println!("The longest string is {}", result);
-```
-
-* Even though we know (as a human) that the reference will be valid, the compiler does not know
-
-<!--
-* We even told the compiler that the returned lifetime would be the same as the smaller of the input lifetimes!
--->
-
-
----
-
-
-# Avoiding Lifetime Annotations
-
-Suppose we wanted to always return the first input, `x`.
-
-```rust
-fn first<'a>(x: &'a str, y: &str) -> &'a str {
-    x
-}
-```
-
-* We don't need to annotate `y` with `'a`, because the return value doesn't care about `y`'s lifetime
-
-
----
-
-
-# Lifetimes of Return Values
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-The lifetime of a return value _must_ match the lifetime of one of the inputs.
-
-```rust
-fn dangling<'a>(x: &str, y: &str) -> &'a str {
-    let result = String::from("really long string");
-    result.as_str()
-}
-```
-
-* If it didn't depend on an input, then it would _always_ be a dangling reference!
-
-
----
-
-
-# Lifetime Elision
-
-All references must have a lifetime. But we've seen many references without lifetime annotations...
-
-This is a version of a function we saw back in week 2:
-
-```rust
-fn first_word(s: &str) -> &str {
-    let bytes = s.as_bytes();
-
-    for (i, &item) in bytes.iter().enumerate() {
-        if item == b' ' {
-            return &s[0..i];
+        match self {
+            Some(x) => x,
+            None => f(),
         }
     }
-
-    &s[..]
 }
 ```
 
-* There are no lifetime annotations here!
-
 
 ---
 
 
-# Story Time
+# `unwrap_or_else`
 
-_Long ago, in the dark ages of the 2010s, every reference needed an explicit lifetime._
+First let's observe the function definition.
 
 ```rust
-fn first_word<'a>(s: &'a str) -> &'a str {
+pub fn unwrap_or_else<F>(self, f: F) -> T
+where
+    F: FnOnce() -> T
+// <-- snip -->
 ```
 
-* Before Rust 1.0, every single `&` needed an explicit `'something` annotation
-* This became incredibly repetitive, and so the Rust team programmed the borrow checker to infer lifetime annotation patterns of certain situations
-* These patterns are called the _lifetime elision rules_
+* This method is generic over `F`
+* `F` is the type of the closure we provide when calling `unwrap_or_else`
+* `F` must be able to be called once, take no arguments, and return a `T` for `Option<T>`
 
 
 ---
 
 
-# Lifetime Elision
+# `unwrap_or_else`
 
-* Lifetime elision does not provide full inference, it will only infer when it is absolutely sure it is correct
-* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_
-* There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes
-
-
----
-
-
-# Lifetime Elision Rule 1
-
-The first rule is that the compiler will assign a different lifetime parameter for each input lifetime.
+Now let's observe the function body.
 
 ```rust
-fn foo(x: &i32);
-fn foo<'a>(x: &'a i32);
-
-fn bar(x: &i32, y: &i32);
-fn bar<'a, 'b>(x: &'a i32, y: &'b i32);
+{
+    match self {
+        Some(x) => x,
+        None => f(),
+    }
+}
 ```
 
+* If the `Option` is `Some`, then extract the inner value
+* Otherwise, call `f` once and return the value
+* Note that `f` is not _required_ to only be `FnOnce` here, it could be `FnMut` or `Fn`
 
 
 ---
 
 
-# Lifetime Elision Rule 2
+# `FnMut`
 
-The second rule is that if there is only 1 input lifetime parameter, then it is assigned to all output lifetimes.
+Recall that `FnMut` applies to closures that might mutate the captured values.
 
 ```rust
-fn foo(x: &i32) -> &i32;
-fn foo<'a>(x: &'a i32) -> &'a i32;
-
-fn bar(arr: &[i32]) -> (&i32, &i32);
-fn bar<'a>(arr: &'a [i32]) -> (&'a i32, &'a i32);
+let mut x: usize = 1;
+let mut add_two_to_x = || x += 2;
+add_two_to_x();
 ```
 
-
----
-
-
-# Lifetime Elision Rule 3
-
-If there are multiple input lifetime parameters, but the first parameter is `&self` or `&mut self`, the lifetime of `&self` is assigned to all output lifetimes.
-
-* This only applies to methods
-* Makes writing methods much nicer!
-* _Examples to come later..._
+* Note that this will not compile without the `mut` in `let mut add_two_to_x`
+  * `mut` signals that we are mutating our closure's environment
+    * Key idea: how variables within scope at invocation change between calls
 
 
 ---
 
 
-# Lifetime Elision Example 1
+# `FnMut`
 
-Let's pretend we are the compiler, and let's attempt to apply the lifetime elision rules to `first_word`.
+Another simple example:
 
 ```rust
-fn first_word(s: &str) -> &str;
+let mut base = String::from("");
+let mut build_string = |addition| base.push_str(addition);
+
+build_string("Ferris is ");
+build_string("happy!");
+
+println!("{}", base);
+```
+
+```
+Ferris is happy!
 ```
 
 
 ---
 
 
-# Lifetime Elision Example 1
+# `FnMut`
 
-We apply the first rule, which specifies that each parameter gets its own lifetime.
+Just like in `unwrap_or_else`, we can pass a `FnMut` closure to a function.
 
 ```rust
-fn first_word<'a>(s: &'a str) -> &str;
+fn do_twice<F>(mut func: F)
+where
+    F: FnMut(),
+{
+    func();
+    func();
+}
 ```
 
 
 ---
 
 
-# Lifetime Elision Example 1
+# `Fn`
 
-The second rule specifies that the lifetime of the single input parameter gets assigned to all output lifetimes, so the signature becomes this:
+Finally, the `Fn` trait is a superset of `FnOnce` and `FnMut`.
 
 ```rust
-fn first_word<'a>(s: &'a str) -> &'a str;
+let double = |x| x * 2; // captures nothing
+
+let mascot = String::from("Ferris");
+let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+
+let my_sanity = ();
+let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
 ```
 
-* Since all references have lifetime annotations, we're done!
+* `Fn` applies to closures that:
+  * Don't move captured values out of their body
+  * Don't mutate captured values
+  * Don't capture anything from their environment
+* Can be called more than once without mutating the environment
 
 
 ---
 
 
-# Lifetime Elision Example 2
-
-So why didn't elision work with `longest`? Let's trace it out!
-
-We start with this signature without annotations:
+# `Fn`
 
 ```rust
-fn longest(x: &str, y: &str) -> &str;
+fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
+where
+    F: Fn(T, T) -> T,
+{
+    // <-- snip -->
+}
 ```
+
+* We can specify the arguments and return types for `Fn`
+* While this example is generic, we could've replaced `T` with a concrete type
 
 
 ---
 
 
-# Lifetime Elision Example 2
+# `fn`?
 
-Let's apply the first rule and get annotations for all inputs.
-
-```rust
-fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
-```
-
-* What now?
-
-
----
-
-
-# Lifetime Elision Example 2
+Rust also has function pointers, denoted `fn` (instead of `Fn`).
 
 ```rust
-fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str;
-```
+fn add_one(x: i32) -> i32 {
+    x + 1
+}
 
-- The second rule doesn't apply here, because there is more than 1 input lifetime (`'a` and `'b`)
-* Since Rust cannot figure out what to do, it gives a compiler error to the programmer so they can write the annotations themselves
-
-
----
-
-
-# Lifetimes in Structs
-
-So far, all of the `struct`s we've looked at have held _owned_ type fields.
-
-If we want a `struct` to hold a reference, we need to annotate them.
-
-```rust
-struct ImportantExcerpt<'a> {
-    part: &'a str,
-    importance: i32,
+fn do_twice(f: fn(i32) -> i32, arg: i32) -> i32 {
+    f(arg) + f(arg)
 }
 
 fn main() {
-    let novel = String::from("Call me Ishmael. Some years ago...");
-    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
-    let i = ImportantExcerpt {
-        part: first_sentence,
-        importance: 42,
-    };
+    let answer = do_twice(add_one, 5);
 }
 ```
+
+* `fn` is a **type*** that implements all 3 closure traits `Fn`, `FnMut`, and `FnOnce`
 
 
 ---
 
 
-# Lifetimes in Structs
+# Recap: Closure Traits
 
-```rust
-struct ImportantExcerpt<'a> {
-    part: &'a str,
-    importance: i32,
-}
-```
-
-- As with generic data types, we declare the name of the generic lifetime parameter inside angle brackets
-* This annotation means an instance of `ImportantExcerpt` can’t outlive the reference it holds in its `part` field
+* `Fn`, `FnMut`, `FnOnce` describe different groups of closures
+  * You don't `impl` them, they apply to a closure automatically if appropriate
+  * A single closure can implement one or multiple of these traits
+* `FnOnce` - call at least once, environment may be consumed
+* `FnMut` - call multiple times, environment may change
+* `Fn` - call multiple times, environment doesn't change
 
 
 ---
 
 
-# Lifetimes in `impl` Blocks
+# **Iterators**
 
-Similarly, we need to annotate `impl` blocks with lifetime parameters.
+* Sorry functional haters... it's show time!
+
+
+---
+
+
+# What is an Iterator?
+
+* Iterators allow you to perform some task on a sequence of elements
+* Iterators manage iterating over each item and determining termination
+* Rust iterators are *lazy*
+  * This means we don't pay a cost until we consume the iterator
+
+
+---
+
+
+# The `Iterator` Trait
+
+All iterators must implement the `Iterator` trait:
 
 ```rust
-impl<'a> ImportantExcerpt<'a> {
-    fn importance(&self) -> i32 {
-        self.importance
+pub trait Iterator {
+  type Item;
+
+  fn next(&mut self) -> Option<Self::Item>;
+
+  // methods with default implementations elided
+}
+```
+
+* Keep generating `Some(item)`
+* When the `Iterator` is finished, `None` is returned
+
+
+---
+
+# `type Item`
+
+What's going on with the `type Item`?
+
+```rust
+pub trait Iterator {
+  type Item;
+
+  fn next(&mut self) -> Option<Self::Item>;
+
+  // methods with default implementations elided
+}
+```
+
+* This is an _associated type_
+* To define `Iterator` you must define the `Item` you're iterating over
+* _Different from generic types!_
+  * There can only be one way to iterate over something
+
+
+---
+
+
+# Custom Iterator Example
+
+Let's say we want to implement an iterator that generates the Fibonacci sequence.
+
+```rust
+struct Fibonacci {
+  curr: u32,
+  next: u32,
+}
+```
+
+* First need to declare the `struct` that can implement `Iterator`
+* We need to store two numbers to compute the next element
+
+
+---
+
+
+# Fibonacci Example
+
+```rust
+impl Iterator for Fibonacci {
+    type Item = u32;
+
+    // We use Self::Item in the return type, so we can change
+    // the type without having to update the function signatures.
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = self.curr;
+
+        self.curr = self.next;
+        self.next = current + self.next;
+
+        // No endpoint to a Fibonacci sequence - `Some` is always returned.
+        Some(current)
     }
 }
 ```
+* Notice `Self::Item` is aliased to `u32`
 
-
----
-
-
-# Lifetimes in Methods
-
-Here is an example where the third elision rule is applied:
-
-```rust
-impl<'a> ImportantExcerpt<'a> {
-    fn announce_and_return_part(&self, announcement: &str) -> &str {
-        println!("Attention please: {}", announcement);
-        self.part
-    }
-}
-```
-
-* The first rule gives both `&self` and `announcement` their own lifetimes
-* The third rule gives the return lifetime the lifetime of `&self`
 
 
 ---
 
 
-# Putting it all together...
-
-Let’s briefly look at the syntax of specifying generic type parameters, trait bounds, and lifetimes all in one function!
+# `Vec` Iterators
 
 ```rust
-fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
-where
-    T: Display,
-{
-    println!("Announcement! {}", ann);
+let v1 = vec![1, 2, 3];
 
-    if x.len() > y.len() {
-        x
-    } else {
-        y
-    }
+let v1_iter = v1.iter();
+for val in v1_iter {
+    println!("Got: {}", val);
+}
+
+for val in v1 {
+    println!("Got: {}", val);
 }
 ```
+
+* These do the same thing!
+* We saw this code before in lecture 4
+  * Except now we explicitly create the iterator that Rust did for us
 
 
 ---
 
 
-# Lifetime Bounds
-
-Lifetimes can be bounds, just like traits.
+# Iterating Explicitly
 
 ```rust
-#[derive(Debug)]
-struct Ref<'a, T: 'a>(&'a T);
+let v1 = vec![1, 2, 3];
+
+let mut v1_iter = v1.iter();
+
+assert_eq!(v1_iter.next(), Some(&1));
+assert_eq!(v1_iter.next(), Some(&2));
+assert_eq!(v1_iter.next(), Some(&3));
+assert_eq!(v1_iter.next(), None);
 ```
 
-* `Ref` contains a reference, with a lifetime of `'a`, to a generic type `T`
-* `T` is bounded such that any references _in_ `T` must live at least as long as `'a`
-* Additionally, the lifetime of `Ref` may not exceed `'a`
+* Here we see how the required `next` function operates
+* Notice how `v1_iter` is mutable
+  * When we call `next()` we've **consumed** that iterator element
+  * The iterator's internal state has changed
+  * Note that `iter()` provides immutable borrows to `v1`'s elements
 
 
 ---
 
 
-# Lifetime Bounds
-
-Here is a similar example, but with a function instead of a `struct`.
+# Iterators and Mutable Borrows
 
 ```rust
-fn print_ref<'a, T>(t: &'a T)
-where
-    T: Debug + 'a,
-{
-    println!("print_ref(t) is {:?}", t);
+let mut vec = vec![1, 2, 3]; // Note we need vec to be mutable
+let mut mutable_iter = vec.iter_mut();
+
+while let Some(val) = mutable_iter.next() {
+    *val += 1;
 }
+
+println!("{:?}", vec);
 ```
 
-* `T` must implement `Debug`, and all references _in_ `T` must outlive `'a`
-* Additionally, `'a` must outlive this function call
+```
+[2, 3, 4]
+```
+
+* Before we saw that `v1.iter()` gave us references to elements
+* We can use `iter_mut()` for `&mut`
 
 
 ---
 
 
-# Lifetime Bounds
-
-Putting the `Ref` and `print_ref` together:
+# Iterators and Ownership
 
 ```rust
-#[derive(Debug)]
-struct Ref<'a, T: 'a>(&'a T);
-
-fn print_ref<'a, T>(t: &'a T)
-where
-    T: Debug + 'a,
-{
-    println!("print_ref(t) is {:?}", t);
+let mut vec = vec![1, 2, 3];
+let owned_iter = vec.into_iter(); // vec is *consumed*
+for val in owned_iter {
+    println!("{}", val);
 }
-
-fn main() {
-    let x = vec![9, 8, 0, 0, 8];
-    let ref_x = Ref(&x);
-    print_ref(&ref_x);
-    // Prints to stdout: print_ref(t) is Ref([9, 8, 0, 0, 8])
-}
+// owned_iter is consumed
 ```
 
-<!--
-This is quite difficult to understand, don't spend too much time here.
--->
+* To make an iterator that owns its values we have `into_iter()`
+* This is what consuming for loops do under the hood
 
 
 ---
 
 
-# Lifetime-bounded Lifetimes
-
-We can have lifetimes that are bounded by other lifetimes.
+# Consuming Iterators
 
 ```rust
-// Takes in a `&'a i32` and return a `&'b i32` as a result of coercion
-fn choose_first<'a: 'b, 'b>(first: &'a i32, _: &'b i32) -> &'b i32 {
-    first
-}
+let v1 = vec![1, 2, 3];
 
-fn main() {
-    let first = 2; // Longer lifetime
-    {
-        let second = 3; // Shorter lifetime
-        println!("{} is the first", choose_first(&first, &second));
-    }
-}
+let v1_iter = v1.iter();
+
+let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
+
+assert_eq!(total, 6);
 ```
 
-* `'a: 'b` reads as "lifetime `'a` outlives `'b`"
-
-<!--
-'a outlives 'b == 'a is at least as long as 'b
--->
+* The standard library has many functions for iterators
+* Some of these functions *consume* the iterator
 
 
 ---
 
 
-# The `'static` Lifetime
+# Other consuming functions
 
-There is a special lifetime called `'static`.
-
-```rust
-let s: &'static str = "I have a static lifetime";
-```
-
-* `'static` implies that the reference will live until the end of the program (it is valid until the program stops running)
-* Here, `s` is stored in the program binary, so it will always be valid!
+* `collect(self)` - Coming soon
+* `fold(self, init: B, f: F)`
+* `count(self)`
 
 
 ---
 
 
-# `'static` Error Messages
+# Producing Iterators
 
-You may see suggestions to use the `'static` lifetime in error messages.
-
+![bg right:25% 75%](../images/ferris_not_desired_behavior.svg)
 ```rust
-fn foo() -> &i32 {
-    let x = 5;
-    &x
-}
+let v1: Vec<i32> = vec![1, 2, 3];
+
+v1.iter().map(|x| x + 1);
 ```
 
+* This code seems fine...
+
+
+---
+
+
+# Producing Iterators
+
 ```
-help: consider using the `'static` lifetime, but this is uncommon unless you're
-      returning a borrowed value from a `const` or a `static`
+warning: unused `Map` that must be used
+ --> src/main.rs:4:5
   |
-2 | fn foo() -> &'static i32 {
-  |              +++++++
+4 |     v1.iter().map(|x| x + 1);
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: iterators are lazy and do nothing unless consumed
+  = note: `#[warn(unused_must_use)]` on by default
+
+warning: `iterators` (bin "iterators") generated 1 warning
+    Finished dev [unoptimized + debuginfo] target(s) in 0.47s
+     Running `target/debug/iterators`
 ```
 
-* Before making a change, think about if your reference will _really_ live until the end of the program
-* You may actually be trying to create a dangling reference!
+* Zero-cost abstractions at work
+* Rust won't make us pay for our iterator until we use it
+  * It will compile and warn us of unused data
 
 
 ---
 
 
-# `'static` vs `static`
-
-There are two common ways to make a variable with a `'static` lifetime.
-
-1) Make a string literal with has type `&'static str`
-2) Make a constant with the `static` declaration
-
-
----
-
-
-# `'static` vs `static` Example
+# Producing Iterators
 
 ```rust
-static NUM: i32 = 42;
-static NUM_REF: &'static i32 = &NUM;
+let v2: Vec<_> = (1..4).map(|x| x + 1).collect();
 
-fn main() {
-    let msg: &'static str = "Hello World";
-    println!("{msg} {NUM_REF}!");
-}
+println!("{:?}", v2);
 ```
 
 ```
-Hello World 42!
+[2, 3, 4]
 ```
+* We use `collect()` to tell Rust we're done modifying our iterator and want to convert our changes to a `Vec`
+
 
 ---
 
 
-# `'static` Memory Leaks
+# Filter
 
-There is a third way: we can create `'static` values by _leaking memory_.
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+```rust
+fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
+    list.into_iter().filter(|x| x == val).collect()
+}
+```
+
+```
+--> src/main.rs:2:35
+  |
+2 |     list.into_iter().filter(|x| x == val).collect()
+  |                                   ^^ no implementation for `&i32 == i32`
+  |
+```
+
+* Some iterator functions take a reference instead of ownership
+* Note how our filter closure captures `val` for our filtering needs
+
+
+---
+
+
+# Filter
+
+![bg right:25% 75%](../images/ferris_happy.svg)
+```rust
+list.into_iter().filter(|&x| x == val).collect()
+```
+
+or
 
 ```rust
-fn random_vec() -> &'static [usize; 100] {
-    let mut rng = rand::thread_rng();
-    let mut boxed = Box::new([0; 100]);
-    boxed.try_fill(&mut rng).unwrap();
-    Box::leak(boxed)
-}
-
-fn main() {
-    let first: &'static [usize; 100] = random_vec();
-    let second: &'static [usize; 100] = random_vec();
-    assert_ne!(first, second)
-}
+list.into_iter().filter(|x| *x == val).collect()
 ```
-
-* This allows us to _dynamically_ create a `'static` reference!
-
-
----
-
-
-# The `'static` Bound
-
-`'static` can also be used as a type bound. However...
-
-* There is a subtle difference between the `'static` lifetime and the `'static` bound
-* The `'static` bound means that the type does not contain any non-static references
-* This means that all owned data implicitly has a `'static` bound, since owned data holds no references
-
-<!--
-Does not imply contrapositive
--->
+* We either explicitly match on the reference or dereference
 
 
 ---
 
 
-# `'static` Bound Example
-
-![bg right:20% 90%](../images/ferris_does_not_compile.svg)
-
-Here's an example of using a `'static` bound.
+# Chaining It Together
 
 ```rust
-fn print_it(input: impl Debug + 'static) {
-    println!("'static value passed in is: {:?}", input);
-}
-
-fn main() {
-    // i is owned and contains no references,
-    // thus it has a 'static bound
-    let i = 5;
-    print_it(i);
-
-    // oops, &i only has the lifetime defined by
-    // the scope of main, so it's not 'static
-    print_it(&i);
+let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
+println!("{:?}", iter);
+// Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 2 } }
+for x in iter.take(5) {
+    print!("{}, ", x); // 9, 36, 81, 144, 225,
 }
 ```
+* Read as: Print first 5 squares skipping 0 divisible by 3
+* Note filter doesn't need a deref here for `%`
 
 
 ---
 
 
-# `'static` Bound Example
+# Iterator Recap
 
-We get a compiler error:
-
-```
-error[E0597]: `i` does not live long enough
-  --> src/lib.rs:15:15
-   |
-15 |     print_it(&i);
-   |     ---------^^--
-   |     |         |
-   |     |         borrowed value does not live long enough
-   |     argument requires that `i` is borrowed for `'static`
-16 | }
-   | - `i` dropped here while still borrowed
-```
+* Iterators is an extremely powerful structure in Rust
+* View std library for more info on functions
+* Rules regarding closures and ownership still apply
+  * `iter`
+  * `iter_mut`
+  * `into_iter`
+* Iterators are *lazy*
+  * Remember `.collect()`!
 
 
 ---
 
 
-# Review
+# Next Lecture: ISD
 
-* Rust has lifetimes to prevent dangling references
-* The borrow checker will ensure that lifetimes are always valid
-* Rust will allow you elide lifetime annotations in some situations
-
-
----
-
-
-# Further Reading
-
-* You can find some more examples here: [Rust By Example](https://doc.rust-lang.org/rust-by-example/scope/lifetime.html)
-* If you want to go _really_ in depth, read the Rustonomicon chapter on [lifetimes](https://doc.rust-lang.org/nomicon/lifetimes.html)
-
-
----
-
-
-# Another Perspective
-
-[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
-
-* This is a great video made by `leddoo` that explains another way to think about lifetimes!
-* Instead of lifetimes as regions of code or scopes, what if we thought about lifetimes as regions of memory?
-* Let's watch it together!
-
-
----
-
-
-# Watch Party
-
-[**What is 'a lifetime?**](https://www.youtube.com/watch?v=gRAVZv7V91Q)
-
-
----
-
-
-# What is `'a` lifetime?
-
-Some quick points:
-
-* Thinking about lifetimes as regions of code can be confusing
-* Instead, think about lifetimes as regions of valid memory
-* Both interpretations are valid!
-
-
----
-
-
-# Feedback
-
-Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Piazza).
-
-* It will help us make this semester better for you
-* It will also help make future offerings of this course better for others!
-* Feedback is anonymous, so please be honest
-* You will receive a homework's worth of extra credit!
-
-
----
-
-
-# Next Lecture: `Box` and Trait Objects
+*Instructors still debating*
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
 * Thanks for coming!
-

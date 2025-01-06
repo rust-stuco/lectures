@@ -1,20 +1,22 @@
-## Week 6: Modules and Testing
+## Week 5: Error handling and Traits
 
 ### Lecture
-- Module system (35 min)
-    - Packages and Crates (5 min)
-    - Modules (30 min)
-        - Using Modules (20 min)
-        - Paths (5 min)
-        - Misc (5 min)
-- Testing (15 min)
-    - Simple Testing (8 min)
-    - Controlled Testing (4 min)
-    - Test Organization (3 min)
+- Type Aliases (2 min)
+- Const Generics (5 min)
+- Error Handling (12 min)
+    - `panic!`
+    - `Result<V,E>`
+- The Never Type (3 min)
+- Traits (28 min)
+    - Intro to traits (8 min)
+    - Derivable Traits (12 min)
+    - Trait Bounds (8 min)
 
 ### Extra Material
-- Rust Book Chapters 7, 11, and 14
+- Rust Book Chapter 10.1 and 10.2
+- Definitely need more than this
 
-### Assignments
-- Design high-level system as a module
-- Testing stuff
+### Assignment
+
+- Fallible design
+- Propagation problems
