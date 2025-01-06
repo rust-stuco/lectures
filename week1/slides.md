@@ -287,26 +287,6 @@ Simplifies development!
 ---
 
 
-# Cargo: 
-
-<!-- Speaker note: "goal is make you comfortable enough to publish your projects to the Rust ecosystem" -->
-![bg](./images/Cargo-IsOdd1.png)
-
-<style>
-.center {
-  transform: scale(0.5);
-  justify: center
-}
-</style>
-
-<div class="center">
-<img src="./images/vintage-this-can-be-you.png"/>
-</div>
-
-
----
-
-
 # Creating a new project
 
 To create a new cargo project called `hello_cargo`, use `cargo new`.
@@ -320,8 +300,36 @@ $ cd hello_cargo
     * `.git` repository and `.gitignore`
     * `Cargo.toml`
     * `src/main.rs`
+<!-- Speaker note: We'll cover more in our Crates and Testing lecture! -->
 
-We'll cover more in our Crates and Testing lecture!
+
+---
+
+
+# Hello World!
+
+To create an executable, we need a `main` function:
+
+```rust
+// main.rs
+
+fn main() {
+    println!("Hello, world!");
+}
+```
+
+
+---
+
+
+# Cargo: One Ring to Rule Them All
+
+Simplifies development!
+
+* C/C++ build systems and package managers: "Many, and they're all awful"
+
+* Cargo is included with all Rust distributions, eliminates the need for third-party build systems
+
 
 ---
 
