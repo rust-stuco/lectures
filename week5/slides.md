@@ -304,12 +304,16 @@ When is memory deallocated?
 Heap: deallocated when ???
 
 * C's proposal: leave it to the programmer
-    * Manual malloc / free
+    * Manual malloc / free <!-- "but this is prone to MANY bugs" -->
 * Java's proposal: leave it to runtime
-    * Garbage collector
+    * Garbage collector <!-- "but runtime processes are inefficient" -->
 * Rust's proposal: prevent it at compilation time
     * Borrow checker
-
+<!--
+Speaker Note:
+    Emphasize that we're accepting longer compilation time
+    for enhanced runtime performance
+-->
 
 ---
 
