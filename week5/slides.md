@@ -319,6 +319,22 @@ Heap: deallocated when ???
 
 How can we be confident that heap memory is deallocated safely?
 
+<!--
+[Optional] We draw inspiration from stack memory!
+Why are stack deallocations safe?
+Well, do you notice that in stack allocations,
+each value on the stack has an "owner"?
+Each value is allocated when we enter the function,
+and each value is deallocated when we exit the function?
+You can think of it as the value being "owned" by the function,
+    and it's valid when we're in the function,
+    and dropped when we exit the function!
+Rust's ownership model is like, what if we take this idea of
+ownership for stacks, and apply it to heap memory?
+Before, in C-land, heap memory is laissez-faire for the programmer.
+Now we impose the following rules:
+-->
+
 
 ---
 
