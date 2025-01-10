@@ -186,9 +186,7 @@ The stack frame
 # Local Variables
 
 Here's `main`'s stack frame.
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-stack frame has x=1 -->
+![bg right 50%](./img/frames/0.png)
 
 ```rust
 fn main() {
@@ -201,9 +199,9 @@ fn main() {
 
 # Local Variables
 
-![bg right 100%](./img/COMINGSOON.png)
+![bg right 50%](./img/frames/0.png)
 
-Now we call `my_function`, and...
+Now we call `my_function`.
 
 ```rust
 fn main() {
@@ -218,8 +216,32 @@ fn main() {
 
 # Local Variables
 
-Here's `my_function`'s stack frame.
-![bg right 100%](./img/COMINGSOON.png)
+In `my_function`'s stack frame, we
+- Copy `x` to create `arg`
+![bg right 50%](./img/frames/1.png)
+
+```rust
+fn main() {
+    let x = 1;
+    my_function(x);
+}
+
+fn my_function(arg: i32) {
+    let y = 2;
+    let z = 3;
+}
+```
+
+
+---
+
+
+# Local Variables
+
+In `my_function`'s stack frame, we
+- Copy `x` to create `arg`
+- Create the locals `y`, `z`
+![bg right 50%](./img/frames/2.png)
 <!-- replace COMINGSOON
 stack frame has arg=1, y=2, z=3 -->
 
@@ -235,10 +257,6 @@ fn my_function(arg: i32) {
 }
 ```
 
-<!-- Speaker note:
-Emphasize that `x` is copied to create `arg`
--->
-
 
 ---
 
@@ -246,7 +264,7 @@ Emphasize that `x` is copied to create `arg`
 # Local Variables
 
 Finally, we return from `my_function`.
-![bg right 100%](./img/COMINGSOON.png)
+![bg right 50%](./img/frames/0.png)
 <!-- replace COMINGSOON
 remove my_function stack frame -->
 
@@ -263,7 +281,7 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](./img/COMINGSOON.png)
+![bg right 50%](./img/frames/0.png)
 
 What if instead of an integer `x = 1`,
 
@@ -279,17 +297,14 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-Replace x=1 with x = [ 15GB of 0xdeadbeef ]
--->
+![bg right 100%](./img/frames/3-crop.png)
 
-We have a 15GB's worth of `Vector<u32>`?
+We have a 15GB vector?
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
 }
 ```
 
@@ -298,17 +313,14 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-add `my_function` stack frame
--->
+![bg right 100%](./img/frames/3-crop.png)
 
 When we call `my_function`,
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -322,18 +334,14 @@ fn my_function(arg : Vec<u32>) {
 
 # Motivating the Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-add `my_function` stack frame
-add `arg`
--->
+![bg right 100%](./img/frames/4-crop.png)
 
 When we call `my_function`,
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -349,19 +357,14 @@ We must allocate `arg` for its stack frame!
 
 # Motivating the Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-add `my_function` stack frame
-add `arg`
-fill `arg`
--->
+![bg right 100%](./img/frames/4-crop.png)
 
 When we call `my_function`,
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -381,17 +384,17 @@ Unsustainable!
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
+    my_function(v);
 }
 ```
 
@@ -401,10 +404,7 @@ fn main() {
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-cross out "x = [ 15GB of 0xdeadbeef ] in main's stack frame"
--->
+![bg right 100%](./img/frames/3-crop.png)
 
 Fortunately, our `Vector` does not live in the stack.
 
@@ -414,11 +414,7 @@ Fortunately, our `Vector` does not live in the stack.
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-add rectangle for heap
-draw arrow from x to heap alloc
--->
+![bg right 100%](./img/frames/5-crop.png)
 
 Fortunately, our `Vector` does not live in the stack.
 
@@ -430,10 +426,7 @@ It lives in the **heap**.
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-highlight heap alloc
--->
+![bg right 100%](./img/frames/5a.png)
 
 Value lives in the heap,
 
@@ -443,10 +436,7 @@ Value lives in the heap,
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- replace COMINGSOON
-highlight x
--->
+![bg right 100%](./img/frames/5b.png)
 
 Value lives in the heap,
 
@@ -458,15 +448,14 @@ Value lives in the heap,
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- add my_function's stack frame -->
+![bg right 100%](./img/frames/5-crop.png)
 
 When we call `my_function`,
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(v);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -480,16 +469,14 @@ fn my_function(arg : Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- add my_function's stack frame -->
-<!-- draw arrow from arg to heap -->
+![bg right 100%](./img/frames/7-crop.png)
 
-We can copy the pointer `x` into `arg`,
+We can copy the pointer `x` into `arg`.
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
-    my_function(&x);
+    let v = vec![0xdeadbeef; 4_000_000];
+    my_function(&v);
 }
 
 fn my_function(arg : &Vec<u32>) {
@@ -503,9 +490,7 @@ fn my_function(arg : &Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](./img/COMINGSOON.png)
-<!-- add my_function's stack frame -->
-<!-- draw arrow from arg to heap -->
+![bg right 100%](./img/frames/7-crop.png)
 
 Much better!
 
@@ -515,7 +500,7 @@ Much better!
 
 ```rust
 fn main() {
-    let x = vec![0xdeadbeef; 4_000_000];
+    let v = vec![0xdeadbeef; 4_000_000];
     my_function(x);
     my_function(x);
     my_function(x);
@@ -535,10 +520,19 @@ fn main() {
 
 # Recap
 
+![bg vertical 30%](./img/frames/0.png)
+![bg right 100%](./img/frames/5-crop.png)
+
 
 Variable placement:
 * **Stack-allocated:** Value on stack
 * **Heap-allocated:** Value on heap, **pointer** on stack
+
+
+---
+
+
+# Recap
 
 Stack:
 * Allocated on function call, deallocated on return
@@ -605,23 +599,53 @@ How can we be confident that heap memory is deallocated safely?
 
 # Motivating Ownership
 
+![bg right 50%](./img/frames/0.png)
 
 How can we be confident that heap memory is deallocated safely?
 
 Inspired by the stack
-* Local variable lives in function's **stack frame**
-* Allocated on function call
-* Deallocated on function return
+- Local variable lives in function's **stack frame**
+
 
 ---
 
 
 # Motivating Ownership
 
+![bg right 50%](./img/frames/2.png)
 
 How can we be confident that heap memory is deallocated safely?
 
 Inspired by the stack
+- Local variable lives in function's **stack frame**
+- Allocated on function call
+
+
+---
+
+
+# Motivating Ownership
+
+![bg right 50%](./img/frames/0.png)
+
+How can we be confident that heap memory is deallocated safely?
+
+Inspired by the stack
+- Local variable lives in function's **stack frame**
+- Allocated on function call
+- Deallocated on function return
+
+
+---
+
+
+# Motivating Ownership
+
+![bg right 50%](./img/frames/0.png)
+
+How can we be confident that heap memory is deallocated safely?
+
+Sound familiar?
 - Local variable "owned by" stack frame
 - One stack frame per variable
 - Dropped on function return
@@ -644,6 +668,8 @@ You can think of it as the value being "owned" by the function,
 
 
 # Motivating Ownership
+
+![bg right 50%](./img/frames/0.png)
 
 How can we be confident that heap memory is deallocated safely?
 
@@ -668,16 +694,53 @@ Now we impose the following rules:
 
 # Motivating Ownership
 
+![bg right 100%](./img/frames/5-crop.png)
 
 How can we be confident that heap memory is deallocated safely?
 
 #### Rules of Ownership
 
-* Each value in Rust has an _owner_
-* A value can only have one owner at a time
+- Each value in Rust has an _owner_
+    * Owner is stack frame
+
+
+---
+
+
+# Motivating Ownership
+
+![bg right 100%](./img/frames/7-crop.png)
+
+How can we be confident that heap memory is deallocated safely?
+
+#### Rules of Ownership
+
+- Each value in Rust has an _owner_
+- A value can only have one owner at a time
 * When the owner goes out of scope, the value will be _dropped_
-    * Deallocate the value here
-    * Safe because value has only one owner
+
+<!--Speaker note:
+    One owner at a time
+    Emphasize that v is grayed out in diagram
+        => ownership transfer
+-->
+
+---
+
+
+# Motivating Ownership
+
+![bg right 100%](./img/frames/5-crop.png)
+
+How can we be confident that heap memory is deallocated safely?
+
+#### Rules of Ownership
+
+- Each value in Rust has an _owner_
+- A value can only have one owner at a time
+- When the owner goes out of scope, the value will be _dropped_
+    - Deallocate the value here
+    * Safe because only one owner
 
 <!-- Speaker note:
 Q: Given these rules, pretend you're the compiler.
