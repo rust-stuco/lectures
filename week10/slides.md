@@ -23,55 +23,55 @@ paginate: true
 <div class="columns">
 <div>
 
-## Parallelism
-
-- Work on multiple tasks at the same time
-- Utilizes multiple processors/cores
-
-</div>
-<div>
-
 ## Concurrency
 
-- Manage multiple tasks, but only do one thing at a time.
-- Better utilizes a single processor/core
+**Problem** of handling many tasks at once
 
-</div>
-</div>
-<center>
 
-* These terms are used (and abused) interchangably
+## Parallelism
 
-</center>
+**Solution** of working on multiple tasks at the same time
+
+* **Key difference:** Parallelism utilizes **multiple** workers
 
 ---
+
+
+# Workers
+
+We divide tasks among workers.
+
+* In hardwareland, we call these workers **processors** or **cores**.
+
+* In softwareland, <!-- "we give these workers a different name" -->
+  * "Processors/CPUs" => Processes
+  * "Cores" => Threads
+
+* **Key difference:** Parallelism utilizes **multiple** processors/cores
+  * Some concurrency models don't!
+
+
+<!-- Note:
+
+Students coming from 122 may be unfamiliar with hardware terminology,
+so I added this to clarification.
+
+Alternate suggestion is to replace all instances of "cores / processors"
+with "threads / processes"
+-->
+
+
+---
+
 
 # Parallelism vs. Concurrency
 
 
 <img src="img/concvspar.jpg" style="width: 85%; margin-left: auto; margin-right: auto;">
 
----
-
-# Parallelism vs. Concurrency
-<div class="columns">
-<div>
-
-## Parallelism
-
-<img src="img/psychotic-chefs.jpg" style="width: 88%">
-
-</div>
-<div>
-
-## Concurrency
-
-<img src="img/lonely-chef.jpg" style="width: 88%">
-
-</div>
-</div>
 
 ---
+
 
 # Parallelism vs. Concurrency (Examples)
 <div class="columns">
@@ -79,16 +79,15 @@ paginate: true
 
 ## Parallelism
 
+* Have one processor work on loading the webpage, while another updates the progress bar
+* Processing 100x100px regions of an image on each core
 
-- Have one processor work on loading the webpage, while another updates the progress bar
-* Often used to divide tasks into smaller units that can run at the same time
-  * e.g. Processing 100x100px regions of an image on each core
-  * "Divide and conquer"
 </div>
 <div>
 
 ## Concurrency
 
+* One core
 * As we load a webpage, take a break sometimes to update the loading progress bar
 * Often used to do other things while we wait for blocking I/O operations
   * e.g. Running garbage collection while we wait for a response over the network
