@@ -248,6 +248,8 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
+First, we have a shared variable `x`.
+
 `x` must satisfy a property to be correct.
 
 ```c
@@ -347,6 +349,26 @@ We want `x = 2`, but we get `x = 1`!
 
 We want bolded operations to be **atomic**.
 
+<!--Speaker Note:
+"That is, while Thread 1 is executing these instructions,
+  Thread 2 cannot cut in.
+"
+-->
+
+<style>
+    .container {
+        display: flex;
+        gap: 16px;
+    }
+    .col {
+        flex: 1;
+    }
+</style>
+<div class = "container">
+
+<div class = "col">
+
+**Not Atomic**
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
@@ -357,6 +379,10 @@ We want bolded operations to be **atomic**.
 | x = temp      |               |
 |               | x = temp      |
 
+</div>
+<div class = "col">
+
+**Atomic**
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
@@ -366,6 +392,9 @@ We want bolded operations to be **atomic**.
 |               | temp += 1     |
 | x = temp      |               |
 |               | x = temp      |
+
+</div>
+</div>
 
 
 ---
