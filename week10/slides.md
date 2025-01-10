@@ -39,7 +39,7 @@ paginate: true
 
 # Workers
 
-We divide tasks among workers.
+Parallelism divides tasks among workers.
 
 * In hardwareland, we call these workers **processors** and **cores**.
 
@@ -120,11 +120,8 @@ For this lecture only,
 * **Thread:** "stream of instructions"
 
 <!--Speaker note:
-
-Our focus will be on multithreading
-  Same principles can be applied to multiprocessing
+Same principles can be applied to multiprocessing
 Emphasize that "thread" is overloaded term
-
 -->
 
 ---
