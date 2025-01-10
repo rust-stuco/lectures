@@ -46,20 +46,6 @@ At the beginning of this course, we learned the Commandments of Rust...
 
 At the beginning of this course, we learned the Commandments of Rust...
 
-#### Rules of Ownership
-
-- Each value in Rust has an _owner_
-- A value can only have one owner at a time
-- When the owner goes out of scope, the value will be _dropped_
-
-
----
-
-
-# The Rules
-
-At the beginning of this course, we learned the Commandments of Rust...
-
 #### Rules of Borrowing
 * Cannot access both a mutable and an immutable reference to the same object
 * At any given time, may have either one mutable reference, or any number of immutable references
@@ -100,7 +86,7 @@ What sorts of behavior is the compiler trying to prevent?
 # Defining Unsafety
 
 
-Safety is the absence of undefined behavior
+Safety is the absence of undefined behavior.
 
 
 ---
@@ -108,7 +94,7 @@ Safety is the absence of undefined behavior
 
 # Defining Unsafety
 
-However, undefined behavior is a lot
+However, undefined behavior is a lot.
 
 Definition in Rust Reference prints on five sheets...
 
@@ -125,9 +111,9 @@ so we'll simplify it and say that
 
 # Defining Unsafety
 
-Safety is the absence of undefined behavior
+Safety is the absence of undefined behavior.
 
-However, undefined behavior is a lot
+However, undefined behavior is a lot.
 
 Simplification: **invalid memory access ⇒ unsafety****
 
@@ -164,7 +150,7 @@ Memory access can be unsafe if
 - Deallocated
 - Overwritten by "someone else"
 
-Trivially safe for immutable globals
+⇒ Trivially safe for immutable globals
 
 
 ---
@@ -177,9 +163,9 @@ Memory access can be unsafe if
 - Deallocated
 - Overwritten by "someone else"
 
-Trivially safe for immutable globals
+⇒ Trivially safe for immutable globals
 
-We'll focus on local variables
+We'll focus on local variables.
 
 ---
 
@@ -199,7 +185,7 @@ The stack frame
 
 # Local Variables
 
-Here's `main`'s stack frame:
+Here's `main`'s stack frame.
 ![bg right 100%](./img/COMINGSOON.png)
 <!-- replace COMINGSOON
 stack frame has x=1 -->
@@ -232,7 +218,7 @@ fn main() {
 
 # Local Variables
 
-Here's `my_function`'s stack frame:
+Here's `my_function`'s stack frame.
 ![bg right 100%](./img/COMINGSOON.png)
 <!-- replace COMINGSOON
 stack frame has arg=1, y=2, z=3 -->
@@ -259,7 +245,7 @@ Emphasize that `x` is copied to create `arg`
 
 # Local Variables
 
-Finally, we return from `my_function`
+Finally, we return from `my_function`.
 ![bg right 100%](./img/COMINGSOON.png)
 <!-- replace COMINGSOON
 remove my_function stack frame -->
@@ -279,7 +265,7 @@ fn main() {
 
 ![bg right 100%](./img/COMINGSOON.png)
 
-What if instead of an integer `x = 1`
+What if instead of an integer `x = 1`,
 
 ```rust
 fn main() {
@@ -317,7 +303,7 @@ fn main() {
 add `my_function` stack frame
 -->
 
-When we call `my_function`
+When we call `my_function`,
 
 ```rust
 fn main() {
@@ -355,7 +341,7 @@ fn my_function(arg : Vec<u32>) {
 }
 ```
 
-We must allocate `arg` for its stack frame
+We must allocate `arg` for its stack frame!
 
 
 ---
@@ -383,7 +369,7 @@ fn my_function(arg : Vec<u32>) {
 }
 ```
 
-We must allocate `arg` for its stack frame
+We must allocate `arg` for its stack frame!
 ⇒ Copy 15GB of `0xdeadbeef`'s
 
 ---
@@ -420,7 +406,7 @@ fn main() {
 cross out "x = [ 15GB of 0xdeadbeef ] in main's stack frame"
 -->
 
-Fortunately, our `Vector` does not live in the stack
+Fortunately, our `Vector` does not live in the stack.
 
 
 ---
@@ -434,9 +420,9 @@ add rectangle for heap
 draw arrow from x to heap alloc
 -->
 
-Fortunately, our `Vector` does not live in the stack
+Fortunately, our `Vector` does not live in the stack.
 
-It lives in the **heap**
+It lives in the **heap**.
 
 
 ---
@@ -449,7 +435,7 @@ It lives in the **heap**
 highlight heap alloc
 -->
 
-Value lives in the heap
+Value lives in the heap,
 
 
 ---
@@ -462,9 +448,9 @@ Value lives in the heap
 highlight x
 -->
 
-Value lives in the heap
+Value lives in the heap,
 
-**Pointer** lives in the stack
+**Pointer** lives in the stack.
 
 
 ---
@@ -475,7 +461,7 @@ Value lives in the heap
 ![bg right 100%](./img/COMINGSOON.png)
 <!-- add my_function's stack frame -->
 
-When we call `my_function`
+When we call `my_function`,
 
 ```rust
 fn main() {
@@ -498,7 +484,7 @@ fn my_function(arg : Vec<u32>) {
 <!-- add my_function's stack frame -->
 <!-- draw arrow from arg to heap -->
 
-We can copy the pointer `x` into `arg`
+We can copy the pointer `x` into `arg`,
 
 ```rust
 fn main() {
@@ -521,11 +507,11 @@ fn my_function(arg : &Vec<u32>) {
 <!-- add my_function's stack frame -->
 <!-- draw arrow from arg to heap -->
 
+Much better!
+
 **Before:** 15GB per `Vector`
 
-**After:** 8 bytes per 64-bit pointer
-
-Much better!
+**After:** 8 bytes per pointer
 
 ```rust
 fn main() {
@@ -637,7 +623,7 @@ How can we be confident that heap memory is deallocated safely?
 
 Inspired by the stack
 - Local variable "owned by" stack frame
-- One copy per stack frame
+- One stack frame per variable
 - Dropped on function return
 
 
@@ -663,10 +649,10 @@ How can we be confident that heap memory is deallocated safely?
 
 Inspired by the stack
 - Local variables "owned by" stack frame
-- One copy per stack frame
+- One stack frame per variable
 - Dropped on function return
 
-Now we apply it to the heap
+Now we apply this to the heap!
 
 
 <!-- Speaker notes:
@@ -948,10 +934,11 @@ We will talk about `unsafe` in the later weeks.
 
 > "His blade works so smoothly that the ox does not feel it." - The Dextrous Butcher
 
-Become the borrow checker whisperer
+Understand the borrow checker, and you'll
 - Fix errors with ease
 - Craft elegant, efficient solutions
 
+<!-- Work so smoothly the borrow checker does not feel it :-) -->
 
 
 ---
@@ -982,36 +969,1068 @@ Places include:
 * Fields of places, like `a.0`, `a.field`
 * Any combination of the above, like `*((*&a[2].field)[5].0.1)`
 
-First, let's talk about variables.
 
 ---
 
 
 # Permissions of Variables
 
-Upon birth, a variable has the permissions
+When declared, a variable has the permissions
 * Read: can be copied
 * Own: can be moved or dropped
 
 
-If declared `mut`,
+If `mut`,
 * Write: can be mutated
-
-References temporarily remove these permissions.
 
 
 ---
 
-<!--
-High-level sketch:
-    => references are non-owning pointers
-    => introduce diagrams with RWO permissions
-            can skip flow permission since we haven't discussed Lifetimes yet
-After walking through example with RWO permissions, check time
 
-If time, we address the second question "Between multiple safe fixes, how do I choose the 'best' fix?"
-    - heuristic: most performant is minimize copying via references
-        - however, don't always want this
-        - example: in FP, prevent side effects, avoid argument mutation
-    - 
+# References Change Permissions
+
+Variables have permissions Read, Own, Write.
+
+References **temporarily remove these permissions**.
+
+
+---
+
+
+# Example: Immutable References
+
+
+Let's revisit our vector example.
+
+We declare `v`, giving it
+- .
+- .
+
+<style>
+    .container {
+        display: flex;
+        gap: 16px;
+    }
+    .col {
+        flex: 1;
+    }
+</style>
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+
+</div>
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+
+Let's revisit our vector example.
+
+We declare `v`, giving it
+- R, O by default
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | +R | - | +O
+
+</div>
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+
+Let's revisit our vector example.
+
+We declare `v`, giving it
+- R, O by default
+- W because `mut`
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | +R | +W | +O
+
+</div>
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+We take a reference to `v`, which
+- .
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | O
+x | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+We take a reference to `v`, which
+- Declares `x` with R, O
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | O
+x | +R | - | +O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+We take a reference to `v`, which
+- Declares `x` with R, O
+- **Moves** `v` into `x`.
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | O
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+This move changes `v`:
+- .
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | O
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+This move changes `v`:
+- Removes O, gives to `x`
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+This move changes `v`:
+- Removes O, gives to `x`
+- Removes W
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3]; // <- v loses W
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+We can no longer mutate `v`, since we have a reference to it.
+
+When does `v` regain W?
+* Case 1: All references become unused.
+* Case 2: Mutate `v` before _any_ reference is used.
+    * Revokes permissions of references
+
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3]; // <- v loses W
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+So, this is safe.
+
+* `v` requests W
+* All references are unused
+* `v` regains W
+* Can mutate `v`
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3]; // <- v loses W
+v.pop(); // <- v regains W
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Immutable References
+
+However, this is not.
+* Reference `x` used in `println`
+* `v` regains W *after* `println`
+* Can't mutate `v`
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3]; // <- v loses W
+v.pop(); // Requires W, R on v
+println!("{}", x);
+// <- v regains W
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Recap: Immutable References
+
+* Declaring a variable `v` gives it R, O permissions
+    * W if `mut`
+* Creating a reference to `v` removes O, W permissions
+    * Permissions are restored when
+        * References become **unused**, OR
+        * Mutate `v` *before* any reference is used
+    * We'll discuss "unused" in Lifetimes lecture
+
+
+---
+
+
+# Mutable References
+
+When we take a reference `x = &v`,
+* We dereference with `*x`
+* **`x` and `*x` have different permissions**
+    * Mutable references illustrate this
+
+
+---
+
+
+# Example: Mutable References
+
+First, here's our immutable reference.
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+Since it's immutable, `*x` only has R permissions.
+* `*x` can only take R if `v` has R
+* More on this later
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+*x | R | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+Now we mark it mutable.
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &mut v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+*x | R | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+Differences:
+- .
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &mut v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | - | -
+x | R | - | O
+*x | R | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+Differences:
+- `v` loses _all_ permissions, including R
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &mut v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+x | R | - | O
+*x | R | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+Differences:
+- `v` loses _all_ permissions, including R
+- `*x`, but _not_ `x`, gains W permissions
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &mut v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+x | R | - | O
+*x | R | W | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Example: Mutable References
+
+This is important!
+- `v` loses _all_ permissions, including R
+    * Avoids simultaneous **aliasing** and mutation
+    * Hence, `*x` can only take R if `v` has R
+- `*x`, but _not_ `x`, gains W permissions
+    * Can't reassign `x`
+
+<!--Speaker note:
+Aliasing: accessing same data through different variables
+ -->
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let x = &mut v[3];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+x | R | - | O
+*x | R | W | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Recap: Mutable References
+
+
+Immutable references `x` of `v`
+* `*x` can only take R if `v` has R
+
+Mutable reference `x` to `v`
+* Removes _all_ permissions for `v`, including R
+* `*x`, but _not_ `x`, has W permission
+
+
+---
+
+
+# Fixing a Safe Program
+
+Let's apply what we've learned!
+
+```rust
+let mut v = vec![];
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+Say we're holding numbers in a line.
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+```
+
+
+
+---
+
+
+# Fixing a Safe Program
+
+For each person in line,
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+                 ^
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+For each person in line, we want to add their neighbor's number.
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+                    ^
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+We'll take a mutable reference for the first person,
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+                 ^
+let person1 = &mut v[0];
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+An immutable reference for the second person,
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+                    ^
+let person1 = &mut v[0];
+let person2 = &v[1];
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+And add them together.
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+This does not compile! Let's break down the permissions.
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+
+---
+
+
+# Fixing a Safe Program
+
+Recall when we create a mutable reference,
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | R | W | O
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+Recall when we create a mutable reference, `v` loses all permissions.
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+When do we use our references?
+- .
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+When do we use our references?
+- Mutating `*person1` requires W, R ✓
+- .
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+*person1 | R | W | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+When do we use our references?
+- Mutating `*person1` requires W, R ✓
+- Reading `*person2` requires R
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+*person1 | R | W | -
+*person2 | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+Reading `*person2` requires R
+* `*person2` can only take R if `v` has R
+* `v` gave R to `person1`!
+* Chicken-and-egg
+
+<!--Speaker note:
+v regains R after person1 becomes unused, BUT
+person1 becomes unused after reading *person2
 -->
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+*person1 | R | W | -
+*person2 | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+**Issue:** Single place `v` represents _all_ indices
+* Borrow checker can't know it's safe
+* But we do
+
+<!--Speaker note: -->
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0];
+let person2 = &v[1];
+*person1 += *person2;
+```
+
+</div>
+
+<div class = "col">
+
+Place | R | W | O
+-----|-----|-----|-----:
+v | - | - | -
+*person1 | R | W | -
+*person2 | - | - | -
+
+</div>
+
+</div>
+
+
+---
+
+
+# Fixing a Safe Program
+
+Solution: `unsafe` block
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+let person1 = &mut v[0] as *mut i32; // raw pointer
+let person2 = &v[1] as *const i32; // raw pointer
+unsafe { *person1 += *person2; } // because *we* know it's safe
+```
+
+<!-- Speaker note:
+Alternate solution is `split_at_mut`, which uses `unsafe` under the hood
+
+-->
+
+---
+
+
+# Recap
+
+- Ownership rules prevent access to deallocated memory
+    - "Owner" is stack frame
+    - "Owned" are variable values, allocated in stack or heap
+- Borrowing rules prevent access to overwritten memory
+    - Understand Pop Goes X example
+- Borrow checker checks **permissions** of **places**
+    - References temporarily remove permissions
+    - Draw RWO table to fix ownership errors
+
+---
+
+
+# Next Lecture: Error Handling and Traits
+
+![bg right:30% 80%](../images/ferris_happy.svg)
+
+* Thanks for coming!
