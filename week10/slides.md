@@ -153,7 +153,7 @@ Each thread retires to their cave
 
 # Motivating Communication
 
-Okay, say our image is more complex.
+Say our image is more complex.
 
 * We're painting circles
 * Circles overlap
@@ -521,6 +521,7 @@ If we eliminate shared memory, race is trivially gone.
 
 ---
 
+
 # Message Passing
 
 **Problem:** How do threads communicate?
@@ -529,17 +530,57 @@ If we eliminate shared memory, race is trivially gone.
 - Approach 1: Shared Memory
 * Approach 2: Message Passing
   * Eliminates shared memory
-  
+
 
 ---
 
 # Message Passing
 
 * Threads communicate via channels
-* Golang famously utilizes this approach
+
+<!-- Speaker note: Golang famously uses this approach -->
 
 
 ---
+
+
+# Approach 2: Message Passing
+
+Previously, shared memory solution was
+
+> For each pixel,
+> - Create shared variable `x`
+> - Increment `x` when thread touches pixel
+
+
+---
+
+
+# Approach 2: Message Passing
+
+In message passing, we eliminate shared memory,
+
+For each pixel,
+- Create a counter `x` for each thread
+> - Increment `x` when thread touches pixel
+
+
+---
+
+
+# Approach 2: Message Passing
+
+We broadcast updates to other threads via **message passing**.
+
+For each pixel,
+- Create a counter `x` for each thread
+- Increment `x` when thread touches pixel
+  * Send message to other threads
+  * So they update their copies of `x`
+
+
+---
+
 
 # Message Passing Example
 
@@ -554,6 +595,7 @@ let (tx, rx) = mpsc::channel();
   * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
 
 ---
+
 
 # Message Passing Example
 
@@ -572,7 +614,7 @@ println!("I am too busy to {}!", received);
 
 ---
 
-# Message Passing Example
+# Message Passing in Rust
 We can also use receivers as iterators!
 
 ```rust
@@ -590,7 +632,9 @@ for msg in rx {
 ```
 * Wait, what does `mpsc` stand for?
 
+
 ---
+
 
 # `mpsc` ⟹ Multiple Producer, Single Consumer
 
