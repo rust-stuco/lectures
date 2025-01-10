@@ -116,8 +116,8 @@ so that this slide is shortened to
 # Multithreading
 
 For this lecture only,
-
-* **thread:** "stream of instructions"
+* Our workers are threads
+* **Thread:** "stream of instructions"
 
 <!--Speaker note:
 
