@@ -347,7 +347,7 @@ We want `x = 2`, but we get `x = 1`!
 
 # Shared Memory: Data Races
 
-We want bolded operations to be **atomic**.
+Want bolded operations to be **atomic**.
 
 <!--Speaker Note:
 "That is, while Thread 1 is executing these instructions,
@@ -399,9 +399,38 @@ We want bolded operations to be **atomic**.
 
 ---
 
+
+# Fixing a Data Race
+
+We must eliminate one:
+1. `x` is shared
+2. `x` becomes incorrect mid-update
+3. Unsynchronized updates
+
+<!--
+Speaker note: Unsynchronized = parties can "cut in" mid-update
+-->
+
+---
+
+
+# Fixing a Data Race
+
+**Approach 1: Synchronization**
+
+Take turns! No "cutting in" mid-update.
+
+1. `x` is shared
+2. `x` becomes incorrect mid-update
+3. ~~Unsynchronized updates~~
+
+
+---
+
+
 # Synchronization
 
-To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
+We need to establish *mutual exclusion*, so that threads don't interfere with each other.
 * Mutual exclusion means "Only one thread can do something at a time"
 * A common tool for this is a mutex lock
 
@@ -431,6 +460,39 @@ static void thread(void) {
 
 
 ---
+
+
+# Fixing a Data Race
+
+**Approach 2: Atomics**
+
+One airtight update! Cannot be "incorrect" mid-update.
+
+1. `x` is shared
+2. ~~`x` becomes incorrect mid-update~~
+3. Unsynchronized updates
+
+
+---
+
+
+# Atomics
+
+Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
+* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
+* 100% lock free, using bespoke assembly instructions
+* Highly performant, but very difficult to use
+* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
+* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
+
+<!-- Note:
+This is a pre-existing slide
+Was originally the last slide; I moved it all the way up here
+We can reduce words
+-->
+
+---
+
 
 # Threads in Rust
 
@@ -926,20 +988,6 @@ thread::spawn(move || {
 
 ---
 
-# One more thing...
-
----
-
-# `std::sync::atomic`
-
-Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
-* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
-* 100% lock free, using bespoke assembly instructions
-* Highly performant, but very difficult to use
-* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
-* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
-
----
 
 # Review: "Fearless Concurrency"
 
@@ -948,6 +996,7 @@ What we have gone over today is referred to as "fearless concurrency" in the rus
 * Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
 * Subjectively, this may be the single best reason to use this language
 * Both parallelism and concurrency, as introduced in this lecture, benefit from these guarantees
+
 
 ---
 
