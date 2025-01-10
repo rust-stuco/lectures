@@ -70,7 +70,6 @@ Not quite...
 # Objective
 
 * When my program is rejected, why might it be unsafe?
-
 * Between multiple safe fixes, how do I choose the "best" fix?
 
 <!-- Speaker note:
@@ -494,7 +493,7 @@ fn my_function(arg : &Vec<u32>) {
 
 Much better!
 
-**Before:** 15GB per `Vector`
+**Before:** 15GB per vector
 
 **After:** 8 bytes per pointer
 
@@ -831,6 +830,8 @@ fn x_shouldnt_exist() {
 }
 ```
 
+<!--Speaker note: Ask audience!! -->
+
 
 ---
 
@@ -931,6 +932,8 @@ fn please_dont_move() {
     println!("{}", x); // What is `x`?
 }
 ```
+
+<!--Speaker note: Ask audience!! -->
 
 
 ---
@@ -1389,8 +1392,7 @@ So, this is safe.
 
 * `v` requests W
 * All references are unused
-* `v` regains W
-* Can mutate `v`
+* `v` regains W, can mutate `v`
 
 <div class = "container">
 <div class = "col">
@@ -1607,6 +1609,11 @@ Differences:
 - `v` loses _all_ permissions, including R
 - .
 
+<!-- Speaker note:
+Losing R is equivalent to "locking" other references from taking R
+    => no more immutable references
+-->
+
 <div class = "container">
 <div class = "col">
 
@@ -1676,6 +1683,10 @@ This is important!
 
 <!--Speaker note:
 Aliasing: accessing same data through different variables
+
+Removing R permission is like to "locking" other references from taking R
+Combined with "*x can only take R if v has R",
+    => no more immutable references
  -->
 
 <div class = "container">
@@ -2072,7 +2083,6 @@ unsafe { *person1 += *person2; } // because *we* know it's safe
 
 <!-- Speaker note:
 Alternate solution is `split_at_mut`, which uses `unsafe` under the hood
-
 -->
 
 ---
