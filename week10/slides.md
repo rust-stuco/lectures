@@ -494,6 +494,176 @@ We can reduce words
 ---
 
 
+# Fixing a Data Race
+
+**Approach 3: No Shared Memory**
+
+If we eliminate shared memory,
+
+1. ~~`x` is shared~~
+2. `x` becomes incorrect mid-update
+3. Unsynchronized updates
+
+
+---
+
+
+# Fixing a Data Race
+
+**Approach 3: No Shared Memory**
+
+If we eliminate shared memory, race is trivially gone.
+
+1. ~~`x` is shared~~
+2. ~~`x` becomes incorrect mid-update~~
+3. ~~Unsynchronized updates~~
+
+
+---
+
+# Message Passing
+
+**Problem:** How do threads communicate?
+
+**Solution:**
+- Approach 1: Shared Memory
+* Approach 2: Message Passing
+  * Eliminates shared memory
+  
+
+---
+
+# Message Passing
+
+* Threads communicate via channels
+* Golang famously utilizes this approach
+
+
+---
+
+# Message Passing Example
+
+```rust
+let (tx, rx) = mpsc::channel();
+```
+* Channels have two halves, a transmitter and a receiver
+* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
+  * Ben finds the duck downstream, and reads the message (receiver)
+* Note that communication is one-way here
+* Note also that each channel can only transmit/receive one type
+  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
+
+---
+
+# Message Passing Example
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+});
+
+let received = rx.recv().unwrap(); // receive val through the receiver
+println!("I am too busy to {}!", received);
+```
+* Note that, after we send `val`, we no longer have ownership of it!
+
+---
+
+# Message Passing Example
+We can also use receivers as iterators!
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+    tx.send("buy Connor lunch".into()).unwrap();
+});
+
+for msg in rx {
+  println!("I am too busy to {}!", msg);
+}
+```
+* Wait, what does `mpsc` stand for?
+
+---
+
+# `mpsc` ⟹ Multiple Producer, Single Consumer
+
+This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+let tx1 = tx.clone();
+thread::spawn(move || { // owns tx1
+      tx1.send("yo".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+thread::spawn(move || { // owns tx
+      tx.send("hello".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+for received in rx {
+    println!("Got: {}", received);
+}
+```
+
+---
+
+# `Send` and `Sync`
+
+---
+
+# `Send` and `Sync`
+
+Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
+
+
+<!-- Marker trait == no implementation, signal to the compiler -->
+
+---
+
+# `Send` vs. `Sync`
+
+
+## `Send`
+
+* Indicates that the type is safe to *send* between threads.
+* `Rc<T>` does not implement this trait, because it is not thread safe.
+
+
+## `Sync`
+
+* Indicates that the type implementing `Send` can be referenced from multiple threads
+* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
+* `Rc<T>` does not implement `Sync` either
+
+<!-- MutexGuard implements Sync, but not Send, actually! -->
+
+
+---
+
+# Using `Send` and `Sync`
+* It is generally rare that you would implement these traits yourself
+  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
+  * Explicitly implementing either one requires using `unsafe`
+* This would be an example of a trait you might want to *unimplement*
+  * e.g. If you are doing something with `unsafe` that is not thread-safe
+  * `impl !Send for CoolType<T> {}`
+
+<!-- Notice this negative impl is not unsafe-->
+
+
+---
+
+
 # Threads in Rust
 
 ---
@@ -801,142 +971,9 @@ println!("Final value of x: {}", *x.lock().unwrap());
 * `x` is 20, *every time*.
   * And it is illegal for it to be anything else in safe Rust.
 
----
-
-# Parallelism Checkpoint
-Up until now, we have been talking about parallelism with *shared state*. Let's shift gears and talk about *message passing*.
 
 ---
 
-# Message Passing
-
-Rather than sharing state between threads, an increasingly popular approach to safe concurrency is message passing.
-* In this approach, threads communicate with each other through channels
-* Golang famously utilizes this approach
-
-
----
-
-# Message Passing Example
-
-```rust
-let (tx, rx) = mpsc::channel();
-```
-* Channels have two halves, a transmitter and a receiver
-* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
-  * Ben finds the duck downstream, and reads the message (receiver)
-* Note that communication is one-way here
-* Note also that each channel can only transmit/receive one type
-  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
-
----
-
-# Message Passing Example
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-});
-
-let received = rx.recv().unwrap(); // receive val through the receiver
-println!("I am too busy to {}!", received);
-```
-* Note that, after we send `val`, we no longer have ownership of it!
-
----
-
-# Message Passing Example
-We can also use receivers as iterators!
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-    tx.send("buy Connor lunch".into()).unwrap();
-});
-
-for msg in rx {
-  println!("I am too busy to {}!", msg);
-}
-```
-* Wait, what does `mpsc` stand for?
-
----
-
-# `mpsc` ⟹ Multiple Producer, Single Consumer
-
-This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-let tx1 = tx.clone();
-thread::spawn(move || { // owns tx1
-      tx1.send("yo".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-thread::spawn(move || { // owns tx
-      tx.send("hello".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-for received in rx {
-    println!("Got: {}", received);
-}
-```
-
----
-
-# `Send` and `Sync`
-
----
-
-# `Send` and `Sync`
-
-Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
-
-
-<!-- Marker trait == no implementation, signal to the compiler -->
-
----
-
-# `Send` vs. `Sync`
-
-
-## `Send`
-
-* Indicates that the type is safe to *send* between threads.
-* `Rc<T>` does not implement this trait, because it is not thread safe.
-
-
-## `Sync`
-
-* Indicates that the type implementing `Send` can be referenced from multiple threads
-* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
-* `Rc<T>` does not implement `Sync` either
-
-<!-- MutexGuard implements Sync, but not Send, actually! -->
-
-
----
-
-# Using `Send` and `Sync`
-* It is generally rare that you would implement these traits yourself
-  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
-  * Explicitly implementing either one requires using `unsafe`
-* This would be an example of a trait you might want to *unimplement*
-  * e.g. If you are doing something with `unsafe` that is not thread-safe
-  * `impl !Send for CoolType<T> {}`
-
-<!-- Notice this negative impl is not unsafe-->
-
----
 
 # More Shared State Primitives
 
