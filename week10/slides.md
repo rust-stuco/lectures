@@ -100,11 +100,12 @@ so that this slide is shortened to
 ---
 
 
-# Today: Parallelism
+# Today
 - Multithreading
 - Interprocess Communication
   - Shared Memory
-    - Synchronization
+    - Data Races
+    - Synchronization, Atomics
   - Message Passing
     - `Send` and `Sync`
 
@@ -112,14 +113,17 @@ so that this slide is shortened to
 ---
 
 
-# Terminology: Threads
+# Multithreading
 
-For this lecture, we define it as a "stream of instructions"
+For this lecture only,
+
+* **thread:** "stream of instructions"
 
 <!--Speaker note:
 
+Our focus will be on multithreading
+  Same principles can be applied to multiprocessing
 Emphasize that "thread" is overloaded term
-In Rust, language threads are 1:1 with OS threads
 
 -->
 
