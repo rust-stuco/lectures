@@ -170,10 +170,21 @@ Okay, say our image is more complex.
 
 # Motivating Communication
 
-**Problem:** How do threads communicate?
-* Which circles have been painted?
+Now threads need to talk to each other!
 
-**Solutions:**
+* For each pixel
+  * How many circles have been drawn?
+  * Do _not_ paint this pixel until previous circles are done
+
+
+---
+
+
+# Motivating Communication
+
+**Problem:** How do threads communicate?
+
+**Solution:**
 * Approach 1: Shared Memory
 * Approach 2: Message Passing
 
@@ -185,48 +196,177 @@ Okay, say our image is more complex.
 ---
 
 
-# Shared Memory
+# Approach 1: Shared Memory
+
+For each pixel,
+* Create shared variable `x`
+* Increment `x` when thread touches pixel
 
 ```c
 static int x = 0;
+```
 
-static void thread(void) {
-  int temp = x;
-  temp += 1;
-  x = temp;
-}
-// <!-- snip -->
-for (int i = 0; i < 20; ++i) {
-  create_thread(thread); // helper function not shown
+Now threads know
+* How many circles have been drawn?
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Are we done?
+
+Not quite...
+
+* Shared memory is ingredient for **data races**
+* Let's illustrate
+
+<!--Speaker note:
+We'll walk through the other ingredients
+-->
+
+---
+
+
+# Shared Memory: Data Races
+
+First, we have a shared variable `x`.
+
+```c
+static int x = 0;
+```
+
+<!-- Speaker note:
+(1) This is pseudocode; we'll explain Rust's interface in second half
+(2) `static` => shared
+-->
+
+
+---
+
+
+# Shared Memory: Data Races
+
+`x` must satisfy a property to be correct.
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+```
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Second, `x` becomes incorrect mid-update.
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+
+static void update_x(void) {
+  int temp = x; // <- x is INCORRECT
+  temp += 1;    // <- x is INCORRECT
+  x = temp;     // <- x is CORRECT
 }
 ```
 
 
-<!-- Define atomic verbally -->
 ---
 
-# Race Conditions
-When multiple threads have access to the same data, things get complicated...
-* Specifically, this is about *data races*
+
+# Shared Memory: Data Races
+
+Third, when multiple threads update at once...
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+
+static void update_x(void) {
+  int temp = x; // <- x is INCORRECT
+  temp += 1;    // <- x is INCORRECT
+  x = temp;     // <- x is CORRECT
+}
+// <!-- snip -->
+for (int i = 0; i < 20; ++i) {
+  create_thread(update_x);
+}
+```
+
 
 ---
 
-# The Bad Slide
+
+# Shared Memory: Data Races
+
+Third, when multiple threads update at once...they interleave!
+
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
-| temp = x (temp = 0)   |               |
-|               | temp = x (temp = 0)   |
-| temp += 1 (temp = 0 + 1) |               |
-|               | temp += 1 (temp = 0 + 1) |
-| x = temp (x = 1)  |               |
-|               | x = temp (x = 1)  |
+| temp = x      |               |
+|               | temp = x      |
+| temp += 1     |               |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
 
-* Uh oh...
 
 <!--
-Is that working correctly? Look at the code—it's doing exactly what it is supposed to do. Maybe we weren't specific enough...
+Q: Can someone tell me the outcome of this sequence?
+A: Next slide
 -->
+
+
+---
+
+
+# Shared Memory: Data Races
+
+We want `x = 2`, but we get `x = 1`!
+
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| Read temp = 0 |               |
+|               | Read temp = 0 |
+| Set temp = 1  |               |
+|               | Set temp = 1  |
+| Set x = 1     |               |
+|               | Set x = 1     |
+
+
+---
+
+
+# Shared Memory: Data Races
+
+We want bolded operations to be **atomic**.
+
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| **temp = x**  |               |
+|               | temp = x      |
+| **temp += 1** |               |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
+
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| **temp = x**  |               |
+| **temp += 1** |               |
+|               | temp = x      |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
+
 
 ---
 
