@@ -102,7 +102,7 @@ so that this slide is shortened to
 
 # Today
 - Multithreading
-- Interprocess Communication
+- Interthread Communication
   - Shared Memory
     - Data Races
     - Synchronization, Atomics
@@ -124,9 +124,68 @@ Same principles can be applied to multiprocessing
 Emphasize that "thread" is overloaded term
 -->
 
+
 ---
 
-# Sharing Resources
+
+# Multithreading
+
+Suppose we're painting an image to the screen.
+
+* Divide image into eight regions
+
+* One region per thread
+
+* Easy! "Embarassingly parallel"
+
+<!--Speaker note:
+"Embarassingly parallel" refers to problems where
+we can easily utilize our hardware in full,
+usually because tasks are super independent
+
+Each thread retires to their cave
+  to paint all day,
+  not too different from modern artists
+-->
+
+---
+
+
+# Motivating Communication
+
+Okay, say our image is more complex.
+
+* We're painting circles
+* Circles overlap
+* The _order_ we paint circles affects their color
+
+<!--Note:
+  This is 418's circle rendering problem
+  Can add images to illustrate the color mixing
+-->
+
+
+---
+
+
+# Motivating Communication
+
+**Problem:** How do threads communicate?
+* Which circles have been painted?
+
+**Solutions:**
+* Approach 1: Shared Memory
+* Approach 2: Message Passing
+
+<!--Speaker note:
+  Now our threads must talk to each other
+-->
+
+
+---
+
+
+# Shared Memory
 
 ```c
 static int x = 0;
@@ -142,8 +201,6 @@ for (int i = 0; i < 20; ++i) {
 }
 ```
 
-* What is the value of `x` after we join on all 20 threads?
-  * What is the next slide's title going to be?
 
 <!-- Define atomic verbally -->
 ---
