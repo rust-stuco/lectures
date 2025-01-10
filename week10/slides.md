@@ -41,10 +41,10 @@ paginate: true
 
 We divide tasks among workers.
 
-* In hardwareland, we call these workers **processors** or **cores**.
+* In hardwareland, we call these workers **processors** and **cores**.
 
 * In softwareland, <!-- "we give these workers a different name" -->
-  * "Processors/CPUs" => Processes
+  * "Processors" => Processes
   * "Cores" => Threads
 
 * **Key difference:** Parallelism utilizes **multiple** processors/cores
@@ -52,12 +52,14 @@ We divide tasks among workers.
 
 
 <!-- Note:
+Students coming from 122 may be unfamiliar with processors/cores,
+so I added this for clarification.
 
-Students coming from 122 may be unfamiliar with hardware terminology,
-so I added this to clarification.
-
-Alternate suggestion is to replace all instances of "cores / processors"
-with "threads / processes"
+Alternate suggestion is to remove mention of hardware,
+so that this slide is shortened to
+  "Examples of workers: 
+      * Processes
+      * Threads"
 -->
 
 
@@ -73,47 +75,53 @@ with "threads / processes"
 ---
 
 
-# Parallelism vs. Concurrency (Examples)
+# Parallelism vs. Concurrency: Examples
 <div class="columns">
 <div>
 
 ## Parallelism
 
-* Have one processor work on loading the webpage, while another updates the progress bar
-* Processing 100x100px regions of an image on each core
+* 8 cores, 8 threads
+* 4 threads load the webpage, 4 threads update the progress bar
 
 </div>
 <div>
 
-## Concurrency
+## Alternate Concurrency Model
 
-* One core
-* As we load a webpage, take a break sometimes to update the loading progress bar
-* Often used to do other things while we wait for blocking I/O operations
-  * e.g. Running garbage collection while we wait for a response over the network
+* 1 core, 1 thread
+* When blocked on loading the webpage, update the progress bar
+
 
 </div>
 </div>
+
 
 ---
 
 
 # Today: Parallelism
-- Threads
-- Synchronization
-- Message Passing
-- `Send` and `Sync`
-- More Synchronization
+- Multithreading
+- Interprocess Communication
+  - Shared Memory
+    - Synchronization
+  - Message Passing
+    - `Send` and `Sync`
 
 
 ---
 
+
 # Terminology: Threads
 
-* Dangerously overloaded term—can mean one of many things
-* For this lecture, we define it as a "stream of instructions"
-* In Rust, language threads are 1:1 with OS threads
-* **Key point:** Threads share the same resources
+For this lecture, we define it as a "stream of instructions"
+
+<!--Speaker note:
+
+Emphasize that "thread" is overloaded term
+In Rust, language threads are 1:1 with OS threads
+
+-->
 
 ---
 
