@@ -710,6 +710,8 @@ Everything we have gone over so far is a *standard library* feature. The languag
 
 # Threads in Rust
 
+Some implementation gotcha's
+
 ---
 
 # Threads in Rust
