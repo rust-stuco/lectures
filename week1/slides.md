@@ -243,15 +243,25 @@ By the end of the semester, we want you all to:
 ---
 
 
-# Cargo
+# Hello World!
 
-![bg right:50% 80%](./images/cargo-ship.avif)
+To create an executable, we need a `main` function:
 
-You may notice a nautical theme...
+```rust
+// main.rs
 
-* Ferris is a crab
-* Everything is a crate
-* Crates are managed by Cargo
+fn main() {
+    println!("Hello, world!");
+}
+```
+
+<br>
+
+To compile `main.rs`, use `rustc`.
+
+```sh
+$ rustc main.rs
+```
 
 
 ---
@@ -260,28 +270,18 @@ You may notice a nautical theme...
 # Cargo
 
 ![bg right:50% 80%](./images/cargo-ship.avif)
+
+
+Rust has a built-in build system and package manager called **Cargo**.
+
+* **Build system**: Build and run in one command
+* **Package manager:** Manages dependencies, like `pip` for `python` or `npm` for `node.js`
 
 <!--
-Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmake
+Speaker note:
+    "built-in" => included with all Rust distributions,
+                    eliminates need for third-party build systems
 -->
-
-Rust has its own build system and package manager called **Cargo**.
-
-* Build system: builds your code into a crate
-* Package manager: downloads and manages dependencies
-<!-- Speaker note: "Similar to `pip` for Python or `npm` for Node.js" -->
-
-
----
-
-
-# Cargo: One Ring to Rule Them All
-
-Simplifies development!
-
-* C/C++ build systems and package managers: "Many, and they're all awful"
-
-* Cargo is included with all Rust distributions, eliminates the need for third-party build systems
 
 
 ---
@@ -300,23 +300,7 @@ $ cd hello_cargo
     * `.git` repository and `.gitignore`
     * `Cargo.toml`
     * `src/main.rs`
-<!-- Speaker note: We'll cover more in our Crates and Testing lecture! -->
-
-
----
-
-
-# Hello World!
-
-To create an executable, we need a `main` function:
-
-```rust
-// main.rs
-
-fn main() {
-    println!("Hello, world!");
-}
-```
+* We will come back `Cargo.toml` in future weeks
 
 
 ---
@@ -334,7 +318,8 @@ $ cargo build
 
 * This creates an executable file at `target/debug/hello_cargo`
 <!-- * To build for release, run `cargo build --release` -->
-* We can run `./target/debug/hello_cargo`, but this is a lot to type...
+* What if we want to run this executable?
+    * We could run `./target/debug/hello_cargo`, but this is a lot to type...
 
 
 ---
