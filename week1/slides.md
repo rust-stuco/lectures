@@ -269,16 +269,19 @@ $ rustc main.rs
 
 # Cargo
 
+![bg right:50% 80%](./images/cargo-ship.avif)
+
+
+Rust has a built-in build system and package manager called **Cargo**.
+
+* **Build system**: Build and run in one command
+* **Package manager:** Manages dependencies, like `pip` for `python` or `npm` for `node.js`
 
 <!--
-Compare Rust and cargo to other languages like Python and pip, or C/C++ and cmake
+Speaker note:
+    "built-in" => included with all Rust distributions,
+                    eliminates need for third-party build systems
 -->
-
-
-Rust has its own build system and package manager called **Cargo**.
-
-* Cargo is included with all Rust distributions, so no `make` files or third-party build systems
-* Manages packages similar to `pip` for `python` or `npm` for `node.js`
 
 
 ---
@@ -315,7 +318,7 @@ $ cargo build
 
 * This creates an executable file at `target/debug/hello_cargo`
 <!-- * To build for release, run `cargo build --release` -->
-* What if we want to actually run this executable?
+* What if we want to run this executable?
     * We could run `./target/debug/hello_cargo`, but this is a lot to type...
 
 
