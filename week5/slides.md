@@ -82,10 +82,11 @@ What sorts of behavior is the compiler trying to prevent?
 ---
 
 
-# Defining Unsafety
+# Defining Safety
 
+What is safety?
 
-Safety is the absence of undefined behavior.
+* Safety is the absence of _undefined behavior_.
 
 
 ---
@@ -93,11 +94,11 @@ Safety is the absence of undefined behavior.
 
 # Defining Unsafety
 
-However, undefined behavior is a lot.
+However, undefined behavior can mean many things.
+
+![list](./img/rust-undefined-list-crop.png)
 
 Definition in Rust Reference prints on five sheets...
-
-![list](./img/rust-undefined-list.png)
 
 <!-- Speaker note:
 Undefined behavior can encapsulate a lot of things,
@@ -109,10 +110,6 @@ so we'll simplify it and say that
 
 
 # Defining Unsafety
-
-Safety is the absence of undefined behavior.
-
-However, undefined behavior is a lot.
 
 Simplification: **invalid memory access ⇒ unsafety****
 
@@ -128,7 +125,7 @@ Double asterisk, see Rust Reference for full definition
 
 # Invalid Memory Access ⇒ Unsafety
 
-Memory access can be unsafe if
+Memory access can be unsafe if:
 
 * Deallocated
     * Ownership rules prevent this
@@ -136,35 +133,20 @@ Memory access can be unsafe if
     * Borrowing rules prevent this
 
 <!-- Speaker note:
-The "someone else" will be explained in Parallelism lecture
+The "someone else" will be further explained in Parallelism lecture
 -->
 
----
-
-
-# Invalid Memory Access ⇒ Unsafety
-
-Memory access can be unsafe if
-
-- Deallocated
-- Overwritten by "someone else"
-
-⇒ Trivially safe for immutable globals
-
 
 ---
 
 
 # Invalid Memory Access ⇒ Unsafety
 
-Memory access can be unsafe if
+Memory access can be unsafe if **deallocated** or **overwritten**.
 
-- Deallocated
-- Overwritten by "someone else"
+* Trivially safe for immutable globals
+* We'll focus on local variables.
 
-⇒ Trivially safe for immutable globals
-
-We'll focus on local variables.
 
 ---
 
