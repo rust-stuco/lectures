@@ -28,11 +28,7 @@ At the beginning of this course, we learned the Commandments of Rust...
 ---
 
 
-# The Rules
-
-At the beginning of this course, we learned the Commandments of Rust...
-
-#### Rules of Ownership
+# Rules of Ownership
 
 * Each value in Rust has an _owner_
 * A value can only have one owner at a time
@@ -42,13 +38,12 @@ At the beginning of this course, we learned the Commandments of Rust...
 ---
 
 
-# The Rules
+# Rules of Borrowing
 
-At the beginning of this course, we learned the Commandments of Rust...
-
-#### Rules of Borrowing
 * Cannot access both a mutable and an immutable reference to the same object
-* At any given time, may have either one mutable reference, or any number of immutable references
+* At any given time, may have either
+    * one mutable reference, or
+    * any number of immutable references
 
 
 ---
@@ -56,21 +51,26 @@ At the beginning of this course, we learned the Commandments of Rust...
 
 # The Catch
 
-If we follow these rules and pass the compiler, is our code perfect?
+Getting code to compile is one thing.
 
-Not quite...
-* Rejected programs are not necessarily unsafe
-* Passing programs are not necessarily the "best"
-    * "Best" being most performant, most elegant, most robust
+Understanding why is another...
+
+* We pass without understanding why patterns are unsafe
+    * Make the same mistakes again
+* The compiler can be overly cautious
+    * Rejects code that seems perfectly safe
+    * Forces us to prove safety, even when we "know" it's safe
 
 
 ---
 
 
-# Objective
+# Today's Objective
 
-* When my program is rejected, why might it be unsafe?
-* Between multiple safe fixes, how do I choose the "best" fix?
+Today we're going to address these questions:
+
+* How do ownership rules prevent memory safety issues?
+* What makes the borrow checker reject seemingly safe code?
 
 <!-- Speaker note:
 First, we have to understand what makes a program unsafe.
