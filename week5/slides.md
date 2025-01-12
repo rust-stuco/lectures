@@ -290,7 +290,7 @@ fn main() {
 
 ![bg right 50%](./img/frames/0.png)
 
-What if instead of an integer `x = 1`,
+What if instead of an integer on the stack (`x = 1`)...
 
 ```rust
 fn main() {
@@ -324,7 +324,7 @@ fn main() {
 
 ![bg right 100%](./img/frames/3-crop.png)
 
-When we call `my_function`,
+When we call `my_function`...
 
 ```rust
 fn main() {
@@ -345,7 +345,7 @@ fn my_function(arg : Vec<u32>) {
 
 ![bg right 100%](./img/frames/4-crop.png)
 
-When we call `my_function`,
+When we call `my_function`...
 
 ```rust
 fn main() {
@@ -368,7 +368,7 @@ We must allocate `arg` for its stack frame!
 
 ![bg right 100%](./img/frames/4-crop.png)
 
-When we call `my_function`,
+When we call `my_function`...
 
 ```rust
 fn main() {
@@ -438,7 +438,7 @@ Our vector is **dynamically-sized**, **long-lived** data.
 
 ![bg right 100%](./img/frames/3-crop.png)
 
-Fortunately, our `Vector` does not live in the stack.
+Fortunately, our `Vec` does not live in the stack.
 
 
 ---
@@ -460,7 +460,7 @@ It lives in the **heap**.
 
 ![bg right 100%](./img/frames/5a.png)
 
-Value lives in the heap,
+Value lives in the heap...
 
 
 ---
@@ -470,7 +470,7 @@ Value lives in the heap,
 
 ![bg right 100%](./img/frames/5b.png)
 
-Value lives in the heap,
+Value lives in the heap...
 
 **Pointer** lives in the stack.
 
@@ -482,7 +482,7 @@ Value lives in the heap,
 
 ![bg right 100%](./img/frames/5-crop.png)
 
-When we call `my_function`,
+When we call `my_function`...
 
 ```rust
 fn main() {
@@ -817,7 +817,7 @@ This is review problem 3 from Lecture 3, animated out
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-We take a reference `x` to its last element,
+We take a reference `x` to its last element...
 
 ```rust
 fn x_shouldnt_exist() {
@@ -834,7 +834,7 @@ fn x_shouldnt_exist() {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-We take a reference `x` to its last element, remove the last element,
+We take a reference `x` to its last element, remove the last element...
 
 ```rust
 fn x_shouldnt_exist() {
@@ -919,7 +919,7 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Instead of removing the last element,
+Instead of removing the last element...
 
 ```rust
 fn please_dont_move() {
@@ -1074,12 +1074,12 @@ Places include:
 
 # Permissions of Variables
 
-When declared, a variable has the permissions
+When declared, a variable has the permissions:
 * Read: can be copied
 * Own: can be moved or dropped
 
 
-If `mut`,
+If `mut`:
 * Write: can be mutated
 
 
@@ -1504,7 +1504,7 @@ x | R | - | O
 
 # Mutable References
 
-When we take a reference `x = &v`,
+When we take a reference `x = &v`...
 * We dereference with `*x`
 * **`x` and `*x` have different permissions**
     * Mutable references illustrate this
@@ -1789,7 +1789,7 @@ let mut v = vec![1, 2, 3, 4];
 
 # Fixing a Safe Program
 
-For each person in line,
+For each person in line...
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
@@ -1815,7 +1815,7 @@ let mut v = vec![1, 2, 3, 4];
 
 # Fixing a Safe Program
 
-We'll take a mutable reference for the first person,
+We'll take a mutable reference for the first person...
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
@@ -1829,7 +1829,7 @@ let person1 = &mut v[0];
 
 # Fixing a Safe Program
 
-An immutable reference for the second person,
+An immutable reference for the second person...
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
@@ -1874,7 +1874,7 @@ let person2 = &v[1];
 
 # Fixing a Safe Program
 
-Recall when we create a mutable reference,
+Recall when we create a mutable reference...
 
 <div class = "container">
 <div class = "col">
