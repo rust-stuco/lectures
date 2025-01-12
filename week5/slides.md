@@ -563,16 +563,13 @@ Variable placement:
 
 ---
 
-
 # Recap
 
-Stack:
-* Allocated on function call, deallocated on return
-* Stores pointers and fixed-size data (like integers, floats)
-
-Heap:
-* Allocated on programmer request
-* For dynamically sized or long-lived data (like `String`, `Vector`)
+Area of Comparison | Stack | Heap
+-----|-----|-----|
+Stores | Pointers and fixed-size data (integers, floats) | Dynamically sized or long-lived data (`String`, `Vec`) 
+Allocated on    | Function call     | Programmer request
+Deallocated on  | Function return   | ???
 
 
 ---
