@@ -55,11 +55,11 @@ Getting code to compile is one thing.
 
 Understanding why is another...
 
-* We pass without understanding why patterns are unsafe
-    * Make the same mistakes again
+* Sometimes we follow the rules blindly
+    * Missing the principles, repeating mistakes
 * The compiler can be overly cautious
-    * Rejects code that seems perfectly safe
-    * Forces us to prove safety, even when we "know" it's safe
+    * Rejects code that seems safe
+    * Makes us prove safety, even when we "know" it's safe
 
 
 ---
