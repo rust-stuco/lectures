@@ -155,7 +155,7 @@ Memory access can be unsafe if **deallocated** or **overwritten**.
 
 Local variables live in a function's **stack frame**
 
-The stack frame
+The stack frame:
 * Contains everything needed for the function to run
 * Is allocated on function call
 * Is deallocated on function return
@@ -167,6 +167,7 @@ The stack frame
 # Local Variables
 
 Here's `main`'s stack frame.
+
 ![bg right 50%](./img/frames/0.png)
 
 ```rust
@@ -179,11 +180,11 @@ fn main() {
 ---
 
 # Local Variables
-
-![bg right 50%](./img/frames/0.png)
 
 Now we call `my_function`.
 
+![bg right 50%](./img/frames/0.png)
+
 ```rust
 fn main() {
     let x = 1;
@@ -197,9 +198,10 @@ fn main() {
 
 # Local Variables
 
-In `my_function`'s stack frame, we
-- Copy `x` to create `arg`
-![bg right 50%](./img/frames/1.png)
+For `my_function`'s stack frame, we
+- .
+- .
+![bg right 50%](./img/frames/0.png)
 
 ```rust
 fn main() {
@@ -219,12 +221,37 @@ fn my_function(arg: i32) {
 
 # Local Variables
 
-In `my_function`'s stack frame, we
+For `my_function`'s stack frame, we
+- Copy `x` to create `arg`
+- .
+
+![bg right 50%](./img/frames/1.png)
+<!-- stack frame has arg=1 -->
+
+```rust
+fn main() {
+    let x = 1;
+    my_function(x);
+}
+
+fn my_function(arg: i32) {
+    let y = 2;
+    let z = 3;
+}
+```
+
+
+---
+
+
+# Local Variables
+
+For `my_function`'s stack frame, we
 - Copy `x` to create `arg`
 - Create the locals `y`, `z`
+
 ![bg right 50%](./img/frames/2.png)
-<!-- replace COMINGSOON
-stack frame has arg=1, y=2, z=3 -->
+<!-- stack frame has arg=1, y=2, z=3 -->
 
 ```rust
 fn main() {
@@ -244,10 +271,9 @@ fn my_function(arg: i32) {
 
 # Local Variables
 
-Finally, we return from `my_function`.
+Finally, we return from `my_function`, deallocating its stack frame.
+
 ![bg right 50%](./img/frames/0.png)
-<!-- replace COMINGSOON
-remove my_function stack frame -->
 
 ```rust
 fn main() {
@@ -288,6 +314,8 @@ fn main() {
     my_function(v);
 }
 ```
+
+* 15GB = your Google Drive storage ![alt text](./img/google-storage.png)
 
 ---
 
@@ -361,8 +389,6 @@ We must allocate `arg` for its stack frame!
 
 # Motivating the Heap
 
-Unsustainable!
-
 ```rust
 fn main() {
     let v = vec![0xdeadbeef; 4_000_000];
@@ -378,6 +404,31 @@ fn main() {
     my_function(v);
 }
 ```
+
+* Unsustainable!
+
+<!--Speaker note:
+If we call this function 10 times, we're copying 10 Google Drives! Unsustainable!
+
+To transition to next slide, emphasize that
+this inefficiency is not just with function calls.
+What if we resize our vector?
+-->
+
+
+---
+
+
+# Motivating the Heap
+
+Our vector is **dynamically-sized**, **long-lived** data.
+
+* Dynamically-sized ⇒ resized regularly
+    * But stack is contiguous
+* Long-lived ⇒ persists across function calls
+    * Lots of copying on stack
+
+<!-- These two qualities don't play well with the stack -->
 
 
 ---
