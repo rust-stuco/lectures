@@ -1402,9 +1402,8 @@ certain nuances that we will talk about in future weeks.
 * **Attendance is mandatory**
     * We have to take attendance every lecture
     * You only get 2 unexcused absences by StuCo guidelines
-* Programming assignments are 65% of your grade
-* The final project is worth the remaining 35%
-* You need 60% to pass this course
+* Programming assignments are 100 points each
+* You need >= 1000 points to pass this course
 
 
 ---
