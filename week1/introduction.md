@@ -266,7 +266,7 @@ $ rustc main.rs
 
 # Cargo
 
-![bg right:50% 80%](./images/cargo-ship.avif)
+![bg right:50% 80%](../images/cargo-ship.avif)
 
 
 Rust has a built-in build system and package manager called **Cargo**.
