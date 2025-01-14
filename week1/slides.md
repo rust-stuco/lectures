@@ -4,26 +4,26 @@ theme: rust
 paginate: true
 ---
 
+<style>
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
 
 <!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Introduction
-
-<br>
-
-#### Benjamin Owad, David Rudo, and Connor Tsui
 
 
 ---
 
 
 # **Welcome!**
-
-<!--
-Introductions here
-Talk a bit about ourselves
--->
 
 
 ---
@@ -58,7 +58,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * What is Rust?
 * How does Rust compare to other languages?
 * What are the biggest advantages of Rust?
-* What are the pitfalls of Rust?
+* What are some issues that Rust has?
 * Who is Rust for?
 
 
@@ -69,8 +69,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 * Rust started as a personal project of Graydon Hoare, a Mozilla Research employee, in 2006
 * Mozilla sponsored the project in 2009, and released the source code in 2010
-* The first stable release, Rust 1.0, was announced in 2015
-
+* The first stable release, Rust 1.0, was announced in May 2015
 * From the official rust [website](rust-lang.org), Rust is:
     * Fast
     * Reliable
@@ -123,10 +122,10 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # Rust vs C/C++
 
-* No segfaults!
-* No null pointers!
-* No buffer overflows!
-* No data races!
+* **No segfaults!**
+* **No null pointers!**
+* **No buffer overflows!**
+* **No data races!**
 * Memory safety as a guarantee through the type checker
 * Robust type system with functional patterns
 * Unified build system and dependency management
@@ -142,7 +141,6 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Safety by default makes it much harder to shoot yourself in the foot
 * Memory accesses checked at compile-time
 * Powerful type system supports thread safety
-
 
 
 ---
@@ -165,16 +163,17 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Rust is only 9 years old
 * Algebraic and generic data types
 * Modern developer tooling
-<!-- Built-in unit testing and documentation, friendly errors -->
 * Included build system and dependency management
 * Asynchronous execution as a first-class language feature
 * Macros / metaprogramming support
+
+<!-- Built-in unit testing and documentation, friendly errors -->
 
 
 ---
 
 
-# Pitfall: Learning curve
+# Issue: Learning curve
 
 * Writing Rust _feels_ very different
 * The borrow checker can get in your way
@@ -190,7 +189,7 @@ Requires thinking a lot up front before you write down code
 ---
 
 
-# Pitfall: Ecosystem
+# Issue: Ecosystem
 
 * Rust is only 9 years old
 * Smaller and less mature ecosystem compared to some older languages
@@ -200,7 +199,7 @@ Requires thinking a lot up front before you write down code
 ---
 
 
-# Other pitfalls
+# Other Issues
 
 * Compile time is slow
 * Using established C++ libraries requires complicated bindings
@@ -212,13 +211,11 @@ Requires thinking a lot up front before you write down code
 
 # Who is Rust for?
 
-* Rust is for those who benefit from its great features, and do not suffer from its pitfalls
-
-* Rust is intended to be fast, reliable, and productive
 * Rust targets complex programs while providing stability and security
+* Rust is intended to be fast, reliable, and productive
 * **Which means Rust is _not_ for everyone**
 
-<!-- Rust is not a magic bullet to solve everyone's problems -->
+<!-- Rust is not a magic bullet to solve everyone's problems! -->
 
 
 ---
@@ -230,7 +227,6 @@ By the end of the semester, we want you all to:
 
 * Be able to read, write, and reason about Rust code
 * Become an intermediate to advanced Rust developer
-* Understand the importance of the Rust language
 * Be confident that you can use Rust going forward!
 
 
@@ -247,9 +243,8 @@ By the end of the semester, we want you all to:
 
 To create an executable, we need a `main` function:
 
+###### src/main.rs
 ```rust
-// main.rs
-
 fn main() {
     println!("Hello, world!");
 }
@@ -259,7 +254,7 @@ fn main() {
 
 To compile `main.rs`, use `rustc`.
 
-```sh
+```
 $ rustc main.rs
 ```
 
@@ -291,7 +286,7 @@ Speaker note:
 
 To create a new cargo project called `hello_cargo`, use `cargo new`.
 
-```sh
+```
 $ cargo new hello_cargo
 $ cd hello_cargo
 ```
@@ -317,9 +312,10 @@ $ cargo build
 ```
 
 * This creates an executable file at `target/debug/hello_cargo`
-<!-- * To build for release, run `cargo build --release` -->
 * What if we want to run this executable?
     * We could run `./target/debug/hello_cargo`, but this is a lot to type...
+
+<!-- * To build for release, run `cargo build --release` -->
 
 
 ---
@@ -337,7 +333,7 @@ $ cargo run
 Hello, world!
 ```
 
-* Note that if you compiled with `cargo build` right before, you wouldn't see the `Compiling hello_cargo ...` line
+<!-- * Note that if you compiled with `cargo build` right before, you wouldn't see the `Compiling hello_cargo ...` line -->
 <!-- * To run in release, run `cargo run --release` -->
 
 
@@ -411,6 +407,8 @@ fn main() {
 
 * What happens when we try to compile this?
 
+<!-- Explain confused Ferris! -->
+
 
 ---
 
@@ -420,8 +418,6 @@ fn main() {
 When we try to compile, we get this error message:
 
 ```
-$ cargo run
-   Compiling variables v0.1.0 (file:///projects/variables)
 error[E0384]: cannot assign twice to immutable variable `x`
  --> src/main.rs:4:5
   |
@@ -544,7 +540,7 @@ println!("The value of x is: {}", x);
 
 <br>
 
-Let's run this now!
+Let's run this!
 
 ```
 $ cargo run
@@ -583,6 +579,7 @@ spaces = spaces.len();
 
 ---
 
+
 # Aside: Shadowing vs Mutability
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
@@ -593,7 +590,8 @@ Shadowing:
 let spaces = "   ";
 let spaces = spaces.len();
 ```
-- Even though the types are different, the `let` keyword allows us to redefine the `spaces` variable
+
+* Even though the types are different, the `let` keyword allows us to redefine the `spaces` variable
 
 
 ---
@@ -673,23 +671,21 @@ fn main() {
 # Numeric Operations
 
 ```rust
-fn main() {
-    // addition
-    let sum = 5 + 10;
+// addition
+let sum = 5 + 10;
 
-    // subtraction
-    let difference = 95.5 - 4.3;
+// subtraction
+let difference = 95.5 - 4.3;
 
-    // multiplication
-    let product = 4 * 30;
+// multiplication
+let product = 4 * 30;
 
-    // division
-    let quotient = 56.7 / 32.2;
-    let truncated = -5 / 3; // Results in -1
+// division
+let quotient = 56.7 / 32.2;
+let truncated = -5 / 3; // Results in -1
 
-    // remainder / modulo
-    let remainder = 43 % 5;
-}
+// remainder / modulo
+let remainder = 43 % 5;
 ```
 
 
@@ -865,13 +861,13 @@ fn main() {
 }
 ```
 
+* Rust will ensure that the index is within bounds at runtime
+   * This is _not_ done in C/C++
+
 <!--
 Note that Rust might not explicitly check at runtime since the compiler could optimize the check away
 The reason why that is important is no buffer overflows!
 -->
-
-* Rust will ensure that the index is within bounds at runtime
-   * This is _not_ done in C/C++
 
 
 ---
@@ -880,13 +876,12 @@ The reason why that is important is no buffer overflows!
 # **Functions, Statements, and Expressions**
 
 
-
 ---
 
 
 # Functions
 
-Like most programming languages, Rust has functions.
+Like most programming languages, Rust has functions!
 
 ```rust
 fn main() {
@@ -958,6 +953,7 @@ The value of x is: 6
 
 ---
 
+
 # Returning from Functions
 
 You can also omit the `return` keyword.
@@ -974,19 +970,14 @@ $ cargo run
 The value of x is: 6
 ```
 
+* Why are we allowed do this?
+
 <!--
 Is this just syntactic sugar for programmers who are too lazy to write the `return` keyword?
 -->
 
-* Why are we allowed do this?
-
 
 ---
-
-
-<!--
-TODO be more precise: https://doc.rust-lang.org/beta/reference/statements-and-expressions.html
--->
 
 
 # Statements and Expressions
@@ -996,13 +987,15 @@ All functions are a series of statements optionally ending in an expression.
 ```rust
 fn main() {
     let x = 6; // Statement
-    let y = 2 + 2; // Statement resulting from the expression "2 + 2"
+    let y = 2 + 2; // Statement resulting from the expression `2 + 2`
     2 + 2; // Expression ending in a semicolon,
            // which turns the expression into a statement with no effect
 }
 ```
+
 * **Statements** are instructions that do some action and don't return a value
 * **Expressions** evaluate / return to a resultant value
+* A more precise explanation can be found [here](https://doc.rust-lang.org/beta/reference/statements-and-expressions.html)
 
 
 ---
@@ -1010,7 +1003,7 @@ fn main() {
 
 # Statements and Expressions
 
-- Statements
+* Statements
     * `let y = 6;` is a statement and does not return a value
     * You _cannot_ write `x = y = 6`
 * Expressions
@@ -1026,7 +1019,7 @@ fn main() {
 
 # Statements and Expressions
 
-Observe the following code where a scope returns a value.
+Observe the following code, where a scope returns a value.
 
 ```rust
 fn main() {
@@ -1062,14 +1055,14 @@ fn plus_one(x: i32) -> i32 {
 }
 ```
 
+* Functions must have a specific return value, or return nothing
+    * No return type is equivalent to returning the unit type `()`
+* Notice again that there is no semicolon after `x + 1`
+
 <!--
 Note that in C, no return type is the `void` type.
 Rust aligns much more with type theory and thus uses the unit type `()` instead!
 -->
-
-* Functions must have a specific return value, or return nothing
-    * No return type is equivalent to returning the unit type `()`
-* Notice again that there is no semicolon after `x + 1`
 
 
 ---
@@ -1089,15 +1082,11 @@ We get this error:
 error[E0308]: mismatched types
  --> src/main.rs:7:24
   |
-7 | fn plus_one(x: i32) -> i32 {
-  |
----
-
----
---            ^^^ expected `i32`, found `()`
+1 | fn plus_one(x: i32) -> i32 {
+  |    --------            ^^^ expected `i32`, found `()`
   |    |
   |    implicitly returns `()` as its body has no tail or `return` expression
-8 |     x + 1;
+2 |     x + 1;
   |          - help: remove this semicolon to return this value
 ```
 
@@ -1126,6 +1115,8 @@ fn main() {
     }
 }
 ```
+
+<!-- Yes, Rust is Turing Complete... -->
 
 
 ---
@@ -1205,6 +1196,7 @@ fn main() {
 # Loops
 
 There are 3 kinds of loops in Rust.
+
 - `loop`
 - `while`
 - `for`
@@ -1228,7 +1220,6 @@ fn main() {
 
     loop {
         counter += 1;
-
         if counter == 10 {
             break;
         }
@@ -1273,40 +1264,37 @@ fn main() {
 You can label loops to use with `break` and `continue` to specify which loop it applies to.
 
 ```rust
-fn main() {
-    'outer: loop {
-        println!("Entered the outer loop");
+'outer: loop {
+    println!("Entered the outer loop");
 
-        'inner: loop {
-            println!("Entered the inner loop");
-            // break; // <-- This would break only the inner loop
+    'inner: loop {
+        println!("Entered the inner loop");
 
-            // This breaks the outer loop
-            break 'outer;
-        }
-
-        println!("This point will never be reached");
+        // break; // <-- This would break only the inner loop
+        break 'outer; // <-- This breaks the outer loop
     }
-    println!("Exited the outer loop");
+
+    println!("This point will never be reached");
 }
+println!("Exited the outer loop");
 ```
 
 
 ---
 
 
+# Loop Labels
+
 ```rust
-fn main() {
-    'outer: loop {
-        println!("Entered the outer loop");
-        'inner: loop {
-            println!("Entered the inner loop");
-            break 'outer;
-        }
-        println!("This point will never be reached");
+'outer: loop {
+    println!("Entered the outer loop");
+    'inner: loop {
+        println!("Entered the inner loop");
+        break 'outer;
     }
-    println!("Exited the outer loop");
+    println!("This point will never be reached");
 }
+println!("Exited the outer loop");
 ```
 
 ```
@@ -1485,10 +1473,14 @@ extenuating circumstance)
 ---
 
 
-
 # **Next Lecture: Ownership (Part 1)**
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
 Thanks for coming!
 
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
