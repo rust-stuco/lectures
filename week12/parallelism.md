@@ -1,20 +1,25 @@
 ---
 marp: true
+paginate: true
 theme: rust
 class: invert
-paginate: true
 ---
 
-<!-- _class: communism communism2 invert  -->
+<style>
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
+
+<!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Parallelism
 
-<br>
-
-#### Benjamin Owad, David Rudo, and Connor Tsui
-
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 ---
 
@@ -721,5 +726,10 @@ What we have gone over today is referred to as "fearless concurrency" in the rus
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-- Including `async`/`await`!
-- Thank you for coming!
+Thanks for coming!
+
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen

@@ -1,7 +1,8 @@
 ---
 marp: true
-theme: rust
 paginate: true
+theme: rust
+class: invert
 ---
 
 <style>

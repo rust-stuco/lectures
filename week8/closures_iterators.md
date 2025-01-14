@@ -1,21 +1,24 @@
 ---
 marp: true
+paginate: true
 theme: rust
 class: invert
-paginate: true
 ---
+
+<style>
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
 
 <!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Crates, Closures, and Iterators
-###### (oh my)
-
-<br>
-
-#### Benjamin Owad, David Rudo, and Connor Tsui
-
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
@@ -1141,10 +1144,14 @@ for x in iter.take(5) {
 ---
 
 
-# Next Lecture: ISD
-
-*Instructors still debating*
+# Next Lecture: Lifetimes
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-* Thanks for coming!
+Thanks for coming!
+
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen

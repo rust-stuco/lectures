@@ -1,21 +1,26 @@
 ---
 marp: true
+paginate: true
 theme: rust
 class: invert
-paginate: true
 ---
 
+<style>
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
 
-<!-- _class: communism communism2 invert  -->
+<!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Lifetimes
 
 <br>
-
-#### Benjamin Owad, David Rudo, and Connor Tsui
-
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
@@ -1172,9 +1177,14 @@ Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Pia
 ---
 
 
-# Next Lecture: `Box` and Trait Objects
+# Next Lecture: Smart Pointers and Trait Objects
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-* Thanks for coming!
+Thanks for coming!
 
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen

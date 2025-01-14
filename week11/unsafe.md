@@ -1,20 +1,24 @@
 ---
 marp: true
+paginate: true
 theme: rust
 class: invert
-paginate: true
 ---
 
-<!-- _class: communism communism2 invert  -->
+<style>
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
+
+<!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Unsafe
-
-<br>
-
-#### Benjamin Owad, David Rudo, and Connor Tsui
-
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 
 ---
@@ -770,12 +774,14 @@ Miri is an undefined behavior detection tool for Rust.
 ---
 
 
-# Next Lecture: ISD
-
-_Instructors still debating_
+# Next Lecture: Parallelism
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-* Thanks for coming!
+Thanks for coming!
 
+<br>
 
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
