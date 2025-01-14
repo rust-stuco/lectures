@@ -1385,6 +1385,7 @@ certain nuances that we will talk about in future weeks.
 
 
 # Recap
+
 * Variables and Mutability
 * Scalar and Compound Data Types
 * Functions, Statements, and Expressions
@@ -1400,14 +1401,32 @@ certain nuances that we will talk about in future weeks.
 ---
 
 
+# Syllabus
+
+You can find our course syllabus [here](https://rust-stuco.github.io/assets/pdf/syllabus-s25.pdf) or on our [website](https://rust-stuco.github.io/about/).
+
+* There is a quiz on Gradescope worth 50 points (half a homework) that checks that you have read the entire syllabus
+* Please make sure you understand the **bolded** parts!
+
+<!--
+We'll go through some of the important bits right now!
+-->
+
+
+---
+
+
 # Course Logistics: Grading
 
 * **Attendance is mandatory**
     * We have to take attendance every lecture
-    * You only get 2 unexcused absences by StuCo guidelines
-* Programming assignments are 65% of your grade
-* The final project is worth the remaining 35%
-* You need 60% to pass this course
+    * You get a maximum of 2 unexcused absences by StuCo guidelines
+* Homeworks / programming assignments are worth 100 points each
+* You need >= 1000 points to pass this course
+
+<!--
+For future instructors: we don't start counting absences until after the drop deadline!
+-->
 
 
 ---
@@ -1415,14 +1434,10 @@ certain nuances that we will talk about in future weeks.
 
 # Course Logistics: Communication
 
-* [Discord](https://discord.com/invite/nXGE2yTckU)
-* [Piazza](https://piazza.com/cmu/fall2024/98008/home)
+* [Piazza](https://piazza.com/cmu/spring2025/98008/home)
+* [Unofficial Discord](https://discord.com/invite/nXGE2yTckU)
 * Email
 * Talk to us!
-    * If you can't make it to lecture, tell us beforehand
-    * If you have feedback for us, feel free to tell us!
-    * Let us know of any ideas you have for this or future semesters!
-    * If you have any sort of concern, talk to us!
 
 
 ---
@@ -1431,17 +1446,16 @@ certain nuances that we will talk about in future weeks.
 # Course Logistics: Homework
 
 * Homeworks are designed to take less than an hour per week
-* If you are spending more than that, please let us know!
+    * If you are spending more than that, please let us know!
 * Autograded assignments through Gradescope
 * 7 late days
-    * Can use them any time in the semester
-    * Can use at most 7 late days for a specific assignment
     * _You can ask us for more late days if you ask in advance..._
 
 <!--
 We may or may not give late days out like candy :D
 Still doesn't change the fact that assignments need to be turned in
-no more than a week after they were officially due
+no more than a week after they were officially due (unless there is an
+extenuating circumstance)
 -->
 
 
@@ -1450,11 +1464,11 @@ no more than a week after they were officially due
 
 # Course Logistics: Homework Solutions
 
-* This semester, we are making homework solutions **public**
+* We have made homework solutions **public**
 * We **strongly encourage** students to avoid looking at these solutions
 * Give a good-faith attempt at the homework before resorting to this
 * You will not learn anything from copying and pasting our code
-    * _We will catch you_
+    * _We will catch you, and we are required to report you to the university_
 
 
 ---
@@ -1472,7 +1486,7 @@ no more than a week after they were officially due
 
 
 
-# **Next Lecture: Ownership**
+# **Next Lecture: Ownership (Part 1)**
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
