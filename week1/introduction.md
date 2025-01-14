@@ -72,7 +72,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Rust started as a personal project of Graydon Hoare, a Mozilla Research employee, in 2006
 * Mozilla sponsored the project in 2009, and released the source code in 2010
 * The first stable release, Rust 1.0, was announced in May 2015
-* From the official rust [website](rust-lang.org), Rust is:
+* From the official rust [website](https://www.rust-lang.org/), Rust is:
     * Fast
     * Reliable
     * Productive
@@ -167,7 +167,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Modern developer tooling
 * Included build system and dependency management
 * Asynchronous execution as a first-class language feature
-* Macros / metaprogramming support
+* Macros / Metaprogramming support
 
 <!-- Built-in unit testing and documentation, friendly errors -->
 
@@ -179,7 +179,7 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 * Writing Rust _feels_ very different
 * The borrow checker can get in your way
-* No object oriented programming
+* No object-oriented programming
 * **That is what we are here for!**
 
 <!--
@@ -359,7 +359,7 @@ $ cargo check
 ---
 
 
-# Cargo recap
+# Cargo Recap
 
 * We can create a project using `cargo new`
 * We can build a project using `cargo build`
@@ -990,8 +990,8 @@ All functions are a series of statements optionally ending in an expression.
 fn main() {
     let x = 6; // Statement
     let y = 2 + 2; // Statement resulting from the expression `2 + 2`
-    2 + 2; // Expression ending in a semicolon,
-           // which turns the expression into a statement with no effect
+    2 + 2; // Expression ending in a semicolon, which turns the expression
+           // into a statement with no effect
 }
 ```
 
@@ -1412,7 +1412,7 @@ We'll go through some of the important bits right now!
     * We have to take attendance every lecture
     * You get a maximum of 2 unexcused absences by StuCo guidelines
 * Homeworks / programming assignments are worth 100 points each
-* You need >= 1000 points to pass this course
+* You need at least 1000 points to pass this course
 
 <!--
 For future instructors: we don't start counting absences until after the drop deadline!
