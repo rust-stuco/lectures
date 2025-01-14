@@ -18,7 +18,7 @@ code {
 
 ## Intro to Rust Lang
 
-# Ownership
+# Ownership (Part 1)
 
 
 ---
