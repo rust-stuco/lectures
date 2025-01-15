@@ -1,0 +1,28 @@
+## Week 5: Ownership, Unpacked
+
+- Rules and Objective (2 min)
+    - Why unsafe
+    - How fix
+- Defining Unsafety
+    - Invalid Memory Access ⇒ Unsafety
+        - Deallocated (Ownership Rules)
+        - Overwritten (Borrowing Rules)
+- Memory Layout
+    - Local Variables on Stack
+    - The Heap
+- Motivating Ownership
+    - Apply Stack "Ownership" to Heap
+- Motivating Borrowing Rules
+    - Pop Goes X
+    - Push Comes to Shove
+- Unveiling the Borrow Checker
+    - Permissions of Places
+    - Immutable References
+        - Example
+        - Recap
+    - Mutable References
+        - Differences from Immutable Refs
+        - [Optional] Downgrading Mutable References
+        - Recap
+        - Fixing a Safe Program: Mutating Array Elements
+- Recap
