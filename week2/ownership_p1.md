@@ -98,7 +98,7 @@ For now, assume the following:
 * Variables **own** values.
 * Two kinds of variables:
   * Value lives on stack
-  * Value lives elsewhere, _pointer_ to value on stack
+  * Value lives elsewhere
 
 <!-- Speaker note: 
   "Value on stack" => Last week's data types
