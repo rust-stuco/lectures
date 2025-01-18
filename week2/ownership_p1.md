@@ -37,7 +37,6 @@ code {
 
 # Today: Ownership
 
-  - String Introduction
 - Ownership
   - Motivation: Strings
   - Moving, `clone`, and `copy`
@@ -95,10 +94,10 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 
 For now, assume the following:
 
-* Variables **own** values.
-* Two kinds of variables:
-  * Value lives on stack
-  * Value lives elsewhere
+* Variables **own** values
+* Variables can store their values in two places:
+  * Stored on the stack
+  * Stored somewhere else...
 
 <!-- Speaker note: 
   "Value on stack" => Last week's data types
@@ -111,10 +110,10 @@ For now, assume the following:
 
 # Motivation: Strings
 
-* Last week: simple data types
-  * Value lives on stack
-* This week: strings
-  * Value lives elsewhere
+* Last week: Scalar Data Types
+  * Values live on the stack
+* This week: `String`s
+  * Values live somewhere else...
 
 <!-- Speaker note:
 Stack-based types have simple memory rules, but strings introduce complexities that motivate our ownership rules
@@ -136,7 +135,7 @@ fn main() {
 }
 ```
 
-* String literals live inside in the program binary
+* String literals are stored in a read-only section of the executable
 
 
 ---
@@ -144,12 +143,14 @@ fn main() {
 
 # Problem: String Literals are Immutable
 
-Suppose we store user input.
+Suppose we store user input. Python handles this seamlessly - the string can be any length.
 
-```rust
-let username = ask_for_user_input()
+```python
+username = input("Enter a short name: ")    # Could be "Bob"
+username = input("Enter a long name: ")     # Could be "Bartholomew"
 ```
 
+How is this handled in Rust?
 * We don't know size of `username` at compile time
 * Our string is _dynamically sized_
 
@@ -159,7 +160,7 @@ let username = ask_for_user_input()
 
 # The `String` Type
 
-* Rust has another string type, `String`
+* In addition to string literals, Rust has another string type called `String`
 * `String` manages data allocated on the _heap_
 * For data whose size is unknown at compile time
 
@@ -177,6 +178,11 @@ You can create a `String` from a string literal using `String::from()`.
 let s = String::from("hello");
 ```
 
+
+---
+
+# `String` Example
+
 This kind of string _can_ be mutated:
 
 ```rust
@@ -187,22 +193,24 @@ s.push_str(", world!"); // push_str() appends a literal to a String
 println!("{}", s); // This will print `hello, world!`
 ```
 
-
 ---
-
 
 # Problem: When is it Valid?
 
-* String literals: hardcoded into the executable
+* String literals are hardcoded into the executable
   * Always valid ✅
-* `String`s: allocated on the _heap_
+* On the other hand, `String`s are dynamically allocated on the _heap_
     * Must request memory from the allocator at _runtime_
     * Must return the memory when we're done using it
+      * Who's responsible for this?
 
 <!--
+String literals are *literally* hardcoded into the executable
+
+As for `Strings`
+- Must return memory, can't hog memory
 - We cannot place a blob of memory into the binary for each piece of text whose size is unknown at
   compile time, and whose size might change while running the program.
-
 - If we had a garbage collector, it would do this for us
 - If we had to manually do this, we _will_ make a mistake
 -->
@@ -210,10 +218,25 @@ println!("{}", s); // This will print `hello, world!`
 
 ---
 
-
 # C's Proposal: Manual Memory Management
 
-In C, we use `malloc` and `free` to manage heap memory for our program.
+In C, the _programmer_ is responsible for returning memory.
+
+- `malloc`: request memory from allocator
+- `free`: return memory to allocator
+
+```rust
+
+    {
+        let s = String::from("hello"); // `malloc`
+        free(s);                       // Done with `s`, free it!
+    }
+```
+
+---
+
+
+# C's Proposal: Manual Memory Management
 
 However, we need to pair exactly one `malloc` with exactly one `free`.
 
@@ -229,18 +252,42 @@ However, we need to pair exactly one `malloc` with exactly one `free`.
 # C's Proposal: Manual Memory Management
 
 * Using `malloc` and `free` can lead to all sorts of undefined behavior
-* It would be great if the compiler knew:
-  * When to allocate heap values
-  * When to deallocate heap values
-* Idea: **What if we tied heap allocations to the scope of a variable?**
+  * Unless you are the perfect developer...
+  * Who _never_ writes a bug...
+  * You're bound to shoot yourself in the foot
 
 <!-- Because developers who never write bugs definitely exist -_- -->
 
 
 ---
 
+# Java's Proposal: Runtime Garbage Collection
 
-# Review: Scopes
+In Java, the _runtime_ is responsible for returning memory.
+
+* **Runtime**: system that provides services during the running of a program
+  * Among these services is the garbage collector
+  * However, runtime processes are inefficient
+
+
+---
+
+
+# Rust's Proposal: Prevent at Compilation
+
+In Rust, the _compiler_ is responsible for returning memory.
+
+* Compiler marks places to return memory
+* It would be great if the compiler knew:
+  * When the variable needs memory
+  * When the memory is no longer needed
+* Idea: **What if we tied heap allocations to the scope of a variable?**
+
+
+---
+
+
+# Rust's Proposal: Prevent at Compilation
 
 Every variable has a _scope_.
 
@@ -258,7 +305,7 @@ Every variable has a _scope_.
 ---
 
 
-# Rust's Proposal
+# Rust's Proposal: Prevent at Compilation
 
 Memory is returned once the variable that owns it goes out of scope.
 
@@ -269,9 +316,9 @@ Memory is returned once the variable that owns it goes out of scope.
     }                                  // s goes out of scope
 ```
 
-* When `s` comes into scope, allocate value
-* When `s` goes out of scope, deallocate value
-    * Rust calls a function `drop` on `s`
+* When `s` comes into scope, it gets memory from the allocator
+* When `s` goes out of scope, its memory is freed
+    * Rust calls the function `drop` on `s` when we reach the closing bracket
 
 <!-- This is the RAII pattern in C++ -->
 <!-- This might seem simple, but it has profound implication on the way we write code in Rust -->
