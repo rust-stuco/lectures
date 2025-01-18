@@ -99,7 +99,7 @@ For now, assume the following:
   * Stored on the stack
   * Stored somewhere else...
 
-<!-- Speaker note: 
+<!-- Speaker note:
   "Value on stack" => Last week's data types
   "Value lives elsewhere" => Today's focus
 -->
@@ -129,13 +129,33 @@ Every time you see a text like `"Hello, World!"` surrounded by double quotes, th
 
 ```rust
 fn main() {
-    println!("Hello, world!"); // Print a string literal
+    println!("Hello, world!");        // Print a string literal
 
-    let s = "Ferris is our friend"; // Another string literal
+    let s = "Ferris is our friend";   // Store another string literal
 }
 ```
 
 * String literals are stored in a read-only section of the executable
+  * In other words, these strings literals are known at _compile-time_
+
+
+---
+
+
+# Python Strings
+
+Suppose we wanted store a user's input. Python can do this easily!
+
+```python
+username1 = input("Enter a short name: ")     # Could be "Bob"
+username2 = input("Enter a long name: ")      # Could be "Bartholomew"
+
+# Python strings can be any length!
+assert len(username1) == 3 and len(username2) == 11
+```
+
+* In Python, we don't have to know the length of the string beforehand
+* How would we do this in Rust?
 
 
 ---
@@ -143,16 +163,17 @@ fn main() {
 
 # Problem: String Literals are Immutable
 
-Suppose we store user input. Python handles this seamlessly - the string can be any length.
+String literals in Rust must be known at compile-time, so we cannot use them for this type of program.
 
-```python
-username = input("Enter a short name: ")    # Could be "Bob"
-username = input("Enter a long name: ")     # Could be "Bartholomew"
+```rust
+fn main() {
+    let username1: <???> = ask_for_user_input();
+    let username2: <???> = ask_for_user_input();
+}
 ```
 
-How is this handled in Rust?
 * We don't know size of `username` at compile time
-* Our string is _dynamically sized_
+* These string must be _dynamically sized_
 
 
 ---
@@ -160,9 +181,10 @@ How is this handled in Rust?
 
 # The `String` Type
 
-* In addition to string literals, Rust has another string type called `String`
+In addition to string literals, Rust has another string type called `String`.
+
 * `String` manages data allocated on the _heap_
-* For data whose size is unknown at compile time
+* We use `String` for managing string data where we do not know the size of the string at compile-time
 
 <!-- Rust has a lot of string types! -->
 
@@ -195,7 +217,7 @@ println!("{}", s); // This will print `hello, world!`
 
 ---
 
-# Problem: When is it Valid?
+# Problem: When is `String` valid?
 
 * String literals are hardcoded into the executable
   * Always valid ✅
@@ -205,7 +227,7 @@ println!("{}", s); // This will print `hello, world!`
       * Who's responsible for this?
 
 <!--
-String literals are *literally* hardcoded into the executable
+String literals are **literally** hardcoded into the executable
 
 As for `Strings`
 - Must return memory, can't hog memory
@@ -251,10 +273,11 @@ However, we need to pair exactly one `malloc` with exactly one `free`.
 
 # C's Proposal: Manual Memory Management
 
-* Using `malloc` and `free` can lead to all sorts of undefined behavior
-  * Unless you are the perfect developer...
-  * Who _never_ writes a bug...
-  * You're bound to shoot yourself in the foot
+Using `malloc` and `free` can lead to all sorts of undefined behavior.
+
+* Unless you are the perfect developer...
+* Who _never_ writes a bug...
+* You're bound to shoot yourself in the foot
 
 <!-- Because developers who never write bugs definitely exist -_- -->
 
