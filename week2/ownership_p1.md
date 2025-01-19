@@ -37,106 +37,11 @@ code {
 
 # Today: Ownership
 
-- Preliminary Content
-  - Review: Scopes
-  - String Introduction
 - Ownership
-  - Motivation
+  - Motivation: Strings
   - Moving, `clone`, and `copy`
 - References and Borrowing
 - Slices and Owned Types
-
-
----
-
-# Review: Scopes
-
-Recall _scopes_ in Rust.
-
-```rust
-
-                           // s is not valid here, it’s not yet declared
-    {
-        let s = "hello";   // s is valid from this point forward
-
-        // do stuff with s
-    }                      // this scope is now over, and s is no longer valid
-
-```
-
-* There are two important points in time here:
-    * When `s` comes _into_ scope, it is valid
-    * It remains valid until it goes _out_ of scope
-
----
-
-
-# String Literals
-
-We didn't explicitly talk about this last week, but every time you see a text like `"Hello, World!"` surrounded by double quotes, that is a _string literal_.
-
-```rust
-fn main() {
-    println!("Hello, world!"); // Print a string literal
-
-    let s = "Ferris is our friend"; // Another string literal
-}
-```
-
-* String literals live inside in the program binary
-
-<!-- Like C/C++ -->
-
-
----
-
-
-# Problem: String Literals are Immutable
-
-Suppose we wanted to take user input and store it. This is how we might do it in Python:
-
-```py
-username = input("Tell me your name!")
-```
-
-* We do not know how long `username` will be
-* How would we do this in Rust?
-* We need a way to store a collection of characters with a dynamic size
-
-
----
-
-
-# The `String` type
-
-* In addition to string literals, Rust has another string type, `String`
-* `String` manages data allocated on the heap
-* Dynamically stores an amount of text that is unknown at compile time
-
-<!-- Rust has a lot of string types! -->
-
-
----
-
-
-# `String` example
-
-You can create a `String` from a string literal using `String::from()`.
-
-```rust
-let s = String::from("hello");
-```
-
-This kind of string _can_ be mutated:
-
-```rust
-let mut s = String::from("hello");
-
-s.push_str(", world!"); // push_str() appends a literal to a String
-
-println!("{}", s); // This will print `hello, world!`
-```
-
 
 
 ---
@@ -160,7 +65,6 @@ From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-unders
 ---
 
 
-
 # What is Ownership?
 
 _Ownership_ is a set of rules that govern how a Rust program manages memory.
@@ -176,7 +80,7 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 ---
 
 
-# Ownership rules
+# Ownership Rules
 
 * Each value in Rust has an _owner_
 * There can only be one owner at a time
@@ -186,18 +90,149 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 ---
 
 
-# Example: `String` vs string literals
+# Ownership Rules
 
-* Since we know the contents of string literals at compile time, the text is hardcoded directly into the final executable
-* To support a fully resizable piece of text, we need to allocate on the _heap_
-    * This means we must request memory from the allocator at _runtime_
-    * We need a way of returning the memory when we're done using it
-    * What 2 C functions does this remind you of?
+For now, assume the following:
+
+* Variables **own** values
+* Variables can store their values in two places:
+  * Stored on the stack
+  * Stored somewhere else...
+
+<!-- Speaker note:
+  "Value on stack" => Last week's data types
+  "Value lives elsewhere" => Today's focus
+-->
+
+
+---
+
+
+# Motivation: Strings
+
+* Last week: Scalar Data Types
+  * Values live on the stack
+* This week: `String`s
+  * Values live somewhere else...
+
+<!-- Speaker note:
+Stack-based types have simple memory rules, but strings introduce complexities that motivate our ownership rules
+-->
+
+
+---
+
+
+# String Literals
+
+Every time you see a text like `"Hello, World!"` surrounded by double quotes, that is a _string literal_.
+
+```rust
+fn main() {
+    println!("Hello, world!");        // Print a string literal
+
+    let s = "Ferris is our friend";   // Store another string literal
+}
+```
+
+* String literals are stored in a read-only section of the program binary
+  * In other words, these strings literals are known at _compile-time_
+
+
+---
+
+
+# Python Strings
+
+Suppose we wanted store a user's input. Python can do this easily!
+
+```python
+username1 = input("Enter a short name: ")     # Could be "Bob"
+username2 = input("Enter a long name: ")      # Could be "Bartholomew"
+
+# Python strings can be any length!
+assert len(username1) == 3 and len(username2) == 11
+```
+
+* In Python, we don't have to know the length of the string beforehand
+* How would we do this in Rust?
+
+
+---
+
+
+# Problem: String Literals are Immutable
+
+String literals in Rust must be known at compile-time, so we cannot use them for this type of program.
+
+```rust
+fn main() {
+    let username1: <???> = ask_for_user_input();
+    let username2: <???> = ask_for_user_input();
+}
+```
+
+* We don't know size of `username` at compile time
+* These strings must be _dynamically sized_
+
+
+---
+
+
+# The `String` Type
+
+In addition to string literals, Rust has another string type called `String`.
+
+* `String` manages data allocated on the _heap_
+* We use `String` for managing string data where we do not know the size of the string at compile-time
+
+<!-- Rust has a lot of string types! -->
+
+
+---
+
+
+# `String` Example
+
+You can create a `String` from a string literal using `String::from()`.
+
+```rust
+let s = String::from("hello");
+```
+
+
+---
+
+# `String` Example
+
+This kind of string _can_ be mutated:
+
+```rust
+let mut s = String::from("hello");
+
+s.push_str(", world!"); // push_str() appends a literal to a String
+
+println!("{}", s); // This will print `hello, world!`
+```
+
+---
+
+# Problem: When is `String` valid?
+
+* String literals are hardcoded into the executable
+  * Always valid ✅
+* On the other hand, `String`s are dynamically allocated on the _heap_
+    * Must request memory from the allocator at _runtime_
+    * Must return the memory when we're done using it
+    * Who's responsible for this?
 
 <!--
+String literals are **literally** hardcoded into the executable
+
+As for `Strings`
+- Must return memory, can't hog memory
 - We cannot place a blob of memory into the binary for each piece of text whose size is unknown at
   compile time, and whose size might change while running the program.
-
 - If we had a garbage collector, it would do this for us
 - If we had to manually do this, we _will_ make a mistake
 -->
@@ -206,11 +241,40 @@ _Ownership_ is a set of rules that govern how a Rust program manages memory.
 ---
 
 
-# `malloc` and `free`
+# Python and Java's Proposal: Garbage Collection
 
-In C, we use `malloc` and `free` to manage heap memory for our program.
+In Python and Java, the _runtime_ is responsible for managing memory.
 
-However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
+* The runtime is a system that provides services while the program runs
+  * Among these services is the garbage collector
+    * The garbage collector finds unused memory and cleans it up
+  * Runtime processes can be inefficient!
+
+
+---
+
+
+# C's Proposal: Manual Memory Management
+
+In C, the _programmer_ is responsible for returning memory.
+
+- `malloc`: request memory from allocator
+- `free`: return memory to allocator
+
+```c
+int main() {
+    char *s = (char *)malloc(sizeof("hello"));  // Allocate memory for `s`
+    strcpy(s, "hello");                         // Set `s` to "hello"
+    free(s);                                    // Done with `s`, free it!
+}
+```
+
+---
+
+
+# C's Proposal: Manual Memory Management
+
+However, the programmer must pair exactly one `malloc` with exactly one `free`.
 
 * If we forget to `free`, we leak memory
 * If we `free` too early, we have an invalid variable
@@ -221,16 +285,13 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
 ---
 
 
-# Manual Memory Management
+# C's Proposal: Memory Footgun
 
-* Using `malloc` and `free` can lead to all sorts of undefined behavior
-  * Unless you are the perfect developer...
-  * Who _never_ writes a bug...
-  * You're bound to shoot yourself in the foot
-* It would be great if the compiler knew:
-  * At what point the variable needs memory
-  * At what point the memory is no longer needed
-* Idea: **what if we tied memory allocation to the scope of a variable?**
+Using `malloc` and `free` can lead to all sorts of undefined behavior.
+
+* Unless you are the perfect developer...
+* Who _never_ writes a bug...
+* You're bound to shoot yourself in the foot!
 
 <!-- Because developers who never write bugs definitely exist -_- -->
 
@@ -238,23 +299,51 @@ However, we need to ensure we pair exactly one `malloc` with exactly one `free`.
 ---
 
 
-# Rust's approach to memory
+# Rust's Proposal: Compile-Time Memory Safety
+
+In Rust, the _compiler_ is responsible for returning memory.
+
+* Compiler marks places to return memory
+* It would be great if the compiler knew:
+  * When the variable needs memory
+  * When the memory is no longer needed
+* Idea: **What if we tied heap allocations to the scope of a variable?**
+
+
+---
+
+
+# Rust's Proposal: Compile-Time Memory Safety
+
+Every variable has a _scope_.
+
+```rust
+{
+    let s = String::from("hello"); // s comes into scope
+} // s goes out of scope
+```
+
+* There are two important points here:
+    * When `s` comes _into_ scope, it is valid
+    * When `s` goes _out_ of scope, it is invalid
+
+
+---
+
+
+# Rust's Proposal: Compile-Time Memory Safety
 
 Memory is returned once the variable that owns it goes out of scope.
 
 ```rust
-
-    {
-        let s = String::from("hello"); // s is valid from this point forward
-
-        // do stuff with s
-    }                                  // this scope is now over,
-                                       // and s is no longer valid
+{
+    let s = String::from("hello"); // s comes into scope
+} // s goes out of scope
 ```
 
 * When `s` comes into scope, it gets memory from the allocator
-* When `s` goes out of scope, it frees all of its memory
-    * Rust calls a function called `drop` on `s` automatically once the program reaches the closing bracket
+* When `s` goes out of scope, its memory is freed
+    * Rust automatically calls the function `drop` on `s` when we reach the closing bracket
 
 <!-- This is the RAII pattern in C++ -->
 <!-- This might seem simple, but it has profound implication on the way we write code in Rust -->
