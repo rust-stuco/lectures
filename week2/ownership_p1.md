@@ -792,25 +792,25 @@ fn calculate_length(s: String) -> (String, usize) {
 
 # Reference with `&`
 
-Instead of moving a value into a function, we can provide a _reference_ to the value.
-
-We use `&` to define a reference to a value.
+Instead of moving a value into a function, we can provide a _reference_ to the value. We use `&` to define a reference to a value.
 
 ```rust
 fn main() {
     let s1 = String::from("hello");
-
     let len = calculate_length(&s1);
-
     println!("The length of '{}' is {}.", s1, len);
 }
-
-fn calculate_length(s: &String) -> usize {
-    s.len()
+fn calculate_length(borrowed: &String) -> usize {
+    borrowed.len()
 }
 ```
 
 * The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
+* `&String` means the type of the argument is a reference to a `String`
+
+<!--
+Make sure to highlight the `&s1` and the `&String` with a laser pointer.
+-->
 
 
 ---
@@ -826,7 +826,7 @@ fn calculate_length(borrowed: &String) -> usize {
 ```
 
 * `borrowed` is a reference to `s1` (i.e. `&s1`)
-* We do not own `s1` with just a reference to it
+* We _do not own_ `s1` with just a reference to it
 * This means `s1` will _not_ be dropped when `borrowed` goes out of scope
 * We call holding a reference _borrowing_
 
@@ -907,15 +907,20 @@ fn change(some_string: &mut String) {
 * In memory, references are just like pointers
 * In practice, they have a couple of constraints that make them safer
 
+
 ---
 
+
 # Reference Constraints
-* Mutable References are Exclusive
-* No Dangling References
+
+* Mutable references must be exclusive
+  * There can only be 1 mutable reference to a value at a time
+* There can never be dangling references
 
 <!--
 Outline for the next few slides
 -->
+
 
 ---
 
@@ -960,6 +965,7 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
   |                        -- first borrow later used here
 ```
 
+
 ---
 
 
@@ -967,12 +973,25 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
 
 * Most languages will let you mutate anything, whenever you want
 * If data can be written to from multiple places, the value can become unpredictable
-* Making mutable references exclusive prevents data races at compile time!
+* Making mutable references exclusive can prevent data invalidation and data races at compile time!
 
 <!--
-Sometimes people will refer to mutable references as exclusive references, and normal references as shared
+Sometimes people will refer to mutable references as exclusive references, and normal references as
+shared references.
+
 Other languages let you mutate values, pointers, variables, etc.
+
 The data races happen when we introduce concurrency, which we'll talk about in the future!
+
+IMPORTANT: The purpose of having 1 mutable reference at a time is not specifically for preventing
+data races, since that would only be a problem in multi-threaded code. The main purpose is to make
+sure that data isn't invalidated while there are read-only references to it.
+
+See:
+
+- Our example in the next lecture where we show that mutating a `Vec` will cause the memory to be
+reallocated, meaning any other references to it would be invalidated
+- https://stackoverflow.com/questions/58364807/why-does-rust-prevent-multiple-mutable-references-even-without-multi-threading
 -->
 
 
@@ -997,6 +1016,8 @@ let r2 = &mut s;
 ```
 
 * Notice that the scopes of these mutable references do not overlap
+
+
 ---
 
 
@@ -1020,14 +1041,6 @@ println!("{}, {}, and {}", r1, r2, r3);
 
 
 # Mutable and Immutable References
-
-```rust
-let mut s = String::from("hello");
-let r1 = &s; // no problem
-let r2 = &s; // no problem
-let r3 = &mut s; // BIG PROBLEM
-println!("{}, {}, and {}", r1, r2, r3);
-```
 
 ```
 error[E0502]: cannot borrow `s` as mutable because
@@ -1064,10 +1077,25 @@ let r3 = &mut s; // no problem
 println!("{}", r3);
 ```
 
+---
+
+
+# Mutable and Immutable References
+
+```rust
+let mut s = String::from("hello");
+let r1 = &s; // no problem
+let r2 = &s; // no problem
+println!("{} and {}", r1, r2);
+
+let r3 = &mut s; // no problem
+println!("{}", r3);
+```
+
 * The scope of a reference starts when it is initialized
 * The scope of a reference **ends at the last point it is used**
 * The specific term for reference scopes are _lifetimes_
-    * We'll talk about lifetimes in week 8!
+    * We'll talk about lifetimes in a future week!
 
 
 ---
@@ -1094,6 +1122,7 @@ fn dangle() -> &String {
 
 ---
 
+
 # Constraint: No Dangling References
 
 ```
@@ -1110,10 +1139,12 @@ help: consider using the `'static` lifetime
 ```
 
 Focus on this line:
-> this function's return type contains a borrowed value, but there is no value for it to be borrowed from
+> help: this function's return type contains a borrowed value, but there is no value for it to be borrowed from
 
 <!--
-Implemented using lifetimes
+Implemented using lifetimes.
+
+Make sure to point out the 'static part, which is actually a bad error message!
 -->
 
 
@@ -1125,12 +1156,11 @@ Implemented using lifetimes
 * Mutable references are exclusive:
   * At any given time, you can have either one mutable reference or any number of immutable references
       * A book being read by multiple people is fine
-      * If more than one person writes, they may overwrite each other's work
-      * References are similar to Read-Write locks
-* No dangling references:
-  * References must always be valid
+      * If multiple people write, they may overwrite each other's work
+      * References are similar to Reader-Writer locks
+* There can be no dangling references, references must always be valid
 
-<!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
+<!-- Make sure to point out in lecture that a reference is an explicit TYPE -->
 
 
 ---
@@ -1138,7 +1168,7 @@ Implemented using lifetimes
 
 # The Borrow Checker
 
-The Borrow Checker enforces the ownership and borrowing rules by checking:
+The _Borrow Checker_ enforces the ownership and borrowing rules by checking:
 
 * That all variables are initialized before they are used
 * That you can't move the same value twice
