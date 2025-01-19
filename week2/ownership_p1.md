@@ -1249,6 +1249,10 @@ let world = &s[6..11];
 
 * A string slice stores a pointer to memory and a length
 
+<!--
+Be clear that the `hello` variable here is not shown, just `s` and `world`.
+-->
+
 
 ---
 
@@ -1283,12 +1287,16 @@ Same rules as loops
 Recall that we talked about string literals being stored inside the binary.
 
 ```rust
-let s = "Hello, world!";
+let s: &str = "Hello, world!";
 ```
 
 * The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
 * String literals are immutable
   * Their `&str` immutable reference type reflects that
+
+<!--
+The above is technically incorrect, it should be `&'static str`, but we're going to ignore that for now.
+-->
 
 
 ---
@@ -1299,7 +1307,7 @@ let s = "Hello, world!";
 * String slices and string literals are immutable because they are a special type of immutable reference
 * String is an owned type
   * i.e. a type that has an owner
-* Another owned type is a vector
+* Another owned type is a _vector_
 
 
 ---
@@ -1307,7 +1315,7 @@ let s = "Hello, world!";
 
 # Vectors
 
-_Vectors_ allow you to store a collection of values of the same type contiguously in memory. Internally, it is a dynamically sized array stored on the heap.
+A _vector_ allows you to store a collection of values (of the same type) contiguously in memory.
 
 You can create an vector with the method `new`:
 
@@ -1315,7 +1323,9 @@ You can create an vector with the method `new`:
 let v: Vec<i32> = Vec::new();
 ```
 
-* The `<i32>` just means that the vector stores `i32` values. We'll talk more about this syntax in Week 4!
+* Internally, a `Vec` is a dynamically sized array stored on the heap
+* The `<i32>` just means that the vector stores `i32` values
+  * We'll talk more about this `<>` syntax in week 4!
 
 
 ---
@@ -1388,7 +1398,7 @@ Also note that we don't technically need the & here because i32 is Copy
 
 # More `Vec<T>` to come...
 
-We will talk more about `String` and `Vec<T>` in Week 4!
+We will talk more about `String` and `Vec<T>` in week 4!
 
 
 ---
@@ -1396,11 +1406,11 @@ We will talk more about `String` and `Vec<T>` in Week 4!
 
 # Homework 2
 
-* The second homework consists of 10 small ownership puzzles
+* The second homework consists of 12 small ownership puzzles
   * Refer to the `README.md` for further instructions
   * Always follow the compiler's advice!
 * We **_highly_** recommend reading the Rust Book chapter on [ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
-  * Ownership is a very tricky concept that affects almost every aspect of Rust, so understanding it is key to writing more complex Rust code
+  * Ownership is a _very tricky concept_ that affects almost every aspect of Rust, so understanding it is key to writing more complex Rust code
 * Try your best to understand Ownership _before_ attempting the homework
 
 
