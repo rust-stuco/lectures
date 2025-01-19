@@ -135,7 +135,7 @@ fn main() {
 }
 ```
 
-* String literals are stored in a read-only section of the executable
+* String literals are stored in a read-only section of the program binary
   * In other words, these strings literals are known at _compile-time_
 
 
@@ -247,11 +247,11 @@ In C, the _programmer_ is responsible for returning memory.
 - `malloc`: request memory from allocator
 - `free`: return memory to allocator
 
-```rust
-
+```c
     {
-        let s = String::from("hello"); // `malloc`
-        free(s);                       // Done with `s`, free it!
+        char *s = (char *) malloc(6); // Allocate memory for `s`
+        strcpy(s, "hello");           // Set `s` to "hello"
+        free(s);                      // Done with `s`, free it!
     }
 ```
 
@@ -296,7 +296,7 @@ In Java, the _runtime_ is responsible for returning memory.
 ---
 
 
-# Rust's Proposal: Prevent at Compilation
+# Rust's Proposal: Compile-Time Memory Safety
 
 In Rust, the _compiler_ is responsible for returning memory.
 
@@ -310,14 +310,15 @@ In Rust, the _compiler_ is responsible for returning memory.
 ---
 
 
-# Rust's Proposal: Prevent at Compilation
+# Rust's Proposal: Compile-Time Memory Safety
 
 Every variable has a _scope_.
 
 ```rust
+
     {
-        let s = "hello";         // s comes into scope
-    }                           // s goes out of scope
+        let s = String::from("hello"); // s comes into scope
+    } // s goes out of scope
 ```
 
 * There are two important points:
@@ -328,7 +329,7 @@ Every variable has a _scope_.
 ---
 
 
-# Rust's Proposal: Prevent at Compilation
+# Rust's Proposal: Compile-Time Memory Safety
 
 Memory is returned once the variable that owns it goes out of scope.
 
@@ -336,12 +337,12 @@ Memory is returned once the variable that owns it goes out of scope.
 
     {
         let s = String::from("hello"); // s comes into scope
-    }                                  // s goes out of scope
+    } // s goes out of scope
 ```
 
 * When `s` comes into scope, it gets memory from the allocator
 * When `s` goes out of scope, its memory is freed
-    * Rust calls the function `drop` on `s` when we reach the closing bracket
+    * Rust automatically calls the function `drop` on `s` when we reach the closing bracket
 
 <!-- This is the RAII pattern in C++ -->
 <!-- This might seem simple, but it has profound implication on the way we write code in Rust -->
