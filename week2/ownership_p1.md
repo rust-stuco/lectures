@@ -377,7 +377,7 @@ Before we make this decision, we should understand what the String looks like in
 ---
 
 
-# `String` data layout
+# `String` Data Layout
 
 ![bg right:50% 90%](../images/String_layout.svg)
 
@@ -396,7 +396,7 @@ let s1 = String::from("hello");
 ---
 
 
-# Pointer aliasing 😨
+# Pointer Aliasing 😨
 
 ![bg right:50% 85%](../images/String_alias.svg)
 
@@ -419,7 +419,7 @@ Shallow copy gets away from the problem of having to recreate the entire string
 ---
 
 
-# Pointer aliasing ☠️
+# Pointer Aliasing ☠️
 
 ![bg right:50% 85%](../images/String_alias.svg)
 
@@ -437,7 +437,7 @@ Suppose Rust handled this case with a shallow copy.
 ---
 
 
-# Enforcing one owner at a time
+# Enforcing Single Ownership
 
 ![bg right:50% 85%](../images/String_move.svg)
 
@@ -474,43 +474,38 @@ error[E0382]: borrow of moved value: `s1`
 5 |     println!("{}, world!", s1);
   |                            ^^ value borrowed here after move
   |
-help: consider cloning the value if the performance cost is acceptable
-  |
-3 |     let s2 = s1.clone();
-  |                ++++++++
 ```
 
 
 ---
 
 
-# Move semantics
+# Move Semantics
 
 ```rust
-let s1 = String::from("hello");
-let s2 = s1;
+let s1 = String::from("hello");   // Create `s1`
+let s2 = s1;                      // Move `s1` into `s2`
+// println!("{}, world!", s1);    // `s1` is now invalid!
 ```
 
-- Rust calls this shallow copy plus invalidation a _move_
+* Rust calls this shallow copy plus invalidation a _move_
 * We _moved_ `s1` into `s2`
   * Hence `s1` can no longer be accessed
 
 
 ---
 
-# Moving vs cloning
+# Moving vs Cloning
 
 ```rust
 let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-* What if we copied all of the data instead?
+* What if we _wanted_ to copy all of the data?
   * Known as deep copying or cloning
-* Implicitly copying all of the data would solve the problem
-  * But it can get expensive, quickly
-* In Rust, cloning must be explicitly performed by the programmer
-  * This is very intentional, to avoid accidental performance loss
+* Making Rust implicitly deep copy all data would solve the problem
+  * But it would get expensive, quickly
 
 
 ---
@@ -532,15 +527,35 @@ s1 = hello, s2 = hello
 ```
 
 * This copies _all_ of the data contained in `s1`, both on the heap and the stack
+
+
+---
+
+
+# `Clone`
+
+```rust
+let s1 = String::from("hello");
+let s2 = s1.clone();
+
+println!("s1 = {}, s2 = {}", s1, s2);
+```
+
+```
+s1 = hello, s2 = hello
+```
+
+* In Rust, cloning must be explicitly performed by the programmer
+  * This is very intentional, to avoid accidental performance overhead
 * We'll talk more about methods next week!
 
 
 ---
 
 
-# What about integers?
+# What About Integers?
 
-Based on what we have seen, this code should not work.
+Based on the rules we have stated, this code should not work.
 
 ```rust
 let x = 5;
@@ -554,7 +569,7 @@ x = 5, y = 5
 ```
 
 * `x` is still valid, but it looks like we moved it into `y`
-* We just said that this wasn't allowed!
+* Didn't we just say that this wasn't allowed?!
 
 
 
@@ -574,10 +589,10 @@ let y = x;
 * There is no difference between a shallow copy and a deep copy here
   * So why not clone implicitly?
 
-
 <!---
 Copies of integers are quick to make => register copy
 -->
+
 
 ---
 
@@ -587,16 +602,16 @@ Copies of integers are quick to make => register copy
 Certain types are annotated with a `Copy` trait, which allows implicit copying instead of moving.
 
 Types that are `Copy`:
-* All numeric types, including integers and floating points
-* Boolean type, `bool`
-* Character type, `char`
+* All numeric types, including integers (`i32`) and floating points (`f64`)
+* The boolean type (`bool`)
+* The character type (`char`)
 * Tuples, if they only contain types that are `Copy`
     - `(i32, i32)` is `Copy`, but `(i32, String)` is not
-
 
 <!--
 Don't explain traits yet!
 -->
+
 
 ---
 
@@ -625,12 +640,11 @@ fn takes_ownership(some_string: String) {
 # Ownership and Functions
 
 What if we tried to use a value after a function takes ownership of it?
+
 ```rust
-fn main() {
-  let s = String::from("hello");
-  takes_ownership(s);
-  println!("{} is invalid now!", s);
-}
+let s = String::from("hello");
+takes_ownership(s);
+println!("{} is invalid now!", s);
 ```
 
 ```
@@ -651,7 +665,7 @@ error[E0382]: borrow of moved value: `s`
 
 # Ownership and Functions
 
-Passing an `i32`:
+`Copy` are copied directly into the function parameter:
 
 ```rust
 fn main() {
@@ -665,25 +679,9 @@ fn makes_copy(some_integer: i32) {
 }
 ```
 
----
-
-
-# Return Values and Scope
-
-Returning values can also transfer ownership.
-
-```rust
-fn main() {
-    let s1 = gives_ownership();
-    println!("{}", s1); // s1 is valid---we have taken ownership
-}
-
-fn gives_ownership() -> String {
-    let some_string = String::from("yours");
-
-    some_string // `some_string` is returned and
-                // moves out to the calling function
-}
+```
+5 just got copied
+Here is 5 again!
 ```
 
 
@@ -692,7 +690,33 @@ fn gives_ownership() -> String {
 
 # Return Values and Scope
 
-Another example of taking and giving back ownership:
+Returning values can also transfer ownership back to the caller.
+
+```rust
+fn main() {
+    let s1 = gives_ownership();
+    println!("{}", s1); // s1 is valid, we have taken ownership!
+}
+
+fn gives_ownership() -> String {
+    let some_string = String::from("from inside `gives_ownership`");
+
+    some_string // `some_string` is returned and is moved out to the
+                // calling function
+}
+```
+
+```
+from inside `gives_ownership`
+```
+
+
+---
+
+
+# Return Values and Scope
+
+Here is another example where a function takes ownership and gives it back:
 
 ```rust
 fn main() {
@@ -734,7 +758,6 @@ fn main() {
     let (s2, len) = calculate_length(s1);
     println!("The length of '{}' is {}.", s2, len);
 }
-
 fn calculate_length(s: String) -> (String, usize) {
     let length = s.len();
     (s, length)
@@ -786,6 +809,7 @@ fn calculate_length(s: &String) -> usize {
     s.len()
 }
 ```
+
 * The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
 
 
