@@ -173,7 +173,7 @@ fn main() {
 ```
 
 * We don't know size of `username` at compile time
-* These string must be _dynamically sized_
+* These strings must be _dynamically sized_
 
 
 ---
@@ -224,7 +224,7 @@ println!("{}", s); // This will print `hello, world!`
 * On the other hand, `String`s are dynamically allocated on the _heap_
     * Must request memory from the allocator at _runtime_
     * Must return the memory when we're done using it
-      * Who's responsible for this?
+    * Who's responsible for this?
 
 <!--
 String literals are **literally** hardcoded into the executable
@@ -240,6 +240,20 @@ As for `Strings`
 
 ---
 
+
+# Python and Java's Proposal: Garbage Collection
+
+In Python and Java, the _runtime_ is responsible for managing memory.
+
+* The runtime is a system that provides services while the program runs
+  * Among these services is the garbage collector
+    * The garbage collector finds unused memory and cleans it up
+  * Runtime processes can be inefficient!
+
+
+---
+
+
 # C's Proposal: Manual Memory Management
 
 In C, the _programmer_ is responsible for returning memory.
@@ -248,11 +262,11 @@ In C, the _programmer_ is responsible for returning memory.
 - `free`: return memory to allocator
 
 ```c
-    {
-        char *s = (char *) malloc(6); // Allocate memory for `s`
-        strcpy(s, "hello");           // Set `s` to "hello"
-        free(s);                      // Done with `s`, free it!
-    }
+int main() {
+    char *s = (char *)malloc(sizeof("hello"));  // Allocate memory for `s`
+    strcpy(s, "hello");                         // Set `s` to "hello"
+    free(s);                                    // Done with `s`, free it!
+}
 ```
 
 ---
@@ -260,7 +274,7 @@ In C, the _programmer_ is responsible for returning memory.
 
 # C's Proposal: Manual Memory Management
 
-However, we need to pair exactly one `malloc` with exactly one `free`.
+However, the programmer must pair exactly one `malloc` with exactly one `free`.
 
 * If we forget to `free`, we leak memory
 * If we `free` too early, we have an invalid variable
@@ -271,26 +285,15 @@ However, we need to pair exactly one `malloc` with exactly one `free`.
 ---
 
 
-# C's Proposal: Manual Memory Management
+# C's Proposal: Memory Footgun
 
 Using `malloc` and `free` can lead to all sorts of undefined behavior.
 
 * Unless you are the perfect developer...
 * Who _never_ writes a bug...
-* You're bound to shoot yourself in the foot
+* You're bound to shoot yourself in the foot!
 
 <!-- Because developers who never write bugs definitely exist -_- -->
-
-
----
-
-# Java's Proposal: Runtime Garbage Collection
-
-In Java, the _runtime_ is responsible for returning memory.
-
-* **Runtime**: system that provides services during the running of a program
-  * Among these services is the garbage collector
-  * However, runtime processes are inefficient
 
 
 ---
@@ -315,13 +318,12 @@ In Rust, the _compiler_ is responsible for returning memory.
 Every variable has a _scope_.
 
 ```rust
-
-    {
-        let s = String::from("hello"); // s comes into scope
-    } // s goes out of scope
+{
+    let s = String::from("hello"); // s comes into scope
+} // s goes out of scope
 ```
 
-* There are two important points:
+* There are two important points here:
     * When `s` comes _into_ scope, it is valid
     * When `s` goes _out_ of scope, it is invalid
 
@@ -334,10 +336,9 @@ Every variable has a _scope_.
 Memory is returned once the variable that owns it goes out of scope.
 
 ```rust
-
-    {
-        let s = String::from("hello"); // s comes into scope
-    } // s goes out of scope
+{
+    let s = String::from("hello"); // s comes into scope
+} // s goes out of scope
 ```
 
 * When `s` comes into scope, it gets memory from the allocator
@@ -346,6 +347,7 @@ Memory is returned once the variable that owns it goes out of scope.
 
 <!-- This is the RAII pattern in C++ -->
 <!-- This might seem simple, but it has profound implication on the way we write code in Rust -->
+
 
 ---
 
