@@ -57,7 +57,7 @@ code {
 
 From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html):
 
-> Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
+> Ownership is Rust's most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it's important to understand how ownership works.
 
 * Today we'll introduce _Ownership_, as well as several related features
 
@@ -555,7 +555,7 @@ s1 = hello, s2 = hello
 
 # What About Integers?
 
-Based on the rules we have stated, this code should not work.
+Based on the ownership rules we have stated, this code should not work.
 
 ```rust
 let x = 5;
@@ -699,7 +699,7 @@ fn main() {
 }
 
 fn gives_ownership() -> String {
-    let some_string = String::from("from inside `gives_ownership`");
+    let some_string = String::from("inside `gives_ownership`");
 
     some_string // `some_string` is returned and is moved out to the
                 // calling function
@@ -707,7 +707,7 @@ fn gives_ownership() -> String {
 ```
 
 ```
-from inside `gives_ownership`
+inside `gives_ownership`
 ```
 
 
@@ -914,7 +914,7 @@ fn change(some_string: &mut String) {
 # Reference Constraints
 
 * Mutable references must be exclusive
-  * There can only be 1 mutable reference to a value at a time
+  * There can only be one mutable reference to a value at a time
 * There can never be dangling references
 
 <!--
@@ -1290,7 +1290,7 @@ Recall that we talked about string literals being stored inside the binary.
 let s: &str = "Hello, world!";
 ```
 
-* The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
+* The type of `s` here is `&str`: it's a slice pointing to that specific point of the binary with type `str`
 * String literals are immutable
   * Their `&str` immutable reference type reflects that
 
@@ -1315,7 +1315,7 @@ The above is technically incorrect, it should be `&'static str`, but we're going
 
 # Vectors
 
-A _vector_ allows you to store a collection of values (of the same type) contiguously in memory.
+A _vector_ allows you to store a collection of values contiguously in memory.
 
 You can create an vector with the method `new`:
 
@@ -1324,6 +1324,7 @@ let v: Vec<i32> = Vec::new();
 ```
 
 * Internally, a `Vec` is a dynamically sized array stored on the heap
+* All values in the `Vec` must be of the same type
 * The `<i32>` just means that the vector stores `i32` values
   * We'll talk more about this `<>` syntax in week 4!
 
