@@ -57,7 +57,7 @@ code {
 
 From the official Rust Lang [book](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html):
 
-> Ownership is Rust’s most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it’s important to understand how ownership works.
+> Ownership is Rust's most unique feature and has deep implications for the rest of the language. It enables Rust to make memory safety guarantees without needing a garbage collector, so it's important to understand how ownership works.
 
 * Today we'll introduce _Ownership_, as well as several related features
 
@@ -377,7 +377,7 @@ Before we make this decision, we should understand what the String looks like in
 ---
 
 
-# `String` data layout
+# `String` Data Layout
 
 ![bg right:50% 90%](../images/String_layout.svg)
 
@@ -396,7 +396,7 @@ let s1 = String::from("hello");
 ---
 
 
-# Pointer aliasing 😨
+# Pointer Aliasing 😨
 
 ![bg right:50% 85%](../images/String_alias.svg)
 
@@ -419,7 +419,7 @@ Shallow copy gets away from the problem of having to recreate the entire string
 ---
 
 
-# Pointer aliasing ☠️
+# Pointer Aliasing ☠️
 
 ![bg right:50% 85%](../images/String_alias.svg)
 
@@ -437,7 +437,7 @@ Suppose Rust handled this case with a shallow copy.
 ---
 
 
-# Enforcing one owner at a time
+# Enforcing Single Ownership
 
 ![bg right:50% 85%](../images/String_move.svg)
 
@@ -474,43 +474,38 @@ error[E0382]: borrow of moved value: `s1`
 5 |     println!("{}, world!", s1);
   |                            ^^ value borrowed here after move
   |
-help: consider cloning the value if the performance cost is acceptable
-  |
-3 |     let s2 = s1.clone();
-  |                ++++++++
 ```
 
 
 ---
 
 
-# Move semantics
+# Move Semantics
 
 ```rust
-let s1 = String::from("hello");
-let s2 = s1;
+let s1 = String::from("hello");   // Create `s1`
+let s2 = s1;                      // Move `s1` into `s2`
+// println!("{}, world!", s1);    // `s1` is now invalid!
 ```
 
-- Rust calls this shallow copy plus invalidation a _move_
+* Rust calls this shallow copy plus invalidation a _move_
 * We _moved_ `s1` into `s2`
   * Hence `s1` can no longer be accessed
 
 
 ---
 
-# Moving vs cloning
+# Moving vs Cloning
 
 ```rust
 let s1 = String::from("hello");
 let s2 = s1;
 ```
 
-* What if we copied all of the data instead?
+* What if we _wanted_ to copy all of the data?
   * Known as deep copying or cloning
-* Implicitly copying all of the data would solve the problem
-  * But it can get expensive, quickly
-* In Rust, cloning must be explicitly performed by the programmer
-  * This is very intentional, to avoid accidental performance loss
+* Making Rust implicitly deep copy all data would solve the problem
+  * But it would get expensive, quickly
 
 
 ---
@@ -532,15 +527,35 @@ s1 = hello, s2 = hello
 ```
 
 * This copies _all_ of the data contained in `s1`, both on the heap and the stack
+
+
+---
+
+
+# `Clone`
+
+```rust
+let s1 = String::from("hello");
+let s2 = s1.clone();
+
+println!("s1 = {}, s2 = {}", s1, s2);
+```
+
+```
+s1 = hello, s2 = hello
+```
+
+* In Rust, cloning must be explicitly performed by the programmer
+  * This is very intentional, to avoid accidental performance overhead
 * We'll talk more about methods next week!
 
 
 ---
 
 
-# What about integers?
+# What About Integers?
 
-Based on what we have seen, this code should not work.
+Based on the ownership rules we have stated, this code should not work.
 
 ```rust
 let x = 5;
@@ -554,7 +569,7 @@ x = 5, y = 5
 ```
 
 * `x` is still valid, but it looks like we moved it into `y`
-* We just said that this wasn't allowed!
+* Didn't we just say that this wasn't allowed?!
 
 
 
@@ -574,10 +589,10 @@ let y = x;
 * There is no difference between a shallow copy and a deep copy here
   * So why not clone implicitly?
 
-
 <!---
 Copies of integers are quick to make => register copy
 -->
+
 
 ---
 
@@ -587,16 +602,16 @@ Copies of integers are quick to make => register copy
 Certain types are annotated with a `Copy` trait, which allows implicit copying instead of moving.
 
 Types that are `Copy`:
-* All numeric types, including integers and floating points
-* Boolean type, `bool`
-* Character type, `char`
+* All numeric types, including integers (`i32`) and floating points (`f64`)
+* The boolean type (`bool`)
+* The character type (`char`)
 * Tuples, if they only contain types that are `Copy`
     - `(i32, i32)` is `Copy`, but `(i32, String)` is not
-
 
 <!--
 Don't explain traits yet!
 -->
+
 
 ---
 
@@ -625,12 +640,11 @@ fn takes_ownership(some_string: String) {
 # Ownership and Functions
 
 What if we tried to use a value after a function takes ownership of it?
+
 ```rust
-fn main() {
-  let s = String::from("hello");
-  takes_ownership(s);
-  println!("{} is invalid now!", s);
-}
+let s = String::from("hello");
+takes_ownership(s);
+println!("{} is invalid now!", s);
 ```
 
 ```
@@ -651,7 +665,7 @@ error[E0382]: borrow of moved value: `s`
 
 # Ownership and Functions
 
-Passing an `i32`:
+`Copy` are copied directly into the function parameter:
 
 ```rust
 fn main() {
@@ -665,25 +679,9 @@ fn makes_copy(some_integer: i32) {
 }
 ```
 
----
-
-
-# Return Values and Scope
-
-Returning values can also transfer ownership.
-
-```rust
-fn main() {
-    let s1 = gives_ownership();
-    println!("{}", s1); // s1 is valid---we have taken ownership
-}
-
-fn gives_ownership() -> String {
-    let some_string = String::from("yours");
-
-    some_string // `some_string` is returned and
-                // moves out to the calling function
-}
+```
+5 just got copied
+Here is 5 again!
 ```
 
 
@@ -692,7 +690,33 @@ fn gives_ownership() -> String {
 
 # Return Values and Scope
 
-Another example of taking and giving back ownership:
+Returning values can also transfer ownership back to the caller.
+
+```rust
+fn main() {
+    let s1 = gives_ownership();
+    println!("{}", s1); // s1 is valid, we have taken ownership!
+}
+
+fn gives_ownership() -> String {
+    let some_string = String::from("inside `gives_ownership`");
+
+    some_string // `some_string` is returned and is moved out to the
+                // calling function
+}
+```
+
+```
+inside `gives_ownership`
+```
+
+
+---
+
+
+# Return Values and Scope
+
+Here is another example where a function takes ownership and gives it back:
 
 ```rust
 fn main() {
@@ -734,7 +758,6 @@ fn main() {
     let (s2, len) = calculate_length(s1);
     println!("The length of '{}' is {}.", s2, len);
 }
-
 fn calculate_length(s: String) -> (String, usize) {
     let length = s.len();
     (s, length)
@@ -769,24 +792,25 @@ fn calculate_length(s: String) -> (String, usize) {
 
 # Reference with `&`
 
-Instead of moving a value into a function, we can provide a _reference_ to the value.
-
-We use `&` to define a reference to a value.
+Instead of moving a value into a function, we can provide a _reference_ to the value. We use `&` to define a reference to a value.
 
 ```rust
 fn main() {
     let s1 = String::from("hello");
-
     let len = calculate_length(&s1);
-
     println!("The length of '{}' is {}.", s1, len);
 }
-
-fn calculate_length(s: &String) -> usize {
-    s.len()
+fn calculate_length(borrowed: &String) -> usize {
+    borrowed.len()
 }
 ```
+
 * The `&s1` syntax lets us create a variable that _refers_ to the value of `s1`
+* `&String` means the type of the argument is a reference to a `String`
+
+<!--
+Make sure to highlight the `&s1` and the `&String` with a laser pointer.
+-->
 
 
 ---
@@ -802,7 +826,7 @@ fn calculate_length(borrowed: &String) -> usize {
 ```
 
 * `borrowed` is a reference to `s1` (i.e. `&s1`)
-* We do not own `s1` with just a reference to it
+* We _do not own_ `s1` with just a reference to it
 * This means `s1` will _not_ be dropped when `borrowed` goes out of scope
 * We call holding a reference _borrowing_
 
@@ -883,15 +907,20 @@ fn change(some_string: &mut String) {
 * In memory, references are just like pointers
 * In practice, they have a couple of constraints that make them safer
 
+
 ---
 
+
 # Reference Constraints
-* Mutable References are Exclusive
-* No Dangling References
+
+* Mutable references must be exclusive
+  * There can only be one mutable reference to a value at a time
+* There can never be dangling references
 
 <!--
 Outline for the next few slides
 -->
+
 
 ---
 
@@ -936,6 +965,7 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
   |                        -- first borrow later used here
 ```
 
+
 ---
 
 
@@ -943,12 +973,25 @@ error[E0499]: cannot borrow `s` as mutable more than once at a time
 
 * Most languages will let you mutate anything, whenever you want
 * If data can be written to from multiple places, the value can become unpredictable
-* Making mutable references exclusive prevents data races at compile time!
+* Making mutable references exclusive can prevent data invalidation and data races at compile time!
 
 <!--
-Sometimes people will refer to mutable references as exclusive references, and normal references as shared
+Sometimes people will refer to mutable references as exclusive references, and normal references as
+shared references.
+
 Other languages let you mutate values, pointers, variables, etc.
+
 The data races happen when we introduce concurrency, which we'll talk about in the future!
+
+IMPORTANT: The purpose of having 1 mutable reference at a time is not specifically for preventing
+data races, since that would only be a problem in multi-threaded code. The main purpose is to make
+sure that data isn't invalidated while there are read-only references to it.
+
+See:
+
+- Our example in the next lecture where we show that mutating a `Vec` will cause the memory to be
+reallocated, meaning any other references to it would be invalidated
+- https://stackoverflow.com/questions/58364807/why-does-rust-prevent-multiple-mutable-references-even-without-multi-threading
 -->
 
 
@@ -973,6 +1016,8 @@ let r2 = &mut s;
 ```
 
 * Notice that the scopes of these mutable references do not overlap
+
+
 ---
 
 
@@ -996,14 +1041,6 @@ println!("{}, {}, and {}", r1, r2, r3);
 
 
 # Mutable and Immutable References
-
-```rust
-let mut s = String::from("hello");
-let r1 = &s; // no problem
-let r2 = &s; // no problem
-let r3 = &mut s; // BIG PROBLEM
-println!("{}, {}, and {}", r1, r2, r3);
-```
 
 ```
 error[E0502]: cannot borrow `s` as mutable because
@@ -1040,10 +1077,25 @@ let r3 = &mut s; // no problem
 println!("{}", r3);
 ```
 
+---
+
+
+# Mutable and Immutable References
+
+```rust
+let mut s = String::from("hello");
+let r1 = &s; // no problem
+let r2 = &s; // no problem
+println!("{} and {}", r1, r2);
+
+let r3 = &mut s; // no problem
+println!("{}", r3);
+```
+
 * The scope of a reference starts when it is initialized
 * The scope of a reference **ends at the last point it is used**
 * The specific term for reference scopes are _lifetimes_
-    * We'll talk about lifetimes in week 8!
+    * We'll talk about lifetimes in a future week!
 
 
 ---
@@ -1070,6 +1122,7 @@ fn dangle() -> &String {
 
 ---
 
+
 # Constraint: No Dangling References
 
 ```
@@ -1086,10 +1139,12 @@ help: consider using the `'static` lifetime
 ```
 
 Focus on this line:
-> this function's return type contains a borrowed value, but there is no value for it to be borrowed from
+> help: this function's return type contains a borrowed value, but there is no value for it to be borrowed from
 
 <!--
-Implemented using lifetimes
+Implemented using lifetimes.
+
+Make sure to point out the 'static part, which is actually a bad error message!
 -->
 
 
@@ -1101,12 +1156,11 @@ Implemented using lifetimes
 * Mutable references are exclusive:
   * At any given time, you can have either one mutable reference or any number of immutable references
       * A book being read by multiple people is fine
-      * If more than one person writes, they may overwrite each other's work
-      * References are similar to Read-Write locks
-* No dangling references:
-  * References must always be valid
+      * If multiple people write, they may overwrite each other's work
+      * References are similar to Reader-Writer locks
+* There can be no dangling references, references must always be valid
 
-<!-- Might be good to point out in lecture that reference is an explicit TYPE, not just a Rust feature -->
+<!-- Make sure to point out in lecture that a reference is an explicit TYPE -->
 
 
 ---
@@ -1114,7 +1168,7 @@ Implemented using lifetimes
 
 # The Borrow Checker
 
-The Borrow Checker enforces the ownership and borrowing rules by checking:
+The _Borrow Checker_ enforces the ownership and borrowing rules by checking:
 
 * That all variables are initialized before they are used
 * That you can't move the same value twice
@@ -1195,6 +1249,10 @@ let world = &s[6..11];
 
 * A string slice stores a pointer to memory and a length
 
+<!--
+Be clear that the `hello` variable here is not shown, just `s` and `world`.
+-->
+
 
 ---
 
@@ -1229,12 +1287,16 @@ Same rules as loops
 Recall that we talked about string literals being stored inside the binary.
 
 ```rust
-let s = "Hello, world!";
+let s: &str = "Hello, world!";
 ```
 
-* The type of `s` here is `&str`: it’s a slice pointing to that specific point of the binary with type `str`
+* The type of `s` here is `&str`: it's a slice pointing to that specific point of the binary with type `str`
 * String literals are immutable
   * Their `&str` immutable reference type reflects that
+
+<!--
+The above is technically incorrect, it should be `&'static str`, but we're going to ignore that for now.
+-->
 
 
 ---
@@ -1245,7 +1307,7 @@ let s = "Hello, world!";
 * String slices and string literals are immutable because they are a special type of immutable reference
 * String is an owned type
   * i.e. a type that has an owner
-* Another owned type is a vector
+* Another owned type is a _vector_
 
 
 ---
@@ -1253,7 +1315,7 @@ let s = "Hello, world!";
 
 # Vectors
 
-_Vectors_ allow you to store a collection of values of the same type contiguously in memory. Internally, it is a dynamically sized array stored on the heap.
+A _vector_ allows you to store a collection of values contiguously in memory.
 
 You can create an vector with the method `new`:
 
@@ -1261,7 +1323,10 @@ You can create an vector with the method `new`:
 let v: Vec<i32> = Vec::new();
 ```
 
-* The `<i32>` just means that the vector stores `i32` values. We'll talk more about this syntax in Week 4!
+* Internally, a `Vec` is a dynamically sized array stored on the heap
+* All values in the `Vec` must be of the same type
+* The `<i32>` just means that the vector stores `i32` values
+  * We'll talk more about this `<>` syntax in week 4!
 
 
 ---
@@ -1334,7 +1399,7 @@ Also note that we don't technically need the & here because i32 is Copy
 
 # More `Vec<T>` to come...
 
-We will talk more about `String` and `Vec<T>` in Week 4!
+We will talk more about `String` and `Vec<T>` in week 4!
 
 
 ---
@@ -1342,11 +1407,11 @@ We will talk more about `String` and `Vec<T>` in Week 4!
 
 # Homework 2
 
-* The second homework consists of 10 small ownership puzzles
+* The second homework consists of 12 small ownership puzzles
   * Refer to the `README.md` for further instructions
   * Always follow the compiler's advice!
 * We **_highly_** recommend reading the Rust Book chapter on [ownership](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)
-  * Ownership is a very tricky concept that affects almost every aspect of Rust, so understanding it is key to writing more complex Rust code
+  * Ownership is a _very tricky concept_ that affects almost every aspect of Rust, so understanding it is key to writing more complex Rust code
 * Try your best to understand Ownership _before_ attempting the homework
 
 
