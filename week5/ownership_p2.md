@@ -20,6 +20,20 @@ paginate: true
 ---
 
 
+# Today
+
+Today, we'll provide another way of thinking about ownership:
+
+* Our goal: Transform ownership from a mysterious ruleset into an elegant problem-solving technique
+    * Not just avoiding compile errors
+    * Uncovering how the borrow checker works
+    * Write safer code, unblock the borrow checker
+
+
+---
+
+
+
 # The Rules
 
 At the beginning of this course, we learned the Commandments of Rust...
