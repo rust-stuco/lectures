@@ -3,11 +3,11 @@ Can fit in ~20 more minutes of content. Some examples I'm considering:
 Written:
 * Aliasing and Mutating a Data Structure (see below)
 * Mutable vs Immutable Borrowing in Loops (see below)
+* Borrowing in Structs (see below)
 * Downgrading Mutable References (see downgrade-mutable.md)
     * missing a problem, ideally provide a problem that would require students to understand downgrading
 
 Not written:
-* Borrowing in structs
 * Borrowing in tuples
 
 # Example: Aliasing and Mutating a Data Structure
@@ -96,3 +96,50 @@ fn main() {
     numbers.append(&mut temp);
 }
 ```
+
+# Example: Borrowing in Structs
+
+Copy the below code into [aquascope](https://cel.cs.brown.edu/aquascope/) to illustrate how `self` is laid out in struct methods
+
+```rust
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+impl Rectangle {    
+  fn max(self, other: Self) -> Self {
+    let w = self.width.max(other.width);
+    let h = self.height.max(other.height);
+    Rectangle { 
+      width: w,
+      height: h
+    }
+  }
+    fn set_to_max(&mut self, other: Rectangle) {
+        let max = self.max(other);
+        *self = max;
+    }
+}
+
+fn main() {
+    let mut rect = Rectangle { width: 0, height: 1 };
+    let other_rect = Rectangle { width: 1, height: 0 };
+    rect.set_to_max(other_rect);
+}
+```
+
+Code doesn't compile until we add `Copy`, `Clone` traits to Rectangle
+```rust
+#[derive(Copy, Clone)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+```
+
+To prevent double-free, Rust doesn't automatically derive `Copy` for structs.
+
+Example: Suppose Rectangle has the `Copy` trait. Also suppose that we add a `name: String` field to `Rectangle`.
+In short, `rect.name` gets freed twice:
+    * First free is in `let max = self.max(other)`. In short, the method `max()`'s stack frame takes ownership of `self.name` and `other.name`. When the method `max()` returns, Rust deallocates its stack frame, and hence frees `self.name`, aka `rect.name`
+    * Second free is in `*self = max`. When `*self` is overwritten, Rust implicitly calls drop on the data previously in `*self`, which subsequently frees all fields in the struct. Hence, `self.name`, aka `rect.name`, gets freed a second time
