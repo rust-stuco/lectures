@@ -1298,6 +1298,8 @@ x | R | - | -
 # Mutable References
 
 * **`x` and `*x` have different permissions**
+    * Note how revoking permissions removes R from `*x`, but keeps R on `x`
+    * Can create as many references as we want, just can't _access_ them invalidly
 * Mutable references further illustrate this
 
 
