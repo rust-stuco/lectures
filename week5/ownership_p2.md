@@ -1517,7 +1517,7 @@ let mut v = vec![1, 2, 3, 4];
 # Fixing a Safe Program
 
 
-Looks reasonable!
+Looks reasonable:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
@@ -1526,7 +1526,26 @@ let slot2 = &v[1];
 *slot1 += *slot2;
 ```
 
-* Yet this does not compile
+---
+
+# Fixing a Safe Program
+
+```
+error[E0502]: cannot borrow `v` as immutable because it is also borrowed as mutable
+  --> src/main.rs:9:18
+   |
+8  |     let slot1 = &mut v[0];
+   |                      - mutable borrow occurs here
+9  |     let slot2 = &v[1];
+   |                  ^ immutable borrow occurs here
+10 |     *slot1 += *slot2;
+   |     ---------------- mutable borrow later used here
+   |
+   = help: use `.split_at_mut(position)` to obtain two mutable non-overlapping sub-slices
+```
+
+* Yet it looks safe to us?
+* Let's break down the permissions
 
 ---
 
