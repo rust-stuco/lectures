@@ -3,26 +3,26 @@
 - Rules and Objective (2 min)
     - Why unsafe
     - How fix
-- Defining Unsafety
+- Defining Unsafety (2 min)
     - Invalid Memory Access ⇒ Unsafety
         - Deallocated (Ownership Rules)
         - Overwritten (Borrowing Rules)
-- Memory Layout
+- Memory Layout (4 min)
     - Local Variables on Stack
     - The Heap
-- Motivating Ownership
+- Motivating Ownership (1 min)
     - Apply Stack "Ownership" to Heap
-- Motivating Borrowing Rules
-    - Pop Goes X
-    - Push Comes to Shove
+- Motivating Borrowing Rules (2 min)
+    - Vector Pop
+    - Vector Push
 - Unveiling the Borrow Checker
-    - Permissions of Places
-    - Immutable References
+    - Permissions of Places (2 min)
+    - Immutable References (5 min)
         - Example
         - Recap
-    - Mutable References
+    - Mutable References (2 min)
         - Differences from Immutable Refs
         - [Optional] Downgrading Mutable References
         - Recap
-        - Fixing a Safe Program: Mutating Array Elements
+    - Fixing a Safe Program: Mutating Array Elements (2 min)
 - Recap
