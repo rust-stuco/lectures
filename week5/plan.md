@@ -10,8 +10,9 @@
 - Memory Layout (4 min)
     - Local Variables on Stack
     - The Heap
-- Motivating Ownership (1 min)
-    - Apply Stack "Ownership" to Heap
+- Motivating Ownership (10 min)
+    - Owner is Stack Frame
+    - Example: Moving Out of `*self`
 - Motivating Borrowing Rules (2 min)
     - Vector Pop
     - Vector Push
@@ -22,7 +23,6 @@
         - Recap
     - Mutable References (2 min)
         - Differences from Immutable Refs
-        - [Optional] Downgrading Mutable References
         - Recap
     - Fixing a Safe Program: Mutating Array Elements (2 min)
 - Recap
