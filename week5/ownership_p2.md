@@ -1151,6 +1151,16 @@ What if you, as the programmer, knew that this push doesn't resize?
 
 You can calm the compiler with a special keyword, `unsafe`
 We will talk about `unsafe` in the later weeks.
+
+```rust
+fn please_dont_move() {
+    let mut v = vec![1, 2, 3, 4];
+    let x = unsafe { v.as_ptr().add(3) }; // Get a raw pointer to the last element
+    v.push(5);
+    let x = unsafe { *x }; // Dereference the raw pointer
+    println!("{}", x);
+}
+```
 -->
 
 
@@ -1161,9 +1171,10 @@ We will talk about `unsafe` in the later weeks.
 
 > "His blade works so smoothly that the ox does not feel it." - The Dextrous Butcher
 
-* Understand the borrow checker, and you'll
-    * Fix errors with ease
-    * Craft elegant, efficient solutions
+* Understand the borrow checker, and you'll speak its language fluently:
+    * "My program is unsafe, and here's how I'll fix it"
+    * And occasionally...
+        * "My program is actually safe, let me tell you why"
 
 <!-- Work so smoothly the borrow checker does not feel it :-) -->
 
@@ -2089,13 +2100,15 @@ Alternate solution is `split_at_mut`, which uses `unsafe` under the hood
 # Recap
 
 * Ownership rules prevent access to deallocated memory
-    * "Owner" is stack frame
-    * "Owned" are variable values, allocated in stack or heap
-* Borrowing rules prevent access to overwritten memory
-    * Understand vector push and pop example
+    * Think of owner as **stack frame** instead of variable
+        * Helpful when dealing with composite data types like structs
+    * Draw stack frame diagrams: when are values copied, moved, freed?
 * Borrow checker checks **permissions** of **places**
     * References temporarily remove permissions
     * Draw RWO table to fix ownership errors
+* Sometimes, borrow checker can't know your program is safe
+    * If you conclude it's safe after reasoning about stack frames and RWO permissions...
+        * Calm the compiler with `unsafe` block
 
 ---
 
