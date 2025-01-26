@@ -1046,8 +1046,6 @@ fn x_shouldnt_exist() {
 # Vector Pop
 
 
-Thankfully, our borrowing rules prevent this
-
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
  --> src/main.rs:4:5

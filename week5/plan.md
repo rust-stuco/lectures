@@ -13,7 +13,7 @@
 - Motivating Ownership (10 min)
     - Owner is Stack Frame
     - Example: Moving Out of `*self`
-- Motivating Borrowing Rules (2 min)
+- Motivating Borrowing Rules (3 min)
     - Vector Pop
     - Vector Push
 - Unveiling the Borrow Checker
@@ -25,4 +25,4 @@
         - Differences from Immutable Refs
         - Recap
     - Fixing a Safe Program: Mutating Array Elements (2 min)
-- Recap
+- Recap (2 min)
