@@ -1145,12 +1145,14 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 * `x` would no longer point to valid memory!
 
 
-<!--
-What if you, as the programmer, knew that this push doesn't resize?
-    e.g. vector is power of 2
+---
 
-You can calm the compiler with a special keyword, `unsafe`
-We will talk about `unsafe` in the later weeks.
+
+# Vector Push: `unsafe`
+
+What if you knew that this push doesn't resize?
+
+`unsafe` block: "Trust me, I'll take care of safety in here"
 
 ```rust
 fn please_dont_move() {
@@ -1161,8 +1163,28 @@ fn please_dont_move() {
     println!("{}", x);
 }
 ```
+
+<!--
+What if you, as the programmer, knew that this push doesn't resize?
+    e.g. vector is power of 2
+
+You can calm the compiler with a special keyword, `unsafe`
+We will talk about `unsafe` in the later weeks.
+
 -->
 
+
+---
+
+
+# Vector Push: `unsafe`
+
+`unsafe` should be used sparingly, which is why...
+
+* We must understand the borrow checker!
+* How do I know if my program is unsafe?
+    * How did the borrow checker conclude this?
+* How can I tell if my program is safe, but borrow checker can't know?
 
 ---
 
