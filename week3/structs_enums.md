@@ -330,7 +330,6 @@ fn init_connor() -> Student {
 
     connor.grade = 60; // shh
     println!("{} has grade {}", connor.andrew_id, connor.grade);
-
     connor
 }
 ```
@@ -393,12 +392,12 @@ Stay tuned to find out!
 We can created named tuples called "tuple structs".
 
 ```rust
-struct Color(i32, i32, i32);
-struct Point(i32, i32, i32);
+struct Color(u8, u8, u8);
+struct Point(i32, i32);
 
 fn main() {
     let red = Color(255, 0, 0);
-    let origin = Point(0, 0, 0);
+    let origin = Point(42, 98_008);
 }
 ```
 
@@ -468,7 +467,7 @@ help: consider introducing a named lifetime parameter
 ```
 
 * We can store references in structs, but we need lifetime specifiers
-    * We will talk about these in Week 8!
+    * We will talk about lifetimes in a few weeks!
 
 
 ---
@@ -567,7 +566,7 @@ error[E0277]: `Student` doesn't implement `Debug`
    = help: the trait `Debug` is not implemented for `Student`
 ```
 
-* More on traits in Week 5!
+* More on traits in an upcoming lecture!
     * They define shared functionality and behavior between types
 
 
@@ -734,6 +733,7 @@ What would happen if we didn't borrow with `&self` and instead use `self`?
 
 ```rust
 impl Rectangle {
+    //      vvvv this isn't `&self`...
     fn area(self) -> u32 {
         self.width * self.height
     }
@@ -741,11 +741,10 @@ impl Rectangle {
 ```
 
 ```rust
-fn main() {
-    let rect = Rectangle { width: 42, height: 98 };
-    println!("Area: {}", rect.area());
-    // println!("Width: {}", rect.width); <-- Cannot do this
-}
+let rect = Rectangle { width: 42, height: 98 };
+
+println!("Area: {}", rect.area());
+// println!("Width: {}", rect.width); <-- Cannot do this
 ```
 
 * We take in `self` and "consume" it by taking ownership
@@ -823,7 +822,7 @@ p1.distance(&p2);
 
 * In C and C++, you use `.` for direct access and `->` for access through a pointer
 * Rust instead has _**automatic referencing and dereferencing**_
-* When you call `object.something()`, Rust will automatically add in the `&`, `&mut`, or `*` so that `object` matches the signature of the method
+* When you call `object.something()`, Rust will automatically add `&`, `&mut`, or `*` so that `object` matches the signature of the method
     * Makes ownership and borrowing more ergonomic
 
 
@@ -841,8 +840,8 @@ p1.distance(&p2);
 * Defines a type with multiple possible _variants_
 * Manifestation of the algebraic data type known as the "sum type"
     * Structs are "product types"
-* Sum types hold a value that takes on one of several distinct variants.
-    * Think of sum types as a value that can be of type A ___or___ B
+* Sum types hold a value that takes on one of several distinct variants
+    * Think of sum types as a value that can be of type A _**or**_ B
 
 
 ---
@@ -882,7 +881,7 @@ let six = IpAddrKind::V6;
 
 * The `::` operator represents a _namespace_
     * `V4` is in the namespace of `IpAddrKind`
-* Useful syntax, because we can see both values are of the same type: `IpAddrKind`
+* Useful syntax, because we can see both values are of the same type (`IpAddrKind`)
 
 
 ---
@@ -893,7 +892,7 @@ let six = IpAddrKind::V6;
 We can define a function that takes an `IpAddrKind`:
 
 ```rust
-fn route(ip_kind: IpAddrKind) {}
+fn route(ip_kind: IpAddrKind) { ... }
 ```
 
 And call it with any of the variants:
@@ -925,6 +924,24 @@ struct IpAddr {
 }
 ```
 
+
+---
+
+
+# Enums vs Structs
+
+```rust
+enum IpAddrKind {
+    V4, // IPv4 addresses look like `8.8.8.8`
+    V6, // IPv6 addresses look like `2001:4860:4860:0:0:0:0:8888`
+}
+
+struct IpAddr {
+    kind: IpAddrKind,
+    address: String,
+}
+```
+
 * When we have an `IpAddr` struct, we could check the `kind` field to determine how to interpret the `address` field
 
 <!--
@@ -937,7 +954,7 @@ That works for this example, but what if V4 and V6 variants require different ty
 
 # Enums Can Hold Data
 
-Instead of using structs to hold data, we can have the enums themselves hold data.
+Instead of using structs to hold data, we can have the enums _themselves_ hold data.
 
 ```rust
 enum IpAddr {
@@ -1000,6 +1017,11 @@ enum IpAddr {
     V6(Ipv6Addr),
 }
 ```
+
+<!--
+Taken straight from the standard library!
+https://doc.rust-lang.org/std/net/enum.IpAddr.html
+-->
 
 
 ---
@@ -1075,7 +1097,27 @@ m.call();
 ---
 
 
-# **The Option Type**
+# Enum Methods
+
+```rust
+impl Message {
+    fn call(&self) {
+        // <-- snip -->
+    }
+}
+
+let m = Message::Write(String::from("hello"));
+m.call();
+```
+
+* `self` holds the value of the enum
+    * Same borrowing semantics as with structs
+
+
+---
+
+
+# **The `Option` Type**
 
 
 ---
@@ -1091,13 +1133,25 @@ But I couldn’t resist the temptation to put in a null reference, simply becaus
 This has led to innumerable errors, vulnerabilities, and system crashes, which have probably caused a billion dollars of pain and damage in the last forty years.
 — Tony Hoare, "inventer of `NULL`", 2009
 
-* The issue is not the concept of `NULL`, rather its _implementation_
-* We still want a way to express that a value could be _something_ **or** _nothing_
 
 ---
 
 
-# The Option Type
+# `NULL`
+
+`NULL` is a pointer that does not point to a valid object or value.
+
+> I call it my billion-dollar mistake...
+— Tony Hoare, "inventer of `NULL`", 2009
+
+* The issue is not the concept of `NULL`, rather its _implementation_
+* We still want a way to express that a value could be _something_ **or** _nothing_
+
+
+---
+
+
+# The `Option` Type
 
 The standard library defines an enum `Option<T>`:
 
@@ -1116,7 +1170,7 @@ enum Option<T> {
 ---
 
 
-# The Option Type
+# The `Option` Type
 
 Here are some examples of `Option<T>`:
 
@@ -1531,11 +1585,10 @@ Pattern Matching is an incredibly powerful tool.
 # Homework 3
 
 * This is the first homework where you will need to actually synthesize code!
-* You have been tasked with implementing two types of Pokemon:
-    * `Charmander` struct
-    * `Eevee` struct that can evolve into `EvolvedEevee`
-        * `EvolvedEevee` is an enum representing different evolutions
-* We _highly_ recommend reading [Chapter 18](https://doc.rust-lang.org/book/ch18-00-patterns.html) of the Rust book if you have time!
+* You have been tasked with implementing a playing `Card`
+    * You will need to model the different kinds of suits and ranks
+    * Please give an honest attempt before consulting the reference solution
+    * _**DO NOT copy and paste someone else's code**_
 
 <!-- Contents of chapter 18 will not be fully covered by the course -->
 
