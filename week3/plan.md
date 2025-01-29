@@ -1,27 +1,27 @@
 ## Week 3: Structs and Enums
 
 ### Lecture
-- Ownership Review (10 min)
-- Structs (10 min)
+
+- Ownership Review (6 min)
+- Structs (14 min)
     - Creating Structs
-        - Update syntax
+    - Update syntax
     - Tuple Structs
     - Unit Structs
     - Lifetimes sneak peek
-- `impl` Structs and Methods (6 min)
+- `impl` Structs and Methods (7 min)
     - Automatic referencing and dereferencing
     - `Self` vs `&self`
     - Associated functions
-- Enum basics (24 min)
-    - Pattern Matching
+- Enum basics (23 min)
     - Option Type
-    - `if let`
+    - Pattern Matching
+    - `match` control flow
 
 ### Extra Material
+
 - Rust Book Chapters 5 and 6
 
 ### Assignment
-- `struct` problems (15-122 type problems?)
-- 15-150 type problems
-    - Book
-    - Turing machine? (something that has state)
+
+- Modeling Playing Cards

@@ -4,11 +4,11 @@
 
 -   Intro (2 min)
 -   Why Rust? (12 min)
--   Cargo Basics (5 min)
--   Variables and Mutability (7 min)
--   Data Types (5 min)
--   Functions, Statements, and Expressions (7 min)
--   Control Flow (6 min)
+-   Cargo basics (5 min)
+-   Variables and mutability (7 min)
+-   Data types (5 min)
+-   Functions, statements, and expressions (7 min)
+-   Control flow (6 min)
 -   Course logistics (6 min)
 
 ### Extra Material
