@@ -196,38 +196,18 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-What's about this code?
+What about this new code snippet?
 
 ```rust
 let mut v = vec![1, 2, 3, 4, 5];
 
+//            vvv
 let first = &v[0];
 
 v.push(6);
 
 println!("The first element is: {}", first);
 ```
-
-
----
-
-
-```
-error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> src/main.rs:6:5
-  |
-4 |     let first = &v[0];
-  |                  - immutable borrow occurs here
-5 |
-6 |     v.push(6);
-  |     ^^^^^^^^^ mutable borrow occurs here
-7 |
-8 |     println!("The first element is: {}", first);
-  |                                          ----- immutable borrow later used here
-```
-
-* You cannot mutate a vector while references to its elements exist
-* Appending might resize and reallocate the vector and change its location in memory!
 
 
 ---
@@ -260,6 +240,25 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 ---
 
 
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:4:5
+  |
+3 |     let first = &v[0];
+  |                  - immutable borrow occurs here
+4 |     v.push(6);
+  |     ^^^^^^^^^ mutable borrow occurs here
+5 |     println!("The first element is: {}", first);
+  |                                          ----- immutable borrow later used here
+```
+
+* You cannot mutate a vector while references to its elements exist
+* Appending might resize and reallocate the vector and change its location in memory!
+
+
+---
+
+
 # Iterating over a Vector
 
 To access each element in order, we can iterate through the elements with a `for` loop directly, rather than using indices.
@@ -283,7 +282,7 @@ for elem in &v { // `elem` is a reference to an i32 (&i32)
 ---
 
 
-# Mutable iteration over a Vector
+# Mutable Iteration over a Vector
 
 We can also iterate over mutable references to each element to make changes to each element.
 
@@ -308,6 +307,51 @@ println!("{:?}", v);
 Note: This doesn't allow us to remove elements from the vector, since we'd need a mutable reference to the entire vector to call the remove method.
 -->
 
+
+---
+
+
+# `Vec` and Mutation
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Say that you wanted to mutate the vector by appending a new element while you were iterating over it.
+
+```rust
+let mut v = vec![100, 32, 57];
+
+for elem in &v {
+    if *elem == 100 {
+        v.push(42);
+    }
+}
+```
+
+* What's the problem here?
+
+
+---
+
+
+# `Vec` and Mutation
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:6:13
+  |
+4 |     for elem in &v {
+  |                 --
+  |                 |
+  |                 immutable borrow occurs here
+  |                 immutable borrow later used here
+5 |         if *elem == 100 {
+6 |             v.push(42);
+  |             ^^^^^^^^^^ mutable borrow occurs here
+```
+
+* Again, you are not allowed to mutate vectors while having a reference to their elements due to potential reallocations!
+
+
 ---
 
 
@@ -325,7 +369,7 @@ for i in v {
 // println!("{:?}", v); <-- Can't do this anymore!
 ```
 
-* We'll talk more about this in week 7!
+* We'll talk more about this in a future week!
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
@@ -349,7 +393,7 @@ fn largest(list: &[i32]) -> &i32
 * The second is more general and preferred
 * We can do this because of _deref coercion_
     * This basically means you can turn a `&Vec<T>` into a `&[T]`
-* We'll talk more about this in week 9!
+* We'll talk more about this in a future week!
 
 
 ---
