@@ -1122,21 +1122,21 @@ What if we have multiple lists? We then have to do multiple searches.
 let number_list = vec![34, 50, 25, 100, 65];
 let mut largest = &number_list[0];
 for number in &number_list {
-    if number > largest {
-        largest = number;
-    }
+    if number > largest { largest = number; }
 }
 println!("The largest number is {}", largest);
 
 let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
 let mut largest = &number_list[0];
 for number in &number_list {
-    if number > largest {
-        largest = number;
-    }
+    if number > largest { largest = number; }
 }
 println!("The largest number is {}", largest); // I is good programr :D
 ```
+
+<!--
+Remember to say that this is BAD code quality :D
+-->
 
 
 ---
@@ -1147,6 +1147,7 @@ println!("The largest number is {}", largest); // I is good programr :D
 Instead, we can make a function called `largest`.
 
 ```rust
+// Assume that the `list` is non-empty :D
 fn largest(list: &[i32]) -> &i32 {
     let mut largest = &list[0];
     for item in list {
@@ -1157,13 +1158,8 @@ fn largest(list: &[i32]) -> &i32 {
     largest
 }
 
-fn main() {
-    let number_list = vec![34, 50, 25, 100, 65];
-    println!("The largest number is {}", largest(&number_list));
-
-    let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
-    println!("The largest number is {}", largest(&number_list));
-}
+let number_list = vec![34, 50, 25, 100, 65];
+println!("The largest number is {}", largest(&number_list));
 ```
 
 <!-- For now we'll ignore the fact that this requires there to be at least 1 element in the vector -->
@@ -1188,9 +1184,9 @@ fn largest_char(list: &[char]) -> &char {
 }
 ```
 
-* This is effectively the same as finding the largest number in a list
+* This is the same as finding the largest number in a list
 * We would still need to write a new function in addition to `largest`
-* Can we remove a _function_ that has been duplicated?
+* Can we deduplicate a _function_?
 
 
 ---
@@ -1207,7 +1203,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function is generic over `T`
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
-* `T` can be _any_\* type!
+* `T` can be _any_* type!
 
 
 ---
@@ -1232,6 +1228,10 @@ fn largest<Smile>(list: &[Smile]) -> &Smile
 * All of these essentially mean the same thing!
     * Last one is _frowned_ upon since it might seem like a struct or enum
 
+<!--
+There are always exceptions to the rule, especially if you have multiple generic type parameters.
+-->
+
 
 ---
 
@@ -1253,12 +1253,10 @@ fn largest<T>(list: &[T]) -> &T {
     largest
 }
 
-fn main() {
-    println!("The largest number is {}",
-             largest(&[34, 50, 25, 100, 65]));
-    println!("The largest char is {}",
-             largest(&['y', 'm', 'a', 'q']));
-}
+println!("The largest number is {}",
+            largest(&[34, 50, 25, 100, 65]));
+println!("The largest char is {}",
+            largest(&['y', 'm', 'a', 'q']));
 ```
 
 ---
@@ -1301,7 +1299,7 @@ help: consider restricting type parameter `T`
   |             ++++++++++++++++++++++
 ```
 
-* We cannot compare two `&T` to each other
+* We cannot just compare any two `&T` to each other
 * We've stated that `T` can be _any_ type, regardless of if `T` is a type that cannot actually be compared
 * Let's just follow the compiler's advice for now!
 
@@ -1339,9 +1337,7 @@ The largest char is y
 # Sneak Peek: Traits
 
 ```rust
-use std::cmp::PartialOrd;
-
-fn largest<T: PartialOrd>(list: &[T]) -> &T {
+fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
 
     for item in list {
@@ -1471,7 +1467,7 @@ enum Result<T, E> {
 ```
 
 * This enum is generic over `T` and `E`, with each stored in a variant
-* `Result<T, E>` is a very common type in the standard library that we will talk about next week!
+* `Result<T, E>` is a very common type in the standard library that we will talk about soon!
 
 
 ---
@@ -1493,10 +1489,8 @@ impl<T> Point<T> {
     }
 }
 
-fn main() {
-    let p = Point { x: 5, y: 10 };
-    println!("p.x = {}", p.x());
-}
+let p = Point { x: 5, y: 10 };
+println!("p.x = {}", p.x());
 ```
 
 
@@ -1534,6 +1528,11 @@ impl Point<f32> {
 ```
 
 * This code means that `Point<f32>` will have an additional `distance_from_origin` method on top of the methods defined for `Point<T>`
+
+<!--
+Specialization still not implemented:
+https://rust-lang.github.io/rfcs/1210-impl-specialization.html
+-->
 
 
 ---
@@ -1644,7 +1643,7 @@ fn main() {
 # Performance of Generics
 
 * The good news is that there is _zero_ overhead to using generics!
-    * The work is done at compile-time instead of runtime.
+    * The work is done at compile-time instead of runtime
 * Rust accomplishes this with _monomorphization_
 
 
@@ -1682,10 +1681,8 @@ enum Option_f64 {
     None,
 }
 
-fn main() {
-    let integer = Option_i32::Some(5);
-    let float = Option_f64::Some(5.0);
-}
+let integer = Option_i32::Some(5);
+let float = Option_f64::Some(5.0);
 ```
 
 * All extra work is performed at compile-time!
