@@ -32,7 +32,7 @@ code {
     - `Vec<T>`
     - `String`
     - `HashMap<K, V>`
-* Generic Types
+* Generics
 
 
 ---
@@ -57,6 +57,19 @@ There might be small string optimizations or small vector optimizations
 
 
 # **Vectors**
+
+
+---
+
+
+# Review: Vectors
+
+Vectors are contiguous growable array types.
+
+* Defined as `Vec<T>`
+* Short for "Vector"
+* Implemented as a dynamic array
+    * Similar to Python lists
 
 
 ---
@@ -136,12 +149,54 @@ match third {
 
 ---
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 # `Vec` and References
 
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 Recall the rules for immutable and mutable references.
 
+```rust
+let mut v = vec![1, 2, 3, 4, 5];
+
+let vec_ref = &v;
+
+v.push(6);
+
+println!("The vector is: {:?}", vec_ref);
+```
+
+* What is wrong with this code?
+
+
+---
+
+
+# `Vec` and References
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:6:5
+  |
+4 |     let vec_ref = &v;
+  |                   -- immutable borrow occurs here
+5 |
+6 |     v.push(6);
+  |     ^^^^^^^^^ mutable borrow occurs here
+7 |
+8 |     println!("The vector is: {:?}", vec_ref);
+  |                                     ------- immutable borrow later used here
+```
+
+
+---
+
+
+# `Vec` and References
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+What's about this code?
 
 ```rust
 let mut v = vec![1, 2, 3, 4, 5];
@@ -153,8 +208,26 @@ v.push(6);
 println!("The first element is: {}", first);
 ```
 
+
+---
+
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:6:5
+  |
+4 |     let first = &v[0];
+  |                  - immutable borrow occurs here
+5 |
+6 |     v.push(6);
+  |     ^^^^^^^^^ mutable borrow occurs here
+7 |
+8 |     println!("The first element is: {}", first);
+  |                                          ----- immutable borrow later used here
+```
+
 * You cannot mutate a vector while references to its elements exist
-* Appending might resize and reallocate the vector and change its location in memory
+* Appending might resize and reallocate the vector and change its location in memory!
 
 
 ---
