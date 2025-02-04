@@ -470,8 +470,8 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # What is a String?
 
-* A `String` is essentially a `Vec` of bytes interpreted as text
-* We introduced them back in week 2, but now we'll look at them in more depth
+* A `String` is a `Vec` of bytes (`u8`) interpreted as UTF-8 text
+* We've seen `String`s before, but now we'll look at them in more depth
 * New Rust programmers may be confused by:
     * `String`'s internal UTF-8 encoding
     * Rust's prevention of possible logical errors from the encoding
@@ -481,21 +481,25 @@ Like any other struct, a vector is dropped when it goes out of scope.
 ---
 
 
-# What is a String?
+# `str` vs `String`
 
-- Rust "only" has one string type in the core language, `str`
-    * We almost always see it in its borrowed form, `&str`
-    * String slices are `&str`
-    * String literals are also `&str`
-        * References data stored in the program's binary
-* `String` is a growable, mutable, owned, UTF-8 encoded string type
+Rust "only" has one string type in the core language, `str`.
+
+* We almost always see it in its borrowed form, `&str`
+* String slices are `&str`
+* String literals are _also_ `&str`
+    * They reference data stored in the program's binary
+* On the other hand, `String` is a growable, mutable, owned, UTF-8 encoded string type
 
 <!--
-a raw `str` type always has to be on the heap, behind a ref, box, rc, raw ptr, or similar.
+When we say "core" language, we mean not in the standard library.
+
+A raw `str` type always has to be on the heap, behind a ref, Box, Rc, raw ptr, or similar.
 
 Slices and literals are both actual references to existing data!
 
-Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative (std::string or Java String).
+Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative
+(std::string or Java String).
 -->
 
 
@@ -551,8 +555,8 @@ We can grow a `String` by using the `push` or `push_str` methods.
 ```rust
 let mut s = String::from("foo");
 
-s.push('b'); // push a char
-s.push_str("ar"); // push a &str
+s.push('b'); // push a `char`
+s.push_str("ar"); // push a `&str`
 
 println!("{}", s);
 ```
@@ -567,7 +571,7 @@ foobar
 
 # Updating a `String`
 
-The `push_str` method takes a string slice, because we don't want to take ownership of the string passed in.
+The `push_str` method takes a string slice because we don't want to take ownership of the string passed in.
 
 ```rust
 let mut s1 = String::from("foo");
@@ -648,7 +652,7 @@ let h = s1[0];
 ```
 
 * Accessing individual characters in a string by indexing is common in many languages
-* However, if you try to access a `String` using an index, you will get an error
+* However, if you try to access a `String` using an index, you will get an error...
 
 
 
@@ -673,7 +677,7 @@ error[E0277]: the type `String` cannot be indexed by `{integer}`
   = help: the trait `Index<{integer}>` is not implemented for `String`
 ```
 
-* Why won't Rust allow indexing `String`?
+* Why won't Rust allow indexing into `String`?
 
 
 ---
@@ -740,7 +744,7 @@ let answer = &hello[0]; // BAD!
 ```
 
 * Anything we can return here might not be an "expected" result
-* The philosophy of Rust is to not compile this code at all
+* The philosophy of Rust is to _not compile this code at all_
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
 
@@ -803,6 +807,11 @@ for c in "Пр".chars() {
 р
 ```
 
+<!--
+May want to mention this:
+Be careful when using this with `.nth()` as that is a linear time operation, not constant time!
+-->
+
 
 ---
 
@@ -862,7 +871,7 @@ The type `HashMap<K, V>` stores keys with type `K` mapped to values with type `V
 ---
 
 
-# Creating a Hash Map
+# Creating a `HashMap`
 
 We can create a new hash map with `new` and insert entries with `insert`.
 
@@ -876,7 +885,7 @@ scores.insert(String::from("Yellow"), 50);
 ```
 
 * Note that we need to import `HashMap` from the standard library's collections module with `use`
-* We'll talk more about `use` in week 6!
+* We'll talk more about `use` in an upcoming week!
 
 <!-- Mention that because Vec and String are used so frequently, they are automatically "imported" -->
 
@@ -884,7 +893,7 @@ scores.insert(String::from("Yellow"), 50);
 ---
 
 
-# Accessing Values in a Hash Map
+# Accessing Values in a `HashMap`
 
 We can use the `get` method to get the value associated with a key.
 
@@ -906,7 +915,7 @@ let score = scores.get(&team_name).unwrap_or(&0);
 ---
 
 
-# Iterating over a Hash Map
+# Iterating over a `HashMap`
 
 We can iterate over each key/value pair using a `for` loop, similar to vectors.
 
@@ -932,7 +941,7 @@ Blue: 10
 ---
 
 
-# Hash Maps and Ownership
+# `HashMap`s and Ownership
 
 Hash maps own their contained data, just like vectors.
 
@@ -943,14 +952,14 @@ let field_value = String::from("Blue");
 let mut map = HashMap::new();
 map.insert(field_name, field_value);
 
-// field_name and field_value are invalid at this point!
+// `field_name` and `field_value` are invalid at this point!
 ```
 
 
 ---
 
 
-# Updating a Hash Map
+# Updating a `HashMap`
 
 Hash maps only contain one value for each distinct key, so to update we can just insert twice.
 
@@ -973,7 +982,7 @@ println!("{:?}", scores);
 ---
 
 
-# Accessing a Hash Map with Defaults
+# Accessing a `HashMap` with Defaults
 
 * A common pattern when accessing a `HashMap` is:
     * If the key exists, we want to access the value
@@ -984,7 +993,7 @@ println!("{:?}", scores);
 ---
 
 
-# Hash Map Entries
+# `HashMap` Entries
 
 To insert a value if the key does not already exist, you can use the `Entry` API and the method `or_insert`.
 
@@ -1006,7 +1015,7 @@ println!("{:?}", scores);
 ---
 
 
-# Hash Map Entries
+# `HashMap` Entries
 
 If you want to update a value, or provide a default if it doesn't yet exist, you can do something similar:
 
@@ -1040,9 +1049,9 @@ The method `or_insert` has the following signature:
 fn or_insert(self, default: V) -> &mut V
 ```
 
-* It gives out a mutable reference
-    * That reference are guaranteed to point to valid data
-    * We need to provide a default, otherwise this data might not exist
+* Given the `Entry`, it gives out a mutable reference to the value
+    * We need to provide a default since this data might not exist yet
+    * That reference is then guaranteed to point to valid data
 * Shorter and more readable than separate conditionals
 
 <!--
