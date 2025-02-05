@@ -2,7 +2,7 @@
 marp: true
 paginate: true
 theme: rust
-# class: invert
+class: invert
 ---
 
 
@@ -32,7 +32,7 @@ code {
     - `Vec<T>`
     - `String`
     - `HashMap<K, V>`
-* Generic Types
+* Generics
 
 
 ---
@@ -57,6 +57,19 @@ There might be small string optimizations or small vector optimizations
 
 
 # **Vectors**
+
+
+---
+
+
+# Review: Vectors
+
+Vectors are contiguous growable array types.
+
+* Defined as `Vec<T>`
+* Short for "Vector"
+* Implemented as a dynamic array
+    * Similar to Python lists
 
 
 ---
@@ -109,7 +122,7 @@ let v = vec![1, 2, 3, 4, 5];
 let third_ref: &i32 = &v[2];
 println!("The third element is {}", third_ref);
 
-let third: i32 = v[2]; // This is only possible because i32 is Copy
+let third: i32 = v[2]; // This is only possible because `i32` is `Copy`
 println!("The third element is {}", third);
 ```
 
@@ -136,16 +149,59 @@ match third {
 
 ---
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
 # `Vec` and References
 
-Recall the rules for immutable and mutable references.
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
+Recall the rules for immutable and mutable references.
 
 ```rust
 let mut v = vec![1, 2, 3, 4, 5];
 
+let vec_ref = &v;
+
+v.push(6); // `push` takes a mutable reference!
+
+println!("The vector is: {:?}", vec_ref);
+```
+
+* What is wrong with this code?
+
+
+---
+
+
+# `Vec` and References
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:6:5
+  |
+4 |     let vec_ref = &v;
+  |                   -- immutable borrow occurs here
+5 |
+6 |     v.push(6);
+  |     ^^^^^^^^^ mutable borrow occurs here
+7 |
+8 |     println!("The vector is: {:?}", vec_ref);
+  |                                     ------- immutable borrow later used here
+```
+
+
+---
+
+
+# `Vec` and References
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+What about this new code snippet?
+
+```rust
+let mut v = vec![1, 2, 3, 4, 5];
+
+//            vvv
 let first = &v[0];
 
 v.push(6);
@@ -153,8 +209,10 @@ v.push(6);
 println!("The first element is: {}", first);
 ```
 
-* You cannot mutate a vector while references to its elements exist
-* Appending might resize and reallocate the vector and change its location in memory
+<!--
+Spell out the fact that we are technically no longer taking a reference to `v` but
+something _inside_ `v`.
+-->
 
 
 ---
@@ -187,6 +245,27 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 ---
 
 
+# `Vec` and References
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:4:5
+  |
+3 |     let first = &v[0];
+  |                  - immutable borrow occurs here
+4 |     v.push(6);
+  |     ^^^^^^^^^ mutable borrow occurs here
+5 |     println!("The first element is: {}", first);
+  |                                          ----- immutable borrow later used here
+```
+
+* You cannot mutate a vector while references to its elements exist
+* Appending might resize and reallocate the vector and change its location in memory!
+
+
+---
+
+
 # Iterating over a Vector
 
 To access each element in order, we can iterate through the elements with a `for` loop directly, rather than using indices.
@@ -195,7 +274,7 @@ To access each element in order, we can iterate through the elements with a `for
 ```rust
 let v = vec![100, 32, 57];
 
-for elem in &v { // `elem` is a reference to an i32 (&i32)
+for elem in &v { // `elem` is a reference to an `i32` (aka `&i32`)
     println!("{}", elem);
 }
 ```
@@ -210,14 +289,14 @@ for elem in &v { // `elem` is a reference to an i32 (&i32)
 ---
 
 
-# Mutable iteration over a Vector
+# Mutable Iteration over a Vector
 
 We can also iterate over mutable references to each element to make changes to each element.
 
 ```rust
 let mut v = vec![100, 32, 57];
 
-for elem in &mut v {  // `elem` is a mutable reference to an i32
+for elem in &mut v {  // `elem` is a mutable reference to an `i32`
     *elem += 50;
 }
 
@@ -234,6 +313,58 @@ println!("{:?}", v);
 <!--
 Note: This doesn't allow us to remove elements from the vector, since we'd need a mutable reference to the entire vector to call the remove method.
 -->
+
+
+---
+
+
+# `Vec` and Mutation
+
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
+Say that you wanted to mutate the vector by appending a new element while you were iterating over it.
+
+```rust
+let mut v = vec![100, 32, 57];
+
+for elem in &v {
+    if *elem == 100 {
+        // Insert `42` into the beginning of `v`.
+        v.insert(0, 42);
+    }
+}
+```
+
+* What's the problem here?
+
+
+---
+
+
+# `Vec` and Mutation
+
+```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:7:13
+  |
+4 |     for elem in &v {
+  |                 --
+  |                 |
+  |                 immutable borrow occurs here
+  |                 immutable borrow later used here
+...
+7 |             v.insert(0, 42);
+  |             ^^^^^^^^^^^^^^^ mutable borrow occurs here
+```
+
+* Again, you are not allowed to mutate vectors while holding a reference!
+    * There could be iteration invariants broken
+    * Reallocation is still a problem
+
+<!--
+When iterating over the vector, what is supposed to happen when all of the elements shift?
+-->
+
 
 ---
 
@@ -252,7 +383,7 @@ for i in v {
 // println!("{:?}", v); <-- Can't do this anymore!
 ```
 
-* We'll talk more about this in week 7!
+* We'll talk more about this in a future week!
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
@@ -276,7 +407,7 @@ fn largest(list: &[i32]) -> &i32
 * The second is more general and preferred
 * We can do this because of _deref coercion_
     * This basically means you can turn a `&Vec<T>` into a `&[T]`
-* We'll talk more about this in week 9!
+* We'll talk more about this in a future week!
 
 
 ---
@@ -353,8 +484,8 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 # What is a String?
 
-* A `String` is essentially a `Vec` of bytes interpreted as text
-* We introduced them back in week 2, but now we'll look at them in more depth
+* A `String` is a `Vec` of bytes (`u8`) interpreted as UTF-8 text
+* We've seen `String`s before, but now we'll look at them in more depth
 * New Rust programmers may be confused by:
     * `String`'s internal UTF-8 encoding
     * Rust's prevention of possible logical errors from the encoding
@@ -364,21 +495,25 @@ Like any other struct, a vector is dropped when it goes out of scope.
 ---
 
 
-# What is a String?
+# `str` vs `String`
 
-- Rust "only" has one string type in the core language, `str`
-    * We almost always see it in its borrowed form, `&str`
-    * String slices are `&str`
-    * String literals are also `&str`
-        * References data stored in the program's binary
-* `String` is a growable, mutable, owned, UTF-8 encoded string type
+Rust "only" has one string type in the core language, `str`.
+
+* We almost always see it in its borrowed form, `&str`
+* String slices are `&str`
+* String literals are _also_ `&str`
+    * They reference data stored in the program's binary
+* On the other hand, `String` is a growable, mutable, owned, UTF-8 encoded string type
 
 <!--
-a raw `str` type always has to be on the heap, behind a ref, box, rc, raw ptr, or similar.
+When we say "core" language, we mean not in the standard library.
+
+A raw `str` type always has to be on the heap, behind a ref, Box, Rc, raw ptr, or similar.
 
 Slices and literals are both actual references to existing data!
 
-Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative (std::string or Java String).
+Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative
+(std::string or Java String).
 -->
 
 
@@ -434,8 +569,8 @@ We can grow a `String` by using the `push` or `push_str` methods.
 ```rust
 let mut s = String::from("foo");
 
-s.push('b'); // push a char
-s.push_str("ar"); // push a &str
+s.push('b'); // push a `char`
+s.push_str("ar"); // push a `&str`
 
 println!("{}", s);
 ```
@@ -450,7 +585,7 @@ foobar
 
 # Updating a `String`
 
-The `push_str` method takes a string slice, because we don't want to take ownership of the string passed in.
+The `push_str` method takes a string slice because we don't want to take ownership of the string passed in.
 
 ```rust
 let mut s1 = String::from("foo");
@@ -477,7 +612,7 @@ You can combine two strings with `+`:
 ```rust
 let s1 = String::from("Hello, ");
 let s2 = String::from("world!");
-let s3 = s1 + &s2; // note s1 has been moved here and can no longer be used
+let s3 = s1 + &s2; // note `s1` has been moved here (can no longer be used)
 ```
 
 This is syntactic sugar for a function whose signature looks something like this:
@@ -531,7 +666,7 @@ let h = s1[0];
 ```
 
 * Accessing individual characters in a string by indexing is common in many languages
-* However, if you try to access a `String` using an index, you will get an error
+* However, if you try to access a `String` using an index, you will get an error...
 
 
 
@@ -556,7 +691,7 @@ error[E0277]: the type `String` cannot be indexed by `{integer}`
   = help: the trait `Index<{integer}>` is not implemented for `String`
 ```
 
-* Why won't Rust allow indexing `String`?
+* Why won't Rust allow indexing into `String`?
 
 
 ---
@@ -623,7 +758,7 @@ let answer = &hello[0]; // BAD!
 ```
 
 * Anything we can return here might not be an "expected" result
-* The philosophy of Rust is to not compile this code at all
+* The philosophy of Rust is to _not compile this code at all_
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
 
@@ -641,6 +776,10 @@ let hello = "Привет";
 
 let s = &hello[0..4]; // `s` == "Пр"
 ```
+
+<!--
+Make sure to note that р != p :D
+-->
 
 
 ---
@@ -685,6 +824,11 @@ for c in "Пр".chars() {
 П
 р
 ```
+
+<!--
+May want to mention this:
+Be careful when using this with `.nth()` as that is a linear time operation, not constant time!
+-->
 
 
 ---
@@ -745,7 +889,7 @@ The type `HashMap<K, V>` stores keys with type `K` mapped to values with type `V
 ---
 
 
-# Creating a Hash Map
+# Creating a `HashMap`
 
 We can create a new hash map with `new` and insert entries with `insert`.
 
@@ -759,7 +903,7 @@ scores.insert(String::from("Yellow"), 50);
 ```
 
 * Note that we need to import `HashMap` from the standard library's collections module with `use`
-* We'll talk more about `use` in week 6!
+* We'll talk more about `use` in an upcoming week!
 
 <!-- Mention that because Vec and String are used so frequently, they are automatically "imported" -->
 
@@ -767,7 +911,7 @@ scores.insert(String::from("Yellow"), 50);
 ---
 
 
-# Accessing Values in a Hash Map
+# Accessing Values in a `HashMap`
 
 We can use the `get` method to get the value associated with a key.
 
@@ -789,7 +933,7 @@ let score = scores.get(&team_name).unwrap_or(&0);
 ---
 
 
-# Iterating over a Hash Map
+# Iterating over a `HashMap`
 
 We can iterate over each key/value pair using a `for` loop, similar to vectors.
 
@@ -815,7 +959,7 @@ Blue: 10
 ---
 
 
-# Hash Maps and Ownership
+# `HashMap`s and Ownership
 
 Hash maps own their contained data, just like vectors.
 
@@ -826,14 +970,14 @@ let field_value = String::from("Blue");
 let mut map = HashMap::new();
 map.insert(field_name, field_value);
 
-// field_name and field_value are invalid at this point!
+// `field_name` and `field_value` are invalid at this point!
 ```
 
 
 ---
 
 
-# Updating a Hash Map
+# Updating a `HashMap`
 
 Hash maps only contain one value for each distinct key, so to update we can just insert twice.
 
@@ -856,7 +1000,7 @@ println!("{:?}", scores);
 ---
 
 
-# Accessing a Hash Map with Defaults
+# Accessing a `HashMap` with Defaults
 
 * A common pattern when accessing a `HashMap` is:
     * If the key exists, we want to access the value
@@ -867,7 +1011,7 @@ println!("{:?}", scores);
 ---
 
 
-# Hash Map Entries
+# `HashMap` Entries
 
 To insert a value if the key does not already exist, you can use the `Entry` API and the method `or_insert`.
 
@@ -889,7 +1033,7 @@ println!("{:?}", scores);
 ---
 
 
-# Hash Map Entries
+# `HashMap` Entries
 
 If you want to update a value, or provide a default if it doesn't yet exist, you can do something similar:
 
@@ -923,9 +1067,9 @@ The method `or_insert` has the following signature:
 fn or_insert(self, default: V) -> &mut V
 ```
 
-* It gives out a mutable reference
-    * That reference are guaranteed to point to valid data
-    * We need to provide a default, otherwise this data might not exist
+* Given the `Entry`, it gives out a mutable reference to the value
+    * We need to provide a default since this data might not exist yet
+    * That reference is then guaranteed to point to valid data
 * Shorter and more readable than separate conditionals
 
 <!--
@@ -996,21 +1140,21 @@ What if we have multiple lists? We then have to do multiple searches.
 let number_list = vec![34, 50, 25, 100, 65];
 let mut largest = &number_list[0];
 for number in &number_list {
-    if number > largest {
-        largest = number;
-    }
+    if number > largest { largest = number; }
 }
 println!("The largest number is {}", largest);
 
 let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
 let mut largest = &number_list[0];
 for number in &number_list {
-    if number > largest {
-        largest = number;
-    }
+    if number > largest { largest = number; }
 }
 println!("The largest number is {}", largest); // I is good programr :D
 ```
+
+<!--
+Remember to say that this is BAD code quality :D
+-->
 
 
 ---
@@ -1021,6 +1165,7 @@ println!("The largest number is {}", largest); // I is good programr :D
 Instead, we can make a function called `largest`.
 
 ```rust
+// Assume that the `list` is non-empty :D
 fn largest(list: &[i32]) -> &i32 {
     let mut largest = &list[0];
     for item in list {
@@ -1031,13 +1176,8 @@ fn largest(list: &[i32]) -> &i32 {
     largest
 }
 
-fn main() {
-    let number_list = vec![34, 50, 25, 100, 65];
-    println!("The largest number is {}", largest(&number_list));
-
-    let number_list = vec![102, 34, 6000, 89, 54, 2, 43, 8];
-    println!("The largest number is {}", largest(&number_list));
-}
+let number_list = vec![34, 50, 25, 100, 65];
+println!("The largest number is {}", largest(&number_list));
 ```
 
 <!-- For now we'll ignore the fact that this requires there to be at least 1 element in the vector -->
@@ -1062,9 +1202,9 @@ fn largest_char(list: &[char]) -> &char {
 }
 ```
 
-* This is effectively the same as finding the largest number in a list
+* This is the same as finding the largest number in a list
 * We would still need to write a new function in addition to `largest`
-* Can we remove a _function_ that has been duplicated?
+* Can we deduplicate a _function_?
 
 
 ---
@@ -1081,7 +1221,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function is generic over `T`
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
-* `T` can be _any_\* type!
+* `T` can be _any_* type!
 
 
 ---
@@ -1104,7 +1244,12 @@ fn largest<Smile>(list: &[Smile]) -> &Smile
 ```
 
 * All of these essentially mean the same thing!
-    * Last one is _frowned_ upon since it might seem like a struct or enum
+
+<!--
+Last one is _frowned_ upon since it might seem like a struct or enum
+
+There are always exceptions to the rule, especially if you have multiple generic type parameters.
+-->
 
 
 ---
@@ -1127,12 +1272,10 @@ fn largest<T>(list: &[T]) -> &T {
     largest
 }
 
-fn main() {
-    println!("The largest number is {}",
-             largest(&[34, 50, 25, 100, 65]));
-    println!("The largest char is {}",
-             largest(&['y', 'm', 'a', 'q']));
-}
+println!("The largest number is {}",
+            largest(&[34, 50, 25, 100, 65]));
+println!("The largest char is {}",
+            largest(&['y', 'm', 'a', 'q']));
 ```
 
 ---
@@ -1175,7 +1318,7 @@ help: consider restricting type parameter `T`
   |             ++++++++++++++++++++++
 ```
 
-* We cannot compare two `&T` to each other
+* We cannot just compare any two `&T` to each other
 * We've stated that `T` can be _any_ type, regardless of if `T` is a type that cannot actually be compared
 * Let's just follow the compiler's advice for now!
 
@@ -1190,13 +1333,11 @@ Once we make that change, this works!
 ```rust
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
-
     for item in list {
         if item > largest {
             largest = item;
         }
     }
-
     largest
 }
 ```
@@ -1213,17 +1354,13 @@ The largest char is y
 # Sneak Peek: Traits
 
 ```rust
-use std::cmp::PartialOrd;
-
-fn largest<T: PartialOrd>(list: &[T]) -> &T {
+fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
-
     for item in list {
         if item > largest {
             largest = item;
         }
     }
-
     largest
 }
 ```
@@ -1345,7 +1482,7 @@ enum Result<T, E> {
 ```
 
 * This enum is generic over `T` and `E`, with each stored in a variant
-* `Result<T, E>` is a very common type in the standard library that we will talk about next week!
+* `Result<T, E>` is a very common type in the standard library that we will talk about soon!
 
 
 ---
@@ -1367,10 +1504,8 @@ impl<T> Point<T> {
     }
 }
 
-fn main() {
-    let p = Point { x: 5, y: 10 };
-    println!("p.x = {}", p.x());
-}
+let p = Point { x: 5, y: 10 };
+println!("p.x = {}", p.x());
 ```
 
 
@@ -1408,6 +1543,11 @@ impl Point<f32> {
 ```
 
 * This code means that `Point<f32>` will have an additional `distance_from_origin` method on top of the methods defined for `Point<T>`
+
+<!--
+Specialization still not implemented:
+https://rust-lang.github.io/rfcs/1210-impl-specialization.html
+-->
 
 
 ---
@@ -1517,8 +1657,8 @@ fn main() {
 
 # Performance of Generics
 
-* The good news is that there is _zero_ overhead to using generics!
-    * The work is done at compile-time instead of runtime.
+* The good news is that there is _zero_ runtime overhead to using generics!
+    * The work is done at compile-time instead of runtime
 * Rust accomplishes this with _monomorphization_
 
 
@@ -1535,7 +1675,7 @@ let float = Some(5.0);
 ```
 
 * The compiler will identify which types `T` can take on by find all instances of `Option<T>`, in this case `i32` and `f64`
-* It creates monomorphized versions of `Option` specific to those types
+* It creates _monomorphized_ versions of `Option` specific to those types
 
 
 ---
@@ -1556,10 +1696,8 @@ enum Option_f64 {
     None,
 }
 
-fn main() {
-    let integer = Option_i32::Some(5);
-    let float = Option_f64::Some(5.0);
-}
+let integer = Option_i32::Some(5);
+let float = Option_f64::Some(5.0);
 ```
 
 * All extra work is performed at compile-time!
@@ -1581,9 +1719,9 @@ fn main() {
 
 * You'll be implementing two collection data structures:
     * `MultiSet`
-        - A collection that stores unordered values and tracks multiplicity
+        * A collection that stores unordered values and tracks multiplicity
     * `MultiMap`
-        - A collection that maps keys to any number of values
+        * A collection that maps keys to any number of values
 * Make sure you are familiar with the API for [`HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html) and [`Entry`](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)!
 
 
