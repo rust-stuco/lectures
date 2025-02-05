@@ -612,7 +612,7 @@ You can combine two strings with `+`:
 ```rust
 let s1 = String::from("Hello, ");
 let s2 = String::from("world!");
-let s3 = s1 + &s2; // note s1 has been moved here and can no longer be used
+let s3 = s1 + &s2; // note `s1` has been moved here (can no longer be used)
 ```
 
 This is syntactic sugar for a function whose signature looks something like this:
@@ -776,6 +776,10 @@ let hello = "Привет";
 
 let s = &hello[0..4]; // `s` == "Пр"
 ```
+
+<!--
+Make sure to note that р != p :D
+-->
 
 
 ---
@@ -1240,9 +1244,10 @@ fn largest<Smile>(list: &[Smile]) -> &Smile
 ```
 
 * All of these essentially mean the same thing!
-    * Last one is _frowned_ upon since it might seem like a struct or enum
 
 <!--
+Last one is _frowned_ upon since it might seem like a struct or enum
+
 There are always exceptions to the rule, especially if you have multiple generic type parameters.
 -->
 
@@ -1328,13 +1333,11 @@ Once we make that change, this works!
 ```rust
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
-
     for item in list {
         if item > largest {
             largest = item;
         }
     }
-
     largest
 }
 ```
@@ -1353,13 +1356,11 @@ The largest char is y
 ```rust
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
-
     for item in list {
         if item > largest {
             largest = item;
         }
     }
-
     largest
 }
 ```
@@ -1656,7 +1657,7 @@ fn main() {
 
 # Performance of Generics
 
-* The good news is that there is _zero_ overhead to using generics!
+* The good news is that there is _zero_ runtime overhead to using generics!
     * The work is done at compile-time instead of runtime
 * Rust accomplishes this with _monomorphization_
 
@@ -1674,7 +1675,7 @@ let float = Some(5.0);
 ```
 
 * The compiler will identify which types `T` can take on by find all instances of `Option<T>`, in this case `i32` and `f64`
-* It creates monomorphized versions of `Option` specific to those types
+* It creates _monomorphized_ versions of `Option` specific to those types
 
 
 ---
@@ -1718,9 +1719,9 @@ let float = Option_f64::Some(5.0);
 
 * You'll be implementing two collection data structures:
     * `MultiSet`
-        - A collection that stores unordered values and tracks multiplicity
+        * A collection that stores unordered values and tracks multiplicity
     * `MultiMap`
-        - A collection that maps keys to any number of values
+        * A collection that maps keys to any number of values
 * Make sure you are familiar with the API for [`HashMap`](https://doc.rust-lang.org/std/collections/struct.HashMap.html) and [`Entry`](https://doc.rust-lang.org/std/collections/hash_map/enum.Entry.html)!
 
 
