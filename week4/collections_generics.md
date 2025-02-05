@@ -122,7 +122,7 @@ let v = vec![1, 2, 3, 4, 5];
 let third_ref: &i32 = &v[2];
 println!("The third element is {}", third_ref);
 
-let third: i32 = v[2]; // This is only possible because i32 is Copy
+let third: i32 = v[2]; // This is only possible because `i32` is `Copy`
 println!("The third element is {}", third);
 ```
 
@@ -161,7 +161,7 @@ let mut v = vec![1, 2, 3, 4, 5];
 
 let vec_ref = &v;
 
-v.push(6);
+v.push(6); // `push` takes a mutable reference!
 
 println!("The vector is: {:?}", vec_ref);
 ```
@@ -209,6 +209,11 @@ v.push(6);
 println!("The first element is: {}", first);
 ```
 
+<!--
+Spell out the fact that we are technically no longer taking a reference to `v` but
+something _inside_ `v`.
+-->
+
 
 ---
 
@@ -240,6 +245,8 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 ---
 
 
+# `Vec` and References
+
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
  --> src/main.rs:4:5
@@ -267,7 +274,7 @@ To access each element in order, we can iterate through the elements with a `for
 ```rust
 let v = vec![100, 32, 57];
 
-for elem in &v { // `elem` is a reference to an i32 (&i32)
+for elem in &v { // `elem` is a reference to an `i32` (aka `&i32`)
     println!("{}", elem);
 }
 ```
@@ -289,7 +296,7 @@ We can also iterate over mutable references to each element to make changes to e
 ```rust
 let mut v = vec![100, 32, 57];
 
-for elem in &mut v {  // `elem` is a mutable reference to an i32
+for elem in &mut v {  // `elem` is a mutable reference to an `i32`
     *elem += 50;
 }
 
@@ -322,7 +329,8 @@ let mut v = vec![100, 32, 57];
 
 for elem in &v {
     if *elem == 100 {
-        v.push(42);
+        // Insert `42` into the beginning of `v`.
+        v.insert(0, 42);
     }
 }
 ```
@@ -337,19 +345,25 @@ for elem in &v {
 
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> src/main.rs:6:13
+ --> src/main.rs:7:13
   |
 4 |     for elem in &v {
   |                 --
   |                 |
   |                 immutable borrow occurs here
   |                 immutable borrow later used here
-5 |         if *elem == 100 {
-6 |             v.push(42);
-  |             ^^^^^^^^^^ mutable borrow occurs here
+...
+7 |             v.insert(0, 42);
+  |             ^^^^^^^^^^^^^^^ mutable borrow occurs here
 ```
 
-* Again, you are not allowed to mutate vectors while having a reference to their elements due to potential reallocations!
+* Again, you are not allowed to mutate vectors while holding a reference!
+    * There could be iteration invariants broken
+    * Reallocation is still a problem
+
+<!--
+When iterating over the vector, what is supposed to happen when all of the elements shift?
+-->
 
 
 ---
