@@ -50,7 +50,7 @@ However, what if we hand over some of this control? What if, say, we give the us
 
 That's where the problem comes in.
 
-## WIP
+## Heap Overview
 
 To understand why this is a problem, we must understand the heap allocator. This will just be a high level overview:
 
