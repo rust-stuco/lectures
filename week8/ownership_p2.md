@@ -108,7 +108,7 @@ What is safety?
 
 However, undefined behavior can mean many things.
 
-![list](../images/week5/rust-undefined-list-crop.png)
+![list](../images/week8/rust-undefined-list-crop.png)
 
 Definition in Rust Reference prints on five sheets...
 
@@ -179,7 +179,7 @@ The stack frame:
 
 # Local Variables
 
-![bg right 50%](../images/week5/frames/0.png)
+![bg right 50%](../images/week8/frames/0.png)
 
 Here is a representation of `main`'s stack frame.
 
@@ -195,7 +195,7 @@ fn main() {
 
 # Local Variables
 
-![bg right 50%](../images/week5/frames/2.png)
+![bg right 50%](../images/week8/frames/2.png)
 
 Now we call `my_function`, constructing its stack frame.
 
@@ -223,7 +223,7 @@ Emphasize the copying of `x`
 
 # Local Variables
 
-![bg right 50%](../images/week5/frames/0.png)
+![bg right 50%](../images/week8/frames/0.png)
 
 Finally, we return from `my_function`, deallocating its stack frame.
 
@@ -240,7 +240,7 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 50%](../images/week5/frames/0.png)
+![bg right 50%](../images/week8/frames/0.png)
 
 What if instead of an integer on the stack (`x = 1`)...
 
@@ -256,7 +256,7 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](../images/week5/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/3-crop.png)
 
 We have a 15GB vector?
 
@@ -267,14 +267,14 @@ fn main() {
 }
 ```
 
-* 15GB = your Google Drive storage ![alt text](../images/week5/google-storage.png)
+* 15GB = your Google Drive storage ![alt text](../images/week8/google-storage.png)
 
 ---
 
 
 # Motivating the Heap
 
-![bg right 100%](../images/week5/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/3-crop.png)
 
 When we call `my_function`...
 
@@ -295,7 +295,7 @@ fn my_function(arg : Vec<u32>) {
 
 # Motivating the Heap
 
-![bg right 100%](../images/week5/frames/4-crop.png)
+![bg right 100%](../images/week8/frames/4-crop.png)
 
 When we call `my_function`...
 
@@ -365,7 +365,7 @@ Our vector is **dynamically-sized**, **long-lived** data.
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/3-crop.png)
 
 Fortunately, our `Vec` does not live in the stack.
 
@@ -375,7 +375,7 @@ Fortunately, our `Vec` does not live in the stack.
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/5-crop.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 Fortunately, our `Vector` does not live in the stack.
 
@@ -387,7 +387,7 @@ It lives in the **heap**.
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/5a.png)
+![bg right 100%](../images/week8/frames/5a.png)
 
 Value lives in the heap...
 
@@ -397,7 +397,7 @@ Value lives in the heap...
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/5b.png)
+![bg right 100%](../images/week8/frames/5b.png)
 
 Value lives in the heap...
 
@@ -409,7 +409,7 @@ Value lives in the heap...
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/5-crop.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 When we call `my_function`...
 
@@ -430,7 +430,7 @@ fn my_function(arg : Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/7-crop.png)
 
 We can copy the pointer `x` into `arg`.
 
@@ -451,7 +451,7 @@ fn my_function(arg : &Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](../images/week5/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/7-crop.png)
 
 Much better!
 
@@ -481,8 +481,8 @@ fn main() {
 
 # Recap
 
-![bg vertical 30%](../images/week5/frames/0.png)
-![bg right 100%](../images/week5/frames/5-crop.png)
+![bg vertical 30%](../images/week8/frames/0.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 
 Variable placement:
@@ -537,7 +537,7 @@ How can we be confident that heap memory is deallocated safely?
 
 # Motivating Ownership
 
-![bg right 50%](../images/week5/frames/0.png)
+![bg right 50%](../images/week8/frames/0.png)
 
 Inspired by the stack
 * Local variable lives in function's **stack frame**
@@ -550,7 +550,7 @@ Inspired by the stack
 
 # Motivating Ownership
 
-![bg right 50%](../images/week5/frames/0.png)
+![bg right 50%](../images/week8/frames/0.png)
 
 Sound familiar?
 - Local variable "owned by" stack frame
@@ -581,7 +581,7 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-![bg right 100%](../images/week5/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/7-crop.png)
 
 * Each value in Rust has an _owner_
     * Owner is stack frame
