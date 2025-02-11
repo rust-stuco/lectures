@@ -194,7 +194,7 @@ fn main() {
 
 # Local Variables
 
-![bg right 50%](../images/week8/frames/2.png)
+![bg right 50%](../images/week8/frames/1.png)
 
 Now we call `my_function`, constructing its stack frame.
 
@@ -255,7 +255,7 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](../images/week8/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/2-crop.png)
 
 We have a 15 GB vector?
 
@@ -266,14 +266,14 @@ fn main() {
 }
 ```
 
-* 15GB = your Google Drive storage ![alt text](../images/week8/google-storage.png)
+* 15 GB = your Google Drive storage ![alt text](../images/week8/google-storage.png)
 
 ---
 
 
 # Motivating the Heap
 
-![bg right 100%](../images/week8/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/2-crop.png)
 
 When we call `my_function`...
 
@@ -294,7 +294,7 @@ fn my_function(arg : Vec<u32>) {
 
 # Motivating the Heap
 
-![bg right 100%](../images/week8/frames/4-crop.png)
+![bg right 100%](../images/week8/frames/3-crop.png)
 
 When we call `my_function`...
 
@@ -310,7 +310,7 @@ fn my_function(arg : Vec<u32>) {
 ```
 
 We must allocate `arg` for its stack frame!
-* Copy 15GB of `0xdeadbeef`'s
+* Copy 15 GB of `0xdeadbeef`'s
 
 ---
 
@@ -364,7 +364,7 @@ Our vector is **dynamically-sized**, **long-lived** data.
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/3-crop.png)
+![bg right 100%](../images/week8/frames/2-crop.png)
 
 Fortunately, our `Vec` does not live in the stack.
 
@@ -374,7 +374,7 @@ Fortunately, our `Vec` does not live in the stack.
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5-crop.png)
+![bg right 100%](../images/week8/frames/4-crop.png)
 
 Fortunately, our `Vector` does not live in the stack.
 
@@ -386,7 +386,7 @@ It lives in the **heap**.
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5a.png)
+![bg right 100%](../images/week8/frames/4a.png)
 
 Value lives in the heap...
 
@@ -396,7 +396,7 @@ Value lives in the heap...
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5b.png)
+![bg right 100%](../images/week8/frames/4b.png)
 
 Value lives in the heap...
 
@@ -408,7 +408,7 @@ Value lives in the heap...
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5-crop.png)
+![bg right 100%](../images/week8/frames/4-crop.png)
 
 When we call `my_function`...
 
@@ -429,7 +429,7 @@ fn my_function(arg : Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 We can copy the pointer `x` into `arg`.
 
@@ -450,11 +450,11 @@ fn my_function(arg : &Vec<u32>) {
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 Much better!
 
-**Before:** 15GB per vector
+**Before:** 15 GB per vector
 
 **After:** 8 bytes per pointer
 
@@ -481,7 +481,7 @@ fn main() {
 # Recap
 
 ![bg vertical 30%](../images/week8/frames/0.png)
-![bg right 100%](../images/week8/frames/5-crop.png)
+![bg right 100%](../images/week8/frames/4-crop.png)
 
 
 Variable placement:
@@ -594,7 +594,7 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-![bg right 100%](../images/week8/frames/7-crop.png)
+![bg right 100%](../images/week8/frames/5-crop.png)
 
 * Note the ownership transfer:
     * Original `v` is invalidated (grayed out)
