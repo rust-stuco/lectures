@@ -24,9 +24,8 @@ paginate: true
 
 Today, we'll provide another way of thinking about ownership:
 
-* Our goal
-    * Not just avoiding compile errors, but uncovering how the borrow checker works
-    * Write safer code, unblock the borrow checker
+* Not just avoiding compile errors, but uncovering how the borrow checker works
+* Write safer code, unblock the borrow checker
 
 
 ---
@@ -257,12 +256,12 @@ fn main() {
 
 ![bg right 100%](../images/week8/frames/2-crop.png)
 
-We have a 15 GB vector?
+We have a 15 GB array?
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(v);
+    let beef = [0xdeadbeef; 4_000_000];
+    my_function(beef);
 }
 ```
 
@@ -279,8 +278,8 @@ When we call `my_function`...
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(v);
+    let beef = [0xdeadbeef; 4_000_000];
+    my_function(beef);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -300,8 +299,8 @@ When we call `my_function`...
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(v);
+    let beef = [0xdeadbeef; 4_000_000];
+    my_function(beef);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -319,17 +318,17 @@ We must allocate `arg` for its stack frame!
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
-    my_function(v);
+    let beef = [0xdeadbeef; 4_000_000];
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
 }
 ```
 
@@ -349,14 +348,10 @@ What if we resize our vector?
 
 # Motivating the Heap
 
-Our vector is **dynamically-sized**, **long-lived** data.
+Our array is **long-lived** data.
 
-* Dynamically-sized ⇒ resized regularly
-    * But stack is contiguous, difficult to accomodate resizing
 * Long-lived ⇒ persists across function calls
     * Lots of copying on stack
-
-<!-- These two qualities don't play well with the stack -->
 
 
 ---
@@ -366,7 +361,7 @@ Our vector is **dynamically-sized**, **long-lived** data.
 
 ![bg right 100%](../images/week8/frames/2-crop.png)
 
-Fortunately, our `Vec` does not live in the stack.
+Instead of storing our array buffer on the stack...
 
 
 ---
@@ -376,9 +371,9 @@ Fortunately, our `Vec` does not live in the stack.
 
 ![bg right 100%](../images/week8/frames/4-crop.png)
 
-Fortunately, our `Vector` does not live in the stack.
+Instead of storing our array buffer on the stack...
 
-It lives in the **heap**.
+Let's put it on the **heap**.
 
 
 ---
@@ -400,8 +395,24 @@ Value lives in the heap...
 
 Value lives in the heap...
 
-**Pointer** lives in the stack.
+**Pointer** lives on the stack.
 
+
+---
+
+
+# The `Box<T>`
+
+The simplest form of heap allocation is `Box<T>`.
+
+Moving a value from stack to heap:
+```rust
+let val: u8 = 5;
+let boxed: Box<u8> = Box::new(val);
+```
+
+* Can access value by dereferencing box as `*boxed`
+* Value is automatically dropped when `boxed` goes out of scope
 
 ---
 
@@ -414,8 +425,8 @@ When we call `my_function`...
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(v);
+    let beef = Box::new([0xdeadbeef; 4_000_000]);
+    my_function(beef);
 }
 
 fn my_function(arg : Vec<u32>) {
@@ -431,12 +442,12 @@ fn my_function(arg : Vec<u32>) {
 
 ![bg right 100%](../images/week8/frames/5-crop.png)
 
-We can copy the pointer `x` into `arg`.
+We can copy the pointer into `arg`.
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(&v);
+    let beef = Box::new([0xdeadbeef; 4_000_000]);
+    my_function(beef);
 }
 
 fn my_function(arg : &Vec<u32>) {
@@ -460,17 +471,17 @@ Much better!
 
 ```rust
 fn main() {
-    let v = vec![0xdeadbeef; 4_000_000];
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
-    my_function(x);
+    let beef = Box::new([0xdeadbeef; 4_000_000]);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
+    my_function(beef);
 }
 ```
 
