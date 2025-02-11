@@ -675,10 +675,11 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 Instead of removing the last element...
 
 ```rust
-fn please_dont_move() {
+fn x_shouldnt_exist() {
     let mut v = vec![1, 2, 3, 4];
     let x = &v[3];
-    v.pop(); // Remove last element in `v`
+    v.pop(); // Removes last element in `v`
+    println!("{}", x); // What is `x`?
 }
 ```
 
@@ -697,27 +698,11 @@ fn please_dont_move() {
     let mut v = vec![1, 2, 3, 4];
     let x = &v[3];
     v.push(5); // Add an element to the end of `v`
-}
-```
-
-
----
-
-
-# Vector Push
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-Surely nothing will happen to `x` this time?
-
-```rust
-fn please_dont_move() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-    v.push(5); // Add an element to the end of `v`
     println!("{}", x); // What is `x`?
 }
 ```
+
+* Surely nothing will happen to `x` this time?
 
 <!--Speaker note: Ask audience!! -->
 
