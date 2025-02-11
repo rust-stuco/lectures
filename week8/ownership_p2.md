@@ -626,60 +626,7 @@ Recall that accessing **overwritten** memory is unsafe.
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Suppose we have a `Vector` like this:
-
-```rust
-fn x_shouldnt_exist() {
-    let mut v = vec![1, 2, 3, 4];
-}
-```
-
-<!--
-This is review problem 3 from Lecture 3, animated out
--->
-
-
----
-
-
-# Vector Pop
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-We take a reference `x` to its last element...
-
-```rust
-fn x_shouldnt_exist() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-}
-```
-
-
----
-
-
-# Vector Pop
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-We take a reference `x` to its last element, remove the last element...
-
-```rust
-fn x_shouldnt_exist() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-    v.pop(); // Removes last element in `v`
-}
-```
-
-
----
-
-
-# Vector Pop
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+Suppose we have a `Vector` like this.
 
 We take a reference `x` to its last element, remove the last element, and print `x`.
 
