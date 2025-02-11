@@ -20,13 +20,12 @@ paginate: true
 ---
 
 
-# Today
+# Ownership Revisited
 
 Today, we'll provide another way of thinking about ownership:
 
-* Our goal: Transform ownership from a mysterious ruleset into an elegant problem-solving technique
-    * Not just avoiding compile errors
-    * Uncovering how the borrow checker works
+* Our goal
+    * Not just avoiding compile errors, but uncovering how the borrow checker works
     * Write safer code, unblock the borrow checker
 
 
@@ -65,10 +64,10 @@ At the beginning of this course, we learned the Commandments of Rust...
 
 # The Catch
 
-Getting code to compile is one thing. Understanding why is another.
+Getting code to compile is one thing. Understanding why is another...
 
 * Sometimes we follow the rules blindly
-    * Missing the principles, repeating mistakes
+    * When we break the rules, we may not fully understand why it is a problem
 * The compiler can be overly cautious
     * Rejects code that seems safe
     * Makes us prove safety, even when we "know" it's safe
@@ -258,7 +257,7 @@ fn main() {
 
 ![bg right 100%](../images/week8/frames/3-crop.png)
 
-We have a 15GB vector?
+We have a 15 GB vector?
 
 ```rust
 fn main() {
@@ -539,10 +538,11 @@ How can we be confident that heap memory is deallocated safely?
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-Inspired by the stack
+Inspired by the stack:
 * Local variable lives in function's **stack frame**
 * Allocated on function call
 * Deallocated on function return
+    * Sound familiar?
 
 
 ---
@@ -552,7 +552,7 @@ Inspired by the stack
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-Sound familiar?
+Inspired by the stack:
 - Local variable "owned by" stack frame
 - One stack frame (owner) per variable
 - Dropped on function return
@@ -581,8 +581,6 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-![bg right 100%](../images/week8/frames/7-crop.png)
-
 * Each value in Rust has an _owner_
     * Owner is stack frame
 * A value can only have one owner at a time
@@ -590,11 +588,18 @@ Now we impose the following rules:
     * Deallocate the value here
     * Safe because only one owner
 
-<!--Speaker note:
-    One owner at a time
-    Emphasize that v is grayed out in diagram
-        => ownership transfer
--->
+
+---
+
+
+# Rules of Ownership
+
+![bg right 100%](../images/week8/frames/7-crop.png)
+
+* Note the ownership transfer:
+    * Original `v` is invalidated (grayed out)
+    * New stack frame becomes owner
+* Value will be dropped when *current* owner exits scope
 
 
 ---
