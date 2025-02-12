@@ -33,6 +33,7 @@ code {
 * Error Handling
 * The Never Type
 * Traits
+* Derived Traits
 
 
 ---
@@ -102,7 +103,7 @@ struct ArrayPair<T, const N: usize> {
 }
 ```
 
-* Const Generics allow items to be generic over constant values
+* Const generics allow items to be generic over constant values
 
 
 ---
@@ -118,14 +119,12 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 
-fn main() {
-    let pair = ArrayPair::<i32, 5> {
-        left: [0; 5],
-        right: [1; 5],
-    };
+let pair = ArrayPair::<i32, 5> {
+    left: [0; 5],
+    right: [1; 5],
+};
 
-    println!("{:?}, {:?}", pair.left, pair.right);
-}
+println!("{:?}, {:?}", pair.left, pair.right);
 ```
 
 ```
@@ -220,6 +219,7 @@ This is an unresolved question in the RFC, but basically we don't know what M or
 
 ---
 
+
 # Const Generic Design Patterns
 
 ```rust
@@ -233,8 +233,8 @@ fn alternating<const ODD: bool>(nums: &[usize]) {
 }
 ```
 
-* Const Generics allow for multiple compilations of the same function with slightly different behavior
-* Const Generics representing "optional flags" is a common pattern
+* Const generics allow for multiple compilations of the same function with slightly different behavior
+* Const generics representing "optional flags" is a common pattern
 
 
 ---
@@ -282,6 +282,8 @@ In Rust there are **two** main types of errors we care about: _recoverable_ and 
 * `panic!`
     * A macro (_notice the `!`_) to invoke unrecoverable errors
 
+<!-- Make sure to note ferris panicking! -->
+
 
 ---
 
@@ -297,7 +299,7 @@ enum Result<T, E> {
 }
 ```
 
-* Notice how the "success" does _not_ have to have the same type as the "error"
+* Notice how `Ok` does _not_ have to be the same type as `Err`
 
 
 ---
@@ -305,17 +307,24 @@ enum Result<T, E> {
 
 # `unwrap()`
 
+`unwrap` is a very common method used on `Result` (and `Option`).
+
 ```rust
 pub const fn unwrap(self) -> T {
     match self {
         Ok(val) => val,
-        Err => panic!("called `Option::unwrap()` on a `Err` value"),
+        Err => panic!("called `Result::unwrap()` on an `Err` value"),
     }
 }
 ```
 
-* Takes an enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
+* *Unwraps* the `Result` (or `Option`) to reveal the inner value
 * It should only be used when you expect an inner value, otherwise it will panic
+
+<!--
+Not exactly the same as the real standard library version:
+https://doc.rust-lang.org/src/core/result.rs.html#1098-1100
+-->
 
 
 ---
@@ -354,7 +363,7 @@ called `Result::unwrap()` on an `Err` value:
     Os { code: 2, kind: NotFound, message: "No such file or directory" }
 ```
 
-* This error message isn't the best...
+* The error message isn't great, but it's also not terrible...
 
 
 ---
@@ -367,7 +376,7 @@ We can do better than this if we *expect* this error and know what message to pr
 ```rust
 fn main() {
     let greeting_file = File::open("hello.txt")
-        .expect("'hello.txt' should be included in this project");
+        .expect("Was unable to find 'hello.txt'");
 }
 ```
 
@@ -375,7 +384,7 @@ Now we get:
 
 ```
 thread 'main' panicked at src/main.rs:5:33:
-'hello.txt' should be included in this project:
+Was unable to find 'hello.txt':
     Os { code: 2, kind: NotFound, message: "No such file or directory" }
 ```
 
@@ -405,10 +414,10 @@ There are other useful macros that panic:
 * `unimplemented!` / `todo!`
     * Usually used while something is in progress
 * `unreachable!`
-    * Can potentially* help the compiler optimize a code segment away
+    * Used to indicate an impossible case
 
 <!--
-`unreachable` probably won't help in optimization, but it might
+`unreachable` won't actually help in optimization, unless you use the `unsafe` variant.
 -->
 
 
@@ -417,7 +426,7 @@ There are other useful macros that panic:
 
 # Using Results 1
 
-If we want recoverable errors, we can use `Result`s.
+If we want recoverable errors, we can use `Result`s without `unwrap`s.
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
@@ -438,14 +447,13 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 
 # Using Results 2
 
-`Result<T, E>` is generic, so we can create our own failure/error types!
+Since `Result<T, E>` is fully generic, we can create our own failure / error types!
 
 ```rust
 enum ArithError {
     DivideByZero,
     IllegalShift(i32),
 }
-
 fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     if shift <= 0 {
         Err(ArithError::IllegalShift(shift))
@@ -466,7 +474,7 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
 # The `?` Operator
 
 
-To make error handling more ergonomic, Rust provides the `?` operator.
+To make error handling more ergonomic, Rust provides the `?` (try) operator.
 
 ```rust
 let x = potential_fail()?;
@@ -479,7 +487,7 @@ let x = match potential_fail() {
 
 * If `potential_fail` returns an `Err`, return early
 * Else we can unwrap the inner value and continue
-* Think of the `?` as quick way to see where a function short-circuit returns on failure
+* Think of the `?` as a short-circuit that returns on failure
 
 
 ---
@@ -488,12 +496,10 @@ let x = match potential_fail() {
 # The `?` Operator Example
 
 ```rust
-use std::num::ParseIntError; // A built-in error type
-
 fn multiply(
     first_number_str: &str,
     second_number_str: &str,
-) -> Result<i32, ParseIntError> {
+) -> Result<i32, std::num::ParseIntError> {
 
     let first_number = first_number_str.parse::<i32>()?;
     let second_number = second_number_str.parse::<i32>()?;
@@ -506,8 +512,11 @@ fn multiply(
 * Otherwise, we store the parsed values
 
 <!--
-Bad formatting to fit on slide better
+Make sure to point out that `ParseIntError` is a built-in error type
+
+(Bad formatting to fit on slide better)
 -->
+
 
 ---
 
@@ -517,17 +526,15 @@ Bad formatting to fit on slide better
 If `parse` fails, we will get the `parse` function's `Err` values as expected.
 
 ```rust
-fn print(result: Result<i32, ParseIntError>) {
+fn print(result: Result<i32, std::num::ParseIntError>) {
     match result {
         Ok(n)  => println!("n is {}", n),
         Err(e) => println!("Error: {}", e),
     }
 }
 
-fn main() {
-    print(multiply("10", "2"));
-    print(multiply("ten", "2"));
-}
+print(multiply("10", "2"));
+print(multiply("ten", "2"));
 ```
 
 ```
@@ -583,7 +590,7 @@ let x = loop { println!("forever"); };
 
 # The "Never" Type`!`
 
-Rust has a special type called `!`, or the "never type", for this exact reason.
+Rust has a special type called `!`, or the "never" type, for this exact reason.
 
 Another example:
 
@@ -608,7 +615,7 @@ let guess: u32 = match guess.trim().parse() {
 };
 ```
 
-* Recall match statements can only return 1 type
+* Recall match statements can only return one type
 * `continue` has the `!` type
     * Rust knows this can't be value and allows `guess: u32`
     * This is why we can have `panic!` in a match statement like `unwrap()`
@@ -622,7 +629,7 @@ let guess: u32 = match guess.trim().parse() {
 * `panic!`
 * `break`
 * `continue`
-* Everything that doesn't return a value - typically related to control flow
+* Everything that doesn't return a value (typically related to control flow)
     * `print!` and `assert!` return `()`, so they don't use `!`
 
 
