@@ -33,6 +33,8 @@ code {
 * Error Handling
 * The Never Type
 * Traits
+* Derived Traits
+* Advanced Types
 
 
 ---
@@ -102,7 +104,7 @@ struct ArrayPair<T, const N: usize> {
 }
 ```
 
-* Const Generics allow items to be generic over constant values
+* Const generics allow items to be generic over constant values
 
 
 ---
@@ -118,14 +120,12 @@ struct ArrayPair<T, const N: usize> {
     right: [T; N],
 }
 
-fn main() {
-    let pair = ArrayPair::<i32, 5> {
-        left: [0; 5],
-        right: [1; 5],
-    };
+let pair = ArrayPair::<i32, 5> {
+    left: [0; 5],
+    right: [1; 5],
+};
 
-    println!("{:?}, {:?}", pair.left, pair.right);
-}
+println!("{:?}, {:?}", pair.left, pair.right);
 ```
 
 ```
@@ -220,6 +220,7 @@ This is an unresolved question in the RFC, but basically we don't know what M or
 
 ---
 
+
 # Const Generic Design Patterns
 
 ```rust
@@ -233,8 +234,8 @@ fn alternating<const ODD: bool>(nums: &[usize]) {
 }
 ```
 
-* Const Generics allow for multiple compilations of the same function with slightly different behavior
-* Const Generics representing "optional flags" is a common pattern
+* Const generics allow for multiple compilations of the same function with slightly different behavior
+* Const generics representing "optional flags" is a common pattern
 
 
 ---
@@ -282,6 +283,8 @@ In Rust there are **two** main types of errors we care about: _recoverable_ and 
 * `panic!`
     * A macro (_notice the `!`_) to invoke unrecoverable errors
 
+<!-- Make sure to note ferris panicking! -->
+
 
 ---
 
@@ -297,7 +300,7 @@ enum Result<T, E> {
 }
 ```
 
-* Notice how the "success" does _not_ have to have the same type as the "error"
+* Notice how `Ok` does _not_ have to be the same type as `Err`
 
 
 ---
@@ -305,17 +308,24 @@ enum Result<T, E> {
 
 # `unwrap()`
 
+`unwrap` is a very common method used on `Result` (and `Option`).
+
 ```rust
 pub const fn unwrap(self) -> T {
     match self {
         Ok(val) => val,
-        Err => panic!("called `Option::unwrap()` on a `Err` value"),
+        Err => panic!("called `Result::unwrap()` on an `Err` value"),
     }
 }
 ```
 
-* Takes an enum like an `Option<T>` or `Result<V, E>` type and *unwraps* it to reveal the inner value
+* *Unwraps* the `Result` (or `Option`) to reveal the inner value
 * It should only be used when you expect an inner value, otherwise it will panic
+
+<!--
+Not exactly the same as the real standard library version:
+https://doc.rust-lang.org/src/core/result.rs.html#1098-1100
+-->
 
 
 ---
@@ -354,7 +364,7 @@ called `Result::unwrap()` on an `Err` value:
     Os { code: 2, kind: NotFound, message: "No such file or directory" }
 ```
 
-* This error message isn't the best...
+* The error message isn't great, but it's also not terrible...
 
 
 ---
@@ -367,7 +377,7 @@ We can do better than this if we *expect* this error and know what message to pr
 ```rust
 fn main() {
     let greeting_file = File::open("hello.txt")
-        .expect("'hello.txt' should be included in this project");
+        .expect("Was unable to find 'hello.txt'");
 }
 ```
 
@@ -375,7 +385,7 @@ Now we get:
 
 ```
 thread 'main' panicked at src/main.rs:5:33:
-'hello.txt' should be included in this project:
+Was unable to find 'hello.txt':
     Os { code: 2, kind: NotFound, message: "No such file or directory" }
 ```
 
@@ -405,10 +415,10 @@ There are other useful macros that panic:
 * `unimplemented!` / `todo!`
     * Usually used while something is in progress
 * `unreachable!`
-    * Can potentially* help the compiler optimize a code segment away
+    * Used to indicate an impossible case
 
 <!--
-`unreachable` probably won't help in optimization, but it might
+`unreachable` won't actually help in optimization, unless you use the `unsafe` variant.
 -->
 
 
@@ -417,7 +427,7 @@ There are other useful macros that panic:
 
 # Using Results 1
 
-If we want recoverable errors, we can use `Result`s.
+If we want recoverable errors, we can use `Result`s without `unwrap`s.
 
 ```rust
 fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
@@ -438,14 +448,13 @@ fn integer_divide(a: i32, b: i32) -> Result<i32, String> {
 
 # Using Results 2
 
-`Result<T, E>` is generic, so we can create our own failure/error types!
+Since `Result<T, E>` is fully generic, we can create our own failure / error types!
 
 ```rust
 enum ArithError {
     DivideByZero,
     IllegalShift(i32),
 }
-
 fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
     if shift <= 0 {
         Err(ArithError::IllegalShift(shift))
@@ -466,7 +475,7 @@ fn shift_and_divide(x: i32, div: i32, shift: i32) -> Result<i32, ArithError> {
 # The `?` Operator
 
 
-To make error handling more ergonomic, Rust provides the `?` operator.
+To make error handling more ergonomic, Rust provides the `?` (try) operator.
 
 ```rust
 let x = potential_fail()?;
@@ -479,7 +488,7 @@ let x = match potential_fail() {
 
 * If `potential_fail` returns an `Err`, return early
 * Else we can unwrap the inner value and continue
-* Think of the `?` as quick way to see where a function short-circuit returns on failure
+* Think of the `?` as a short-circuit that returns on failure
 
 
 ---
@@ -488,12 +497,10 @@ let x = match potential_fail() {
 # The `?` Operator Example
 
 ```rust
-use std::num::ParseIntError; // A built-in error type
-
 fn multiply(
     first_number_str: &str,
     second_number_str: &str,
-) -> Result<i32, ParseIntError> {
+) -> Result<i32, std::num::ParseIntError> {
 
     let first_number = first_number_str.parse::<i32>()?;
     let second_number = second_number_str.parse::<i32>()?;
@@ -506,8 +513,11 @@ fn multiply(
 * Otherwise, we store the parsed values
 
 <!--
-Bad formatting to fit on slide better
+Make sure to point out that `ParseIntError` is a built-in error type
+
+(Bad formatting to fit on slide better)
 -->
+
 
 ---
 
@@ -517,17 +527,15 @@ Bad formatting to fit on slide better
 If `parse` fails, we will get the `parse` function's `Err` values as expected.
 
 ```rust
-fn print(result: Result<i32, ParseIntError>) {
+fn print(result: Result<i32, std::num::ParseIntError>) {
     match result {
         Ok(n)  => println!("n is {}", n),
         Err(e) => println!("Error: {}", e),
     }
 }
 
-fn main() {
-    print(multiply("10", "2"));
-    print(multiply("ten", "2"));
-}
+print(multiply("10", "2"));
+print(multiply("ten", "2"));
 ```
 
 ```
@@ -583,7 +591,7 @@ let x = loop { println!("forever"); };
 
 # The "Never" Type`!`
 
-Rust has a special type called `!`, or the "never type", for this exact reason.
+Rust has a special type called `!`, or the "never" type, for this exact reason.
 
 Another example:
 
@@ -608,7 +616,7 @@ let guess: u32 = match guess.trim().parse() {
 };
 ```
 
-* Recall match statements can only return 1 type
+* Recall match statements can only return one type
 * `continue` has the `!` type
     * Rust knows this can't be value and allows `guess: u32`
     * This is why we can have `panic!` in a match statement like `unwrap()`
@@ -622,7 +630,7 @@ let guess: u32 = match guess.trim().parse() {
 * `panic!`
 * `break`
 * `continue`
-* Everything that doesn't return a value - typically related to control flow
+* Everything that doesn't return a value (typically related to control flow)
     * `print!` and `assert!` return `()`, so they don't use `!`
 
 
@@ -652,7 +660,7 @@ trait Shape {
 ```
 
 * Traits are defined with the `trait` keyword
-* They act as an interface for types
+* They act as an _interface_ for types
     * They cannot be constructed directly, only applied onto types
 
 
@@ -661,7 +669,7 @@ trait Shape {
 
 # Trait Definitions
 
-So how do we use traits? We `impl`ement them for a struct:
+So how do we use traits? We `impl`ement them on a struct:
 
 ```rust
 struct Rectangle {
@@ -669,6 +677,7 @@ struct Rectangle {
     width: f32
 }
 
+vvvv vvvvv
 impl Shape for Rectangle {
     fn new_shape() -> Self {
         Rectangle { height: 1.0, width: 1.0 }
@@ -697,15 +706,13 @@ trait Shape {
 }
 ```
 
-* These can be overridden by any `impl Shape for MyStruct`
-
 
 ---
 
 
 # Overriding Default Trait Implementations
 
-We can simply override functions as such:
+We can simply override default functions as such:
 
 ```rust
 impl Shape for Rectangle {
@@ -716,6 +723,10 @@ impl Shape for Rectangle {
     }
 }
 ```
+
+<!--
+Make sure to be clear that this is NOT inheritance.
+-->
 
 
 ---
@@ -730,6 +741,10 @@ What happens when we try and construct a `Shape`?
 ```rust
 let rec = Shape::new_unit();
 ```
+
+<!--
+Reiterate that `Shape` is a _trait_, not a struct or an enum.
+-->
 
 
 ---
@@ -769,12 +784,20 @@ help: use the fully-qualified path to the only available implementation
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
 
-To use the `Shape` trait, Rust must know who is implementing it.
+To use the `Shape` trait, Rust must know the type that is implementing it.
 
 ```rust
 let rec: Rectangle = Shape::new_unit();
 let rec = <Rectangle as Shape>::new_shape();
 ```
+
+* `Rectangle` is a type
+* `Shape` is a trait on `Rectangle`
+    * `Rectangle` _implements_ `Shape`
+
+<!--
+Be clear that `Rectangle` is _not_ inheriting from some `Shape` class
+-->
 
 
 ---
@@ -829,6 +852,7 @@ trait CompSciStudent: Programmer + Student {
 * Traits are similar to:
     * Interfaces
     * Abstract / Virtual Classes
+* Traits are NOT classes
 
 
 ---
@@ -858,8 +882,8 @@ struct Student {
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
 ```
 
-* Recall that we were not able to print out this struct without the
-`#[derive(Debug)]`
+* Recall that we were not able to print out this struct without adding
+`#[derive(Debug)]` at the top
 
 
 ---
@@ -1057,7 +1081,7 @@ pub trait Copy: Clone {}
 
 # What Can `#[derive(Copy)]`?
 
-Since `Clone` is a supertrait of `Copy`, we must derive `Clone` first to derive `Copy`.
+Since `Clone` is a supertrait of `Copy`, we must first derive `Clone` to derive `Copy`.
 
 ```rust
 #[derive(Clone, Copy)]
@@ -1067,8 +1091,7 @@ pub struct Cat {
 }
 ```
 
-* Note that we cannot force `impl Copy` ourselves whenever
-`#[derive(Clone, Copy)]` doesn't work, so always use `#[derive]` for `Copy`
+* Note that we cannot `impl Copy` ourselves, it must be derived
 
 <!--
 If you try to do this on a type that has fields that are not copyable,
@@ -1084,24 +1107,33 @@ So at that point you might as well just use #[derive(Clone, Copy)]
 
 # When `#[derive]` Fails
 
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 What happens if a field is not `Copy`?
 
 ```rust
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub struct Stuff<T> {
     singleton: T,
     many: Vec<T>,
 }
 ```
 
+
+---
+
+
+# When `#[derive]` Fails
+
+
 ```
 error[E0204]: the trait `Copy` cannot be implemented for this type
- --> src/main.rs:4:10
+ --> src/lib.rs:1:17
   |
-4 | #[derive(Copy)]
-  |          ^^^^
+1 | #[derive(Clone, Copy)]
+  |                 ^^^^
 ...
-7 |     many: Vec<T>,
+4 |     many: Vec<T>,
   |     ------------ this field does not implement `Copy`
   |
   = note: this error originates in the derive macro `Copy`
@@ -1130,7 +1162,7 @@ pub struct Stuff<T> {
 }
 ```
 
-* This actually compiles, even though `T` is not `Default`!
+* This compiles even though `T` is not `Default`!
     * However...
 
 
@@ -1141,7 +1173,7 @@ pub struct Stuff<T> {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-We can only derive `Default` if every generic type `T` used is also `Default`.
+`Default` is only successfully derived if every generic type used is also `Default`.
 
 ```rust
 // No #[derive(Default)] here!
@@ -1171,6 +1203,10 @@ error[E0277]: the trait bound `Nope: Default` is not satisfied
    |
    = help: the trait `Default` is implemented for `Stuff<T>`
 ```
+
+<!--
+This might be confusing so don't hesitate to spend time on this.
+-->
 
 
 ---
@@ -1221,6 +1257,12 @@ impl Default for SomeOptions {
 ---
 
 
+# **Advanced Types**
+
+
+---
+
+
 # Trait Mix Ups
 
 Consider the following:
@@ -1247,21 +1289,19 @@ Let's say we implement both traits for `Human`, which both have the `fly` method
 
 ```rust
 impl Pilot for Human {
-    fn fly(&self) {
-        println!("This is your captain speaking.");
-    }
+    fn fly(&self) { println!("This is your captain speaking."); }
 }
+
 impl Wizard for Human {
-    fn fly(&self) {
-        println!("Up!");
-    }
+    fn fly(&self) { println!("Up!"); }
 }
+
 impl Human {
-    fn fly(&self) {
-        println!("*waving arms furiously*");
-    }
+    fn fly(&self) { println!("*waving arms furiously*"); }
 }
 ```
+
+<!-- Bad formatting for slide real estate -->
 
 
 ---
@@ -1356,12 +1396,16 @@ You can annotate the generic type with a trait bound, or you can use `impl Trait
 ```rust
 fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32;
 
-fn get_csv_lines(src: impl std::io::BufRead) -> u32;
+fn get_csv_lines(src: impl std::io::BufRead) -> u32; // Similar!
 ```
 
-* The second line is called an _argument-position impl trait (APIT)_.
+* The second signature is an example of _argument-position impl trait (APIT)_.
 * There is a slight difference here which we won't cover, just know that these aren't completely identical
     * Watch [this](https://youtu.be/CWiz_RtA1Hw?si=nJ4lFAJz7Uczz50I&t=882) for more information
+
+<!--
+First is strictly more powerful
+-->
 
 
 ---
@@ -1384,7 +1428,7 @@ fn to_key<T>(v: Vec<T>) -> impl Hash;
 ---
 
 
-# `where` Clauses
+# Too many bounds...
 
 Trait bounds are awesome, but sometimes too many can be verbose.
 
@@ -1392,7 +1436,15 @@ Trait bounds are awesome, but sometimes too many can be verbose.
 fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32;
 ```
 
-This can be cumbersome to write, so we have `where` clauses!
+* This can be cumbersome to write...
+
+
+---
+
+
+# `where` Clauses
+
+We can use `where` clauses to improve ergonomics!
 
 ```rust
 fn some_function<T, U>(t: &T, u: &U) -> i32
@@ -1441,11 +1493,8 @@ We can conditionally implement methods based on the traits the generic parameter
 ```rust
 impl<T: Display + PartialOrd> Pair<T> {
     fn cmp_display(&self) {
-        if self.x >= self.y {
-            println!("The largest member is x = {}", self.x);
-        } else {
-            println!("The largest member is y = {}", self.y);
-        }
+        if self.x >= self.y { println!("The largest member is x = {}", self.x); }
+        else { println!("The largest member is y = {}", self.y); }
     }
 }
 ```
@@ -1454,18 +1503,36 @@ impl<T: Display + PartialOrd> Pair<T> {
 * `T` must implement `PartialOrd` to be compared
 * `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>`
 
+<!--
+Bad formatting for slide real estate
+-->
+
 
 ---
 
 
 # Homework 5
 
-* You'll be parsing some files to implement `Reader` and `Summary` traits
-    * The `parse` methods will return a `Result`, which means they can fail
-* Parsing strings in Rust is tricky, so you will only need to do _half_ of this homework to receive _full credit_
-    * The second half is all extra credit!
-* Even though this week focused on Errors and Traits, this homework will heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
+* In this homework, you'll be modeling Poker hands!
+    * _This homework is not directly related to everything in today's lecture_
+* You'll be using a `Card` type similar to the one you implemented in Card Lab
+* Given 5 cards, figure out what the rank of the `Hand` is
+    * `PokerHand` includes: `TwoPair`, `Straight`, `Flush`, etc.
+* You'll have to implement the comparison traits on `PokerHand`!
 * Please do not hesitate to reach out for help!
+
+
+---
+
+
+# Extra Credit: Summary Lab
+
+This was the previous homework 5... now extra credit!
+
+* Parse some files to implement `Reader` and `Summary` traits
+    * The `parse` methods will return a `Result`, which means they can fail
+* Parsing strings in Rust is tricky...
+* Even though this week focused on Errors and Traits, this homework will also heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
 
 
 ---
