@@ -659,7 +659,7 @@ trait Shape {
 ```
 
 * Traits are defined with the `trait` keyword
-* They act as an interface for types
+* They act as an _interface_ for types
     * They cannot be constructed directly, only applied onto types
 
 
@@ -668,7 +668,7 @@ trait Shape {
 
 # Trait Definitions
 
-So how do we use traits? We `impl`ement them for a struct:
+So how do we use traits? We `impl`ement them on a struct:
 
 ```rust
 struct Rectangle {
@@ -676,6 +676,7 @@ struct Rectangle {
     width: f32
 }
 
+vvvv vvvvv
 impl Shape for Rectangle {
     fn new_shape() -> Self {
         Rectangle { height: 1.0, width: 1.0 }
@@ -704,15 +705,13 @@ trait Shape {
 }
 ```
 
-* These can be overridden by any `impl Shape for MyStruct`
-
 
 ---
 
 
 # Overriding Default Trait Implementations
 
-We can simply override functions as such:
+We can simply override default functions as such:
 
 ```rust
 impl Shape for Rectangle {
@@ -723,6 +722,10 @@ impl Shape for Rectangle {
     }
 }
 ```
+
+<!--
+Make sure to be clear that this is NOT inheritance.
+-->
 
 
 ---
@@ -737,6 +740,10 @@ What happens when we try and construct a `Shape`?
 ```rust
 let rec = Shape::new_unit();
 ```
+
+<!--
+Reiterate that `Shape` is a _trait_, not a struct or an enum.
+-->
 
 
 ---
@@ -776,12 +783,20 @@ help: use the fully-qualified path to the only available implementation
 
 ![bg right:25% 80%](../images/ferris_happy.svg)
 
-To use the `Shape` trait, Rust must know who is implementing it.
+To use the `Shape` trait, Rust must know the type that is implementing it.
 
 ```rust
 let rec: Rectangle = Shape::new_unit();
 let rec = <Rectangle as Shape>::new_shape();
 ```
+
+* `Rectangle` is a type
+* `Shape` is a trait on `Rectangle`
+    * `Rectangle` _implements_ `Shape`
+
+<!--
+Be clear that `Rectangle` is _not_ inheriting from some `Shape` class
+-->
 
 
 ---
@@ -836,6 +851,7 @@ trait CompSciStudent: Programmer + Student {
 * Traits are similar to:
     * Interfaces
     * Abstract / Virtual Classes
+* Traits are NOT classes
 
 
 ---
