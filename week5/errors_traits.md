@@ -34,6 +34,7 @@ code {
 * The Never Type
 * Traits
 * Derived Traits
+* Advanced Types
 
 
 ---
@@ -881,8 +882,8 @@ struct Student {
 Student { andrew_id: "cjtsui", attendance: [true, false], grade: 42, stress_level: 1000 }
 ```
 
-* Recall that we were not able to print out this struct without the
-`#[derive(Debug)]`
+* Recall that we were not able to print out this struct without adding
+`#[derive(Debug)]` at the top
 
 
 ---
@@ -1080,7 +1081,7 @@ pub trait Copy: Clone {}
 
 # What Can `#[derive(Copy)]`?
 
-Since `Clone` is a supertrait of `Copy`, we must derive `Clone` first to derive `Copy`.
+Since `Clone` is a supertrait of `Copy`, we must first derive `Clone` to derive `Copy`.
 
 ```rust
 #[derive(Clone, Copy)]
@@ -1090,8 +1091,7 @@ pub struct Cat {
 }
 ```
 
-* Note that we cannot force `impl Copy` ourselves whenever
-`#[derive(Clone, Copy)]` doesn't work, so always use `#[derive]` for `Copy`
+* Note that we cannot `impl Copy` ourselves, it must be derived
 
 <!--
 If you try to do this on a type that has fields that are not copyable,
@@ -1107,24 +1107,33 @@ So at that point you might as well just use #[derive(Clone, Copy)]
 
 # When `#[derive]` Fails
 
+![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 What happens if a field is not `Copy`?
 
 ```rust
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub struct Stuff<T> {
     singleton: T,
     many: Vec<T>,
 }
 ```
 
+
+---
+
+
+# When `#[derive]` Fails
+
+
 ```
 error[E0204]: the trait `Copy` cannot be implemented for this type
- --> src/main.rs:4:10
+ --> src/lib.rs:1:17
   |
-4 | #[derive(Copy)]
-  |          ^^^^
+1 | #[derive(Clone, Copy)]
+  |                 ^^^^
 ...
-7 |     many: Vec<T>,
+4 |     many: Vec<T>,
   |     ------------ this field does not implement `Copy`
   |
   = note: this error originates in the derive macro `Copy`
@@ -1153,7 +1162,7 @@ pub struct Stuff<T> {
 }
 ```
 
-* This actually compiles, even though `T` is not `Default`!
+* This compiles even though `T` is not `Default`!
     * However...
 
 
@@ -1164,7 +1173,7 @@ pub struct Stuff<T> {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-We can only derive `Default` if every generic type `T` used is also `Default`.
+`Default` is only successfully derived if every generic type used is also `Default`.
 
 ```rust
 // No #[derive(Default)] here!
@@ -1194,6 +1203,10 @@ error[E0277]: the trait bound `Nope: Default` is not satisfied
    |
    = help: the trait `Default` is implemented for `Stuff<T>`
 ```
+
+<!--
+This might be confusing so don't hesitate to spend time on this.
+-->
 
 
 ---
@@ -1244,6 +1257,12 @@ impl Default for SomeOptions {
 ---
 
 
+# **Advanced Types**
+
+
+---
+
+
 # Trait Mix Ups
 
 Consider the following:
@@ -1270,21 +1289,19 @@ Let's say we implement both traits for `Human`, which both have the `fly` method
 
 ```rust
 impl Pilot for Human {
-    fn fly(&self) {
-        println!("This is your captain speaking.");
-    }
+    fn fly(&self) { println!("This is your captain speaking."); }
 }
+
 impl Wizard for Human {
-    fn fly(&self) {
-        println!("Up!");
-    }
+    fn fly(&self) { println!("Up!"); }
 }
+
 impl Human {
-    fn fly(&self) {
-        println!("*waving arms furiously*");
-    }
+    fn fly(&self) { println!("*waving arms furiously*"); }
 }
 ```
+
+<!-- Bad formatting for slide real estate -->
 
 
 ---
@@ -1379,12 +1396,16 @@ You can annotate the generic type with a trait bound, or you can use `impl Trait
 ```rust
 fn get_csv_lines<R: std::io::BufRead>(src: R) -> u32;
 
-fn get_csv_lines(src: impl std::io::BufRead) -> u32;
+fn get_csv_lines(src: impl std::io::BufRead) -> u32; // Similar!
 ```
 
-* The second line is called an _argument-position impl trait (APIT)_.
+* The second signature is an example of _argument-position impl trait (APIT)_.
 * There is a slight difference here which we won't cover, just know that these aren't completely identical
     * Watch [this](https://youtu.be/CWiz_RtA1Hw?si=nJ4lFAJz7Uczz50I&t=882) for more information
+
+<!--
+First is strictly more powerful
+-->
 
 
 ---
@@ -1407,7 +1428,7 @@ fn to_key<T>(v: Vec<T>) -> impl Hash;
 ---
 
 
-# `where` Clauses
+# Too many bounds...
 
 Trait bounds are awesome, but sometimes too many can be verbose.
 
@@ -1415,7 +1436,15 @@ Trait bounds are awesome, but sometimes too many can be verbose.
 fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32;
 ```
 
-This can be cumbersome to write, so we have `where` clauses!
+* This can be cumbersome to write...
+
+
+---
+
+
+# `where` Clauses
+
+We can use `where` clauses to improve ergonomics!
 
 ```rust
 fn some_function<T, U>(t: &T, u: &U) -> i32
@@ -1464,11 +1493,8 @@ We can conditionally implement methods based on the traits the generic parameter
 ```rust
 impl<T: Display + PartialOrd> Pair<T> {
     fn cmp_display(&self) {
-        if self.x >= self.y {
-            println!("The largest member is x = {}", self.x);
-        } else {
-            println!("The largest member is y = {}", self.y);
-        }
+        if self.x >= self.y { println!("The largest member is x = {}", self.x); }
+        else { println!("The largest member is y = {}", self.y); }
     }
 }
 ```
@@ -1477,18 +1503,36 @@ impl<T: Display + PartialOrd> Pair<T> {
 * `T` must implement `PartialOrd` to be compared
 * `cmp_display` will exist for a `Pair<i32>` but not for `Pair<T: !PartialOrd>`
 
+<!--
+Bad formatting for slide real estate
+-->
+
 
 ---
 
 
 # Homework 5
 
-* You'll be parsing some files to implement `Reader` and `Summary` traits
-    * The `parse` methods will return a `Result`, which means they can fail
-* Parsing strings in Rust is tricky, so you will only need to do _half_ of this homework to receive _full credit_
-    * The second half is all extra credit!
-* Even though this week focused on Errors and Traits, this homework will heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
+* In this homework, you'll be modeling Poker hands!
+    * _This homework is not directly related to everything in today's lecture_
+* You'll be using a `Card` type similar to the one you implemented in Card Lab
+* Given 5 cards, figure out what the rank of the `Hand` is
+    * `PokerHand` includes: `TwoPair`, `Straight`, `Flush`, etc.
+* You'll have to implement the comparison traits on `PokerHand`!
 * Please do not hesitate to reach out for help!
+
+
+---
+
+
+# Extra Credit: Summary Lab
+
+This was the previous homework 5... now extra credit!
+
+* Parse some files to implement `Reader` and `Summary` traits
+    * The `parse` methods will return a `Result`, which means they can fail
+* Parsing strings in Rust is tricky...
+* Even though this week focused on Errors and Traits, this homework will also heavily test your familiarity with the [`String` API](https://doc.rust-lang.org/std/string/struct.String.html)
 
 
 ---
