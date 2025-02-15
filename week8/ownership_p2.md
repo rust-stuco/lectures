@@ -34,7 +34,9 @@ Today, we'll provide another way of thinking about ownership:
 
 # The Rules
 
-At the beginning of this course, we learned the Commandments of Rust...
+At the beginning of this course, we learned two sets of rules...
+* Ownership Rules
+* Borrowing Rules
 
 
 ---
@@ -54,8 +56,8 @@ At the beginning of this course, we learned the Commandments of Rust...
 
 * Cannot access both a mutable and an immutable reference to the same object
 * At any given time, may have either
-    * one mutable (exclusive) reference, or
-    * any number of immutable (shared) references
+    * One mutable (exclusive) reference
+    * Any number of immutable (shared) references
 
 
 ---
@@ -282,7 +284,7 @@ fn main() {
     my_function(beef);
 }
 
-fn my_function(arg : Vec<u32>) {
+fn my_function(arg : [u32; 4_000_000]) {
     ...
 }
 ```
@@ -303,7 +305,7 @@ fn main() {
     my_function(beef);
 }
 
-fn my_function(arg : Vec<u32>) {
+fn my_function(arg : [u32; 4_000_000]) {
     ...
 }
 ```
@@ -429,7 +431,7 @@ fn main() {
     my_function(beef);
 }
 
-fn my_function(arg : Vec<u32>) {
+fn my_function(arg : Box<[u32]>) {
     ...
 }
 ```
