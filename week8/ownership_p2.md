@@ -279,14 +279,8 @@ fn main() {
 When we call `my_function`...
 
 ```rust
-fn main() {
-    let beef = [0xdeadbeef; 4_000_000];
-    my_function(beef);
-}
-
-fn my_function(arg : [u32; 4_000_000]) {
-    ...
-}
+let beef = [0xdeadbeef; 4_000_000];
+my_function(beef);
 ```
 
 
@@ -297,20 +291,13 @@ fn my_function(arg : [u32; 4_000_000]) {
 
 ![bg right 100%](../images/week8/frames/3-crop.png)
 
-When we call `my_function`...
+We must allocate `arg` for its stack frame!
 
 ```rust
-fn main() {
-    let beef = [0xdeadbeef; 4_000_000];
-    my_function(beef);
-}
-
 fn my_function(arg : [u32; 4_000_000]) {
     ...
 }
 ```
-
-We must allocate `arg` for its stack frame!
 * Copy 15 GB of `0xdeadbeef`'s
 
 ---
