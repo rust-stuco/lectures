@@ -137,7 +137,7 @@ Double asterisk, see Rust Reference for full definition
 
 # Invalid Memory Access ⇒ Unsafe
 
-Memory access can be unsafe if we access memory that is
+Memory access can be unsafe if we access memory that is:
 
 * Deallocated
     * Ownership rules prevent this
@@ -166,7 +166,7 @@ Memory access can be unsafe if we access **deallocated** or **overwritten** memo
 
 # Local Variables
 
-Local variables live in a function's **stack frame**
+Local variables live in a function's **stack frame**.
 
 The stack frame:
 * Contains everything needed for the function to run
@@ -350,10 +350,10 @@ What if we resize our vector?
 
 # Motivating the Heap
 
-Our array is **long-lived** data.
+Our `beef` array is **long-lived** data.
 
-* Long-lived ⇒ persists across function calls
-    * Lots of copying on stack
+* We want other functions to use this array, instead of just a single stack frame
+* How do we persist this data across function calls?
 
 
 ---
@@ -416,6 +416,35 @@ let boxed: Box<u8> = Box::new(val);
 * Can access value by dereferencing box as `*boxed`
 * Value is automatically dropped when `boxed` goes out of scope
 
+
+---
+
+
+# The `Box<T>`
+
+Let's put our `beef` array in a `Box`:
+
+```rust
+fn main() {
+    let beef = Box::new([0xdeadbeef; 4_000_000]);
+    my_function(beef);
+}
+
+fn my_function(arg : Box<[u32]>) {
+    ...
+}
+```
+
+* In practice, this allocates `beef` on the stack and then copies it to the heap
+    * We recommend creating `Vec<T>` instead
+
+<!-- Speaker note:
+If students ask about type annotation of `arg`:
+    * `beef` is coerced from a fixed-size array `Box<[u32; 4_000_000]>` to a boxed slice `Box<[u32]>`
+If students ask when we'd use `Box`, seeing as this is not recommended:
+    * We use `Box` when defining recursive types, like tree nodes that have nodes for children. Rust needs to know the size of every type at compile time, but recursive types have an unknown, potentially infinite size. `Box` is used to break the infinite size problem, since its size is always a fixed pointer size
+-->
+
 ---
 
 
@@ -444,7 +473,7 @@ fn my_function(arg : Box<[u32]>) {
 
 ![bg right 100%](../images/week8/frames/5-crop.png)
 
-We can copy the pointer into `arg`.
+When we call `my_function`...we can copy the pointer into `arg`!
 
 ```rust
 fn main() {
