@@ -534,7 +534,7 @@ When do we deallocate memory?
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-Inspired by the stack:
+Inspired by the stack's management of local variables:
 * Local variable lives in function's **stack frame**
 * Allocated on function call
 * Deallocated on function return
