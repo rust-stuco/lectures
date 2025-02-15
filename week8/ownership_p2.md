@@ -221,23 +221,6 @@ Emphasize the copying of `x`
 ---
 
 
-# Local Variables
-
-![bg right 50%](../images/week8/frames/0.png)
-
-Finally, we return from `my_function`, deallocating its stack frame.
-
-```rust
-fn main() {
-    let x = 1;
-    my_function(x);
-}
-```
-
-
----
-
-
 # Motivating the Heap
 
 ![bg right 50%](../images/week8/frames/0.png)
@@ -274,24 +257,9 @@ fn main() {
 
 # Motivating the Heap
 
-![bg right 100%](../images/week8/frames/2-crop.png)
-
-When we call `my_function`...
-
-```rust
-let beef = [0xdeadbeef; 4_000_000];
-my_function(beef);
-```
-
-
----
-
-
-# Motivating the Heap
-
 ![bg right 100%](../images/week8/frames/3-crop.png)
 
-We must allocate `arg` for its stack frame!
+When we call `my_function`, we must allocate `arg` for its stack frame!
 
 ```rust
 fn my_function(arg : [u32; 4_000_000]) {
@@ -427,24 +395,9 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/4-crop.png)
-
-When we call `my_function`...
-
-```rust
-let beef = Box::new([0xdeadbeef; 4_000_000]);
-my_function(beef);
-```
-
-
----
-
-
-# The Heap
-
 ![bg right 100%](../images/week8/frames/5-crop.png)
 
-When we call `my_function`...we can copy the pointer into `arg`!
+When we call `my_function`, we can copy the pointer into `arg`!
 
 ```rust
 let beef = Box::new([0xdeadbeef; 4_000_000]);
