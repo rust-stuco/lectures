@@ -383,21 +383,11 @@ Let's put it on the **heap**.
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/4a.png)
-
-Value lives in the heap...
-
-
----
-
-
-# The Heap
-
 ![bg right 100%](../images/week8/frames/4b.png)
 
-Value lives in the heap...
+* Value lives in the heap...
 
-**Pointer** lives on the stack.
+* **Pointer** lives on the stack.
 
 
 ---
@@ -455,14 +445,8 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 When we call `my_function`...
 
 ```rust
-fn main() {
-    let beef = Box::new([0xdeadbeef; 4_000_000]);
-    my_function(beef);
-}
-
-fn my_function(arg : Box<[u32]>) {
-    ...
-}
+let beef = Box::new([0xdeadbeef; 4_000_000]);
+my_function(beef);
 ```
 
 
@@ -476,14 +460,8 @@ fn my_function(arg : Box<[u32]>) {
 When we call `my_function`...we can copy the pointer into `arg`!
 
 ```rust
-fn main() {
-    let beef = Box::new([0xdeadbeef; 4_000_000]);
-    my_function(beef);
-}
-
-fn my_function(arg : &Vec<u32>) {
-    ...
-}
+let beef = Box::new([0xdeadbeef; 4_000_000]);
+my_function(beef);
 ```
 
 
@@ -501,19 +479,17 @@ Much better!
 **After:** 8 bytes per pointer
 
 ```rust
-fn main() {
-    let beef = Box::new([0xdeadbeef; 4_000_000]);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-}
+let beef = Box::new([0xdeadbeef; 4_000_000]);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
 ```
 
 
@@ -562,16 +538,7 @@ When do we deallocate memory?
     * We'll discuss more in Lifetimes lecture
 * Heap: deallocated when ???
     * ⚠️
-
-
----
-
-
-# Motivating Ownership
-
-
-How can we be confident that heap memory is deallocated safely?
-
+    * How can we be confident that heap memory is deallocated safely?
 
 ---
 
@@ -594,10 +561,10 @@ Inspired by the stack:
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-Inspired by the stack:
-- Local variable "owned by" stack frame
-- One stack frame (owner) per variable
-- Dropped on function return
+What if we say that data is "owned" by the stack frame?
+* One stack frame (owner) per variable
+* Data is dropped on function return
+* Very similar to our previous model!
 
 
 <!-- Speaker notes:
@@ -622,6 +589,8 @@ Now we impose the following rules:
 
 
 # Rules of Ownership
+
+Another way to think about ownership in Rust, different from our previous model:
 
 * Each value in Rust has an _owner_
     * Owner is stack frame
