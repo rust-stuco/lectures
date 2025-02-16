@@ -1512,7 +1512,6 @@ fn it_adds_two() {
 `cargo test --test integration_test`
 
 
-
 ---
 
 
@@ -1596,6 +1595,156 @@ We cannot create integration tests for a binary crate.
 * Unit tests examine parts of a library in isolation and can test private implementation details
 * Integration tests check that many parts of the library work together correctly
 * Even though Rust can prevent some kinds of bugs, tests are still extremely important to reduce logical bugs!
+
+
+---
+
+
+# Homework 6
+
+Homework 6 is going to be very different from the previous 5 homeworks!
+
+* You will be following a tutorial from the [official Rust Book](https://doc.rust-lang.org/book/ch12-00-an-io-project.html) (our textbook)
+* Your task is to implement a miniature version of the popular CLI tool `grep`
+* We are not giving you _any_ starter code
+* Your assignment will be manually graded on both correctness and robustness
+
+
+---
+
+
+# **Code**
+
+
+---
+
+
+# Code?
+
+* What is code?
+* Why do we write code?
+
+
+---
+
+
+# Typical Assignment Workflow
+
+You are probably very used to [this workflow](https://www.cs.cmu.edu/~410/lectures/L01c_Boot.pdf):
+
+* Get assignment handout and code outline
+* "Fill in the blanks"
+* Graded by autograder
+* All done!
+    * Never use this code again
+    * Delete it at the end of the semester
+
+<!--
+This slide is inspired very directly from 15-410's Boot Camp Slides, page 45
+-->
+
+
+---
+
+
+# Real World Workflow
+
+In the real world, the workflow is almost the complete opposite:
+
+* Jump into a _massive_ codebase
+* Read and debug someone else's code
+* Figure out where the "blanks" are to add new features
+* Run tests that may not be exhaustive
+* **Not done!**
+    * Other people _will_ use and read your code
+
+
+---
+
+
+# Homework 6 Grading
+
+We will be manually grading for both correctness and _robustness_.
+
+* By following the tutorial, you will easily get 100% on this assignment
+* We will give you up to 100 extra credit points for style, quality, documentation, and robustness
+* If you simply copy and paste everything from the tutorial, _you may get around 15/100 extra credit points_
+    * We are going to be super strict!
+        * Adopting the 15-410 (CMU Operating Systems) mindset
+
+
+---
+
+
+# Style
+
+You can follow the [Rust style guide](https://doc.rust-lang.org/nightly/style-guide/) for advice.
+
+Key things:
+
+* Format your code correctly with `cargo fmt`
+* Run the `cargo clippy` linter
+* Make sure comments are styled correctly
+* Use descriptive naming
+
+
+---
+
+
+# Documentation
+
+Most of the extra credit grade will come from your documentation.
+
+* Documentation should be descriptive and succinct
+* Explain the features of your program
+* For fellow developers, explain:
+    * Design
+    * Architecture / Structure of your code
+    * _Why_ does this function need to exist?
+
+
+---
+
+
+# Errors
+
+There are [3 types of errors](https://www.cs.cmu.edu/~410/lectures/L10a_Errors.pdf):
+
+* Hmm...
+    * Try to _resolve_
+* That's not right...
+    * Try to _report_
+* Uh-oh
+    * Try to help the developer find the _fatal_ problem faster
+
+<!--
+Taken directly from 15-410's Error's lecture, page 37
+We're being purposefully ambiguous here since there is not time to do an entire lecture on error handling
+-->
+
+
+---
+
+
+# Testing
+
+Write good tests!
+
+* 1000 tests testing the same thing?
+* 5 tests testing edge cases?
+
+
+---
+
+
+# Code?
+
+* What is code?
+* Why do we write code?
+
+<!--
+Encourage students to think about these kinds of things because it is _super_ important
+-->
 
 
 ---
