@@ -1604,7 +1604,7 @@ v | - | - | -
 # Fixing a Safe Program
 
 **Issue:** Single place `v` represents _all_ indices
-* Borrow checker does not see each index as a different places
+* Borrow checker does not see each index as a different place
 * Borrow checker can't know it's safe, but we do
 
 <!--Speaker note: -->
