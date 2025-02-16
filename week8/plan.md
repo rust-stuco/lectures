@@ -1,0 +1,17 @@
+- Introduction (5 min)
+    - Review of Ownership and Borrowing
+    - Statement of Objectives
+    - Defining Unsafety
+- Ownership Rules (15 min)
+    - Stack and Heap
+    - `Box<T>`
+    - Owner is Stack Frame
+- Vector Resizing Example (5 min)
+    - Vector Pop
+    - Vector Push
+- Unveiling the Borrow Checker (15 min)
+    - Permissions of Places
+    - References Remove Permissions of Places
+        - Immutable and Mutable References
+    - Fixing a Safe Program: Mutating Array Elements
+- Recap (5 min)
