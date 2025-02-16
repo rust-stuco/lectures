@@ -1648,9 +1648,8 @@ let slot2 = &v[1] as *const i32; // raw pointer
 unsafe { *slot1 += *slot2; } // because *we* know it's safe
 ```
 
-<!-- Speaker note:
-Alternate solution is `split_at_mut`, which uses `unsafe` under the hood
--->
+* Alternate: `split_at_mut`, which use unsafe under the hood
+
 
 ---
 
