@@ -336,7 +336,7 @@ Let's put it on the **heap**.
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/4b.png)
+![bg right 100%](../images/week8/frames/4-crop.png)
 
 * Value lives in the heap...
 
