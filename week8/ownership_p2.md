@@ -274,19 +274,17 @@ fn my_function(arg : [u32; 4_000_000]) {
 # Motivating the Heap
 
 ```rust
-fn main() {
-    let beef = [0xdeadbeef; 4_000_000];
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-    my_function(beef);
-}
+let beef = [0xdeadbeef; 4_000_000];
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
+my_function(beef);
 ```
 
 * Unsustainable!
