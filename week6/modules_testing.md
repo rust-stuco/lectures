@@ -42,14 +42,12 @@ code {
 
 # Large Programs
 
-As your programs get larger, the organization of the code becomes increasingly important.
-
-It is generally good practice to:
+As your programs get larger, the organization of the code becomes increasingly important. It is generally good practice to:
 
 * Split code into multiple folders and files
 * Group related functionality
 * Separate code with distinct features
-* Encapsulate implementation details
+* _Encapsulate_ implementation details
 * _Modularize_ your program
 
 
@@ -89,13 +87,15 @@ A _crate_ is the smallest amount of code that the Rust compiler considers at a t
     * Modules can be defined in other files
     * Paths allow modules to refer to other modules
 
-
 <!--
 You've probably never heard of compilation units---
 Think of it as adding a .o to your makefile. When you add it,
 the preprocessor will logically pull in all of the headers. The
 source c/cxx/cpp file and all of its dependents is one compilation unit.
+
+Explicitly state that in C/C++ each file is treated as a compilation unit, and that is NOT the case in Rust
 -->
+
 
 ---
 
@@ -103,7 +103,7 @@ source c/cxx/cpp file and all of its dependents is one compilation unit.
 
 # Crate
 
-There are two types of crates: binary crates and library crates.
+There are two types of crates: **binary** crates and **library** crates.
 
 * A binary crate can be compiled to an executable
     * Contains a `main` function
@@ -112,6 +112,7 @@ There are two types of crates: binary crates and library crates.
     * Defines functionality intended to be shared with multiple projects
 * Each crate also has a file referred to as the _crate root_
     * _The Rust compiler looks at this file first, and it is also the root module of the crate (more on modules later!)_
+
 
 ---
 
@@ -148,6 +149,10 @@ main.rs
 * Creates a `src/main.rs` file that prints `"Hello, world!"`
 * Creates a `Cargo.toml` in the root directory
 
+<!--
+Some stuff has been elided for slide real estate...
+-->
+
 
 ---
 
@@ -167,11 +172,13 @@ edition = "2021"
 
 * File written in `toml`, a file format for configuration files
 * Notice how there is no explicit mention of `src/main.rs`
-* Cargo follows the convention that a `src/main.rs` file is the crate root of a _binary_ crate
-* Similarly, a `src/lib.rs` file is the crate root of a _library_ crate
+* Cargo follows the convention that `src/main.rs` is the root of a _binary_ crate
+* Similarly, a `src/lib.rs` file is the root of a _library_ crate
 
 <!--
-You *can* have both lib.rs and main.rs
+When we say root, we mean root _modules_
+
+You _can_ have both lib.rs and main.rs
 -->
 
 
@@ -184,6 +191,11 @@ Cargo is itself a Rust package that ships with installations of Rust!
 
 * Contains the binary crate that compiles to the executable `cargo`
 * Contains a library crate that the `cargo` binary depends on
+
+<!--
+It is typical for binary executables in Rust to be thin wrappers around library crates as that makes
+testing the program easier
+-->
 
 
 ---
@@ -312,8 +324,6 @@ mod kitchen {
     pub mod stove {
         pub fn cook() { println!("I'm cooking"); }
     }
-
-    fn examine_ingredients() {}
 }
 ```
 
@@ -437,7 +447,14 @@ src
 
 * This is a stylistic choice that each instructor has a very strong opinion on
     * Ask at your own peril...
-* Consistency with surrounding codebase is ___always___ most important
+
+<!--
+Connor prefers `mod.rs`
+Ben prefers named modules files
+David is partial to both based on the project
+
+Connor also believes that `mod.rs` files should only have docs, `use` statements, and type definitions.
+-->
 
 
 ---
@@ -503,6 +520,20 @@ src
 ---
 
 
+# File Structure Comparison
+
+Consistency with surrounding codebase is _**always**_ most important!
+
+See discussions:
+
+- [Rust Users Forum](https://users.rust-lang.org/t/module-mod-rs-or-module-rs/122653)
+- [Rust Internals Forum](https://internals.rust-lang.org/t/the-module-scheme-module-rs-file-module-folder-instead-of-just-module-mod-rs-introduced-by-the-2018-edition-maybe-a-little-bit-more-confusing/21977/17?u=zirconium-n)
+- [Reddit](https://www.reddit.com/r/rust/comments/18pytwt/noob_question_foomodrs_vs_foors_foo_for_module/)
+
+
+---
+
+
 # The Module Tree, Visualized
 
 Even with our file system changes, the module tree stays the same!
@@ -517,6 +548,10 @@ crate restaurant
 ```
 
 * We can customize our file structure without changing any behavior!
+
+<!--
+Emphasize that the above module tree can be represented by many different file structures
+-->
 
 
 ---
@@ -548,7 +583,7 @@ This is saying:
 * In the module `kitchen`
     * In the submodule `stove`
         * Call the function `cook`
-* This is a path relative to the crate root
+* This is a path relative to the current module (in this case, the root)
 
 
 ---
@@ -634,7 +669,8 @@ use std::io::Write;
 
 <!--
 The reason this is idiomatic is because you generally shouldn't have multiple different types that
-are named exactly the same. If you do have that, you need to bring in the types relative to their
+are named exactly the same, and types are usually defined elsewhere anyways.
+If you do have types that have identical names, you need to bring in the types relative to their
 parent modules anyways.
 -->
 
@@ -658,7 +694,7 @@ use std::io::*; // Also possible!
     * Generally not recommended since it clutters the namespace
 
 <!--
-The one case where glob is idiomatic is with the prelude pattern
+The one case where glob is idiomatic is with the `use some_crate::prelude::*` pattern.
 
 It does not actually increase compilation cost, it just makes dealing with namespace collisions
 annoying, so it is good practice to only bring in what you actually need.
@@ -689,8 +725,6 @@ src
 
 # Aside: Binary and Library Crate Paths
 
-Typically when you have both a binary and library crate in the same package, you want to use functions and types defined in `lib.rs` from `main.rs`.
-
 ```
 src
 ├── kitchen
@@ -699,6 +733,8 @@ src
 ├── lib.rs
 └── main.rs (wants to call functions from lib.rs)
 ```
+
+Typically when you have both a binary and library crate in the same package, you want to use functions and types defined in `lib.rs` from `main.rs`.
 
 * If you have both a `main.rs` file and a `lib.rs` file, _both_ are crate roots
 * So how can we get items from a separate module tree?
@@ -729,6 +765,10 @@ fn main() {
 
 * All files in `src/kitchen` remain unchanged
 * What do we put in `???`?
+
+<!--
+Make sure the mention that the paths are now relative to outside package directory now
+-->
 
 
 ---
@@ -831,7 +871,9 @@ pub enum Appetizer {
 
 # Recap: Modules
 
-* You can split a package into crates, and crates into modules
+* You can split a package into crates
+    * Crates into modules
+        * Modules into items
 * You can refer to items defined in other modules with paths
 * All module components are private by default, unless you mark them as `pub`
 
@@ -960,7 +1002,10 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 * We see `test result: ok`, meaning we have passed all the tests
 * In this case, only 1 test has run, and it has passed
-* The `0 measured` statistic is for benchmark tests, which are currently only available in "nightly" versions of Rust
+
+<!--
+Disregard the "0 measured", that is for nightly benchmarking
+-->
 
 
 ---
@@ -997,7 +1042,7 @@ mod tests {
 ```
 
 * This tells the compiler that this entire module should _only_ be used for testing
-* Removes this module from the source code when compiling with `cargo build`
+* The compiler ignores this module when compiling with `cargo build`
 
 
 ---
@@ -1032,9 +1077,6 @@ Let's see what we get:
 
 ```
 $ cargo test
-   Compiling adder v0.1.0 (file:///projects/adder)
-    Finished test [unoptimized + debuginfo] target(s) in 0.72s
-     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
 
 running 2 tests
 test tests::another ... FAILED
@@ -1045,7 +1087,6 @@ failures:
 ---- tests::another stdout ----
 thread 'tests::another' panicked at 'Make this test fail', src/lib.rs:10:9
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-
 
 failures:
     tests::another
@@ -1115,7 +1156,7 @@ than if you did an if check and panic manually
 
 # Testing Equality
 
-Rust also provides a way to check equality between two values.
+Rust also provides a way to check equality between two values with `assert_eq!`.
 
 ```rust
 #[test]
@@ -1182,9 +1223,13 @@ fn greater_than_100() {
 * The `#[should_panic]` attribute says that this test expects a panic!
 * Adding the `expected = "..."` means we want a specific panic message
 
+<!--
+We don't actually use this anymore... But it is helpful to know nonetheless
+-->
 
+
+<!--
 ---
-
 
 
 # Using `Result<T, E>` in Tests
@@ -1205,6 +1250,7 @@ fn it_works() -> Result<(), String> {
 * The test will now fail if it returns `Err`
 * Allows convenient usage of `?` in tests
 * Note that you can't use `#[should_panic]` on tests that return a `Result`
+-->
 
 
 ---
@@ -1242,16 +1288,15 @@ Parallel stuff leads into next slide...
 # Test Threads
 
 
-By default, Rust will run all of the tests in parallel, on different threads.
+By default, Rust will run all tests in parallel, on different threads.
 
-You can use `--test-threads` to control the number of threads running the tests.
-
+You can use `--test-threads` flag to control the number of threads.
 
 ```
 $ cargo test -- --test-threads=1
 ```
 
-* Only use this when you need to, otherwise the benefits of running tests in parallel are lost
+* Only use this when you actually need to, otherwise the benefits of running tests in parallel are lost
 
 <!--
 Take 15-445 if you want to do this safely without losing parallelism!
@@ -1275,6 +1320,10 @@ $ cargo test -- --show-output
 * With 1000 tests, this might become verbose!
 * If only we could only run a subset of the tests...
 
+<!--
+Note that `cargo test` will show the print output of failed tests
+-->
+
 
 ---
 
@@ -1285,9 +1334,6 @@ Let's say we have 1000 tests, but only one is named `one_hundred`. We can run `c
 
 ```
 $ cargo test one_hundred
-   Compiling adder v0.1.0 (file:///projects/adder)
-    Finished test [unoptimized + debuginfo] target(s) in 0.69s
-     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
 
 running 1 test
 test tests::one_hundred ... ok
@@ -1303,13 +1349,10 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 999 filtered out; fi
 
 # Multiple Tests by Name
 
-`cargo` will actually find any test that matches the name you passed in.
+`cargo` will actually find _any_ test that matches the name you passed in.
 
 ```
 $ cargo test add
-   Compiling adder v0.1.0 (file:///projects/adder)
-    Finished test [unoptimized + debuginfo] target(s) in 0.61s
-     Running unittests src/lib.rs (target/debug/deps/adder-92948b65e88960b4)
 
 running 2 tests
 test tests::add_three_and_two ... ok
@@ -1341,7 +1384,7 @@ fn expensive_test() {
 }
 ```
 
-* If we only want to run ignored tests, we can run `cargo test -- --ignored`
+* If we want to run only ignored tests, we can run `cargo test -- --ignored`
 * If we want to run all tests, we can run `cargo test -- --include-ignored`
 
 <!--
@@ -1367,9 +1410,13 @@ The Rust community thinks about tests in terms of two main categories: unit test
 
 Unit tests are almost always contained within the `src` directory.
 
-* The convention is to create a submodule named `tests` annotated with `#[cfg(test)]` for every module you want to test
-* Recall that `#[cfg(test)]` attribute on items will only compile those items when running `cargo test`, and not `cargo build`
+* The convention is to create submodules named `tests` for every module you want to test
+    * Make sure to add the attribute `#[cfg(test)]`!
 * Prevents deploying extra code in production that is only used for testing
+
+<!--
+Make sure to briefly re-explain what `#[cfg(test)]` is just in case
+-->
 
 
 ---
@@ -1418,6 +1465,8 @@ Integration Tests use your library in the same way any other code would.
 <!--
 By "any other code" we mean code that was written by some other developer using
 your library crate.
+
+The main difference here is that integration tests don't have any access to private items
 -->
 
 
@@ -1459,23 +1508,26 @@ fn it_adds_two() {
 ```
 
 * Note that we don't need to annotate anything with `#[cfg(tests)]`
-* We can now also run test files using the _name_ of the file with
+* We run test files using the name of the integration test file, like
 `cargo test --test integration_test`
+
 
 
 ---
 
 
+<!--
 # Submodules in Integration Tests
 
 As you add more integration tests, you might want to make more files in the `tests` directory to help organize them.
 
 * You can use submodules in the `tests` directory just like in the `src` directory
 
-<!--
+
+// Comment this below:
 You can treat the `tests` directory almost exactly the same as the `src` directory, and you can
 also use the alternate module file naming that we talked about earlier in the lecture.
--->
+
 
 
 ---
@@ -1525,6 +1577,7 @@ fn it_adds_two() {
 
 
 ---
+-->
 
 
 # Integration Tests for Binary Crates
