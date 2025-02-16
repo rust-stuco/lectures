@@ -530,6 +530,10 @@ See discussions:
 - [Rust Internals Forum](https://internals.rust-lang.org/t/the-module-scheme-module-rs-file-module-folder-instead-of-just-module-mod-rs-introduced-by-the-2018-edition-maybe-a-little-bit-more-confusing/21977/17?u=zirconium-n)
 - [Reddit](https://www.reddit.com/r/rust/comments/18pytwt/noob_question_foomodrs_vs_foors_foo_for_module/)
 
+<!--
+You don't really need to explain the discussions in here, leave it for interested students to find out on their own
+-->
+
 
 ---
 
@@ -1210,7 +1214,7 @@ fn greeting_contains_name() {
 
 # `#[should_panic]`
 
-You may have seen something similar in your homework:
+If you want test that your code (correctly) panics, you can use `#[should_panic]`:
 
 ```rust
 #[test]
@@ -1720,6 +1724,9 @@ There are [3 types of errors](https://www.cs.cmu.edu/~410/lectures/L10a_Errors.p
 <!--
 Taken directly from 15-410's Error's lecture, page 37
 We're being purposefully ambiguous here since there is not time to do an entire lecture on error handling
+
+Note that for the purposes of this assignment, the only type of error that should really happen is reportable errors,
+unless someone is adding a VERY interesting feature...
 -->
 
 
