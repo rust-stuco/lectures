@@ -24,8 +24,14 @@ paginate: true
 
 Today, we'll provide another way of thinking about ownership:
 
-* Not just avoiding compile errors, but uncovering how the borrow checker works
-* Write safer code, unblock the borrow checker
+* Not just avoiding compile errors, but uncovering:
+    * How the borrow checker works
+    * The purpose of the borrow checker
+* How do we write safer code by working _with_ the borrow checker?
+
+<!--
+Instead of _against_ the borrow checker
+-->
 
 
 ---
@@ -35,6 +41,7 @@ Today, we'll provide another way of thinking about ownership:
 # The Rules
 
 At the beginning of this course, we learned two sets of rules...
+
 * Ownership Rules
 * Borrowing Rules
 
@@ -54,10 +61,10 @@ At the beginning of this course, we learned two sets of rules...
 
 # Rules of Borrowing
 
-* Cannot access both a mutable and an immutable reference to the same object
-* At any given time, may have either
-    * One mutable (exclusive) reference
-    * Any number of immutable (shared) references
+* At any given time, you may have either
+    * One mutable (exclusive) reference to data
+    * Any number of immutable (shared) references to the same data
+* There can never be dangling references
 
 
 ---
@@ -68,7 +75,7 @@ At the beginning of this course, we learned two sets of rules...
 Getting code to compile is one thing. Understanding why is another...
 
 * Sometimes we follow the rules blindly
-    * When we break the rules, we may not fully understand why it is a problem
+    * When we break the rules, we may not fully understand why it is a problem in the first place
 * The compiler can be overly cautious
     * Rejects code that seems safe
     * Makes us prove safety, even when we "know" it's safe
@@ -106,11 +113,11 @@ What is safety?
 
 # Defining Unsafe
 
-However, undefined behavior can mean many things.
+However, undefined behavior / unsafety can mean many things.
 
 ![list](../images/week8/rust-undefined-list-crop.png)
 
-Definition in Rust Reference prints on five sheets...
+* Definition in the [Rust Reference](https://doc.rust-lang.org/reference/behavior-considered-undefined.html) is much longer...
 
 <!-- Speaker note:
 Undefined behavior can encapsulate a lot of things,
@@ -123,7 +130,7 @@ so we'll simplify it and say that
 
 # Defining Unsafe
 
-Simplification: **invalid memory access ⇒ unsafe**
+Simplification for today: **Unsafety ⇒ Invalid Memory Access**
 
 
 <!-- Speaker note:
@@ -135,7 +142,7 @@ Double asterisk, see Rust Reference for full definition
 ---
 
 
-# Invalid Memory Access ⇒ Unsafe
+# Unsafety ⇒ Invalid Memory Access
 
 Memory access can be unsafe if we access memory that is:
 
@@ -145,20 +152,25 @@ Memory access can be unsafe if we access memory that is:
     * Borrowing rules prevent this
 
 <!-- Speaker note:
-The "someone else" will be further explained in Parallelism lecture
+The "someone else" will be further explained in Parallelism lecture, but it is also possible
+that "someone else" can overwrite in a single-threaded context (vector mutation example)
 -->
 
 
 ---
 
 
-# Invalid Memory Access ⇒ Unsafe
+# Unsafety ⇒ Invalid Memory Access
 
 Memory access can be unsafe if we access **deallocated** or **overwritten** memory.
 
-* Trivially safe for immutable globals
+* Immutable global variables are trivially safe
     * `static` variables are read-only and valid for program's lifetime
-* We'll focus on local variables
+* Today, we'll focus on _local_ variables
+
+<!--
+Immutable global variables are by definition never be deallocated and never written to.
+-->
 
 
 ---
@@ -177,7 +189,7 @@ The stack frame:
 ---
 
 
-# Local Variables
+# The Stack: Local Variables
 
 ![bg right 50%](../images/week8/frames/0.png)
 
@@ -193,7 +205,7 @@ fn main() {
 ---
 
 
-# Local Variables
+# The Stack: Local Variables
 
 ![bg right 50%](../images/week8/frames/1.png)
 
@@ -216,6 +228,12 @@ fn my_function(arg: i32) {
 - Create the locals `y`, `z`
 Emphasize the copying of `x`
 -->
+
+
+---
+
+
+# **The Heap**
 
 
 ---
@@ -245,12 +263,15 @@ We have a 15 GB array?
 
 ```rust
 fn main() {
-    let beef = [0xdeadbeef; 4_000_000];
+    let beef =
+        [0xDEADBEEF; 4_000_000];
+
     my_function(beef);
 }
 ```
 
 * 15 GB = your Google Drive storage ![alt text](../images/week8/google-storage.png)
+
 
 ---
 
@@ -262,19 +283,24 @@ fn main() {
 When we call `my_function`, we must allocate `arg` for its stack frame!
 
 ```rust
-fn my_function(arg : [u32; 4_000_000]) {
-    ...
+fn my_function(arg: [u32; 4_000_000]) {
+    <-- snip -->
 }
 ```
-* Copy 15 GB of `0xdeadbeef`'s
+
+* Copy 15 GB of `0xDEADBEEF`'s
+
 
 ---
 
 
 # Motivating the Heap
 
+Imagine being required to recreate `beef` on every single stack frame.
+
 ```rust
-let beef = [0xdeadbeef; 4_000_000];
+let beef = [0xDEADBEEF; 4_000_000];
+
 my_function(beef);
 my_function(beef);
 my_function(beef);
@@ -291,6 +317,8 @@ my_function(beef);
 
 <!--Speaker note:
 If we call this function 10 times, we're copying 10 Google Drives! Unsustainable!
+
+Make it clear that this is not a recursive function, it's just super expensive to do this every function call.
 
 To transition to next slide, emphasize that
 this inefficiency is not just with function calls.
@@ -328,7 +356,7 @@ Instead of storing our array buffer on the stack...
 
 Instead of storing our array buffer on the stack...
 
-Let's put it on the **heap**.
+Let's put it on the **heap**!
 
 
 ---
@@ -338,15 +366,14 @@ Let's put it on the **heap**.
 
 ![bg right 100%](../images/week8/frames/4-crop.png)
 
-* Value lives in the heap...
-
-* **Pointer** lives on the stack.
+* If the data lives in the heap...
+* The **pointer** lives on the stack
 
 
 ---
 
 
-# The `Box<T>`
+# `Box<T>`
 
 The simplest form of heap allocation is `Box<T>`.
 
@@ -363,23 +390,23 @@ let boxed: Box<u8> = Box::new(val);
 ---
 
 
-# The `Box<T>`
+# `Box<T>`
 
 Let's put our `beef` array in a `Box`:
 
 ```rust
 fn main() {
-    let beef = Box::new([0xdeadbeef; 4_000_000]);
+    let beef = Box::new([0xDEADBEEF; 4_000_000]);
     my_function(beef);
 }
 
-fn my_function(arg : Box<[u32]>) {
-    ...
+fn my_function(arg: Box<[u32]>) {
+    <-- snip -->
 }
 ```
 
-* In practice, this allocates `beef` on the stack and then copies it to the heap
-    * We recommend creating `Vec<T>` instead
+* In reality, this allocates `beef` on the stack and then copies it to the heap
+    * Use `Vec<T>` and convert to a boxed slice instead!
 
 <!-- Speaker note:
 If students ask about type annotation of `arg`:
@@ -387,6 +414,7 @@ If students ask about type annotation of `arg`:
 If students ask when we'd use `Box`, seeing as this is not recommended:
     * We use `Box` when defining recursive types, like tree nodes that have nodes for children. Rust needs to know the size of every type at compile time, but recursive types have an unknown, potentially infinite size. `Box` is used to break the infinite size problem, since its size is always a fixed pointer size
 -->
+
 
 ---
 
@@ -398,7 +426,9 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 When we call `my_function`, we can copy the pointer into `arg`!
 
 ```rust
-let beef = Box::new([0xdeadbeef; 4_000_000]);
+let beef =
+    Box::new([0xDEADBEEF; 4_000_000]);
+
 my_function(beef);
 ```
 
@@ -417,7 +447,9 @@ Much better!
 **After:** 8 bytes per pointer
 
 ```rust
-let beef = Box::new([0xdeadbeef; 4_000_000]);
+let beef =
+    Box::new([0xDEADBEEF; 4_000_000]);
+
 my_function(beef);
 my_function(beef);
 my_function(beef);
@@ -434,26 +466,30 @@ my_function(beef);
 ---
 
 
-# Recap
+# Recap: The Heap
 
 ![bg vertical 30%](../images/week8/frames/0.png)
 ![bg right 100%](../images/week8/frames/4-crop.png)
 
 
 Variable placement:
+
 * **Stack-allocated:** Value on stack
 * **Heap-allocated:** Value on heap, **pointer** on stack
 
 
 ---
 
+
 # Recap
 
-Area of Comparison | Stack | Heap
------|-----|-----|
-Stores | Pointers and fixed-size data (integers, floats) | Dynamically sized or long-lived data (`String`, `Vec`) 
-Allocated on    | Function call     | Programmer request
-Deallocated on  | Function return   | ???
+| Comparison     | Stack                    | Heap                                 |
+|----------------|--------------------------|--------------------------------------|
+| Manages        | Scalar Data and Pointers | Dynamically-sized or Long-lived Data |
+| Allocated on   | Function Call            | Programmer Request                   |
+| Deallocated on | Function Return          | ???                                  |
+
+<!-- Scalar data being integers and floating points -->
 
 
 ---
@@ -469,14 +505,19 @@ Recall that accessing **deallocated** memory is unsafe.
 
 # Motivating Ownership
 
-When do we deallocate memory?
+When is memory deallocated?
 
 * Stack: deallocated when function returns
     * Valid, unless dangling pointer ✅
-    * We'll discuss more in Lifetimes lecture
+        * We'll discuss more in the upcoming Lifetimes lecture...
 * Heap: deallocated when ???
     * ⚠️
     * How can we be confident that heap memory is deallocated safely?
+
+<!--
+Let's put that question on hold for a few slides...
+-->
+
 
 ---
 
@@ -485,7 +526,8 @@ When do we deallocate memory?
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-Inspired by the stack's management of local variables:
+Recall the behavior of local variables on the stack:
+
 * Local variable lives in function's **stack frame**
 * Allocated on function call
 * Deallocated on function return
@@ -499,10 +541,11 @@ Inspired by the stack's management of local variables:
 
 ![bg right 50%](../images/week8/frames/0.png)
 
-What if we say that data is "owned" by the stack frame?
+What if we say that data is **"owned"** by the stack frame?
+
 * One stack frame (owner) per variable
 * Data is dropped on function return
-* Very similar to our previous model!
+* Very similar to our previous model of ownership!
 
 
 <!-- Speaker notes:
@@ -528,17 +571,19 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-Another way to think about ownership in Rust, different from our previous model:
+This is a another / different way to think about ownership in Rust:
 
 * Each value in Rust has an _owner_
-    * Owner is stack frame
+    * Owner is the _stack frame_
 * A value can only have one owner at a time
+    * Variables can only be in one stack frame
 * When the owner goes out of scope, the value will be _dropped_
-    * Deallocate the value here
-    * Safe because only one owner
+    * When the function returns, the stack frame is cleaned up!
 
 
----
+<!-- ---
+
+TODO: Do we need these two slides?
 
 
 # Rules of Ownership
@@ -550,6 +595,9 @@ Another way to think about ownership in Rust, different from our previous model:
     * New stack frame becomes owner
 * Value will be dropped when *current* owner exits scope
 
+^^^ Imo this is kind of confusing because you can very easily transfer ownership into another
+variable in the stack frame
+
 
 ---
 
@@ -558,6 +606,7 @@ Another way to think about ownership in Rust, different from our previous model:
 
 * In part 1, we told you owners were variables
 * Now you know: owners are _stack frames_
+-->
 
 
 ---
@@ -567,6 +616,11 @@ Another way to think about ownership in Rust, different from our previous model:
 
 Recall that accessing **overwritten** memory is unsafe.
 
+<!--
+So we just explained another way to think about ownership rules.
+Is there another way to think about borrowing rules?
+-->
+
 
 ---
 
@@ -575,22 +629,26 @@ Recall that accessing **overwritten** memory is unsafe.
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Suppose we have a `Vector` like this.
-
-We take a reference `x` to its last element, remove the last element, and print `x`.
+Suppose we want to write this code.
 
 ```rust
-fn x_shouldnt_exist() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-    v.pop(); // Removes last element in `v`
-    println!("{}", x); // What is `x`?
-}
+let mut v = vec![1, 2, 3, 4];
+
+let x = &v[3]; // Get a reference to the last element
+
+v.pop(); // Remove the last element in `v`
+
+println!("{}", x); // What is `x`?
 ```
 
 * What do you think the compiler will say?
 
-<!--Speaker note: Ask audience!! -->
+<!--
+Explain this code directly:
+Suppose we have a `Vec`, and we take a reference `x` to its last element, remove the last element, and print `x`.
+
+Ask audience!!
+-->
 
 
 ---
@@ -601,36 +659,20 @@ fn x_shouldnt_exist() {
 
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> src/main.rs:4:5
+ --> src/main.rs:6:5
   |
-3 |     let x = &v[3];
+4 |     let x = &v[3]; // Get a reference to the last element
   |              - immutable borrow occurs here
-4 |     v.pop(); // Removes last element in `vec`
+5 |
+6 |     v.pop(); // Remove the last element in `v`
   |     ^^^^^^^ mutable borrow occurs here
-5 |     println!("{}", x); // What is `x`?
+7 |
+8 |     println!("{}", x); // What is `x`?
   |                    - immutable borrow later used here
 ```
 
-* `x` is invalid! `v[3]` can be any value ⇒ undefined behavior
-* We cannot mutably borrow a value with an existing immutable borrow
-
----
-
-
-# Vector Push
-
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
-
-Instead of removing the last element...
-
-```rust
-fn x_shouldnt_exist() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-    v.pop(); // Removes last element in `v`
-    println!("{}", x); // What is `x`?
-}
-```
+* `x` is invalid! `&v[3]` could now be any value ⇒ undefined behavior
+* We cannot mutate a value that someone else is borrowing
 
 
 ---
@@ -640,20 +682,21 @@ fn x_shouldnt_exist() {
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Instead of removing the last element, let's add a new element!
+What if instead of removing the last element, we _add_ an element to the end?
 
 ```rust
-fn please_dont_move() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = &v[3];
-    v.push(5); // Add an element to the end of `v`
-    println!("{}", x); // What is `x`?
-}
+let mut v = vec![1, 2, 3, 4];
+
+let x = &v[3]; // Get a reference to the last element
+
+v.push(5); // Instead of popping, let's push!
+
+println!("{}", x); // What is `x`?
 ```
 
 * Surely nothing will happen to `x` this time?
 
-<!--Speaker note: Ask audience!! -->
+<!--Speaker note: Ask audience!!-->
 
 
 ---
@@ -661,44 +704,88 @@ fn please_dont_move() {
 
 # Vector Push
 
-
-The compiler isn't paranoid! It's prudent.
+Why isn't this okay???
 
 ```
 error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
- --> src/main.rs:4:5
+ --> src/main.rs:6:5
   |
-3 |     let x = &v[2];
+4 |     let x = &v[3]; // Get a reference to the last element
   |              - immutable borrow occurs here
-4 |     v.push(5);
+5 |
+6 |     v.push(5); // Instead of popping, let's push!
   |     ^^^^^^^^^ mutable borrow occurs here
-5 |     println!("{}", x); // What is `x`?
+7 |
+8 |     println!("{}", x); // What is `x`?
   |                    - immutable borrow later used here
 ```
 
+
+---
+
+
+# Vector Layout
+
+![bg right:50% 90%](../images/String_layout.svg)
+
+Recall that vectors are _dynamic arrays_.
+
+* _This is technically a `String`, but recall that `String` is implemented with a `Vec<u8>`_
+
+
+
+---
+
+
+# Mutating Vectors
+
+
+![bg right:35% 95%](../images/String_layout.svg)
+
 * What if pushing `5` onto `v` triggers a resize?
-    * Resizing means allocating new memory for `v`, copying data, and deallocating old `v`
+* Resizing means:
+    * Allocate new memory for `v`
+    * Copy data to new location
+    * **Deallocate old memory location**
 * `x` would no longer point to valid memory!
 
 
 ---
 
 
-# Vector Push: `unsafe`
+# Mutating Vectors
 
-What if you knew that this push doesn't resize?
-
-`unsafe` block: "Trust me, I'll take care of safety in here"
-
-```rust
-fn please_dont_move() {
-    let mut v = vec![1, 2, 3, 4];
-    let x = unsafe { v.as_ptr().add(3) }; // Get a raw pointer to the last element
-    v.push(5);
-    let x = unsafe { *x }; // Dereference the raw pointer
-    println!("{}", x);
-}
 ```
+error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable
+ --> src/main.rs:6:5
+  |
+4 |     let x = &v[3]; // Get a reference to the last element
+  |              - immutable borrow occurs here
+5 |
+6 |     v.push(5); // Instead of popping, let's push!
+  |     ^^^^^^^^^ mutable borrow occurs here
+7 |
+8 |     println!("{}", x); // What is `x`?
+  |                    - immutable borrow later used here
+```
+
+Even though this error may seem unreasonable, the borrow checker is actually preventing you from making a hard-to-find mistake!
+
+<!--
+Ask students how easy you can make this mistake in other languages (namely C++)
+-->
+
+
+---
+
+
+# We Know Better...
+
+What if you knew that this `push` doesn't resize?
+
+* You as the programmer have vetted the implementation of `push`
+* You can _guarantee_ that resizing only happens with more elements
+
 
 <!--
 What if you, as the programmer, knew that this push doesn't resize?
@@ -713,14 +800,53 @@ We will talk about `unsafe` in the later weeks.
 ---
 
 
-# Vector Push: `unsafe`
+# Sneak Peek: `unsafe`
 
-`unsafe` should be used sparingly, which is why...
+You can use an `unsafe` block to tell the compiler that you know better.
 
-* We must understand the borrow checker!
+
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+
+let x = unsafe { v.as_ptr().add(3) }; // Get a raw pointer to the last element
+
+v.push(5);
+
+let x = unsafe { *x }; // Dereference the raw pointer
+
+println!("{}", x);
+```
+
+* Think of `unsafe` blocks as "trust me bro" blocks
+* We will talk about `unsafe` in a few weeks!
+
+
+---
+
+
+# `unsafe` vs. Borrow Checking
+
+You should _never_ resort to using `unsafe` just to get past the borrow checker.
+
+* `unsafe` should be used sparingly and intentionally
+* You must understand _why_ you need to bypass the borrow checker
+* Therefore, you _must_ understand the borrow checker!
+
+
+---
+
+
+# The Borrow Checker
+
+The Borrow Checker prevents you from writing unsafe code.
+
+This leads to some questions:
+
 * How do I know if my program is unsafe?
     * How did the borrow checker conclude this?
-* How can I tell if my program is safe, but borrow checker can't know?
+* How can I tell if my program is safe even if the borrow checker rejects it?
+
 
 ---
 
