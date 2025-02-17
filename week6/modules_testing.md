@@ -1617,7 +1617,7 @@ Homework 6 is going to be very different from the previous 5 homeworks!
 ---
 
 
-# **Code**
+# **Code Review**
 
 
 ---
@@ -1639,7 +1639,7 @@ You are probably very used to [this workflow](https://www.cs.cmu.edu/~410/lectur
 * Get assignment handout and code outline
 * "Fill in the blanks"
 * Graded by autograder
-* All done!
+* **All done!**
     * Never use this code again
     * Delete it at the end of the semester
 
@@ -1660,7 +1660,7 @@ In the real world, the workflow is almost the complete opposite:
 * Figure out where the "blanks" are to add new features
 * Run tests that may not be exhaustive
 * **Not done!**
-    * Other people _will_ use and read your code
+    * Your users and your team ultimately "grade" your work
 
 
 ---
@@ -1744,7 +1744,7 @@ Write good tests!
 ---
 
 
-# Code?
+# Code Review
 
 * What is code?
 * Why do we write code?
