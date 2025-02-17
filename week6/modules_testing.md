@@ -1638,6 +1638,7 @@ You are probably very used to [this workflow](https://www.cs.cmu.edu/~410/lectur
 
 * Get assignment handout and code outline
 * "Fill in the blanks"
+* Debug a few things
 * Graded by autograder
 * **All done!**
     * Never use this code again
@@ -1656,11 +1657,11 @@ This slide is inspired very directly from 15-410's Boot Camp Slides, page 45
 In the real world, the workflow is almost the complete opposite:
 
 * Jump into a _massive_ codebase
-* Read and debug someone else's code
 * Figure out where the "blanks" are to add new features
+* Read and debug someone else's code
 * Run tests that may not be exhaustive
 * **Not done!**
-    * Your users and your team ultimately "grade" your work
+    * Your users and your team are constantly "grading" your work
 
 
 ---
@@ -1675,6 +1676,11 @@ We will be manually grading for both correctness and _robustness_.
 * If you simply copy and paste everything from the tutorial, _you may get around 15/100 extra credit points_
     * We are going to be super strict!
         * Adopting the 15-410 (CMU Operating Systems) mindset
+
+<!--
+A perfect 100 is basically the highest quality open source code.
+That is basically impossible to get in an hour...
+-->
 
 
 ---
@@ -1699,11 +1705,11 @@ Key things:
 
 Most of the extra credit grade will come from your documentation.
 
-* Documentation should be descriptive and succinct
-* Explain the features of your program
+* Documentation should be [descriptive and succinct](https://rust-lang.github.io/api-guidelines/documentation.html)
+    * For this assignment, explain the features of your executable!
 * For fellow developers, explain:
     * Design
-    * Architecture / Structure of your code
+    * Architecture / structure of your code
     * _Why_ does this function need to exist?
 
 
@@ -1739,19 +1745,6 @@ Write good tests!
 
 * 1000 tests testing the same thing?
 * 5 tests testing edge cases?
-
-
----
-
-
-# Code Review
-
-* What is code?
-* Why do we write code?
-
-<!--
-Encourage students to think about these kinds of things because it is _super_ important
--->
 
 
 ---
