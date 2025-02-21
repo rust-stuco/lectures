@@ -248,7 +248,7 @@ let annotated_closure = |num: u32| -> u32 {
 };
 ```
 * This looks very similar to functions we've seen
-* Like normal variables, rust can derive closure type annotations from context!
+* Like normal variables, Rust can derive closure type annotations from context!
 
 
 ---
