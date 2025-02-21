@@ -498,7 +498,7 @@ println!("Mystery value is {}", mystery(5));
 ---
 
 
-# Thread sneak peek
+# Case for `move`: Thread Safety
 
 Let's briefly explore spawning a new thread with a closure.
 
@@ -513,9 +513,10 @@ fn main() {
 }
 ```
 
-* The `println!` technically only needs an immutable reference to `list`
-* But what would happen if the parent thread dropped `list` before the child thread ran?
-* Use after free! ☠️
+* Why do we `move` instead of borrow?
+  * Our child's `println!` technically only needs an immutable reference to `list`
+* The parent might drop `list` before the child thread runs?
+  * Use after free! ☠️
 
 
 ---
