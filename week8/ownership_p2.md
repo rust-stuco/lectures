@@ -756,24 +756,6 @@ let my_str_str = take_and_give_back.run();
 
 # Closure B
 
-Then our code is equivalent to
-
-```rust
-let my_str = String::from("x");
-let take_and_give_back = ClosureB { my_str };
-```
-
-What happens when we call `ClosureB`'s function?
-```rust
-let my_str_str = take_and_give_back.run();
-```
-
-
----
-
-
-# Closure B
-
 ![bg right 100%](../images/week8/closures/closureB_0.png)
 
 First, `my_str` is moved into our closure...
