@@ -581,34 +581,6 @@ This is a another / different way to think about ownership in Rust:
     * When the function returns, the stack frame is cleaned up!
 
 
-<!-- ---
-
-TODO: Do we need these two slides?
-
-
-# Rules of Ownership
-
-![bg right 100%](../images/week8/frames/5-crop.png)
-
-* Note the ownership transfer:
-    * Original `v` is invalidated (grayed out)
-    * New stack frame becomes owner
-* Value will be dropped when *current* owner exits scope
-
-^^^ Imo this is kind of confusing because you can very easily transfer ownership into another
-variable in the stack frame
-
-
----
-
-
-# Rules of Ownership
-
-* In part 1, we told you owners were variables
-* Now you know: owners are _stack frames_
--->
-
-
 ---
 
 
