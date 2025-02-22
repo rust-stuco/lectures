@@ -592,9 +592,8 @@ let consume_and_return = move || my_str; // Returns `my_str`, moving it out of t
 * `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
 
 <!--
-Use case: Writing a task scheduler that runs a job exactly once
-  The captured variable can be a resource that cannot be reused after the task is complete,
-  like a file handle, a network connection, or a database connection.
+Use case: Transactions that should happen exactly once,
+but the underlying resource can be reused for multiple transactions
 -->
 
 
@@ -831,6 +830,8 @@ fn main() {
 
 
 # `Fn`
+
+The `Fn` trait allows you to define functions that accept other functions as arguments:
 
 ```rust
 fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
