@@ -605,7 +605,7 @@ Use case: Writing a task scheduler that runs a job exactly once
 
 All closures implement `FnOnce`, since all closures can be called once. This does not mean they can _only_ be called once!
 
-One example is the `unwrap_or_else` method, which calls a closure if it receives an `Err`.
+One example is the `unwrap_or_else` method, which calls a closure if it receives an `Err`:
 
 ```rust
 fn count(x: &str) -> usize { x.len() }
@@ -690,6 +690,8 @@ let mut add_two_to_x = || x += 2;
 add_two_to_x();
 ```
 
+* Use cases: Stateful operations on some shared resource
+  * Imagine `x` were a score on a scoreboard
 * Note that this will not compile without the `mut` in `let mut add_two_to_x`
   * `mut` signals that we are mutating our closure's environment
     * Key idea: how variables within scope at invocation change between calls
@@ -728,7 +730,7 @@ Ferris is happy!
 
 # `FnMut`
 
-Just like in `unwrap_or_else`, we can pass a `FnMut` closure to a function.
+We can pass an `FnMut` closure as an argument to a function.
 
 ```rust
 fn do_twice<F>(mut func: F)
@@ -740,29 +742,26 @@ where
 }
 ```
 
+* Would `do_twice` accept a closure that's exclusively `FnOnce`?
+  * No, because we call our closure twice
+* How about an `Fn` closure?
+  * Yes, next slide
+
 
 ---
 
 
 # `Fn`
 
-Finally, the `Fn` trait is a superset of `FnOnce` and `FnMut`.
-
-```rust
-let double = |x| x * 2; // captures nothing
-
-let mascot = String::from("Ferris");
-let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
-
-let my_sanity = ();
-let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
-```
+The `Fn` trait is a superset of `FnOnce` and `FnMut`.
 
 * `Fn` applies to closures that:
   * Don't move captured values out of their body
   * Don't mutate captured values
   * Don't capture anything from their environment
 * Can be called more than once without mutating the environment
+* Use case: Stateless operations without side effects
+  * Logging, pretty printing, etc.
 
 <!--
 Use case: Stateless operation without side effects
@@ -772,6 +771,61 @@ Use case: Stateless operation without side effects
 
 ---
 
+
+# `Fn`
+
+`Fn` applies to closures that don't capture anything from their environment:
+
+```rust
+let double = |x| x * 2; // captures nothing
+```
+
+---
+
+# `Fn`
+
+`Fn` also applies to closures that don't mutate captured variables:
+
+```rust
+let mascot = String::from("Ferris");
+let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+```
+
+
+---
+
+# `Fn`
+
+Finally, `Fn` applies to closures that don't move captured values out of their body:
+
+```rust
+let my_sanity = ();
+let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+```
+
+* When is `my_sanity` dropped?
+  * `my_sanity` is _not_ dropped when we call and return from our closure!
+  * It's dropped when our closure goes out of scope
+
+
+---
+
+
+# `Fn`
+
+`my_sanity` is dropped when our closure goes out of scope:
+
+```rust
+fn main() {
+  let my_sanity = ();
+  let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+}
+```
+
+* Again, to reiterate: `my_sanity` is _not_ dropped when we call and return from our closure!
+
+
+---
 
 # `Fn`
 
