@@ -515,7 +515,7 @@ fn main() {
 
 * Why do we `move` instead of borrow?
   * Our child's `println!` technically only needs an immutable reference to `list`
-* The parent might drop `list` before the child thread runs?
+* The parent might drop `list` before the child thread runs
   * Use after free! ☠️
 
 
