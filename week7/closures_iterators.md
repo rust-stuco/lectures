@@ -605,6 +605,21 @@ Use case: Writing a task scheduler that runs a job exactly once
 
 All closures implement `FnOnce`, since all closures can be called once. This does not mean they can _only_ be called once!
 
+One example is the `unwrap_or_else` method, which calls a closure if it receives an `Err`.
+
+```rust
+fn count(x: &str) -> usize { x.len() }
+
+Ok(2).unwrap_or_else(count);          // unwrap the value in `Ok`
+Err("foo").unwrap_or_else(count), 3;  // else, compute it from closure `count("foo")`
+```
+
+
+---
+
+
+# `unwrap_or_else`
+
 Let's look at the definition of the `unwrap_or_else` method on `Option<T>`.
 
 ```rust
