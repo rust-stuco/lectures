@@ -565,7 +565,7 @@ What do you mean, function _trait_???
 
 ![bg right:40% 120%](../images/closure_traits.svg)
 
-* `FnOnce`: Closures that can only be called once
+* `FnOnce`: Closures that can be called once
   * e.g. A closure that moves captured values out of its body
 * `FnMut`: Closures that might mutate the captured values
   * These closures can be called more than once
@@ -578,18 +578,20 @@ What do you mean, function _trait_???
 
 # `FnOnce`
 
-Let's look at some examples of `FnOnce`.
+All closures implement `FnOnce`, since all closures can be called once.
+
+However, a closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`:
 
 ```rust
 let my_str = String::from("x");
-let consume_and_return = move || my_str;
+let consume_and_return = move || my_str; // Returns `my_str`, moving it out of the closure
 ```
 
-* Recall that Rust will never implicitly clone `my_str`
-  * This closure consumes `my_str` by giving ownership back to the caller
-* Closures that can be called once implement `FnOnce`
-* All closures implement this trait, since all closures can be called
-* A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`
+* Why can this closure only be called once?
+  * `my_str` is no longer accessible to our closure after it's called!
+  * It takes ownership of `my_str`, then gives ownership back to the caller
+    * Rust never implicitly clones `my_str`, cannot be reused after move
+* `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
 
 
 ---
