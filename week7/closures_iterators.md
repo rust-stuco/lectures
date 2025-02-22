@@ -544,22 +544,7 @@ What do you mean, function _trait_???
   * `FnOnce`
   * `FnMut`
   * `Fn`
-
-
----
-
-
-# The `Fn` traits
-
-
-* `FnOnce` applies to closures that can be called once
-  * If a closure moves captured values out of its body, it can only be called once, thus it implements `FnOnce`
-* `FnMut` applies to closures that might mutate the captured values
-  * These closures can be called more than once
-* `Fn` applies to all other types of closures
-  * Closures that don't move values out
-  * Closures that don't mutate
-  * Closures that don't capture anything
+* You don't `impl` them, they apply to a closure automatically
 
 
 ---
@@ -571,6 +556,22 @@ What do you mean, function _trait_???
 
 * `Fn` is also `FnMut` and `FnOnce`
 * `FnMut` is also `FnOnce`
+
+
+---
+
+
+# The `Fn` traits
+
+![bg right:40% 120%](../images/closure_traits.svg)
+
+* `FnOnce`: Closures that can only be called once
+  * e.g. A closure that moves captured values out of its body
+* `FnMut`: Closures that might mutate the captured values
+  * These closures can be called more than once
+* `Fn`: All the rest
+  * Don't move values out, don't mutate, don't capture anything
+
 
 ---
 
