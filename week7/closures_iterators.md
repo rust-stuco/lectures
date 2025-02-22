@@ -818,14 +818,17 @@ let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
 ```rust
 fn main() {
   let my_sanity = ();
-  let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
-}
+  let cmu = move || {my_sanity;};
+  cmu(); // `my_sanity` is NOT dropped here
+  cmu(); // `my_sanity` is NOT dropped here
+} // `my_sanity gets dropped here`
 ```
 
 * Again, to reiterate: `my_sanity` is _not_ dropped when we call and return from our closure!
 
 
 ---
+
 
 # `Fn`
 
