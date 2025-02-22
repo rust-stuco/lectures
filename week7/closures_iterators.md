@@ -591,6 +591,12 @@ let consume_and_return = move || my_str; // Returns `my_str`, moving it out of t
     * Rust never implicitly clones `my_str`, cannot be reused after move
 * `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
 
+<!--
+Use case: Writing a task scheduler that runs a job exactly once
+  The captured variable can be a resource that cannot be reused after the task is complete,
+  like a file handle, a network connection, or a database connection.
+-->
+
 
 ---
 
@@ -661,7 +667,7 @@ Now let's observe the function body.
 
 # `FnMut`
 
-Recall that `FnMut` applies to closures that might mutate the captured values.
+`FnMut` applies to closures that might mutate the captured values.
 
 ```rust
 let mut x: usize = 1;
@@ -672,6 +678,12 @@ add_two_to_x();
 * Note that this will not compile without the `mut` in `let mut add_two_to_x`
   * `mut` signals that we are mutating our closure's environment
     * Key idea: how variables within scope at invocation change between calls
+
+<!--
+Use case: Stateful operation to some shared resource
+  The captured variable is some shared resource, like a score on a scoreboard,
+  a message queue, etc.
+-->
 
 
 ---
@@ -736,6 +748,11 @@ let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
   * Don't mutate captured values
   * Don't capture anything from their environment
 * Can be called more than once without mutating the environment
+
+<!--
+Use case: Stateless operation without side effects
+  Example is logging
+-->
 
 
 ---
