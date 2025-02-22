@@ -571,7 +571,7 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-This is a another / different way to think about ownership in Rust:
+Under our new ownership model, owners are stack frames:
 
 * Each value in Rust has an _owner_
     * Owner is the _stack frame_
@@ -579,6 +579,267 @@ This is a another / different way to think about ownership in Rust:
     * Variables can only be in one stack frame
 * When the owner goes out of scope, the value will be _dropped_
     * When the function returns, the stack frame is cleaned up!
+
+
+---
+
+# Ownership of Closures
+
+Let's examine closures using our new ownership model:
+* What does the `move` keyword really do?
+* Why are captured values dropped at the times they do?
+
+---
+
+
+# Ownership of Closures
+
+When is `my_str` dropped?
+
+**Closure A**
+
+```rust
+let my_str = String::from("x");
+let take_and_keep = move || {my_str;};
+```
+
+**Closure B**
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = move || my_str;
+```
+
+* In Closure A, `my_str` is dropped when the closure goes out of scope
+* In Closure B, `my_str` is dropped the first time the closure is called
+    * B can only be called once, while A can be called multiple times
+
+<!-- Speaker note:
+    Bonus points if you can tell us which Traits these closures implement:
+        Closure A is all three
+        Closure B is FnOnce only
+-->
+
+
+---
+
+
+# Reframing Closures
+
+When we create a closure...
+
+```rust
+let do_nothing_closure = |x| {x;};
+```
+
+Think of it as a struct with an associated function:
+
+```rust
+struct Closure { }
+
+impl Closure {
+    pub fn run(&self, x: &str) -> () {
+        &x;
+    }
+}
+```
+
+
+---
+
+
+# Reframing Closures
+
+The `move` keyword tells the closure to take ownership of values from its environment.
+
+```rust
+let my_str = String::from("x");
+let take_and_keep = move || {my_str;};
+```
+
+These values are stored in the struct like so:
+
+```rust
+struct ClosureA {
+    my_str: String // `move` keyword tells compiler to put `my_str` in struct
+}
+impl ClosureA {
+    pub fn run(&self) -> () {
+        &self.my_str;
+        ()
+    }
+}
+```
+
+<!-- Speaker note:
+    Although the `my_str;` is a no-op, it's necessary for telling
+    the closure to capture the value `my_str`
+
+    Other important detail is &self.my_str instead of self.my_str
+    Aquascope renders the diagrams with a UAF in the case of self.my_str
+    Without the reference &, self.my_str gets interpreted as an attempt
+    to move my_str out of the struct. As for where this is moved, ¯\_(ツ)_/¯
+-->
+
+
+---
+
+
+# Closure A
+
+Then our closure declaration is equivalent to creating a struct:
+
+```rust
+let my_str = String::from("x");
+let take_and_keep = ClosureA { my_str };
+```
+
+Hence, `my_str` is dropped when Closure A goes out of scope:
+
+```rust
+let my_str = String::from("x");
+{
+    let take_and_keep = ClosureA { my_str }; // take ownership of `my_str`
+    take_and_keep.run();
+    take_and_keep.run();
+} // drop `take_and_keep`, which drops `my_str`
+```
+* Closure A can be called multiple times!
+
+---
+
+
+# Closure B
+
+Now, when we compare with Closure B...
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = move || my_str;
+```
+
+Closure B becomes the following struct and function:
+
+```rust
+struct ClosureB {
+    my_str: String
+}
+
+impl ClosureB {
+    pub fn run(self) -> String {
+        return self.my_str; // gives ownership back to caller
+    }
+}
+```
+
+
+---
+
+
+# Closure B
+
+Then our code is equivalent to
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = ClosureB { my_str };
+```
+
+What happens when we call `ClosureB`'s function?
+```rust
+let my_str_str = take_and_give_back.run();
+```
+
+
+---
+
+
+# Closure B
+
+Then our code is equivalent to
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = ClosureB { my_str };
+```
+
+What happens when we call `ClosureB`'s function?
+```rust
+let my_str_str = take_and_give_back.run();
+```
+
+
+---
+
+
+# Closure B
+
+![bg right 100%](../images/week8/closures/closureB_0.png)
+
+First, `my_str` is moved into our closure...
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = ClosureB { my_str }; // <-
+let my_str_str = take_and_give_back.run();
+```
+
+---
+
+
+# Closure B
+
+![bg right 100%](../images/week8/closures/closureB_1.png)
+
+Next, we call our closure, which gives ownership of `my_str` to `ClosureB::run`'s stack frame...
+
+```rust
+let my_str = String::from("x");
+let take_and_give_back = ClosureB { my_str }; 
+let my_str_str = take_and_give_back.run(); // <-
+```
+
+---
+
+
+# Closure B
+
+![bg right 100%](../images/week8/closures/closureB_2.png)
+
+`Closure::run` gives ownership back to `main`'s stack frame...
+
+```rust
+pub fn run(self) -> String {
+    return self.my_str; // gives ownership back to caller
+}
+```
+
+
+---
+
+
+# Closure B
+
+![bg right 100%](../images/week8/closures/closureB_3.png)
+
+See how our closure's `my_str` is invalidated
+
+* Closure B moves `my_str` out of is body
+    * Can only be called once
+* Closure A retains ownership of `my_str`
+    * Can be called multiple times
+
+---
+
+
+# Recap
+
+* New way of thinking about ownership
+    * Owners are stack frames
+* A closure is really a struct and a function
+    * Ways to capture values:
+        * **Taking ownership:** Store the value in the struct, via `move` keyword
+        * **Borrowing:** Pass the value as an argument to the function
 
 
 ---
