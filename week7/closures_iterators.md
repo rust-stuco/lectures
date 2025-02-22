@@ -578,9 +578,7 @@ What do you mean, function _trait_???
 
 # `FnOnce`
 
-All closures implement `FnOnce`, since all closures can be called once.
-
-However, a closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`:
+A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`:
 
 ```rust
 let my_str = String::from("x");
@@ -598,6 +596,8 @@ let consume_and_return = move || my_str; // Returns `my_str`, moving it out of t
 
 
 # `unwrap_or_else`
+
+All closures implement `FnOnce`, since all closures can be called once. This does not mean they can _only_ be called once!
 
 Let's look at the definition of the `unwrap_or_else` method on `Option<T>`.
 
