@@ -248,7 +248,7 @@ let annotated_closure = |num: u32| -> u32 {
 };
 ```
 * This looks very similar to functions we've seen
-* Like normal variables, rust can derive closure type annotations from context!
+* Like normal variables, Rust can derive closure type annotations from context!
 
 
 ---
@@ -498,7 +498,7 @@ println!("Mystery value is {}", mystery(5));
 ---
 
 
-# Thread sneak peek
+# Case for `move`: Thread Safety
 
 Let's briefly explore spawning a new thread with a closure.
 
@@ -513,9 +513,10 @@ fn main() {
 }
 ```
 
-* The `println!` technically only needs an immutable reference to `list`
-* But what would happen if the parent thread dropped `list` before the child thread ran?
-* Use after free! ☠️
+* Why do we `move` instead of borrow?
+  * Child's `println!` only needs an immutable reference to `list`
+* Parent might drop `list` before the child thread runs
+  * Use after free! ☠️
 
 
 ---
@@ -543,6 +544,18 @@ What do you mean, function _trait_???
   * `FnOnce`
   * `FnMut`
   * `Fn`
+* Rust auto-implements these for closures and functions
+
+
+---
+
+
+# The `Fn` Traits: Visualized
+
+![bg right:50% 120%](../images/closure_traits.svg)
+
+* `Fn` is also `FnMut` and `FnOnce`
+* `FnMut` is also `FnOnce`
 
 
 ---
@@ -550,44 +563,84 @@ What do you mean, function _trait_???
 
 # The `Fn` traits
 
+![bg right:40% 120%](../images/closure_traits.svg)
 
-* `FnOnce` applies to closures that can be called once
-  * If a closure moves captured values out of its body, it can only be called once, thus it implements `FnOnce`
-* `FnMut` applies to closures that might mutate the captured values
-  * These closures can be called more than once
-* `Fn` applies to all other types of closures
-  * Closures that don't move values out
-  * Closures that don't mutate
-  * Closures that don't capture anything
+* `FnOnce`: Closures that can be called once
+* `FnMut`: Closures that might mutate the captured values
+* `Fn`: All the rest
 
 
 ---
 
 
-# Closure Traits Visualized
+# The `Fn` traits
 
-![bg right:50% 120%](../images/closure_traits.svg)
+* `FnOnce`: Closures that can be called once
+  * All closures and functions implement this, can be called _at least_ once
+  * However, closure that are exclusively `FnOnce` can _only_ be called once
+    * e.g. A closure that moves captured values out of its body
+* `FnMut`: Closures that might mutate the captured values
+  * Can be called more than once
+* `Fn`: All the rest
+  * Don't move values out, don't mutate, don't capture anything
 
-* `Fn` is also `FnMut` and `FnOnce`
-* `FnMut` is also `FnOnce`
 
 ---
 
 
 # `FnOnce`
 
-Let's look at some examples of `FnOnce`.
+A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`:
 
 ```rust
 let my_str = String::from("x");
+// Returns `my_str`, moving it out of the closure
 let consume_and_return = move || my_str;
 ```
 
-* Recall that Rust will never implicitly clone `my_str`
-  * This closure consumes `my_str` by giving ownership back to the caller
-* Closures that can be called once implement `FnOnce`
-* All closures implement this trait, since all closures can be called
-* A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`
+* Why can this closure only be called once?
+  * It takes ownership of `my_str`, then gives ownership back to the caller
+  * `my_str` is no longer accessible to our closure after it's called!
+* `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
+
+<!--
+Rust never implicitly clones `my_str`, cannot be reused after move
+
+Use case for moving captured values out:
+  Transactions that should happen exactly once,
+  but the underlying resource can be reused for multiple transactions
+
+Think of the resource as a database connection, socket connection, or file handle
+-->
+
+
+---
+
+
+# `unwrap_or_else`
+
+All closures implement `FnOnce`, since all closures can be called once.
+
+* This does not mean they can _only_ be called once!
+* One example is the `unwrap_or_else` method
+
+
+---
+
+
+# `unwrap_or_else`
+
+`unwrap_or_else` processes the `Result<T, E>` of a function.
+
+```rust
+fn count(x: &str) -> usize { x.len() }
+
+Ok(2).unwrap_or_else(count);
+Err("foo").unwrap_or_else(count), 3;
+```
+
+* If successful, it unwraps the value from `Ok(T)`
+* Otherwise, if `Err(E)`, it calculates the value from a closure
 
 
 ---
@@ -657,7 +710,7 @@ Now let's observe the function body.
 
 # `FnMut`
 
-Recall that `FnMut` applies to closures that might mutate the captured values.
+`FnMut` applies to closures that might mutate the captured values.
 
 ```rust
 let mut x: usize = 1;
@@ -665,9 +718,18 @@ let mut add_two_to_x = || x += 2;
 add_two_to_x();
 ```
 
+* Use cases: Stateful operations on some shared resource
+  * Imagine `x` were a score on a scoreboard
 * Note that this will not compile without the `mut` in `let mut add_two_to_x`
   * `mut` signals that we are mutating our closure's environment
-    * Key idea: how variables within scope at invocation change between calls
+
+<!--
+Key idea: how variables within scope at invocation change between calls
+
+Use case: Stateful operation to some shared resource
+  The captured variable is some shared resource, like a score on a scoreboard,
+  a message queue, etc.
+-->
 
 
 ---
@@ -697,7 +759,7 @@ Ferris is happy!
 
 # `FnMut`
 
-Just like in `unwrap_or_else`, we can pass a `FnMut` closure to a function.
+We can pass an `FnMut` closure as an argument to a function.
 
 ```rust
 fn do_twice<F>(mut func: F)
@@ -709,35 +771,107 @@ where
 }
 ```
 
+* Would `do_twice` accept a closure that's exclusively `FnOnce`?
+  * No, because we call our closure twice
+* How about an `Fn` closure?
+  * Yes!
+
 
 ---
 
 
 # `Fn`
 
-Finally, the `Fn` trait is a superset of `FnOnce` and `FnMut`.
-
-```rust
-let double = |x| x * 2; // captures nothing
-
-let mascot = String::from("Ferris");
-let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
-
-let my_sanity = ();
-let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
-```
+The `Fn` trait is a superset of `FnOnce` and `FnMut`.
 
 * `Fn` applies to closures that:
   * Don't move captured values out of their body
   * Don't mutate captured values
   * Don't capture anything from their environment
 * Can be called more than once without mutating the environment
+* Use cases: Stateless operations without side effects
+  * Logging, pretty printing
+  * Predicates for sorting, searching, filtering
+
+<!--
+Use case: Stateless operation without side effects
+  Example is logging
+
+Note for sorting:
+Actually FnMut in the standard library but in most cases we're passing in something that is Fn
+-->
 
 
 ---
 
 
 # `Fn`
+
+`Fn` applies to closures that don't capture anything from their environment:
+
+```rust
+let double = |x| x * 2; // captures nothing
+assert!(double(2) == 4);
+```
+
+---
+
+# `Fn`
+
+`Fn` also applies to closures that don't mutate captured variables:
+
+```rust
+let mascot = String::from("Ferris");
+let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+
+assert!(is_mascot("Ferris"));    // true
+assert!(!is_mascot("Ferrari"));  // false
+```
+
+
+---
+
+# `Fn`
+
+Finally, `Fn` applies to closures that don't move captured values out of their body:
+
+```rust
+let my_sanity = ();
+let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+
+assert!(cmu() == ());
+```
+
+* When is `my_sanity` dropped?
+  * `my_sanity` is _not_ dropped when we call and return from our closure!
+  * It's dropped when our closure goes out of scope
+
+
+---
+
+
+# `Fn`
+
+`my_sanity` is dropped when our closure goes out of scope:
+
+```rust
+fn main() {
+  let my_sanity = ();
+  let cmu = move || {my_sanity;};
+  cmu(); // `my_sanity` is NOT dropped here
+  cmu(); // `my_sanity` is NOT dropped here
+} // `my_sanity gets dropped here`
+```
+
+* Again, to reiterate: `my_sanity` is _not_ dropped when we call and return from our closure!
+
+
+---
+
+
+# `Fn`
+
+The `Fn` trait allows you to define functions that accept other functions as arguments:
 
 ```rust
 fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
