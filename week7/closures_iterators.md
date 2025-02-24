@@ -514,8 +514,8 @@ fn main() {
 ```
 
 * Why do we `move` instead of borrow?
-  * Our child's `println!` technically only needs an immutable reference to `list`
-* The parent might drop `list` before the child thread runs
+  * Child's `println!` only needs an immutable reference to `list`
+* Parent might drop `list` before the child thread runs
   * Use after free! ☠️
 
 
@@ -544,13 +544,13 @@ What do you mean, function _trait_???
   * `FnOnce`
   * `FnMut`
   * `Fn`
-* You don't `impl` them, they apply to a closure automatically
+* Rust auto-implements these for closures and functions
 
 
 ---
 
 
-# Closure Traits Visualized
+# The `Fn` Traits: Visualized
 
 ![bg right:50% 120%](../images/closure_traits.svg)
 
@@ -566,9 +566,21 @@ What do you mean, function _trait_???
 ![bg right:40% 120%](../images/closure_traits.svg)
 
 * `FnOnce`: Closures that can be called once
-  * e.g. A closure that moves captured values out of its body
 * `FnMut`: Closures that might mutate the captured values
-  * These closures can be called more than once
+* `Fn`: All the rest
+
+
+---
+
+
+# The `Fn` traits
+
+* `FnOnce`: Closures that can be called once
+  * All closures and functions implement this, can be called _at least_ once
+  * However, closure that are exclusively `FnOnce` can _only_ be called once
+    * e.g. A closure that moves captured values out of its body
+* `FnMut`: Closures that might mutate the captured values
+  * Can be called more than once
 * `Fn`: All the rest
   * Don't move values out, don't mutate, don't capture anything
 
@@ -582,18 +594,23 @@ A closure that moves captured values **out** of its body will _only_ implement `
 
 ```rust
 let my_str = String::from("x");
-let consume_and_return = move || my_str; // Returns `my_str`, moving it out of the closure
+// Returns `my_str`, moving it out of the closure
+let consume_and_return = move || my_str;
 ```
 
 * Why can this closure only be called once?
-  * `my_str` is no longer accessible to our closure after it's called!
   * It takes ownership of `my_str`, then gives ownership back to the caller
-    * Rust never implicitly clones `my_str`, cannot be reused after move
+  * `my_str` is no longer accessible to our closure after it's called!
 * `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
 
 <!--
-Use case: Transactions that should happen exactly once,
-but the underlying resource can be reused for multiple transactions
+Rust never implicitly clones `my_str`, cannot be reused after move
+
+Use case for moving captured values out:
+  Transactions that should happen exactly once,
+  but the underlying resource can be reused for multiple transactions
+
+Think of the resource as a database connection, socket connection, or file handle
 -->
 
 
@@ -602,16 +619,28 @@ but the underlying resource can be reused for multiple transactions
 
 # `unwrap_or_else`
 
-All closures implement `FnOnce`, since all closures can be called once. This does not mean they can _only_ be called once!
+All closures implement `FnOnce`, since all closures can be called once.
 
-One example is the `unwrap_or_else` method, which calls a closure if it receives an `Err`:
+* This does not mean they can _only_ be called once!
+* One example is the `unwrap_or_else` method
+
+
+---
+
+
+# `unwrap_or_else`
+
+`unwrap_or_else` processes the `Result<T, E>` of a function.
 
 ```rust
 fn count(x: &str) -> usize { x.len() }
 
-Ok(2).unwrap_or_else(count);          // unwrap the value in `Ok`
-Err("foo").unwrap_or_else(count), 3;  // else, compute it from closure `count("foo")`
+Ok(2).unwrap_or_else(count);
+Err("foo").unwrap_or_else(count), 3;
 ```
+
+* If successful, it unwraps the value from `Ok(T)`
+* Otherwise, if `Err(E)`, it calculates the value from a closure
 
 
 ---
@@ -693,9 +722,10 @@ add_two_to_x();
   * Imagine `x` were a score on a scoreboard
 * Note that this will not compile without the `mut` in `let mut add_two_to_x`
   * `mut` signals that we are mutating our closure's environment
-    * Key idea: how variables within scope at invocation change between calls
 
 <!--
+Key idea: how variables within scope at invocation change between calls
+
 Use case: Stateful operation to some shared resource
   The captured variable is some shared resource, like a score on a scoreboard,
   a message queue, etc.
@@ -744,7 +774,7 @@ where
 * Would `do_twice` accept a closure that's exclusively `FnOnce`?
   * No, because we call our closure twice
 * How about an `Fn` closure?
-  * Yes, next slide
+  * Yes!
 
 
 ---
@@ -759,12 +789,16 @@ The `Fn` trait is a superset of `FnOnce` and `FnMut`.
   * Don't mutate captured values
   * Don't capture anything from their environment
 * Can be called more than once without mutating the environment
-* Use case: Stateless operations without side effects
-  * Logging, pretty printing, etc.
+* Use cases: Stateless operations without side effects
+  * Logging, pretty printing
+  * Predicates for sorting, searching, filtering
 
 <!--
 Use case: Stateless operation without side effects
   Example is logging
+
+Note for sorting:
+Actually FnMut in the standard library but in most cases we're passing in something that is Fn
 -->
 
 
@@ -777,6 +811,7 @@ Use case: Stateless operation without side effects
 
 ```rust
 let double = |x| x * 2; // captures nothing
+assert!(double(2) == 4);
 ```
 
 ---
@@ -788,6 +823,9 @@ let double = |x| x * 2; // captures nothing
 ```rust
 let mascot = String::from("Ferris");
 let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+
+assert!(is_mascot("Ferris"));    // true
+assert!(!is_mascot("Ferrari"));  // false
 ```
 
 
@@ -800,6 +838,8 @@ Finally, `Fn` applies to closures that don't move captured values out of their b
 ```rust
 let my_sanity = ();
 let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
+
+assert!(cmu() == ());
 ```
 
 * When is `my_sanity` dropped?
