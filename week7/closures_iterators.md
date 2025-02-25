@@ -335,7 +335,7 @@ let n = example_closure(5);
 ```
 
 * The first time we called `example_closure` with a `String`
-* Rust inferred the type of `x` and the return type to be `String`
+* Rust inferred the type of `example_closure` to be `String -> String`
 * Those types are now bound to the closure
     * `example_closure(5)` will not type check
 
@@ -353,7 +353,7 @@ Closures can capture values from their environment in three ways:
 * Borrowing immutably
 * Borrowing mutably
 * Taking ownership
-    * _**Moving**_ the value to the closure
+    * _**Moving**_ the value into the closure
 
 
 ---
@@ -367,6 +367,31 @@ println!("Before defining closure: {:?}", list);
 
 let only_borrows = || { println!("From closure: {:?}", list); };
 
+println!("Before calling closure: {:?}", list);
+only_borrows(); // Prints "From closure: [1, 2, 3]"
+println!("After calling closure: {:?}", list);
+```
+
+```
+Before defining closure: [1, 2, 3]
+Before calling closure: [1, 2, 3]
+From closure: [1, 2, 3]
+After calling closure: [1, 2, 3]
+```
+
+
+---
+
+
+# Immutable Borrowing in Closures
+
+```rust
+let list = vec![1, 2, 3];
+println!("Before defining closure: {:?}", list);
+
+let only_borrows = || { println!("From closure: {:?}", list); };
+
+println!("Before calling closure: {:?}", list);
 only_borrows(); // Prints "From closure: [1, 2, 3]"
 println!("After calling closure: {:?}", list);
 ```
@@ -387,6 +412,8 @@ that's why it doesn't move the list
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
+What happens if we mutate captured variables from inside the closure?
+
 ```rust
 let mut list = vec![1, 2, 3];
 println!("Before defining closure: {:?}", list);
@@ -397,7 +424,7 @@ borrows_mutably();
 println!("After calling closure: {:?}", list);
 ```
 
-* This seems like it would work...
+* This seems like it should work...
 
 
 ---
@@ -409,9 +436,9 @@ println!("After calling closure: {:?}", list);
 error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared as mutable
  --> src/main.rs:7:5
   |
-5 |     let borrows_mutably = || list.push(7);
-  |                              ---- calling `borrows_mutably` requires mutable
-  |                                   binding due to mutable borrow of `list`
+5 |     let borrows_mutably = || { list.push(7); };
+  |                                ---- calling `borrows_mutably` requires mutable
+  |                                     binding due to mutable borrow of `list`
 6 |
 7 |     borrows_mutably();
   |     ^^^^^^^^^^^^^^^ cannot borrow as mutable
@@ -419,7 +446,7 @@ error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared 
 
 * A closure mutating its captured state is _equivalent_ to mutating _itself_
   * Calling `borrows_mutably` mutates the closure's internal state
-* Mutability must always be explicitly stated
+    * We'll discuss in the next section...
 
 
 ---
@@ -430,7 +457,7 @@ error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared 
 ```
 help: consider changing this to be mutable
   |
-5 |     let mut borrows_mutably = || list.push(7);
+5 |     let mut borrows_mutably = || { list.push(7); };
   |         +++
 ```
 
@@ -468,7 +495,7 @@ let mut list = vec![1, 2, 3];
 
 let mut borrows_mutably = || { list.push(7); };
 
-// println!("Before calling closure: {:?}", list);
+// println!("Before calling closure: {:?}", list); <-- Compiler error!
 borrows_mutably();
 println!("After calling closure: {:?}", list);
 ```
@@ -476,8 +503,13 @@ println!("After calling closure: {:?}", list);
 * Note how we can't have a `println!` before invoking `borrows_mutably`
 * Rust only considers the **invocation** a borrow, not the definition
   * Closures are lazy in this sense
+
+<!--
+The lecturer should spell this out:
+
 * `borrows_mutably` isn't called again, so Rust knows the borrowing has ended
-  * This is why we can call `println!` after
+  * This is why we are allowed to call `println!` after
+-->
 
 
 ---
@@ -495,6 +527,10 @@ let mystery = {
 
 println!("Mystery value is {}", mystery(5));
 ```
+
+<!--
+Make sure people understand that we're trying to bind a closure to `mystery`
+-->
 
 
 ---
@@ -530,19 +566,15 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
 let mystery = {
     let x = rand::random::<u32>();
     move |y: u32| -> u32 { x + y }
+//  ^^^^ Add the `move` keyword!
 };
 
 println!("Mystery value is {}", mystery(5));
 ```
 
-* We can tell a closure to own a value using the `move` keyword
-  * You can't selectively `move` certain parameters
-* This is important for thread safety in Rust!
-
-<!--
-Move is all or nothing, you have to borrow / make copies of specific variables to
-selectively move.
--->
+* We can `move` values into closures instead of capturing references (borrowing)
+  * Note that you can't selectively `move` parameters, it's all or nothing
+* `move` semantics with closures are important for thread safety!
 
 
 ---
@@ -581,9 +613,13 @@ fn main() {
 ```
 
 * Why do we `move` instead of borrow?
-  * Child's `println!` only needs an immutable reference to `list`
+  * Child thread's `println!` only needs a reference to `list`...
 * Parent might drop `list` before the child thread runs
-  * Use after free! ☠️
+  * Use after free in child thread! ☠️
+
+<!--
+It is super easy to make this mistake in other languages!
+-->
 
 
 ---
@@ -596,7 +632,13 @@ fn main() {
   * Mutate a captured value
   * Neither of the above
 * It could also have captured nothing to begin with!
-* The properties a closure has determines its function _trait_
+* The properties a closure has determines the function _trait_ it implements
+
+
+---
+
+
+# **The `Fn` traits**
 
 
 ---
@@ -604,7 +646,7 @@ fn main() {
 
 # The `Fn` traits
 
-What do you mean, function _trait_???
+What do you mean, function _**trait**_???
 
 * Rust has 3 special traits that define the _kind_ of closure we want to use
 * The 3 traits are:
@@ -621,8 +663,8 @@ What do you mean, function _trait_???
 
 ![bg right:50% 120%](../images/closure_traits.svg)
 
-* `Fn` is also `FnMut` and `FnOnce`
 * `FnMut` is also `FnOnce`
+* `Fn` is also `FnMut` _and_ `FnOnce`
 
 
 ---
@@ -630,11 +672,11 @@ What do you mean, function _trait_???
 
 # The `Fn` traits
 
-![bg right:40% 120%](../images/closure_traits.svg)
+![bg right:35% 130%](../images/closure_traits.svg)
 
 * `FnOnce`: Closures that can be called once
-* `FnMut`: Closures that might mutate the captured values
-* `Fn`: All the rest
+* `FnMut`: Closures that can mutate the captured values
+* `Fn`: Everything else!
 
 
 ---
@@ -642,13 +684,13 @@ What do you mean, function _trait_???
 
 # The `Fn` traits
 
-* `FnOnce`: Closures that can be called once
-  * All closures and functions implement this, can be called _at least_ once
-  * However, closure that are exclusively `FnOnce` can _only_ be called once
+- `FnOnce`: Closures that can be called once
+  * All closures and functions implement this, since all closures can be called _at least_ once
+  * However, closures that are exclusively `FnOnce` can _only_ be called once
     * e.g. A closure that moves captured values out of its body
-* `FnMut`: Closures that might mutate the captured values
+- `FnMut`: Closures that can mutate the captured values
   * Can be called more than once
-* `Fn`: All the rest
+- `Fn`: Everything else!
   * Don't move values out, don't mutate, don't capture anything
 
 
@@ -661,6 +703,7 @@ A closure that moves captured values **out** of its body will _only_ implement `
 
 ```rust
 let my_str = String::from("x");
+
 // Returns `my_str`, moving it out of the closure
 let consume_and_return = move || my_str;
 ```
@@ -689,7 +732,7 @@ Think of the resource as a database connection, socket connection, or file handl
 All closures implement `FnOnce`, since all closures can be called once.
 
 * This does not mean they can _only_ be called once!
-* One example is the `unwrap_or_else` method
+* One example is the `unwrap_or_else` method on `Result`
 
 
 ---
@@ -700,14 +743,14 @@ All closures implement `FnOnce`, since all closures can be called once.
 `unwrap_or_else` processes the `Result<T, E>` of a function.
 
 ```rust
-fn count(x: &str) -> usize { x.len() }
+let count = |s: &str| s.len();
 
-Ok(2).unwrap_or_else(count);
-Err("foo").unwrap_or_else(count), 3;
+assert_eq!(Ok(2).unwrap_or_else(count), 2);
+assert_eq!(Err("foobar").unwrap_or_else(count), 6);
 ```
 
-* If successful, it unwraps the value from `Ok(T)`
-* Otherwise, if `Err(E)`, it calculates the value from a closure
+* If successful, it unwraps the value from `Ok(T)` into `T`
+* Otherwise, it takes `E` as input to the closure
 
 
 ---
@@ -715,21 +758,26 @@ Err("foo").unwrap_or_else(count), 3;
 
 # `unwrap_or_else`
 
-Let's look at the definition of the `unwrap_or_else` method on `Option<T>`.
+Let's look at the definition of the `unwrap_or_else` method on `Result<T>`.
 
 ```rust
-impl<T> Option<T> {
+impl<T, E> Result<T, E> {
     pub fn unwrap_or_else<F>(self, f: F) -> T
     where
-        F: FnOnce() -> T
+        F: FnOnce(E) -> T
     {
         match self {
             Some(x) => x,
-            None => f(),
+            None => f(e),
         }
     }
 }
 ```
+
+<!--
+Copied and pasted (and modified very slightly) from the standard library:
+https://doc.rust-lang.org/src/core/result.rs.html#1460-1465
+-->
 
 
 ---
@@ -742,13 +790,17 @@ First let's observe the function definition.
 ```rust
 pub fn unwrap_or_else<F>(self, f: F) -> T
 where
-    F: FnOnce() -> T
+    F: FnOnce(E) -> T
 // <-- snip -->
 ```
 
 * This method is generic over `F`
 * `F` is the type of the closure we provide when calling `unwrap_or_else`
 * `F` must be able to be called once, take no arguments, and return a `T` for `Option<T>`
+
+<!--
+Requiring `F: FnOnce(E) -> T` is **MORE GENERAL** than requiring one of the other function traits
+-->
 
 
 ---
@@ -769,7 +821,8 @@ Now let's observe the function body.
 
 * If the `Option` is `Some`, then extract the inner value
 * Otherwise, call `f` once and return the value
-* Note that `f` is not _required_ to only be `FnOnce` here, it could be `FnMut` or `Fn`
+* Note that `f` is not _required_ to only be `FnOnce` here
+  * It is valid for `f` to be `FnMut` or `Fn`
 
 
 ---
@@ -787,7 +840,7 @@ add_two_to_x();
 
 * Use cases: Stateful operations on some shared resource
   * Imagine `x` were a score on a scoreboard
-* Note that this will not compile without the `mut` in `let mut add_two_to_x`
+* Note that this will not compile without the second `mut`
   * `mut` signals that we are mutating our closure's environment
 
 <!--
@@ -856,16 +909,18 @@ The `Fn` trait is a superset of `FnOnce` and `FnMut`.
   * Don't mutate captured values
   * Don't capture anything from their environment
 * Can be called more than once without mutating the environment
-* Use cases: Stateless operations without side effects
-  * Logging, pretty printing
-  * Predicates for sorting, searching, filtering
+* Use cases:
+  * Stateless operations without side effects
+    * Logging, pretty printing
+    * Predicates* for sorting, searching, filtering
 
 <!--
 Use case: Stateless operation without side effects
   Example is logging
 
-Note for sorting:
-Actually FnMut in the standard library but in most cases we're passing in something that is Fn
+BIG asterisk for predicates:
+They are usually `FnMut` in the standard library because that is more general,
+but in most cases we're passing in something that is `Fn`
 -->
 
 
@@ -878,6 +933,7 @@ Actually FnMut in the standard library but in most cases we're passing in someth
 
 ```rust
 let double = |x| x * 2; // captures nothing
+
 assert!(double(2) == 4);
 ```
 
@@ -889,7 +945,7 @@ assert!(double(2) == 4);
 
 ```rust
 let mascot = String::from("Ferris");
-let is_mascot = |guess| mascot == guess; // mascot borrowed as immutable
+let is_mascot = |guess| guess == mascot; // `mascot` immutably borrowed
 
 assert!(is_mascot("Ferris"));    // true
 assert!(!is_mascot("Ferrari"));  // false
@@ -899,6 +955,8 @@ assert!(!is_mascot("Ferrari"));  // false
 ---
 
 # `Fn`
+
+TODO FIX (this example doesn't work with non-`Copy` types)
 
 Finally, `Fn` applies to closures that don't move captured values out of their body:
 
@@ -919,6 +977,8 @@ assert!(cmu() == ());
 
 # `Fn`
 
+TODO FIX (this example doesn't work with non-`Copy` types)
+
 `my_sanity` is dropped when our closure goes out of scope:
 
 ```rust
@@ -937,6 +997,8 @@ fn main() {
 
 
 # `Fn`
+
+TODO (the next line is not specific to just `Fn`)
 
 The `Fn` trait allows you to define functions that accept other functions as arguments:
 
@@ -975,6 +1037,11 @@ fn main() {
 ```
 
 * `fn` is a **type*** that implements all 3 closure traits `Fn`, `FnMut`, and `FnOnce`
+
+<!--
+It's not really a type, they are just function pointers that know the signatures of the code they
+are pointing to
+-->
 
 
 ---
