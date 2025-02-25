@@ -487,6 +487,7 @@ println!("After calling closure: {:?}", list);
 # Giving Closures Ownership
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 ```rust
 let mystery = {
     let x = rand::random::<u32>();
@@ -495,6 +496,13 @@ let mystery = {
 
 println!("Mystery value is {}", mystery(5));
 ```
+
+
+---
+
+
+# Giving Closures Ownership
+
 ```
 error[E0373]: closure may outlive the current block, but it borrows `x`,
  which is owned by the current block
@@ -511,16 +519,14 @@ error[E0373]: closure may outlive the current block, but it borrows `x`,
 help: to force the closure to take ownership of `x`, use the `move` keyword
   |
 6 |         move |y: u32| -> u32 { x + y }
-  |         ++++
+  |
 ```
-
 
 ---
 
 
 # Giving Closures Ownership
 
-![bg right:25% 75%](../images/ferris_happy.svg)
 ```rust
 let mystery = {
     let x = rand::random::<u32>();
@@ -531,16 +537,38 @@ println!("Mystery value is {}", mystery(5));
 ```
 
 * We can tell a closure to own a value using the `move` keyword
-  * You can't selectively `move` certain parameters unless you explicitly borrow
+  * You can't selectively `move` certain parameters
 * This is important for thread safety in Rust!
+
+<!--
+Move is all or nothing, you have to borrow / make copies of specific variables to
+selectively move.
+-->
+
+
+---
+
+
+# Threads Sneak Peek
+
+Let's briefly explore spawning a new thread with a closure.
+
+```rust
+fn main() {
+    let list = vec![1, 2, 3];
+    println!("Before defining closure: {:?}", list);
+
+    std::thread::spawn(move || println!("From thread: {:?}", list))
+        .join()
+        .unwrap();
+}
+```
 
 
 ---
 
 
 # Case for `move`: Thread Safety
-
-Let's briefly explore spawning a new thread with a closure.
 
 ```rust
 fn main() {
