@@ -243,7 +243,7 @@ Closures are anonymous functions that can capture values from the scope in which
 # Closure Syntax
 
 ```rust
-let annotated_closure = |num: u32| -> u32 {
+let annotated_closure = |num: i32| -> i32 {
     num
 };
 ```
@@ -258,8 +258,8 @@ let annotated_closure = |num: u32| -> u32 {
 # Closures Simplified
 
 ```rust
-fn  add_one_v1   (x: u32) -> u32 { x + 1 }
-let add_one_v2 = |x: u32| -> u32 { x + 1 };
+fn  add_one_v1   (x: i32) -> i32 { x + 1 }
+let add_one_v2 = |x: i32| -> i32 { x + 1 };
 let add_one_v3 = |x|             { x + 1 };
 let add_one_v4 = |x|               x + 1  ;
 
@@ -396,6 +396,7 @@ let borrows_mutably = || { list.push(7); };
 borrows_mutably();
 println!("After calling closure: {:?}", list);
 ```
+
 * This seems like it would work...
 
 
@@ -421,7 +422,6 @@ error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared 
 * Mutability must always be explicitly stated
 
 
-
 ---
 
 
@@ -437,7 +437,6 @@ help: consider changing this to be mutable
 * As always, the compiler tells us how to fix our mistake!
 
 
-
 ---
 
 
@@ -447,7 +446,7 @@ help: consider changing this to be mutable
 let mut list = vec![1, 2, 3];
 println!("Before defining closure: {:?}", list);
 
-let mut borrows_mutably = || list.push(7);
+let mut borrows_mutably = || { list.push(7); };
 
 borrows_mutably();
 println!("After calling closure: {:?}", list);
@@ -467,7 +466,7 @@ After calling closure: [1, 2, 3, 7]
 ```rust
 let mut list = vec![1, 2, 3];
 
-let mut borrows_mutably = || list.push(7);
+let mut borrows_mutably = || { list.push(7); };
 
 // println!("Before calling closure: {:?}", list);
 borrows_mutably();
