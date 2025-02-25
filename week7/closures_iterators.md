@@ -1085,11 +1085,11 @@ All iterators must implement the `Iterator` trait:
 
 ```rust
 pub trait Iterator {
-  type Item;
+    type Item;
 
-  fn next(&mut self) -> Option<Self::Item>;
+    fn next(&mut self) -> Option<Self::Item>;
 
-  // methods with default implementations elided
+    // methods with default implementations elided
 }
 ```
 
@@ -1099,17 +1099,18 @@ pub trait Iterator {
 
 ---
 
+
 # `type Item`
 
 What's going on with the `type Item`?
 
 ```rust
 pub trait Iterator {
-  type Item;
+    type Item;
 
-  fn next(&mut self) -> Option<Self::Item>;
+    fn next(&mut self) -> Option<Self::Item>;
 
-  // methods with default implementations elided
+    // <-- methods with default implementations elided -->
 }
 ```
 
@@ -1117,6 +1118,11 @@ pub trait Iterator {
 * To define `Iterator` you must define the `Item` you're iterating over
 * _Different from generic types!_
   * There can only be one way to iterate over something
+
+<!--
+For example, if I have a vector / list of `i32` integers, the only way I should be able to iterate
+over them is by `i32`s. It doesn't make sense to also allow iterating via strings or something like that.
+-->
 
 
 ---
@@ -1128,8 +1134,8 @@ Let's say we want to implement an iterator that generates the Fibonacci sequence
 
 ```rust
 struct Fibonacci {
-  curr: u32,
-  next: u32,
+    curr: u32,
+    next: u32,
 }
 ```
 
@@ -1146,8 +1152,6 @@ struct Fibonacci {
 impl Iterator for Fibonacci {
     type Item = u32;
 
-    // We use Self::Item in the return type, so we can change
-    // the type without having to update the function signatures.
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.curr;
 
@@ -1160,30 +1164,6 @@ impl Iterator for Fibonacci {
 }
 ```
 * Notice `Self::Item` is aliased to `u32`
-
-
-
----
-
-
-# `Vec` Iterators
-
-```rust
-let v1 = vec![1, 2, 3];
-
-let v1_iter = v1.iter();
-for val in v1_iter {
-    println!("Got: {}", val);
-}
-
-for val in v1 {
-    println!("Got: {}", val);
-}
-```
-
-* These do the same thing!
-* We saw this code before in lecture 4
-  * Except now we explicitly create the iterator that Rust did for us
 
 
 ---
@@ -1202,7 +1182,7 @@ assert_eq!(v1_iter.next(), Some(&3));
 assert_eq!(v1_iter.next(), None);
 ```
 
-* Here we see how the required `next` function operates
+* Here we see how the `next` method is used
 * Notice how `v1_iter` is mutable
   * When we call `next()` we've **consumed** that iterator element
   * The iterator's internal state has changed
@@ -1212,10 +1192,68 @@ assert_eq!(v1_iter.next(), None);
 ---
 
 
-# Iterators and Mutable Borrows
+# `Vec` Iterators
 
 ```rust
-let mut vec = vec![1, 2, 3]; // Note we need vec to be mutable
+let v1 = vec![1, 2, 3];
+
+for val in v1.iter() {
+    println!("Got: {}", val);
+}
+
+for val in &v1 {
+    println!("Got: {}", val);
+}
+```
+
+* These do the same thing!
+  * Note that this is _not_ syntax sugar
+* We saw this code before in lecture 4
+  * Except now we explicitly create the iterator that Rust did for us
+
+<!--
+Be clear that `val` has type `&i32`, NOT `i32`.
+
+Students can think about this like syntactic sugar, but it is actually not identical.
+
+`.iter()` is an actual method on `Vec` that returns an `Iter` object that can iterate over references
+to the vector.
+
+At the same time, `IntoIterator` is implemented for `&'a Vec<T>` which also iterates over references
+to the vector.
+-->
+
+
+---
+
+
+# Syntactic Sugar: `for` loops
+
+```rust
+let v1 = vec![1, 2, 3];
+
+for val in v1.iter() {
+    println!("Got: {}", val);
+}
+
+let mut v1_iter = v1.iter();
+while let Some(val) = v1_iter.next() {
+    println!("Got: {}", val);
+}
+```
+
+* The `for` loop _is_ syntax sugar
+
+
+---
+
+
+# Iterators and Mutable Borrows
+
+We can use the `iter_mut()` on `Vec` to get an iterator over mutable references.
+
+```rust
+let mut vec = vec![1, 2, 3]; // Note that we need `vec` to be mutable
 let mut mutable_iter = vec.iter_mut();
 
 while let Some(val) = mutable_iter.next() {
@@ -1229,8 +1267,38 @@ println!("{:?}", vec);
 [2, 3, 4]
 ```
 
-* Before we saw that `v1.iter()` gave us references to elements
-* We can use `iter_mut()` for `&mut`
+* Before we saw that `v1.iter()` gave us an iterator over `&i32`
+* Now, we see that `v1.iter_mut()` gives us an iterator over `&mut i32`
+
+
+---
+
+
+# More Mutable Iteration
+
+```rust
+let mut vec = vec![1, 2, 3];
+
+let mut mutable_iter = vec.iter_mut();
+while let Some(val) = mutable_iter.next() {
+    *val += 1;
+}
+
+for val in vec.iter_mut() {
+    *val += 1;
+}
+
+for val in &mut vec {
+    *val += 1;
+}
+```
+
+* All of these do the same thing!
+
+<!--
+Again, be clear that the very last example with `&mut vec` is NOT syntax sugar for the two things
+above. You can _think_ of it like syntax sugar, but they are different.
+-->
 
 
 ---
@@ -1238,17 +1306,22 @@ println!("{:?}", vec);
 
 # Iterators and Ownership
 
+If we want an iterator to iterate over _owned_ values, we usually use `into_iter()`.
+
 ```rust
 let mut vec = vec![1, 2, 3];
+
 let owned_iter = vec.into_iter(); // vec is *consumed*
 for val in owned_iter {
-    println!("{}", val);
+    println!("I own {}", val);
 }
-// owned_iter is consumed
+
+// owned_iter has been consumed
 ```
 
 * To make an iterator that owns its values we have `into_iter()`
-* This is what consuming for loops do under the hood
+* `into_iter()` is the sole method on the `IntoIterator` trait
+* This is what the `for` loops are actually consuming
 
 
 ---
@@ -1256,18 +1329,19 @@ for val in owned_iter {
 
 # Consuming Iterators
 
+The standard library has many functions for using iterators.
+
 ```rust
 let v1 = vec![1, 2, 3];
 
 let v1_iter = v1.iter();
 
-let total: i32 = v1_iter.sum(); // .sum() takes ownership of v1_iter
+let total: i32 = v1_iter.sum(); // `.sum()` consumes `v1_iter`
 
 assert_eq!(total, 6);
 ```
 
-* The standard library has many functions for iterators
-* Some of these functions *consume* the iterator
+* Most of these functions _consume_ iterators
 
 
 ---
@@ -1275,9 +1349,14 @@ assert_eq!(total, 6);
 
 # Other consuming functions
 
-* `collect(self)` - Coming soon
-* `fold(self, init: B, f: F)`
-* `count(self)`
+- `fn max(self)`
+- `fn count(self)`
+- `fn map(self, f: F)`
+- `fn filter(self, predicate: P)`
+- `fn fold(self, init: B, f: F)`
+- `fn collect(self)`
+  - Coming soon...
+- Many, many more!
 
 
 ---
@@ -1294,6 +1373,10 @@ v1.iter().map(|x| x + 1);
 
 * This code seems fine...
 
+<!--
+Mention that ferris is not confused but is trying to point out something to us...
+-->
+
 
 ---
 
@@ -1309,10 +1392,6 @@ warning: unused `Map` that must be used
   |
   = note: iterators are lazy and do nothing unless consumed
   = note: `#[warn(unused_must_use)]` on by default
-
-warning: `iterators` (bin "iterators") generated 1 warning
-    Finished dev [unoptimized + debuginfo] target(s) in 0.47s
-     Running `target/debug/iterators`
 ```
 
 * Zero-cost abstractions at work
@@ -1326,7 +1405,7 @@ warning: `iterators` (bin "iterators") generated 1 warning
 # Producing Iterators
 
 ```rust
-let v2: Vec<_> = (1..4).map(|x| x + 1).collect();
+let v2: Vec<i32> = (1..4).map(|x| x + 1).collect();
 
 println!("{:?}", v2);
 ```
@@ -1334,7 +1413,11 @@ println!("{:?}", v2);
 ```
 [2, 3, 4]
 ```
+
 * We use `collect()` to tell Rust we're done modifying our iterator and want to convert our changes to a `Vec`
+* `collect` is a super common method on iterators
+  * If you don't use `collect`, no computation is performed
+  * `collect` is the method that executes all of the desired operations!
 
 
 ---
@@ -1343,8 +1426,9 @@ println!("{:?}", v2);
 # Filter
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+
 ```rust
-fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
+fn filter_by(list: Vec<i32>, val: i32) -> Vec<i32> {
     list.into_iter().filter(|x| x == val).collect()
 }
 ```
@@ -1358,7 +1442,7 @@ fn filter_by(list : Vec<i32>, val : i32) -> Vec<i32> {
 ```
 
 * Some iterator functions take a reference instead of ownership
-* Note how our filter closure captures `val` for our filtering needs
+* _Note how our filter closure captures the input `val` for our filtering needs!_
 
 
 ---
@@ -1386,14 +1470,40 @@ list.into_iter().filter(|x| *x == val).collect()
 
 ```rust
 let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
-println!("{:?}", iter);
-// Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 2 } }
+
 for x in iter.take(5) {
-    print!("{}, ", x); // 9, 36, 81, 144, 225,
+    print!("{}, ", x);
 }
 ```
-* Read as: Print first 5 squares skipping 0 divisible by 3
-* Note filter doesn't need a deref here for `%`
+
+* You can read this as:
+  * Print first 5 square numbers
+  * Skipping 0
+  * Only divisible divisible by 3
+* _Note that `filter` doesn't need a dereference for `%`_
+
+
+---
+
+
+# Chaining It Together
+
+```rust
+let iter = (0..100).map(|x| x*x).skip(1).filter(|y| y % 3 == 0);
+println!("{:?}", iter);
+
+for x in iter.take(5) {
+    print!("{}, ", x);
+}
+```
+
+```
+Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 1 } }
+9, 36, 81, 144, 225,
+```
+
+* Notice how `iter` is just a bunch of metadata
+  * Lazy iterators on display!
 
 
 ---
@@ -1402,19 +1512,16 @@ for x in iter.take(5) {
 # Iterator Recap
 
 * Iterators is an extremely powerful structure in Rust
-* View std library for more info on functions
+* View the [`std` library](https://doc.rust-lang.org/std/iter/trait.Iterator.html) for more info on `Iterator` methods
 * Rules regarding closures and ownership still apply
-  * `iter`
-  * `iter_mut`
-  * `into_iter`
-* Iterators are *lazy*
-  * Remember `.collect()`!
+* Iterators are _lazy_
+  * Remember to use `.collect()`!
 
 
 ---
 
 
-# Next Lecture: Lifetimes
+# Next Lecture: Ownership Revisited
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
