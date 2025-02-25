@@ -233,7 +233,7 @@ With a bit of setup, you can generate this with `cargo flamegraph`
 
 Closures are anonymous functions that can capture values from the scope in which they're defined.
 
-* Known as lambdas in "lesser languages" ;)
+* Known as lambdas in "lesser languages" 😉
 * You can save closures in variables or pass them as arguments to other functions
 
 
@@ -247,7 +247,8 @@ let annotated_closure = |num: u32| -> u32 {
     num
 };
 ```
-* This looks very similar to functions we've seen
+
+* This should feel very similar to functions we've seen...
 * Like normal variables, Rust can derive closure type annotations from context!
 
 
@@ -271,6 +272,10 @@ let _ = add_one_v4(4);
   * This is similar to eliding the type parameter in `let v = Vec::new()`
 * For `v4`, we can remove the `{}` since the body is only one line
 
+<!--
+Bad formatting on purpose to show similarities
+-->
+
 
 ---
 
@@ -285,17 +290,17 @@ let example_closure = |x| x;
 let s = example_closure(String::from("hello"));
 let n = example_closure(5);
 ```
+
 * How would we describe the type of `example_closure`?
 
 
 ---
 
 
-# Annotations Are Still Important
+# Closure Types
 
 ```rust
 let example_closure = |x| x;
-
 let s = example_closure(String::from("hello"));
 let n = example_closure(5);
 ```
@@ -309,7 +314,6 @@ error[E0308]: mismatched types
   |             |               |
   |             |               expected struct `String`, found integer
   |             arguments to this function are incorrect
-  |
 note: closure parameter defined here
  --> src/main.rs:2:28
   |
@@ -321,7 +325,7 @@ note: closure parameter defined here
 ---
 
 
-# So What Happened Here?
+# Closure Types
 
 ```rust
 let example_closure = |x| x;
@@ -335,6 +339,10 @@ let n = example_closure(5);
 * Those types are now bound to the closure
     * `example_closure(5)` will not type check
 
+<!--
+This is one of the main differences between Rust and a functional language like SML or OCaml, things generally are always ONE type, not fully polymorphic.
+-->
+
 
 ---
 
@@ -345,7 +353,7 @@ Closures can capture values from their environment in three ways:
 * Borrowing immutably
 * Borrowing mutably
 * Taking ownership
-    * _moving_ the value to the closure
+    * _**Moving**_ the value to the closure
 
 
 ---
@@ -357,9 +365,8 @@ Closures can capture values from their environment in three ways:
 let list = vec![1, 2, 3];
 println!("Before defining closure: {:?}", list);
 
-let only_borrows = || println!("From closure: {:?}", list);
+let only_borrows = || { println!("From closure: {:?}", list); };
 
-println!("Before calling closure: {:?}", list);
 only_borrows(); // Prints "From closure: [1, 2, 3]"
 println!("After calling closure: {:?}", list);
 ```
@@ -367,7 +374,10 @@ println!("After calling closure: {:?}", list);
 * Note how once a closure is defined, it's invoked in the same manner as a function
 * Because we can have many immutable borrows, Rust allows us to to print, even with the closure holding a reference
 
-<!-- println! implicitly takes references to anything passed in, that's why this works -->
+<!--
+Make sure to state that `println!` implicitly takes references to anything passed in,
+that's why it doesn't move the list
+-->
 
 
 ---
@@ -381,7 +391,7 @@ println!("After calling closure: {:?}", list);
 let mut list = vec![1, 2, 3];
 println!("Before defining closure: {:?}", list);
 
-let borrows_mutably = || list.push(7);
+let borrows_mutably = || { list.push(7); };
 
 borrows_mutably();
 println!("After calling closure: {:?}", list);
@@ -400,21 +410,32 @@ error[E0596]: cannot borrow `borrows_mutably` as mutable, as it is not declared 
   |
 5 |     let borrows_mutably = || list.push(7);
   |                              ---- calling `borrows_mutably` requires mutable
-  |                                    binding due to mutable borrow of `list`
+  |                                   binding due to mutable borrow of `list`
 6 |
 7 |     borrows_mutably();
   |     ^^^^^^^^^^^^^^^ cannot borrow as mutable
-  |
+```
+
+* A closure mutating its captured state is _equivalent_ to mutating _itself_
+  * Calling `borrows_mutably` mutates the closure's internal state
+* Mutability must always be explicitly stated
+
+
+
+---
+
+
+# Mutable Borrowing in Closures
+
+```
 help: consider changing this to be mutable
   |
 5 |     let mut borrows_mutably = || list.push(7);
   |         +++
 ```
 
-* Mutability must always be explicitly stated
-  * Mutating the closure's internal state matters!
-* Rust only considers the **invocation** a borrow, not the definition
-  * Closures are lazy in this sense
+* As always, the compiler tells us how to fix our mistake!
+
 
 
 ---
@@ -436,7 +457,26 @@ println!("After calling closure: {:?}", list);
 Before defining closure: [1, 2, 3]
 After calling closure: [1, 2, 3, 7]
 ```
-* Note how we can't have a `println!` before invoking `borrows_mutably` like before
+
+
+---
+
+
+# Closure Borrowing Rules
+
+```rust
+let mut list = vec![1, 2, 3];
+
+let mut borrows_mutably = || list.push(7);
+
+// println!("Before calling closure: {:?}", list);
+borrows_mutably();
+println!("After calling closure: {:?}", list);
+```
+
+* Note how we can't have a `println!` before invoking `borrows_mutably`
+* Rust only considers the **invocation** a borrow, not the definition
+  * Closures are lazy in this sense
 * `borrows_mutably` isn't called again, so Rust knows the borrowing has ended
   * This is why we can call `println!` after
 
