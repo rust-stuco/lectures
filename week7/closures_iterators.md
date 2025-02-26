@@ -990,6 +990,9 @@ Be clear that `val` has type `&i32`, NOT `i32`.
 
 Students can think about this like syntactic sugar, but it is actually not identical.
 
+A is syntactic sugar for B if the compiler rewrites A as B
+If it were syntax sugar, `for val in &v1` would be written as `for val in v1.iter()`
+
 `.iter()` is an actual method on `Vec` that returns an `Iter` object that can iterate over references
 to the vector.
 
