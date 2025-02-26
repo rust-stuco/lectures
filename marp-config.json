@@ -1,0 +1,23 @@
+{
+    "allowLocalFiles": true,
+    "pdfNotes": false,
+    "pdfOutlines": false,
+    "html": true,
+    "browser": "auto",
+    "options": {
+        "markdown": {
+            "breaks": true,
+            "typographer": false
+        },
+        "math": "mathjax"
+    },
+    "pptxEditable": false,
+    "themeSet": ["/home/connor/CMU/rust-stuco/lectures/styles/rust.css"],
+    "vscode": {
+        "themeFiles": [
+            {
+                "path": "/home/connor/CMU/rust-stuco/lectures/styles/rust.css"
+            }
+        ]
+    }
+}
