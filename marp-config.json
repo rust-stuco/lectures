@@ -12,11 +12,11 @@
         "math": "mathjax"
     },
     "pptxEditable": false,
-    "themeSet": ["/home/connor/CMU/rust-stuco/lectures/styles/rust.css"],
+    "themeSet": ["./styles/rust.css"],
     "vscode": {
         "themeFiles": [
             {
-                "path": "/home/connor/CMU/rust-stuco/lectures/styles/rust.css"
+                "path": "./styles/rust.css"
             }
         ]
     }
