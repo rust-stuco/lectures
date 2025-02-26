@@ -20,204 +20,17 @@ code {
 
 ## Intro to Rust Lang
 
-# Crates, Closures, and Iterators
+# Closures and Iterators
 
 
 ---
 
-# Today: Crates, Closures, and Iterators
 
-- Crate Highlights
+# Today: Closures and Iterators
+
 - Closures
 - Iterators
-
-
----
-
-
-# **Crate Highlights**
-
-
----
-
-
-# `rand`
-
-The standard library includes many things... but a random number generator isn't one of them*.
-
-Here's an example of using the `rand` crate:
-
-```rust
-use rand::prelude::*;
-
-let mut rng = rand::thread_rng();
-let y: f64 = rng.gen(); // generates a float between 0 and 1
-
-let mut nums: Vec<i32> = (1..100).collect();
-nums.shuffle(&mut rng);
-```
-
-
----
-
-
-# `rand`
-
-```rust
-use rand::prelude::*;
-
-let mut rng = rand::thread_rng();
-let y: f64 = rng.gen(); // generates a float between 0 and 1
-
-let mut nums: Vec<i32> = (1..100).collect();
-nums.shuffle(&mut rng);
-```
-
-* `rand` is the de facto crate for:
-    * Generating random numbers
-    * Creating probabilistic distributions
-    * Providing randomness related algorithms (like vector shuffling)
-
-
----
-
-
-# `clap`
-
-Often, we want our binary to take in command line arguments.
-
-A very popular argument parser used in Rust programs is `clap`.
-
-```rust
-use clap::Parser;
-
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(short, long)]
-    name: String, // Name of the person to greet
-
-    #[arg(short, long, default_value_t = 1)]
-    count: u8, // Number of times to greet
-}
-```
-
-* Makes use of Rust's macro system to generate boilerplate code for us!
-
-
----
-
-
-# `clap`
-
-Here's how you would use a `clap` struct called `Args`:
-
-```rust
-use clap::Parser;
-
-// <-- snip -->
-struct Args {
-    // <-- snip -->
-}
-
-fn main() {
-    let args = Args::parse(); // get-opt could never
-    for _ in 0..args.count {
-        println!("Hello {}!", args.name)
-    }
-}
-```
-
-
----
-
-
-# `clap`
-
-If we run the binary called `demo`:
-
-```
-$ demo --help
-A simple to use, efficient, and full-featured Command Line Argument Parser
-
-Usage: demo[EXE] [OPTIONS] --name <NAME>
-
-Options:
-  -n, --name <NAME>    Name of the person to greet
-  -c, --count <COUNT>  Number of times to greet [default: 1]
-  -h, --help           Print help
-  -V, --version        Print version
-
-$ demo --name Me
-Hello Me!
-```
-
-* Note that `clap` is not the only 3rd-party crate option!
-
-<!--
-clap can be pretty heavyweight if you don't need too much functionality
--->
-
-
----
-
-
-# `anyhow`
-
-Have code that can throw multiple error types that you wish was one? Use this!
-```rust
-use anyhow::Result;
-
-fn get_cluster_info() -> Result<ClusterMap> {
-    let config = std::fs::read_to_string("cluster.json")?;
-    let map: ClusterMap = serde_json::from_str(&config)?;
-    Ok(map)
-}
-
-```
-
-* Both lines return different error types, but `anyhow` allows us to return both!
-* Makes errors more dynamic and ergonomic
-
-
----
-
-
-# `anyhow`
-
-Another example:
-
-```rust
-use anyhow::{Context, Result};
-
-fn main() -> Result<()> {
-    // <-- snip -->
-    it.detach().context("Failed to detach the important thing")?;
-
-    let content = std::fs::read(path)
-        .with_context(|| format!("Failed to read instrs from {}", path))?;
-}
-```
-
-Other `anyhow` features include:
-* Downcasting to the original error types
-* Attaching custom context / error messages
-* More expressive custom errors
-
-
----
-
-
-# `flamegraph`
-
-![bg right:60% 90%](../images/example_flame.png)
-
-Rust powered flamegraph generator with Cargo support!
-
-With a bit of setup, you can generate this with `cargo flamegraph`
-
-* Can support non-Rust projects too
-* Relies on perf/dtrace
+- Crate Highlights
 
 
 ---
@@ -954,53 +767,10 @@ assert!(!is_mascot("Ferrari"));  // false
 
 ---
 
-# `Fn`
-
-TODO FIX (this example doesn't work with non-`Copy` types)
-
-Finally, `Fn` applies to closures that don't move captured values out of their body:
-
-```rust
-let my_sanity = ();
-let cmu = move || {my_sanity;}; // captures sanity and never gives it back...
-
-assert!(cmu() == ());
-```
-
-* When is `my_sanity` dropped?
-  * `my_sanity` is _not_ dropped when we call and return from our closure!
-  * It's dropped when our closure goes out of scope
-
-
----
-
 
 # `Fn`
 
-TODO FIX (this example doesn't work with non-`Copy` types)
-
-`my_sanity` is dropped when our closure goes out of scope:
-
-```rust
-fn main() {
-  let my_sanity = ();
-  let cmu = move || {my_sanity;};
-  cmu(); // `my_sanity` is NOT dropped here
-  cmu(); // `my_sanity` is NOT dropped here
-} // `my_sanity gets dropped here`
-```
-
-* Again, to reiterate: `my_sanity` is _not_ dropped when we call and return from our closure!
-
-
----
-
-
-# `Fn`
-
-TODO (the next line is not specific to just `Fn`)
-
-The `Fn` trait allows you to define functions that accept other functions as arguments:
+The `Fn` usually represents pure functions, which means it makes sense to pass them as inputs to other functions!
 
 ```rust
 fn reduce<F, T>(reducer: F, data: &[T]) -> Option<T>
@@ -1012,13 +782,17 @@ where
 ```
 
 * We can specify the arguments and return types for `Fn`
-* While this example is generic, we could've replaced `T` with a concrete type
+* Functions are values!
+
+<!--
+While this example is generic, we could've replaced `T` with a concrete type
+-->
 
 
 ---
 
 
-# `fn`?
+# `fn` vs. `Fn`
 
 Rust also has function pointers, denoted `fn` (instead of `Fn`).
 
@@ -1516,6 +1290,198 @@ Filter { iter: Skip { iter: Map { iter: 0..100 }, n: 1 } }
 * Rules regarding closures and ownership still apply
 * Iterators are _lazy_
   * Remember to use `.collect()`!
+
+
+---
+
+
+# **Crate Highlights**
+
+
+---
+
+
+# `rand`
+
+The standard library includes many things... but a random number generator isn't one of them*.
+
+Here's an example of using the `rand` crate:
+
+```rust
+use rand::prelude::*;
+
+let mut rng = rand::thread_rng();
+let y: f64 = rng.gen(); // generates a float between 0 and 1
+
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+```
+
+
+---
+
+
+# `rand`
+
+```rust
+use rand::prelude::*;
+
+let mut rng = rand::thread_rng();
+let y: f64 = rng.gen(); // generates a float between 0 and 1
+
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+```
+
+* `rand` is the de facto crate for:
+    * Generating random numbers
+    * Creating probabilistic distributions
+    * Providing randomness related algorithms (like vector shuffling)
+
+
+---
+
+
+# `clap`
+
+Often, we want our binary to take in command line arguments. A very popular argument parser used in Rust programs is `clap`.
+
+```rust
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    name: String, // Name of the person to greet
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8, // Number of times to greet
+}
+```
+
+* Makes use of Rust's macro system to generate boilerplate code for us!
+
+
+---
+
+
+# `clap`
+
+Here's how you would use a `clap` struct called `Args`:
+
+```rust
+use clap::Parser;
+
+// <-- snip -->
+struct Args {
+    // <-- snip -->
+}
+
+fn main() {
+    let args = Args::parse(); // get-opt could never
+    for _ in 0..args.count {
+        println!("Hello {}!", args.name)
+    }
+}
+```
+
+
+---
+
+
+# `clap`
+
+If we run the binary called `demo`:
+
+```
+$ demo --help
+A simple to use, efficient, and full-featured Command Line Argument Parser
+
+Usage: demo[EXE] [OPTIONS] --name <NAME>
+
+Options:
+  -n, --name <NAME>    Name of the person to greet
+  -c, --count <COUNT>  Number of times to greet [default: 1]
+  -h, --help           Print help
+  -V, --version        Print version
+
+$ demo --name Me
+Hello Me!
+```
+
+* Note that `clap` is not the only 3rd-party crate option!
+
+<!--
+clap can be pretty heavyweight if you don't need too much functionality
+-->
+
+
+---
+
+
+# `anyhow`
+
+Have code that can throw multiple error types that you wish was one? Use this!
+```rust
+use anyhow::Result;
+
+fn get_cluster_info() -> Result<ClusterMap> {
+    let config = std::fs::read_to_string("cluster.json")?;
+    let map: ClusterMap = serde_json::from_str(&config)?;
+    Ok(map)
+}
+```
+
+* Both lines return different error types, but `anyhow` allows us to return both!
+* Makes errors more dynamic and ergonomic
+
+
+---
+
+
+# `anyhow`
+
+Another example:
+
+```rust
+it.detach().context("Failed to detach the important thing")?;
+
+let content = std::fs::read(path)
+    .with_context(|| format!("Failed to read from {}", path))?;
+```
+
+Other `anyhow` features include:
+* Downcasting to the original error types
+* Attaching custom context / error messages
+* More expressive custom errors
+
+
+---
+
+
+# Error Handling Libraries
+
+In addition to [`anyhow`](https://docs.rs/anyhow/latest/anyhow/), there is also [`thiserror`](https://docs.rs/thiserror/latest/thiserror/) and [`snafu`](https://docs.rs/snafu/latest/snafu/).
+
+- `anyhow`: Use in binaries where you don't care what kind of error has occurred
+- `thiserror`: Use in libraries where you _do_ care what exactly happened
+- `snafu`: Newer crate, combines the functionality of both!
+
+
+---
+
+
+# `flamegraph`
+
+![bg right:60% 90%](../images/example_flame.png)
+
+Rust powered flamegraph generator with Cargo support!
+
+With a bit of setup, you can generate this with `cargo flamegraph`.
+
+* Can support non-Rust projects too
+* Relies on `perf` or `dtrace`
 
 
 ---
