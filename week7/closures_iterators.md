@@ -627,7 +627,7 @@ Now let's observe the function body.
 {
     match self {
         Some(x) => x,
-        None => f(),
+        None => f(e),
     }
 }
 ```
