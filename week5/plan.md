@@ -8,7 +8,7 @@
     - `Result<V,E>`
 - The Never Type (3 min)
 - Traits (28 min)
-    - Intro to traits (8 min)
+    - Intro to Traits (8 min)
     - Derivable Traits (12 min)
     - Trait Bounds (8 min)
 

@@ -8,7 +8,7 @@
     - UTF-8
     - `String` API
 - Maps (7 min)
-    - Focus on `HashMap` and `HashSet`
+    - `HashMap`
     - `Entry` API
 - Generics (22 min)
     - Functions
