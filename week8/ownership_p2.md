@@ -239,7 +239,7 @@ Emphasize the copying of `x`
 ---
 
 
-# Motivating the Heap
+# Big Data
 
 ![bg right 50%](../images/week8/frames/0.png)
 
@@ -255,7 +255,7 @@ fn main() {
 ---
 
 
-# Motivating the Heap
+# Big Data
 
 ![bg right 100%](../images/week8/frames/2-crop.png)
 
@@ -276,11 +276,9 @@ fn main() {
 ---
 
 
-# Motivating the Heap
+# Big Data
 
 ![bg right 100%](../images/week8/frames/3-crop.png)
-
-When we call `my_function`, we must allocate `arg` for its stack frame!
 
 ```rust
 fn my_function(arg: [u32; 4_000_000]) {
@@ -288,13 +286,16 @@ fn my_function(arg: [u32; 4_000_000]) {
 }
 ```
 
-* Copy 15 GB of `0xDEADBEEF`'s
+When we call `my_function`, we need to:
+
+* Allocate enough space in the stack frame
+* Copy all 15 GB of `0xDEADBEEF`'s...
 
 
 ---
 
 
-# Motivating the Heap
+# Big Data
 
 Imagine being required to recreate `beef` on every single stack frame.
 
@@ -318,6 +319,9 @@ my_function(beef);
 <!--Speaker note:
 If we call this function 10 times, we're copying 10 Google Drives! Unsustainable!
 
+Just 1 of these is likely going to cause you to run out of RAM (16 GB RAM is standard
+nowadays, but many laptops have only 8 GB of memory).
+
 Make it clear that this is not a recursive function, it's just super expensive to do this every function call.
 
 To transition to next slide, emphasize that
@@ -331,8 +335,9 @@ What if we resize our vector?
 
 # Motivating the Heap
 
-Our `beef` array is **long-lived** data.
+We probably want to keep our `beef` array around for longer than a single function call.
 
+* We can say that it is **long-lived** data
 * We want other functions to use this array, instead of just a single stack frame
 * How do we persist this data across function calls?
 
@@ -340,7 +345,7 @@ Our `beef` array is **long-lived** data.
 ---
 
 
-# The Heap
+# The Stack?
 
 ![bg right 100%](../images/week8/frames/2-crop.png)
 
@@ -423,7 +428,7 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 
 ![bg right 100%](../images/week8/frames/5-crop.png)
 
-When we call `my_function`, we can copy the pointer into `arg`!
+When we call `my_function`, we can copy the _pointer_ into `arg`!
 
 ```rust
 let beef =
@@ -440,11 +445,9 @@ my_function(beef);
 
 ![bg right 100%](../images/week8/frames/5-crop.png)
 
-Much better!
+**Before:** 15 GB per array
 
-**Before:** 15 GB per vector
-
-**After:** 8 bytes per pointer
+**After:** 15 GB + 8 bytes per pointer
 
 ```rust
 let beef =
@@ -466,7 +469,7 @@ my_function(beef);
 ---
 
 
-# Recap: The Heap
+# Recap: Stack vs. Heap
 
 ![bg vertical 30%](../images/week8/frames/0.png)
 ![bg right 100%](../images/week8/frames/4-crop.png)
@@ -474,20 +477,20 @@ my_function(beef);
 
 Variable placement:
 
-* **Stack-allocated:** Value on stack
-* **Heap-allocated:** Value on heap, **pointer** on stack
+* **Stack-allocated:** Data lives on the stack
+* **Heap-allocated:** Data lives on the heap, the **pointer** on stack
 
 
 ---
 
 
-# Recap
+# Recap: Stack vs. Heap
 
-| Comparison     | Stack                    | Heap                                 |
-|----------------|--------------------------|--------------------------------------|
-| Manages        | Scalar Data and Pointers | Dynamically-sized or Long-lived Data |
-| Allocated on   | Function Call            | Programmer Request                   |
-| Deallocated on | Function Return          | ???                                  |
+| Comparison     | Stack                  | Heap                                |
+|----------------|------------------------|-------------------------------------|
+| Manages        | Scalar data + Pointers | Dynamically-sized / long-lived data |
+| Allocated on   | Function call          | Programmer request                  |
+| Deallocated on | Function return        | ???                                 |
 
 <!-- Scalar data being integers and floating points -->
 
@@ -507,7 +510,7 @@ Recall that accessing **deallocated** memory is unsafe.
 
 When is memory deallocated?
 
-* Stack: deallocated when function returns
+* Stack: deallocated when the function returns
     * Valid, unless dangling pointer ✅
         * We'll discuss more in the upcoming Lifetimes lecture...
 * Heap: deallocated when ???
@@ -528,7 +531,7 @@ Let's put that question on hold for a few slides...
 
 Recall the behavior of local variables on the stack:
 
-* Local variable lives in function's **stack frame**
+* Local variable lives in the function's **stack frame**
 * Allocated on function call
 * Deallocated on function return
     * Sound familiar?
@@ -575,7 +578,7 @@ Under this alternate ownership model, owners are stack frames:
 
 * Each value in Rust has an _owner_
     * Owner is the _stack frame_
-* A value can only have one owner at a time
+* A value can have only one owner at a time
     * Variables can only be in one stack frame
 * When the owner goes out of scope, the value will be _dropped_
     * When the function returns, the stack frame is cleaned up!
@@ -583,11 +586,14 @@ Under this alternate ownership model, owners are stack frames:
 
 ---
 
+
 # Ownership of Closures
 
-Let's examine closures using our new ownership model:
+Let's re-examine **closures** again using this new ownership model:
+
 * What does the `move` keyword really do?
-* Why are captured values dropped at the times they do?
+* Why are captured values dropped when they are?
+
 
 ---
 
