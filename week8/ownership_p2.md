@@ -42,8 +42,8 @@ Instead of _against_ the borrow checker
 
 At the beginning of this course, we learned two sets of rules...
 
-* Ownership Rules
-* Borrowing Rules
+* Ownership rules
+* Borrowing rules
 
 
 ---
@@ -571,7 +571,7 @@ Now we impose the following rules:
 
 # Rules of Ownership
 
-Under our new ownership model, owners are stack frames:
+Under this alternate ownership model, owners are stack frames:
 
 * Each value in Rust has an _owner_
     * Owner is the _stack frame_
@@ -596,28 +596,19 @@ Let's examine closures using our new ownership model:
 
 When is `my_str` dropped?
 
-**Closure A**
-
-```rust
-let my_str = String::from("x");
-let take_and_keep = move || {my_str;};
-```
-
-**Closure B**
 
 ```rust
 let my_str = String::from("x");
 let take_and_give_back = move || my_str;
 ```
 
-* In Closure A, `my_str` is dropped when the closure goes out of scope
-* In Closure B, `my_str` is dropped the first time the closure is called
-    * B can only be called once, while A can be called multiple times
+* In `take_and_give_back`, `my_str` is dropped the first time the closure is called
+    * B can only be called once
 
 <!-- Speaker note:
-    Bonus points if you can tell us which Traits these closures implement:
-        Closure A is all three
-        Closure B is FnOnce only
+    Q: Bonus points if you can tell us which Traits this closure implements:
+    A: FnOnce only
+        Exactly what it says on the tin
 -->
 
 
@@ -629,18 +620,16 @@ let take_and_give_back = move || my_str;
 When we create a closure...
 
 ```rust
-let do_nothing_closure = |x| {x;};
+let do_nothing_closure = |_x| {};
 ```
 
 Think of it as a struct with an associated function:
 
 ```rust
-struct Closure { }
+struct Closure;
 
 impl Closure {
-    pub fn run(&self, x: &str) -> () {
-        &x;
-    }
+    pub fn run(&self, _x: &str) -> () {}
 }
 ```
 
@@ -658,76 +647,13 @@ let take_and_keep = move || {my_str;};
 ```
 
 These values are stored in the struct like so:
-
 ```rust
 struct ClosureA {
     my_str: String // `move` keyword tells compiler to put `my_str` in struct
 }
 impl ClosureA {
-    pub fn run(&self) -> () {
-        &self.my_str;
-        ()
-    }
-}
-```
-
-<!-- Speaker note:
-    Although the `my_str;` is a no-op, it's necessary for telling
-    the closure to capture the value `my_str`
-
-    Other important detail is &self.my_str instead of self.my_str
-    Aquascope renders the diagrams with a UAF in the case of self.my_str
-    Without the reference &, self.my_str gets interpreted as an attempt
-    to move my_str out of the struct. As for where this is moved, ¯\_(ツ)_/¯
--->
-
-
----
-
-
-# Closure A
-
-Then our closure declaration is equivalent to creating a struct:
-
-```rust
-let my_str = String::from("x");
-let take_and_keep = ClosureA { my_str };
-```
-
-Hence, `my_str` is dropped when Closure A goes out of scope:
-
-```rust
-let my_str = String::from("x");
-{
-    let take_and_keep = ClosureA { my_str }; // take ownership of `my_str`
-    take_and_keep.run();
-    take_and_keep.run();
-} // drop `take_and_keep`, which drops `my_str`
-```
-* Closure A can be called multiple times!
-
----
-
-
-# Closure B
-
-Now, when we compare with Closure B...
-
-```rust
-let my_str = String::from("x");
-let take_and_give_back = move || my_str;
-```
-
-Closure B becomes the following struct and function:
-
-```rust
-struct ClosureB {
-    my_str: String
-}
-
-impl ClosureB {
-    pub fn run(self) -> String {
-        return self.my_str; // gives ownership back to caller
+    pub fn run(&self) -> String {
+        return self.my_str;
     }
 }
 ```
@@ -749,6 +675,8 @@ What happens when we call `ClosureB`'s function?
 ```rust
 let my_str_str = take_and_give_back.run();
 ```
+
+* Think about the stack frames
 
 
 ---
@@ -804,12 +732,10 @@ pub fn run(self) -> String {
 
 ![bg right 100%](../images/week8/closures/closureB_3.png)
 
-See how our closure's `my_str` is invalidated
-
+* See how our closure's `my_str` is invalidated
 * Closure B moves `my_str` out of is body
     * Can only be called once
-* Closure A retains ownership of `my_str`
-    * Can be called multiple times
+
 
 ---
 
@@ -818,10 +744,10 @@ See how our closure's `my_str` is invalidated
 
 * New way of thinking about ownership
     * Owners are stack frames
-* A closure is really a struct and a function
+* A closure is really a function that stores ("captures") values in a struct
     * Ways to capture values:
         * **Taking ownership:** Store the value in the struct, via `move` keyword
-        * **Borrowing:** Pass the value as an argument to the function
+        * **Borrowing:** Store a reference to the value in the struct
 
 
 ---
@@ -1087,7 +1013,7 @@ Denote the left side of assignments as **places**.
 
 ```rust
 let x = &v[3];
-    ^ place
+//  ^ place
 ```
 
 The borrow checker checks permissions of **places**.
@@ -1104,7 +1030,7 @@ Places include:
 * Dereferences of places, like `*a`
 * Array accesses of places, like `a[0]`
 * Fields of places, like `a.0`, `a.field`
-* Any combination of the above, like `*((*&a[2].field)[5].0.1)`
+* Any combination of the above, like `*a.x[i].y`
 
 
 ---
@@ -1123,9 +1049,8 @@ When declared, a variable has the permissions:
 
 # References Change Permissions
 
-Variables have permissions Read, Own, Write.
-
-References **temporarily remove these permissions**.
+* Variables have permissions Read, Own, and Write.
+* References **temporarily remove these permissions**.
 
 
 ---
@@ -1137,8 +1062,8 @@ References **temporarily remove these permissions**.
 Let's revisit our vector pop example.
 
 We declare `v`, giving it
-- .
-- .
+- ?
+- ?
 
 <style>
     .container {
@@ -1162,7 +1087,7 @@ let mut v = vec![1, 2, 3, 4];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | - | - | -
+v | ? | ? | ?
 
 </div>
 </div>
@@ -1178,7 +1103,7 @@ Let's revisit our vector pop example.
 
 We declare `v`, giving it
 - R, O due to variable declaration
-- .
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1193,7 +1118,7 @@ let mut v = vec![1, 2, 3, 4];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | +R | - | +O
+v | **+R** | ? | **+O**
 
 </div>
 </div>
@@ -1224,7 +1149,7 @@ let mut v = vec![1, 2, 3, 4];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | +R | +W | +O
+v | +R | **+W** | +O
 
 </div>
 </div>
@@ -1236,8 +1161,8 @@ v | +R | +W | +O
 # Example: Immutable References
 
 When we create a reference `x` to `v`, we
-- .
-- .
+- ?
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1254,7 +1179,7 @@ let x = &v[3];
 Place | R | W | O
 -----|-----|-----|-----:
 v | R | W | O
-x | - | - | -
+x | ? | - | ?
 
 </div>
 
@@ -1268,7 +1193,7 @@ x | - | - | -
 
 When we take a reference to `v`, we
 - Give `x` R, O due to variable declaration
-- .
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1285,7 +1210,7 @@ let x = &v[3];
 Place | R | W | O
 -----|-----|-----|-----:
 v | R | W | O
-x | +R | - | +O
+x | **+R** | - | **+O**
 
 </div>
 
@@ -1329,8 +1254,8 @@ x | R | - | O
 # Example: Immutable References
 
 This move changes `v`:
-- .
-- .
+- ?
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1346,7 +1271,7 @@ let x = &v[3];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | W | O
+v | R | W? | O?
 x | R | - | O
 
 </div>
@@ -1361,7 +1286,7 @@ x | R | - | O
 
 This move changes `v`:
 - Removes O, gives to `x`
-- .
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1377,7 +1302,7 @@ let x = &v[3];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | W | -
+v | R | W? | **-**
 x | R | - | O
 
 </div>
@@ -1408,7 +1333,7 @@ let x = &v[3]; // <- v loses W
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | - | -
+v | R | **-** | -
 x | R | - | O
 
 </div>
@@ -1512,9 +1437,9 @@ v.pop(); // <- v regains W, O
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | +W | +O
-x | R | - | -
-*x | - | - | -
+v | R | **+W** | **+O**
+x | R | - | **-**
+*x | **-** | - | -
 
 </div>
 
@@ -1607,9 +1532,9 @@ let x = &v[3];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | - | -
+v | R | **-** | **-**
 x | R | - | O
-*x | R | - | -
+*x | **R** | - | -
 
 </div>
 
@@ -1622,8 +1547,8 @@ x | R | - | O
 # Example: Mutable References
 
 However, when `x` is a mutable reference:
-- .
-- .
+- ?
+- ?
 
 <div class = "container">
 <div class = "col">
@@ -1639,9 +1564,9 @@ let x = &mut v[3];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | R | - | -
+v | R? | - | -
 x | R | - | O
-*x | R | - | -
+*x | R | -? | -
 
 </div>
 
@@ -1655,7 +1580,7 @@ x | R | - | O
 
 However, when `x` is a mutable reference:
 - `v` loses _all_ permissions, including R
-- .
+- ?
 
 <!-- Speaker note:
 Losing R is equivalent to "locking" other references from taking R
@@ -1676,9 +1601,9 @@ let x = &mut v[3];
 
 Place | R | W | O
 -----|-----|-----|-----:
-v | - | - | -
+v | **-** | - | -
 x | R | - | O
-*x | R | - | -
+*x | R | -? | -
 
 </div>
 
@@ -1710,7 +1635,7 @@ Place | R | W | O
 -----|-----|-----|-----:
 v | - | - | -
 x | R | - | O
-*x | R | W | -
+*x | R | **W** | -
 
 </div>
 
@@ -1777,7 +1702,7 @@ We want to take this number `2`...
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-                    ^
+//                  ^
 ```
 
 
@@ -1786,11 +1711,11 @@ let mut v = vec![1, 2, 3, 4];
 
 # Fixing a Safe Program
 
-We want to take this number `2`...and add it to `1`'s slot.
+We want to take this number `2`...and add it to the first index.
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-                 ^
+//               ^
 ```
 
 
