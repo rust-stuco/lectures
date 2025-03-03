@@ -1718,6 +1718,12 @@ let mut v = vec![1, 2, 3, 4];
 //               ^
 ```
 
+<!--
+Speaker note:
+    Q: "What's ONE plus TWO, boys and girls???"
+    A: Three, I hope!
+-->
+
 
 ---
 
