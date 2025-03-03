@@ -1126,6 +1126,7 @@ assert_eq!(total, 6);
 
 # Other consuming functions
 
+- `fn sum(self)`
 - `fn max(self)`
 - `fn count(self)`
 - `fn map(self, f: F)`
@@ -1256,7 +1257,7 @@ for x in iter.take(5) {
 * You can read this as:
   * Print first 5 square numbers
   * Skipping 0
-  * Only divisible divisible by 3
+  * Only divisible by 3
 * _Note that `filter` doesn't need a dereference for `%`_
 
 
