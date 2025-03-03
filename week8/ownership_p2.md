@@ -1911,17 +1911,75 @@ v | - | - | -
 
 # Fixing a Safe Program
 
-Solution: `unsafe` block
+Solution 1: No References
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let slot1 = &mut v[0] as *mut i32; // raw pointer
-let slot2 = &v[1] as *const i32; // raw pointer
-unsafe { *slot1 += *slot2; } // because *we* know it's safe
+v[0] += v[1];
+println!("{:?}", v);
 ```
 
-* Alternate: `split_at_mut`, which use unsafe under the hood
+* This works because we mutate only `v[0]`
+* However, what we mutate both `v[0]` and `v[1]`?
 
+
+---
+
+
+# Fixing a Safe Program
+
+Now that we mutate both indices, we can't avoid taking a mutable reference:
+
+```rust
+struct Num {
+    val: u32
+}
+impl Num {
+    fn add(&mut self, other: &mut Num) {
+        self.val += 1;
+        other.val -= 1;
+    }
+}
+// <-- snip -->
+let mut v = vec![Num {val: 1}, Num {val: 2}];
+v[0].add(&mut v[1]);
+println!("{:?}", v);
+```
+* Cannot borrow `v` as mutable more than once at a time!
+
+
+---
+
+
+# Fixing a Safe Program
+
+Solution 2: Drop into `unsafe`
+
+`split_at_mut` uses `unsafe` under the hood:
+
+```rust
+let mut v = [1, 0, 3, 0, 5, 6];
+let (left, right) = v.split_at_mut(2);
+assert_eq!(left, [1, 0]);
+assert_eq!(right, [3, 0, 5, 6]);
+```
+
+* Divides a mutable slice into two mutable slices at index `mid`
+    * `left` contains `[0, mid)`
+    * `right` contains `[mid, len)`
+
+---
+
+# Fixing a Safe Program
+
+Solution 2: Drop into `unsafe`
+
+```rust
+let mut v = vec![Num {val: 1}, Num {val: 2}];
+let (left, right) = v.split_at_mut(0);
+left[0].add(&mut right[0]);
+println!("{:?}", v);
+```
 
 ---
 
@@ -1929,15 +1987,13 @@ unsafe { *slot1 += *slot2; } // because *we* know it's safe
 # Recap
 
 * Ownership rules prevent access to deallocated memory
-    * Think of owner as **stack frame** instead of variable
-        * Helpful when dealing with composite data types like structs
-    * Draw stack frame diagrams: when are values copied, moved, freed?
+    * Think of owners as **stack frames**
 * Borrow checker checks **permissions** of **places**
     * References temporarily remove permissions
-    * Draw RWO table to fix ownership errors
 * Sometimes, borrow checker can't know your program is safe
     * If you conclude it's safe after reasoning about stack frames and RWO permissions...
         * Calm the compiler with `unsafe` block
+
 
 ---
 
