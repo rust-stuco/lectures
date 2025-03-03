@@ -6,6 +6,7 @@
     - Stack and Heap
     - `Box<T>`
     - Owner is Stack Frame
+    - Closure Move Example
 - Vector Resizing Example (5 min)
     - Vector Pop
     - Vector Push
