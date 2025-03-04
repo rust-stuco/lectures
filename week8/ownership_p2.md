@@ -1217,7 +1217,7 @@ let x = &v[3];
 
 # Example: Immutable References
 
-When we take a reference to `v`, we:
+When we create a reference `x` to `v`, we:
 
 - Give `x` R, O due to variable declaration
 - ?
@@ -1249,7 +1249,7 @@ let x = &v[3];
 
 # Example: Immutable References
 
-When we take a reference to `v`, we:
+When we create a reference `x` to `v`, we:
 
 - Give `x` R, O due to variable declaration
 - _Move_ `v` into `x`
@@ -1494,6 +1494,8 @@ However, we cannot access `*x` anymore, as its permissions have been revoked
 let mut v = vec![1, 2, 3, 4];
 let x = &v[3];
 v.pop(); // Revokes permissions
+
+// THIS DOES NOT COMPILE!!!
 println!("{}", x); // Requires R on *x
 ```
 
@@ -1517,6 +1519,10 @@ println!("{}", x); // Requires R on *x
 
 # Recap: Immutable References
 
+<!--
+TODO(connor): try to shorten this slide
+-->
+
 * Declaring a variable `v` gives it R, O permissions
     * W if `mut`
 * Creating an immutable reference `x` to `v`
@@ -1528,8 +1534,8 @@ println!("{}", x); // Requires R on *x
         * Case 2: Mutate `v` *before* any reference is used
             * Revokes permissions of all references
 
-
 <!-- Speaker note: "unused" will be clarified in Lifetimes lecture -->
+
 
 ---
 
