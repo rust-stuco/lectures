@@ -610,23 +610,24 @@ When is `my_str` dropped?
 
 ```rust
 let my_str = String::from("x");
-let take_and_give_back = move || my_str;
+let take_and_give_back = move || { my_str };
+
+assert_eq!(take_and_give_back(), "x");
 ```
 
 * In `take_and_give_back`, `my_str` is dropped the first time the closure is called
-    * B can only be called once
+    * Can only be called once
 
 <!-- Speaker note:
     Q: Bonus points if you can tell us which Traits this closure implements:
-    A: FnOnce only
-        Exactly what it says on the tin
+    (FnOnce only)
 -->
 
 
 ---
 
 
-# Reframing Closures
+# Closure Internals
 
 When we create a closure...
 
@@ -640,7 +641,8 @@ Think of it as a struct with an associated function:
 struct Closure;
 
 impl Closure {
-    pub fn run(&self, _x: &str) -> () {}
+    //          vvvvv Notice the immutable reference to `self`!
+    pub fn call(&self, _x: &str) -> () {}
 }
 ```
 
@@ -648,90 +650,101 @@ impl Closure {
 ---
 
 
-# Reframing Closures
+# Closure Internals
 
 The `move` keyword tells the closure to take ownership of values from its environment.
 
 ```rust
-let my_str = String::from("x");
-let take_and_keep = move || {my_str;};
-```
+let take_and_give_back = move || { my_str };
 
-These values are stored in the struct like so:
-```rust
-struct ClosureA {
-    my_str: String // `move` keyword tells compiler to put `my_str` in struct
+// The `move` keyword tells compiler to put `my_str` in this `Closure`.
+struct Closure {
+    my_str: String,
 }
-impl ClosureA {
-    pub fn run(&self) -> String {
+
+impl Closure {
+    //          vvvv Notice the owned `self` type!
+    pub fn call(self) -> String {
         return self.my_str;
     }
 }
 ```
 
+<!--
+Normally you wouldn't do `return self.my_str;` and instead just do `self.my_str`, but this makes it
+clear what is happening
+-->
+
 
 ---
 
 
-# Closure B
+# Closure Internals
 
 Then our code is equivalent to
 
 ```rust
 let my_str = String::from("x");
-let take_and_give_back = ClosureB { my_str };
+
+let take_and_give_back = Closure { my_str };
+//                                 ^^^^^^ `my_str` is moved!
+
+let my_returned_str: String = take_and_give_back.call();
 ```
 
-What happens when we call `ClosureB`'s function?
-```rust
-let my_str_str = take_and_give_back.run();
-```
-
-* Think about the stack frames
+* What happens when we `call` on the `Closure`?
+    * Think about the stack frames
 
 
 ---
 
 
-# Closure B
+# Closure Internals
 
-![bg right 100%](../images/week8/closures/closureB_0.png)
+![bg right 100%](../images/week8/closures/closure_0.png)
 
-First, `my_str` is moved into our closure...
+First, `my_str` is moved into our `Closure`.
 
 ```rust
 let my_str = String::from("x");
-let take_and_give_back = ClosureB { my_str }; // <-
-let my_str_str = take_and_give_back.run();
+
+let take_and_give_back =
+    Closure { my_str };
 ```
 
 ---
 
 
-# Closure B
+# Closure Internals
 
-![bg right 100%](../images/week8/closures/closureB_1.png)
+![bg right 100%](../images/week8/closures/closure_1.png)
 
-Next, we call our closure, which gives ownership of `my_str` to `ClosureB::run`'s stack frame...
+Next, we call our closure, which gives ownership of `my_str` to `Closure::call`'s stack frame.
 
 ```rust
 let my_str = String::from("x");
-let take_and_give_back = ClosureB { my_str }; 
-let my_str_str = take_and_give_back.run(); // <-
+
+let take_and_give_back =
+    Closure { my_str };
+
+let my_returned_str =
+    take_and_give_back.call();
 ```
+
 
 ---
 
 
-# Closure B
+# Closure Internals
 
-![bg right 100%](../images/week8/closures/closureB_2.png)
+![bg right 100%](../images/week8/closures/closure_2.png)
 
-`Closure::run` gives ownership back to `main`'s stack frame...
+`Closure::call` gives ownership back to `main`'s stack frame...
 
 ```rust
-pub fn run(self) -> String {
-    return self.my_str; // gives ownership back to caller
+pub fn call(self) -> String {
+    // Gives ownership back!
+    return self.my_str;
 }
 ```
 
@@ -739,19 +752,19 @@ pub fn run(self) -> String {
 ---
 
 
-# Closure B
+# Closure Internals
 
-![bg right 100%](../images/week8/closures/closureB_3.png)
+![bg right 100%](../images/week8/closures/closure_3.png)
 
-* See how our closure's `my_str` is invalidated
-* Closure B moves `my_str` out of is body
-    * Can only be called once
+* `Closure`'s `my_str` is invalidated
+* `my_str` is moved out of `Closure`'s "body"
+    * This is why it can only be called once!
 
 
 ---
 
 
-# Recap
+# Recap: Closures
 
 * New way of thinking about ownership
     * Owners are stack frames
