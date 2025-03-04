@@ -264,13 +264,18 @@ We have a 15 GB array?
 ```rust
 fn main() {
     let beef =
-        [0xDEADBEEF; 4_000_000];
+        [0xDEADBEEF; HUGE_NUMBER];
 
     my_function(beef);
 }
 ```
 
 * 15 GB = your Google Drive storage ![alt text](../images/week8/google-storage.png)
+
+<!--
+Just to be super clear, we would actually need 2^31 64-bit integers to occupy 16 GB, but
+this gets the point across.
+-->
 
 
 ---
@@ -281,7 +286,7 @@ fn main() {
 ![bg right 100%](../images/week8/frames/3-crop.png)
 
 ```rust
-fn my_function(arg: [u32; 4_000_000]) {
+fn my_function(arg: [u32; HUGE_NUMBER]) {
     <-- snip -->
 }
 ```
@@ -300,7 +305,7 @@ When we call `my_function`, we need to:
 Imagine being required to recreate `beef` on every single stack frame.
 
 ```rust
-let beef = [0xDEADBEEF; 4_000_000];
+let beef = [0xDEADBEEF; 2_000_000_000];
 
 my_function(beef);
 my_function(beef);
@@ -401,7 +406,7 @@ Let's put our `beef` array in a `Box`:
 
 ```rust
 fn main() {
-    let beef = Box::new([0xDEADBEEF; 4_000_000]);
+    let beef = Box::new([0xDEADBEEF; HUGE_NUMBER]);
     my_function(beef);
 }
 
@@ -415,7 +420,7 @@ fn my_function(arg: Box<[u32]>) {
 
 <!-- Speaker note:
 If students ask about type annotation of `arg`:
-    * `beef` is coerced from a fixed-size array `Box<[u32; 4_000_000]>` to a boxed slice `Box<[u32]>`
+    * `beef` is coerced from a fixed-size array `Box<[u32; HUGE_NUMBER]>` to a boxed slice `Box<[u32]>`
 If students ask when we'd use `Box`, seeing as this is not recommended:
     * We use `Box` when defining recursive types, like tree nodes that have nodes for children. Rust needs to know the size of every type at compile time, but recursive types have an unknown, potentially infinite size. `Box` is used to break the infinite size problem, since its size is always a fixed pointer size
 -->
@@ -432,7 +437,7 @@ When we call `my_function`, we can copy the _pointer_ into `arg`!
 
 ```rust
 let beef =
-    Box::new([0xDEADBEEF; 4_000_000]);
+    Box::new([0xDEADBEEF; HUGE_NUMBER]);
 
 my_function(beef);
 ```
@@ -451,7 +456,7 @@ my_function(beef);
 
 ```rust
 let beef =
-    Box::new([0xDEADBEEF; 4_000_000]);
+    Box::new([0xDEADBEEF; HUGE_NUMBER]);
 
 my_function(beef);
 my_function(beef);
