@@ -605,11 +605,11 @@ Let's re-examine **closures** again using this new ownership model:
 
 # Ownership of Closures
 
-When is `my_str` dropped?
-
+When is `my_str` dropped? Who has ownership of it?
 
 ```rust
 let my_str = String::from("x");
+
 let take_and_give_back = move || { my_str };
 
 assert_eq!(take_and_give_back(), "x");
@@ -693,13 +693,13 @@ let my_returned_str: String = take_and_give_back.call();
 ```
 
 * What happens when we `call` on the `Closure`?
-    * Think about the stack frames
+    * _Think about the stack frames_
 
 
 ---
 
 
-# Closure Internals
+# Closure Example
 
 ![bg right 100%](../images/week8/closures/closure_0.png)
 
@@ -715,7 +715,7 @@ let take_and_give_back =
 ---
 
 
-# Closure Internals
+# Closure Example
 
 ![bg right 100%](../images/week8/closures/closure_1.png)
 
@@ -735,7 +735,7 @@ let my_returned_str =
 ---
 
 
-# Closure Internals
+# Closure Example
 
 ![bg right 100%](../images/week8/closures/closure_2.png)
 
@@ -752,7 +752,7 @@ pub fn call(self) -> String {
 ---
 
 
-# Closure Internals
+# Closure Example
 
 ![bg right 100%](../images/week8/closures/closure_3.png)
 
@@ -764,7 +764,7 @@ pub fn call(self) -> String {
 ---
 
 
-# Recap: Closures
+# Recap: Closure Internals
 
 * New way of thinking about ownership
     * Owners are stack frames
