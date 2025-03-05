@@ -1,8 +1,8 @@
 ---
 marp: true
+paginate: true
 theme: rust
 class: invert
-paginate: true
 ---
 
 
@@ -15,6 +15,10 @@ paginate: true
 
 
 <!-- ![bg right:35% 65%](../images/ferris.svg) -->
+
+<!--
+Many images in this lecture were generated with https://cel.cs.brown.edu/aquascope/
+-->
 
 
 ---
@@ -115,7 +119,7 @@ What is safety?
 
 However, undefined behavior / unsafety can mean many things.
 
-![list](../images/week8/rust-undefined-list-crop.png)
+![list](../images/week8/rust-undefined.png)
 
 * Definition in the [Rust Reference](https://doc.rust-lang.org/reference/behavior-considered-undefined.html) is much longer...
 
@@ -257,7 +261,7 @@ fn main() {
 
 # Big Data
 
-![bg right 100%](../images/week8/frames/2-crop.png)
+![bg right 100%](../images/week8/frames/2.png)
 
 We have a 15 GB array?
 
@@ -283,7 +287,7 @@ this gets the point across.
 
 # Big Data
 
-![bg right 100%](../images/week8/frames/3-crop.png)
+![bg right:45% 100%](../images/week8/frames/3.png)
 
 ```rust
 fn my_function(arg: [u32; HUGE_NUMBER]) {
@@ -352,7 +356,7 @@ We probably want to keep our `beef` array around for longer than a single functi
 
 # The Stack?
 
-![bg right 100%](../images/week8/frames/2-crop.png)
+![bg right 100%](../images/week8/frames/2.png)
 
 Instead of storing our array buffer on the stack...
 
@@ -362,7 +366,7 @@ Instead of storing our array buffer on the stack...
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/4-crop.png)
+![bg right 100%](../images/week8/frames/4.png)
 
 Instead of storing our array buffer on the stack...
 
@@ -374,7 +378,7 @@ Let's put it on the **heap**!
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/4-crop.png)
+![bg right 100%](../images/week8/frames/4.png)
 
 * If the data lives in the heap...
 * The **pointer** lives on the stack
@@ -431,7 +435,7 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5-crop.png)
+![bg right:40% 100%](../images/week8/frames/5.png)
 
 When we call `my_function`, we can copy the _pointer_ into `arg`!
 
@@ -448,7 +452,7 @@ my_function(beef);
 
 # The Heap
 
-![bg right 100%](../images/week8/frames/5-crop.png)
+![bg right:40% 100%](../images/week8/frames/5.png)
 
 **Before:** 15 GB per array
 
@@ -477,7 +481,7 @@ my_function(beef);
 # Recap: Stack vs. Heap
 
 ![bg vertical 30%](../images/week8/frames/0.png)
-![bg right 100%](../images/week8/frames/4-crop.png)
+![bg right 100%](../images/week8/frames/4.png)
 
 
 Variable placement:
@@ -701,7 +705,7 @@ let my_returned_str: String = take_and_give_back.call();
 
 # Closure Example
 
-![bg right 100%](../images/week8/closures/closure_0.png)
+![bg right 100%](../images/week8/closures/closure0.png)
 
 First, `my_str` is moved into our `Closure`.
 
@@ -717,7 +721,7 @@ let take_and_give_back =
 
 # Closure Example
 
-![bg right 100%](../images/week8/closures/closure_1.png)
+![bg right 100%](../images/week8/closures/closure1.png)
 
 Next, we call our closure, which gives ownership of `my_str` to `Closure::call`'s stack frame.
 
@@ -737,7 +741,7 @@ let my_returned_str =
 
 # Closure Example
 
-![bg right 100%](../images/week8/closures/closure_2.png)
+![bg right 100%](../images/week8/closures/closure2.png)
 
 `Closure::call` gives ownership back to `main`'s stack frame...
 
@@ -754,7 +758,7 @@ pub fn call(self) -> String {
 
 # Closure Example
 
-![bg right 100%](../images/week8/closures/closure_3.png)
+![bg right 100%](../images/week8/closures/closure3.png)
 
 * `Closure`'s `my_str` is invalidated
 * `my_str` is moved out of `Closure`'s "body"
@@ -968,15 +972,17 @@ We will talk about `unsafe` in the later weeks.
 You can use an `unsafe` block to tell the compiler that you know better.
 
 ```rust
-let mut v = vec![1, 2, 3, 4];
-
-let x = unsafe { v.as_ptr().add(3) }; // Get a raw pointer to the last element
+let mut v: Vec<i32> = vec![1, 2, 3, 4];
+// SAFETY: We know that `v` has 4 elements, so adding `3 * size_of::<i32>()`
+// cannot overflow (wrap around the address space).
+let p: *const i32 = unsafe { v.as_ptr().add(3) };
 
 v.push(5);
 
-let x = unsafe { *x }; // Dereference the raw pointer
-
-println!("{}", x);
+// SAFETY: `p` was derived from a valid slice pointer via `v.as_ptr()`, and
+// since `v` has not been dropped, it is safe to dereference this pointer.
+let elem: i32 = unsafe { *p };
+println!("{}", elem);
 ```
 
 * Think of `unsafe` blocks as "trust me bro" blocks
