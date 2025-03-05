@@ -781,9 +781,9 @@ pub fn call(self) -> String {
 ---
 
 
-# Motivating Borrowing Rules
+# **Motivating Borrowing Rules**
 
-Recall that accessing **overwritten** memory is unsafe.
+* Recall that accessing **overwritten** memory is unsafe
 
 <!--
 So we just explained another way to think about ownership rules.
@@ -979,14 +979,31 @@ let p: *const i32 = unsafe { v.as_ptr().add(3) };
 
 v.push(5);
 
-// SAFETY: `p` was derived from a valid slice pointer via `v.as_ptr()`, and
-// since `v` has not been dropped, it is safe to dereference this pointer.
+// SAFETY: We have checked that a resize will never happen with only
+// 5 elements, so this dereference is safe.
 let elem: i32 = unsafe { *p };
 println!("{}", elem);
 ```
 
 * Think of `unsafe` blocks as "trust me bro" blocks
 * We will talk about `unsafe` in a few weeks!
+
+<!--
+These safety contracts are actually pretty bare. If we wanted to be precise, it would look more
+along the lines of:
+
+SAFETY: We know that `v` has 4 valid elements, which means that the pointers at offsets +1, +2, and
++3 are all valid pointers that point to values of type `i32`. This means it cannot be the case that
+adding `3 * size_of::<i32>()` to `v.as_ptr()` overflows, otherwise that last element could not even
+exist in the first place.
+
+SAFETY: We showed above that `p` was a valid pointer to an `i32` value. We have also checked in the
+code of `Vec::push` that a resize and reallocation cannot happen when there are only 5 elements.
+So since there is no reallocation, and `v` is still in scope so the memory has not been freed, this
+dereference of `p` to an `i32` value is valid.
+
+MAKE SURE TO MENTION THAT THESE SAFETY CONTRACTS ARE SHORT AND THAT IS BAD!
+-->
 
 
 ---
@@ -1033,7 +1050,7 @@ This leads to some questions:
 ---
 
 
-# Permissions
+# **Permissions**
 
 
 ---
