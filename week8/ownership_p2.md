@@ -2,19 +2,25 @@
 marp: true
 paginate: true
 theme: rust
-class: invert
+# class: invert
 ---
 
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+section {
+    font-family: "Noto Sans";
+}
+code {
+    font-family: "Noto Sans Mono";
+}
+</style>
 
 <!-- _class: communism invert  -->
 
 ## Intro to Rust Lang
+
 # Ownership Revisited
-
-<br>
-
-
-<!-- ![bg right:35% 65%](../images/ferris.svg) -->
 
 <!--
 Many images in this lecture were generated with https://cel.cs.brown.edu/aquascope/
@@ -1176,7 +1182,7 @@ We declare `v`, giving it:
 <div class = "col">
 
 ```rust
-let mut v = vec![1, 2, 3, 4];
+let mut v = vec![1, 2, 3, 4]; // <-
 ```
 
 </div>
@@ -1205,7 +1211,7 @@ We declare `v`, giving it:
 <div class = "col">
 
 ```rust
-let mut v = vec![1, 2, 3, 4];
+let mut v = vec![1, 2, 3, 4]; // <-
 ```
 
 </div>
@@ -1236,7 +1242,8 @@ We declare `v`, giving it:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3];
+
+let x = &v[3]; // <-
 ```
 
 </div>
@@ -1265,7 +1272,8 @@ When we create a reference `x` to `v`, we:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3];
+
+let x = &v[3]; // <- x gets R, O
 ```
 
 </div>
@@ -1282,6 +1290,7 @@ let x = &v[3];
 When we create a reference `x` to `v`, we:
 
 - Give `x` R, O due to variable declaration
+    * We can think of `v` "giving" R to `x`
     * `x`'s permissions are for the _reference_, not the data it is referring to
 
 
@@ -1295,7 +1304,8 @@ When we create a reference `x` to `v`, we:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3];
+
+let x = &v[3]; // <-
 ```
 
 </div>
@@ -1309,7 +1319,7 @@ let x = &v[3];
 </div>
 </div>
 
-This move changes `v`:
+Creating a reference `x` to `v` also changes the permissions of `v`:
 
 - ?
 - ?
@@ -1325,7 +1335,8 @@ This move changes `v`:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3]; // v loses W
+
+let x = &v[3]; // <- v loses W
 ```
 
 </div>
@@ -1339,7 +1350,7 @@ let x = &v[3]; // v loses W
 </div>
 </div>
 
-This move changes `v`:
+Creating a reference `x` to `v` also changes the permissions of `v`:
 
 - Removes W
 - ?
@@ -1355,6 +1366,7 @@ This move changes `v`:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let x = &v[3]; // <- v loses W, O
 ```
 
@@ -1369,10 +1381,14 @@ let x = &v[3]; // <- v loses W, O
 </div>
 </div>
 
-This move changes `v`:
+Creating a reference `x` to `v` also changes the permissions of `v`:
 
 - Removes W
 - Removes O
+
+<!--
+TODO: It might be the case that `v` also loses R permissions unless it needs to be used later?
+-->
 
 
 ---
@@ -1385,9 +1401,10 @@ This move changes `v`:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let x = &v[3];
 
-println!("{}", *x);
+println!("{}", *x); // <-
 ```
 
 </div>
@@ -1402,7 +1419,7 @@ println!("{}", *x);
 </div>
 </div>
 
-We can access our reference `x` by dereferencing it as `*x`.
+We can access what our reference `x` is referring by dereferencing it as `*x`.
 
 * `*x`'s permissions are different from `x`'s!
 * Can only dereference if `*x` has R permissions
@@ -1419,7 +1436,10 @@ We can access our reference `x` by dereferencing it as `*x`.
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let x = &v[3];
+
+println!("{}", *x); // <-
 ```
 
 </div>
@@ -1436,10 +1456,10 @@ let x = &v[3];
 
 We can no longer mutate `v`, since we created a reference `x` to it.
 
-When does `v` regain W, O?
+When does `v` regain W, O? Either:
 
-* Case 1: All references become unused
-* Case 2: Mutate `v` before _any_ reference is used
+* All references become unused (Case 1)
+* Mutate `v` before _any_ reference is used (Case 2)
     * Revokes permissions of references
 
 
@@ -1453,9 +1473,10 @@ When does `v` regain W, O?
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3]; // <- v loses W, O
 
-v.pop(); // <- v regains W, O
+let x = &v[3];
+
+v.pop(); // <- v revokes x's permissions
 ```
 
 </div>
@@ -1464,17 +1485,60 @@ v.pop(); // <- v regains W, O
 | Place | R     | W      | O      |
 |-------|-------|--------|--------|
 | v     | R     | **+W** | **+O** |
-| x     | R     | -      | **-**  |
+| x     | **-** | -      | **-**  |
 | *x    | **-** | -      | -      |
 
 </div>
 </div>
 
-This `v.pop()` is safe (Case 1).
+This `v.pop()` is safe (Case 2).
 
-* `v` requests W while all references are unused (Case 1)
+* `v` requests W before any references are used (Case 2)
     * `v` regains W, O, _revokes permissions of all references_
-    * `x` loses O, `*x` loses R
+    * Temporarily: `x` loses R and O, `*x` loses R
+
+<!--
+This is technically both cases because line 2 is dead code...
+-->
+
+
+---
+
+
+# Example: Immutable References
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+
+let x = &v[3];
+
+println!("{}", *x); // Requires R on *x
+
+// x and *x lose all permissions
+
+v.pop(); // <- v regains W and O
+```
+
+</div>
+<div class = "col">
+
+| Place | R     | W      | O      |
+|-------|-------|--------|--------|
+| v     | R     | **+W** | **+O** |
+| x     | **-** | -      | **-**  |
+| *x    | **-** | -      | -      |
+
+</div>
+</div>
+
+This `v.pop()` is also safe (Case 1)!
+
+* `v` requests W after all references become unused (Case 1)
+    * Permanently: `x` loses R and O, `*x` loses R
+    * `v` regains W, O
 
 
 ---
@@ -1489,6 +1553,7 @@ However, we cannot access `*x` anymore, as its permissions have been revoked.
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let x = &v[3];
 
 v.pop(); // Revokes permissions!
@@ -1500,11 +1565,11 @@ println!("{}", *x); // Requires R on *x
 </div>
 <div class = "col">
 
-| Place | R | W | O |
-|-------|---|---|---|
-| v     | R | W | O |
-| x     | R | - | - |
-| *x    | - | - | - |
+| Place | R     | W | O |
+|-------|-------|---|---|
+| v     | R     | W | O |
+| x     | R     | - | - |
+| *x    | **-** | - | - |
 
 </div>
 </div>
@@ -1551,7 +1616,8 @@ println!("{}", *x); // Requires R on *x
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &v[3];
+
+let x = &v[3]; // <-
 ```
 
 </div>
@@ -1569,7 +1635,9 @@ let x = &v[3];
 Recall that when we create an immutable reference `x = &v[3]`:
 
 * `v` loses W and O permissions
-* `*x` only has R permissions
+    * `v` gives `x` R
+* `x` gains R and O permissions
+* `*x` gains R permissions
 
 
 ---
@@ -1582,7 +1650,8 @@ Recall that when we create an immutable reference `x = &v[3]`:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &mut v[3];
+
+let x = &mut v[3]; // <-
 //      ^^^^
 ```
 
@@ -1614,7 +1683,8 @@ However, when `x` is a mutable reference:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &mut v[3];
+
+let x = &mut v[3]; // <-
 //      ^^^^
 ```
 
@@ -1651,7 +1721,8 @@ Losing R is equivalent to "locking" other references from taking R
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &mut v[3];
+
+let x = &mut v[3]; // <-
 //      ^^^^
 ```
 
@@ -1672,6 +1743,10 @@ However, when `x` is a mutable reference:
 - `v` loses _all_ permissions, including R
 - `*x` (_not_ `x`) gains W permissions
 
+<!--
+The variable holding the reference / pointer is immutable, even if we can mutate through the reference
+-->
+
 
 ---
 
@@ -1683,7 +1758,8 @@ However, when `x` is a mutable reference:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let x = &mut v[3];
+
+let x = &mut v[3]; // <-
 //      ^^^^
 ```
 
@@ -1699,10 +1775,10 @@ let x = &mut v[3];
 </div>
 </div>
 
-* `v` loses _all_ permissions, including R
+- `v` loses _all_ permissions, including R
     * Prevents creation of other references (both mutable and immutable)
     * Avoids simultaneous **aliasing** and mutation
-* `*x` (_not_ `x`) gains W permission
+- `*x` (_not_ `x`) gains W permission
     * We can write to the data, but we can't reassign `x`
 
 <!--Speaker note:
@@ -1722,7 +1798,7 @@ Combined with "*x can only take R if v has R",
 
 An immutable reference `x` of `v`:
 
-* Removes W and O permissions for `v`
+* Removes W and O permissions for `v` (keeps R)
 * `*x` can only take R if `v` has R
 
 A mutable reference `x` to `v`:
@@ -1735,13 +1811,13 @@ A mutable reference `x` to `v`:
 ---
 
 
-# **Soundness vs. Completeness**
+# **Fixing Programs**
 
 
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices
 
 Suppose we have a vector of numbers:
 
@@ -1753,7 +1829,7 @@ let mut v = vec![1, 2, 3, 4];
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices
 
 We want to take this number `2`...
 
@@ -1766,7 +1842,7 @@ let mut v = vec![1, 2, 3, 4];
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices
 
 We want to take this number `2`...and add it to the number in the first index.
 
@@ -1785,7 +1861,7 @@ Speaker note:
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
@@ -1793,15 +1869,18 @@ Here is a seemingly reasonable solution:
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let slot1 = &mut v[0];
+
 let slot2 = &v[1];
+
 *slot1 += *slot2;
 ```
 
 
 ---
 
-# Fixing a Safe Program
+# Arrays and Slices: Problem
 
 ```
 error[E0502]: cannot borrow `v` as immutable because it is also borrowed as mutable
@@ -1824,15 +1903,18 @@ error[E0502]: cannot borrow `v` as immutable because it is also borrowed as muta
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices: Permissions
 
 <div class = "container">
 <div class = "col">
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
-let slot1 = &mut v[0];
+
+let slot1 = &mut v[0]; // <-
+
 let slot2 = &v[1];
+
 *slot1 += *slot2;
 ```
 
@@ -1847,26 +1929,66 @@ let slot2 = &v[1];
 </div>
 </div>
 
-Recall when we create a mutable reference `slot1 = &mut v[0]`:
+Recall that when we create a mutable reference `slot1 = &mut v[0]`:
 
 * `v` loses all permissions
-* `*slot1` gains W, R permissions
+* `*slot1` gains R, W permissions
 
 
 ---
 
 
-
-# Fixing a Safe Program
+# Arrays and Slices: Permissions
 
 <div class = "container">
 <div class = "col">
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let slot1 = &mut v[0];
-let slot2 = &v[1];
+
+let slot2 = &v[1]; // <-
+
 *slot1 += *slot2;
+```
+
+</div>
+<div class = "col">
+
+| Place  | R | W | O |
+|--------|---|---|---|
+| v      | - | - | - |
+| *slot1 | R | W | - |
+| *slot2 | ? | ? | ? |
+
+</div>
+</div>
+
+Recall that when we create an immutable reference `slot2 = &v[1]`:
+
+
+* `v` loses W and O permissions (didn't have it anyways)
+* `v` gives `x` R since `x` needs R on line 4
+    * But `v` doesn't have R!
+
+
+---
+
+
+# Arrays and Slices: Permissions
+
+<div class = "container">
+<div class = "col">
+
+```rust
+let mut v = vec![1, 2, 3, 4];
+
+let slot1 = &mut v[0];
+
+let slot2 = &v[1]; // <-
+
+*slot1 += *slot2; ❌
 ```
 
 </div>
@@ -1880,46 +2002,12 @@ let slot2 = &v[1];
 
 </div>
 </div>
-
-Next, let's look at whether our references are accessed safely:
 
 * Mutating `*slot1` requires R, W
-    * We have both ✅
+    * `*slot1` has both ✅
 * Reading `*slot2` requires R
-    * We don't have R ❌
-
-
----
-
-
-# Fixing a Safe Program
-
-<div class = "container">
-<div class = "col">
-
-```rust
-let mut v = vec![1, 2, 3, 4];
-let slot1 = &mut v[0];
-let slot2 = &v[1];
-*slot1 += *slot2;
-```
-
-</div>
-<div class = "col">
-
-| Place  | R | W | O |
-|--------|---|---|---|
-| v      | - | - | - |
-| *slot1 | R | W | - |
-| *slot2 | - | - | - |
-
-</div>
-</div>
-
-Reading `*slot2` requires R.
-
-* `*slot2` can only take R if `v` has R
-* `v` "gave" R to `*slot1`!
+    * `*slot2` doesn't have R ❌
+    * `v` "gave" R to `*slot1`!
 
 <!--Speaker note:
 v regains R after slot1 becomes unused, BUT
@@ -1930,16 +2018,19 @@ slot1 becomes unused after reading *slot2
 ---
 
 
-# Fixing a Safe Program
+# Arrays and Slices: Permissions
 
 <div class = "container">
 <div class = "col">
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
+
 let slot1 = &mut v[0];
-let slot2 = &v[1];
-*slot1 += *slot2;
+
+let slot2 = &v[1]; // <-
+
+*slot1 += *slot2; ❌
 ```
 
 </div>
@@ -1954,9 +2045,9 @@ let slot2 = &v[1];
 </div>
 </div>
 
-**Issue:** Single place `v` represents _all_ elements in the vector.
+The main issue here is that the single place `v` represents the _entire_ vector.
 
-* Borrow checker does not see each index as a different place
+* Borrow checker does not see each index / element as a different place
 * Borrow checker can't know that this code is safe
     * But we (as humans) do!
 
@@ -1966,7 +2057,7 @@ let slot2 = &v[1];
 
 # Fixing a Safe Program
 
-Solution 1: No References.
+Solution 1: Don't use explicit references.
 
 ```rust
 let mut v = vec![1, 2, 3, 4];
@@ -1977,7 +2068,7 @@ println!("{:?}", v);
 ```
 
 * This works because we mutate only `v[0]`
-    * Program evaluation is right to left
+    * _Program evaluation is right to left_
 
 
 ---
@@ -1985,7 +2076,7 @@ println!("{:?}", v);
 
 # Fixing a Safe Program
 
-Solution 2: Drop into `unsafe`.
+Solution 2: Drop into `unsafe` code.
 
 `split_at_mut` uses `unsafe` under the hood:
 
@@ -2007,15 +2098,33 @@ assert_eq!(right, [3, 0, 5, 6]);
 ---
 
 
-# Recap
+# Sound vs. Complete
+
+The borrow checker is **sound**, but not **complete**. This means that the borrow checker sometimes can't figure out if your program is safe.
+
+* If you conclude it is actually safe:
+    * After reasoning about stack frames
+    * After reasoning about permissions
+    * Repeating all steps several times
+    * Consider _potentially_ using `unsafe`
+    * And then tell yourself that you probably don't need to use `unsafe`
+
+<!--
+If you are wondering if you need unsafe, you probably don't need it.
+Usually you can be pretty sure when you need it vs. when you don't.
+-->
+
+
+---
+
+
+# Ownership Recap
 
 * Ownership rules prevent access to deallocated memory
     * Think of owners as **stack frames**
 * Borrow checker checks **permissions** of **places**
     * References temporarily remove permissions
-* Sometimes, borrow checker can't know your program is safe
-    * If you conclude it's safe after reasoning about stack frames and RWO permissions...
-        * Consider using `unsafe`
+* The borrow checker is your friend!
 
 
 ---
@@ -2025,4 +2134,10 @@ assert_eq!(right, [3, 0, 5, 6]);
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
-* Thanks for coming!
+Thanks for coming!
+
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
