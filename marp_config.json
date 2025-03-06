@@ -1,0 +1,24 @@
+{
+    "allowLocalFiles": true,
+    "pdfNotes": false,
+    "pdfOutlines": false,
+    "lang": "en-US",
+    "html": true,
+    "browser": "auto",
+    "options": {
+        "markdown": {
+            "breaks": true,
+            "typographer": false
+        },
+        "math": "mathjax"
+    },
+    "pptxEditable": false,
+    "themeSet": ["./styles/rust.css"],
+    "vscode": {
+        "themeFiles": [
+            {
+                "path": "./styles/rust.css"
+            }
+        ]
+    }
+}
