@@ -45,12 +45,20 @@ def render(week, topic):
     os.chdir(f"week{week}")
 
     # The default theme in the repository is dark.
-    os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.html")
-    os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.pdf")
+    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.html") != 0:
+        raise Exception(f"Error rendering {topic}-dark.html")
+
+    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.pdf") != 0:
+        raise Exception(f"Error rendering {topic}-dark.pdf")
 
     # Render the light theme slides.
-    os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.html")
-    os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.pdf")
+    change_theme(f"{topic}.md", light=True)
+
+    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.html") != 0:
+        raise Exception(f"Error rendering {topic}-light.html")
+
+    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.pdf") != 0:
+        raise Exception(f"Error rendering {topic}-light.pdf")
 
     # Change the theme back to dark.
     change_theme(f"{topic}.md", light=False)
