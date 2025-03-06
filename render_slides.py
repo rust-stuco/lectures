@@ -1,6 +1,7 @@
 import argparse
 import multiprocessing
 import os
+import signal
 
 # The configuration file.
 MARP_CONFIG = "marp_config.json"
@@ -22,6 +23,8 @@ TOPICS = {
     13: "concurrency",
 }
 
+# Global event to signal workers to stop
+stop_event = multiprocessing.Event()
 
 # Given a filename, changes the Marp theme.
 def change_theme(filename, light):
@@ -45,41 +48,42 @@ def needs_rendering(md_file, outputs):
     md_mtime = os.path.getmtime(md_file)
     return any(os.path.getmtime(out) < md_mtime for out in outputs)
 
+def _render_output(md_file, out):
+    if stop_event.is_set():
+        print(f"Interrupted during {out}")
+        return False
+    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {out}") != 0:
+        raise Exception(f"Error rendering {out}")
+    return True
 
 # Given a week number and a topic name, renders the 4 slide decks.
 def render(week, topic, config):
     week_dir = f"week{week}"
     md_file = f"{topic}.md"
 
+    if stop_event.is_set():
+        print(f"Stopping render for {topic} due to interrupt")
+        return
+
     if not os.path.isdir(week_dir) or not os.path.isfile(os.path.join(week_dir, md_file)):
         raise FileNotFoundError(f"Missing {week_dir}/{md_file}")
-    
-    outputs = [
-        f"{topic}-dark.html",
-        f"{topic}-dark.pdf",
-        f"{topic}-light.html",
-        f"{topic}-light.pdf"
-    ]
     
     # We have to change into the correct directory for the `marp` command to work properly with
     # the images inside the slides.
     os.chdir(week_dir)
 
     # The default theme in the repository is dark.
-    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-dark.html") != 0:
-        raise Exception(f"Error rendering {topic}-dark.html")
-
-    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-dark.pdf") != 0:
-        raise Exception(f"Error rendering {topic}-dark.pdf")
+    if not _render_output(md_file, f"{topic}-dark.html"):
+        return
+    if not _render_output(md_file, f"{topic}-dark.pdf"):
+        return
 
     # Render the light theme slides.
     change_theme(f"{md_file}", light=True)
-
-    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-light.html") != 0:
-        raise Exception(f"Error rendering {topic}-light.html")
-
-    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-light.pdf") != 0:
-        raise Exception(f"Error rendering {topic}-light.pdf")
+    if not _render_output(md_file, f"{topic}-light.html"):
+        return
+    if not _render_output(md_file, f"{topic}-light.pdf"):
+        return
 
     # Change the theme back to dark.
     change_theme(f"{md_file}", light=False)
@@ -126,13 +130,36 @@ def get_render_args(args, parser: argparse.ArgumentParser):
 
     return [(week, topic, args.config) for week, topic in topics.items()]
 
+
+# Handle SIGINT (Ctrl+C) by setting stop event and terminating the pool
+def signal_handler(sig, frame, pool):
+    print("Received Ctrl+C, stopping all rendering...")
+    stop_event.set()
+    pool.close()
+    pool.join()
+    print("All workers stopped.")
+    exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Render Marp slides for a Rust course")
     args = parse_args(parser)
 
     with multiprocessing.Pool(min(len(TOPICS), multiprocessing.cpu_count())) as pool:
         render_args = get_render_args(args, parser)
-        pool.starmap(render, render_args)
+        results = pool.starmap_async(render, render_args)
+
+        # signal handler for Ctrl+C
+        signal.signal(signal.SIGINT, lambda sig, frame: signal_handler(sig, frame, pool))
+
+        try:
+            results.wait()
+            if not results.successful():
+                print("Some rendering tasks failed")
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt")
+        finally:
+            pool.close()
+            pool.join()
 
 
 if __name__ == "__main__":
