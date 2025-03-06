@@ -2,6 +2,7 @@
     "allowLocalFiles": true,
     "pdfNotes": false,
     "pdfOutlines": false,
+    "lang": "en-US",
     "html": true,
     "browser": "auto",
     "options": {
