@@ -40,28 +40,34 @@ def change_theme(filename, light):
 
 # Given a week number and a topic name, renders the 4 slide decks.
 def render(week, topic):
+    week_dir = f"week{week}"
+    md_file = f"{topic}.md"
+
+    if not os.path.isdir(week_dir) or not os.path.isfile(os.path.join(week_dir, md_file)):
+        raise FileNotFoundError(f"Missing {week_dir}/{md_file}")
+    
     # We have to change into the correct directory for the `marp` command to work properly with
     # the images inside the slides.
-    os.chdir(f"week{week}")
+    os.chdir(week_dir)
 
     # The default theme in the repository is dark.
-    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.html") != 0:
+    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-dark.html") != 0:
         raise Exception(f"Error rendering {topic}-dark.html")
 
-    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-dark.pdf") != 0:
+    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-dark.pdf") != 0:
         raise Exception(f"Error rendering {topic}-dark.pdf")
 
     # Render the light theme slides.
-    change_theme(f"{topic}.md", light=True)
+    change_theme(f"{md_file}", light=True)
 
-    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.html") != 0:
+    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-light.html") != 0:
         raise Exception(f"Error rendering {topic}-light.html")
 
-    if os.system(f"marp {topic}.md -c ../{MARP_CONFIG} -o {topic}-light.pdf") != 0:
+    if os.system(f"marp {md_file} -c ../{MARP_CONFIG} -o {topic}-light.pdf") != 0:
         raise Exception(f"Error rendering {topic}-light.pdf")
 
     # Change the theme back to dark.
-    change_theme(f"{topic}.md", light=False)
+    change_theme(f"{md_file}", light=False)
 
     # Change back to the root directory.
     os.chdir("..")
