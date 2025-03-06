@@ -69,7 +69,7 @@ def render(week, topic):
 
 def main():
     # Create a pool of workers.
-    with multiprocessing.Pool(len(TOPICS)) as pool:
+    with multiprocessing.Pool(min(len(TOPICS), multiprocessing.cpu_count())) as pool:
         # Create a list of arguments for the render function.
         args = [(week, topic) for week, topic in TOPICS.items()]
         # Use the pool to map the render function to the arguments.
