@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing
 import os
 
@@ -37,14 +38,28 @@ def change_theme(filename, light):
     f.write(newdata)
     f.close()
 
+# Check if the md file has been modified since the outputs were generated
+def needs_rendering(md_file, outputs):
+    if not all(os.path.exists(out) for out in outputs):
+        return True
+    md_mtime = os.path.getmtime(md_file)
+    return any(os.path.getmtime(out) < md_mtime for out in outputs)
+
 
 # Given a week number and a topic name, renders the 4 slide decks.
-def render(week, topic):
+def render(week, topic, config):
     week_dir = f"week{week}"
     md_file = f"{topic}.md"
 
     if not os.path.isdir(week_dir) or not os.path.isfile(os.path.join(week_dir, md_file)):
         raise FileNotFoundError(f"Missing {week_dir}/{md_file}")
+    
+    outputs = [
+        f"{topic}-dark.html",
+        f"{topic}-dark.pdf",
+        f"{topic}-light.html",
+        f"{topic}-light.pdf"
+    ]
     
     # We have to change into the correct directory for the `marp` command to work properly with
     # the images inside the slides.
@@ -73,13 +88,51 @@ def render(week, topic):
     os.chdir("..")
 
 
+def parse_args(parser: argparse.ArgumentParser):
+    parser.add_argument("--config", default=MARP_CONFIG, help="Marp config file")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--force", action="store_true", help="Force render all slides")
+    group.add_argument("--modified", action="store_true", help="Render only modified slides")
+    group.add_argument("--topics", nargs="+", help="Render specific topics by name (e.g., introduction ownership_p1)")
+    
+    return parser.parse_args()
+
+def get_render_args(args, parser: argparse.ArgumentParser):
+    if args.topics:
+        valid_topics = set(TOPICS.values())
+        selected_topics = set(args.topics)
+        invalid_topics = selected_topics - valid_topics
+        if invalid_topics:
+            parser.error(f"Invalid topics specified: {invalid_topics}")
+        topics = {week: topic for week, topic in TOPICS.items() if topic in selected_topics}
+    elif args.modified:
+        # Filter topics based on modification status
+        topics = {}
+        for week, topic in TOPICS.items():
+            week_dir = f"week{week}"
+            md_file = f"{topic}.md"
+            outputs = [
+                f"{topic}-dark.html",
+                f"{topic}-dark.pdf",
+                f"{topic}-light.html",
+                f"{topic}-light.pdf"
+            ]
+            if needs_rendering(os.path.join(week_dir, md_file), outputs):
+                topics[week] = topic
+            else:
+                print(f"Skipping {topic} in week {week}: outputs are up-to-date")
+    else:
+        topics = TOPICS
+
+    return [(week, topic, args.config) for week, topic in topics.items()]
+
 def main():
-    # Create a pool of workers.
+    parser = argparse.ArgumentParser(description="Render Marp slides for a Rust course")
+    args = parse_args(parser)
+
     with multiprocessing.Pool(min(len(TOPICS), multiprocessing.cpu_count())) as pool:
-        # Create a list of arguments for the render function.
-        args = [(week, topic) for week, topic in TOPICS.items()]
-        # Use the pool to map the render function to the arguments.
-        pool.starmap(render, args)
+        render_args = get_render_args(args, parser)
+        pool.starmap(render, render_args)
 
 
 if __name__ == "__main__":
