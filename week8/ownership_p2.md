@@ -1462,6 +1462,22 @@ When does `v` regain W, O? Either:
 * Mutate `v` before _any_ reference is used (Case 2)
     * Revokes permissions of references
 
+<!-- 
+(Only if time!)
+
+Before 2018: Rust used a more restrictive model called "lexical lifetimes,"
+where the borrow's lifetime lasted until the end of the lexical scope in which
+the reference was declared. A yucky workaround was creating extra scopes with
+curly braces to end borrows early
+
+After 2018: Non-lexical lifetimes (NLL) were introduced!
+Instead of using lexical scopes to determine lifetimes, the compiler analyzes
+the control flow to determine when the reference was last used, hence more
+intuitive behavior
+
+We'll talk more in the Lifetimes lecture, alongside more "Dark Ages" tales!
+-->
+
 
 ---
 
@@ -1744,7 +1760,12 @@ However, when `x` is a mutable reference:
 - `*x` (_not_ `x`) gains W permissions
 
 <!--
-The variable holding the reference / pointer is immutable, even if we can mutate through the reference
+Prevents data races:
+* `v` loses all access permissions *including* R, since the old
+memory location may be invalidated. Remember our vector resizing example!
+* The variable holding the reference / pointer is immutable (`x`),
+so that we can't reassign it to point elsewhere while the value
+it points to (*x) is being modified
 -->
 
 
@@ -1784,10 +1805,13 @@ let x = &mut v[3]; // <-
 <!--Speaker note:
 Aliasing: accessing same data through different variables
 
-Removing R permission is like to "locking" other references from taking R
+Removing R permission is like "locking" other references from taking R
 Combined with "*x can only take R if v has R",
     => no more immutable references
- -->
+
+Analogous to reader-writer locks
+- the R permission is like the internal reader mutex
+-->
 
 
 
