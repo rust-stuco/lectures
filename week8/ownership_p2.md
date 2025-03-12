@@ -682,6 +682,9 @@ impl Closure {
 ```
 
 <!--
+Make sure to spend time on this! If students do not understand this, they are not going to
+understand the entire section.
+
 Normally you wouldn't do `return self.my_str;` and instead just do `self.my_str`, but this makes it
 clear what is happening
 -->
@@ -967,7 +970,6 @@ What if you, as the programmer, knew that this push doesn't resize?
 
 You can calm the compiler with a special keyword, `unsafe`
 We will talk about `unsafe` in the later weeks.
-
 -->
 
 
@@ -995,22 +997,33 @@ println!("{}", elem);
 * Think of `unsafe` blocks as "trust me bro" blocks
 * We will talk about `unsafe` in a few weeks!
 
-<!--
-These safety contracts are actually pretty bare. If we wanted to be precise, it would look more
-along the lines of:
 
-SAFETY: We know that `v` has 4 valid elements, which means that the pointers at offsets +1, +2, and
-+3 are all valid pointers that point to values of type `i32`. This means it cannot be the case that
-adding `3 * size_of::<i32>()` to `v.as_ptr()` overflows, otherwise that last element could not even
-exist in the first place.
+---
 
-SAFETY: We showed above that `p` was a valid pointer to an `i32` value. We have also checked in the
-code of `Vec::push` that a resize and reallocation cannot happen when there are only 5 elements.
-So since there is no reallocation, and `v` is still in scope so the memory has not been freed, this
-dereference of `p` to an `i32` value is valid.
 
-MAKE SURE TO MENTION THAT THESE SAFETY CONTRACTS ARE SHORT AND THAT IS BAD!
--->
+Note that this is what the `unsafe` code should _really_ look like:
+
+```rust
+let mut v: Vec<i32> = vec![1, 2, 3, 4];
+
+// SAFETY: We know that `v` has 4 valid elements, which means that the pointers at
+// offsets +1, +2, and +3 are all valid pointers that point to values of type `i32`.
+// This also means it cannot be the case that adding `3 * size_of::<i32>()` to
+// `v.as_ptr()` overflows, otherwise that last element could not even exist in the
+// first place. With these two guarantees, we fulfill `add`'s safety contract.
+let p: *const i32 = unsafe { v.as_ptr().add(3) };
+
+v.push(5);
+
+// SAFETY: We showed above that `p` was a valid pointer to an `i32` value. We have
+// also checked in the code of `Vec::push` that a resize and reallocation
+// **cannot** happen when there are only 5 elements. So since there is no
+// reallocation, and `v` is still in scope (so the memory has not been freed), this
+// dereference of `p` to an `i32` value is valid.
+let elem: i32 = unsafe { *p };
+
+println!("{}", elem);
+```
 
 
 ---
@@ -1058,6 +1071,12 @@ This leads to some questions:
 
 
 # **Permissions**
+
+<!--
+This section is supposed to be a preview of what students will actually read in the Brown Rust
+Book. Make sure to tell them that it is okay if they do not fully understand everything in this
+section, as it is not easy to understand quickly (just like Rust)!
+-->
 
 
 ---
@@ -1463,7 +1482,7 @@ When does `v` regain W, O? Either:
 * Mutate `v` before _any_ reference is used (Case 2)
     * Revokes permissions of references
 
-<!-- 
+<!--
 (Only if time!)
 
 Before 2018: Rust used a more restrictive model called "lexical lifetimes,"
@@ -2118,6 +2137,9 @@ assert_eq!(right, [3, 0, 5, 6]);
     * `left` contains `[0, mid)`
     * `right` contains `[mid, len)`
 * We will talk about this in a few weeks!
+
+<!-- Make sure to mention that here, `left` and `right` are now different places so we can get a
+mutable reference to one and an immutable reference to the other. -->
 
 
 ---
