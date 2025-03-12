@@ -38,27 +38,17 @@ def signal_handler(sig, frame, pool):
 
 
 # Check if the markdown file has been modified since the outputs were generated.
-def needs_rendering(markdown_file, outputs):
-    if not all(os.path.exists(out) for out in outputs):
+def needs_rendering(markdown_file, outputs, week):
+    week_dir = f"week{week}"
+
+    if not all(os.path.exists(os.path.join(week_dir, out)) for out in outputs):
         return True
-    md_mtime = os.path.getmtime(markdown_file)
-    return any(os.path.getmtime(out) < md_mtime for out in outputs)
 
+    md_mtime = os.path.getmtime(os.path.join(week_dir, markdown_file))
 
-# Given a filename, changes the Marp theme.
-def change_theme(filename, light):
-    f = open(filename, "r")
-    filedata = f.read()
-    f.close()
-
-    if light:
-        newdata = filedata.replace("class: invert", "# class: invert")
-    else:
-        newdata = filedata.replace("# class: invert", "class: invert")
-
-    f = open(filename, "w")
-    f.write(newdata)
-    f.close()
+    return any(
+        os.path.getmtime(os.path.join(week_dir, out)) < md_mtime for out in outputs
+    )
 
 
 # Helper function to render the output file while handling interrupts.
@@ -90,20 +80,27 @@ def render(week, topic, config):
     os.chdir(week_dir)
 
     # The default theme in the repository is dark.
-    if not render_output(md_file, f"{topic}-dark.html"):
-        return
-    if not render_output(md_file, f"{topic}-dark.pdf"):
-        return
+    render_output(md_file, f"{topic}-dark.html")
+    render_output(md_file, f"{topic}-dark.pdf")
+
+    # Create a temporary file for the light theme.
+    temp_light = f"{topic}-light-temp.md"
+    with open(md_file, "r") as src_file:
+        content = src_file.read()
+
+        # Replace dark theme with light theme.
+        content = content.replace("class: invert", "# class: invert")
+
+        # Write it to the temporary file.
+        with open(temp_light, "w") as dest_file:
+            dest_file.write(content)
 
     # Render the light theme slides.
-    change_theme(f"{md_file}", light=True)
-    if not render_output(md_file, f"{topic}-light.html"):
-        return
-    if not render_output(md_file, f"{topic}-light.pdf"):
-        return
+    render_output(temp_light, f"{topic}-light.html")
+    render_output(temp_light, f"{topic}-light.pdf")
 
-    # Change the theme back to dark.
-    change_theme(f"{md_file}", light=False)
+    # Delete the temporary file after rendering.
+    os.remove(temp_light)
 
     # Change back to the root directory.
     os.chdir("..")
@@ -118,14 +115,17 @@ def get_render_args(args, parser: argparse.ArgumentParser):
         if invalid_topics:
             parser.error(f"Invalid topics specified: {invalid_topics}")
 
+        print(f"Rendering slides {selected_topics}")
         topics = {
             week: topic for week, topic in TOPICS.items() if topic in selected_topics
         }
-    elif args.modified:
+    elif args.all:
+        print("Rendering all slides...")
+        topics = TOPICS
+    else:
         # Filter topics based on modification status.
         topics = dict()
         for week, topic in TOPICS.items():
-            week_dir = f"week{week}"
             md_file = f"{topic}.md"
             outputs = [
                 f"{topic}-dark.html",
@@ -133,12 +133,10 @@ def get_render_args(args, parser: argparse.ArgumentParser):
                 f"{topic}-light.html",
                 f"{topic}-light.pdf",
             ]
-            if needs_rendering(os.path.join(week_dir, md_file), outputs):
+            if needs_rendering(md_file, outputs, week):
                 topics[week] = topic
             else:
                 print(f"Skipping {topic} in week {week}: outputs are up-to-date")
-    else:
-        topics = TOPICS
 
     return [(week, topic, args.config) for week, topic in topics.items()]
 
@@ -148,9 +146,7 @@ def parse_args(parser: argparse.ArgumentParser):
     parser.add_argument("--config", default=MARP_CONFIG, help="Marp config file")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--force", action="store_true", help="Force render all slides")
-    group.add_argument(
-        "--modified", action="store_true", help="Render only modified slides"
-    )
+    group.add_argument("--all", action="store_true", help="Render all slides")
     group.add_argument(
         "--topics",
         nargs="+",
