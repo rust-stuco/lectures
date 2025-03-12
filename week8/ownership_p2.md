@@ -416,8 +416,9 @@ Let's put our `beef` array in a `Box`:
 
 ```rust
 fn main() {
-    let beef = Box::new([0xDEADBEEF; HUGE_NUMBER]);
-    my_function(beef);
+    // Renamed to `v`.
+    let v = Box::new([0xDEADBEEF; HUGE_NUMBER]);
+    my_function(v);
 }
 
 fn my_function(arg: Box<[u32]>) {
@@ -430,9 +431,9 @@ fn my_function(arg: Box<[u32]>) {
 
 <!-- Speaker note:
 If students ask about type annotation of `arg`:
-    * `beef` is coerced from a fixed-size array `Box<[u32; HUGE_NUMBER]>` to a boxed slice `Box<[u32]>`
+    * `v` is coerced from a fixed-size array `Box<[u32; HUGE_NUMBER]>` to a boxed slice `Box<[u32]>`
 If students ask when we'd use `Box`, seeing as this is not recommended:
-    * We use `Box` when defining recursive types, like tree nodes that have nodes for children. Rust needs to know the size of every type at compile time, but recursive types have an unknown, potentially infinite size. `Box` is used to break the infinite size problem, since its size is always a fixed pointer size
+    * We usually use `Box` when defining recursive types, like tree nodes that have nodes for children. Rust needs to know the size of every type at compile time, but recursive types have an unknown, potentially infinite size. `Box` is used to break the infinite size problem, since its size is always a fixed pointer size
 -->
 
 
@@ -446,7 +447,7 @@ If students ask when we'd use `Box`, seeing as this is not recommended:
 When we call `my_function`, we can copy the _pointer_ into `arg`!
 
 ```rust
-let beef =
+let v =
     Box::new([0xDEADBEEF; HUGE_NUMBER]);
 
 my_function(beef);
@@ -465,7 +466,7 @@ my_function(beef);
 **After:** 15 GB + 8 bytes per pointer
 
 ```rust
-let beef =
+let v =
     Box::new([0xDEADBEEF; HUGE_NUMBER]);
 
 my_function(beef);
@@ -2149,6 +2150,20 @@ Usually you can be pretty sure when you need it vs. when you don't.
 * Borrow checker checks **permissions** of **places**
     * References temporarily remove permissions
 * The borrow checker is your friend!
+
+
+---
+
+
+# Homework 8
+
+* This homework is a Gradescope Quiz!
+* 30 questions from the [Brown Rust Book](https://rust-book.cs.brown.edu/)
+* Read through chapter 4 on ownership
+    * Answer the quiz questions on the web page as you go through it
+    * All answers will be revealed after you attempt!
+* Each question is worth 5 points, so you don't need to do everything
+* Focus on _understanding_ rather than the questions themselves
 
 
 ---
