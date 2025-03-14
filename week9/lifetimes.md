@@ -2,7 +2,7 @@
 marp: true
 paginate: true
 theme: rust
-class: invert
+# class: invert
 ---
 
 
@@ -56,9 +56,9 @@ Lifetimes are all about references, and **nothing** else.
 ---
 
 
-# Lifetimes vs Generics and Traits
+# Lifetimes and References vs Traits and Generics
 
-Lifetimes are similar to trait bounds.
+Lifetimes are similar to trait bounds on generic types.
 
 * Traits ensure that a generic type has the behavior we want
 * Lifetimes ensure that references are valid for as long as we need them to be
