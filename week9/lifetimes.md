@@ -235,7 +235,7 @@ fn longest(x: &str, y: &str) -> &str {
 ---
 
 
-# `longest` error
+# `longest` Error
 
 Unfortunately, our attempt will not compile:
 
@@ -258,7 +258,7 @@ help: consider introducing a named lifetime parameter
 ---
 
 
-# `longest` error
+# `longest` Error
 
 The help text from the compiler error reveals some useful information:
 
@@ -274,7 +274,7 @@ The help text from the compiler error reveals some useful information:
 ---
 
 
-# `longest` error
+# `longest` Error
 
 ![bg right:20% 90%](../images/ferris_does_not_compile.svg)
 
@@ -381,7 +381,7 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
 ```
 
 * This will compile now!
-* _Remember that these lifetime annotations don't change the lifetimes of any values_
+* _Note that these lifetime annotations don't **change** any lifetimes, they just **restrict**_
 
 <!--
 They just tell the borrow checker to reject any values that don't adhere to these constraints/invariants
@@ -412,8 +412,8 @@ fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str;
 ```
 
-- When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
-* In practice, this means the lifetime returned by `longest` is the same as the smaller of the two input lifetimes
+* When calling `longest`, the lifetime that is substituted for `'a` is the intersection of the lifetimes of `x` and `y`
+* In practice, this means the lifetime returned by `longest` is the same as the **smaller** of the two input lifetimes
 
 <!--
 Be clear that functions do not "return" lifetimes, this is just for slide space.
@@ -436,14 +436,11 @@ This is a more complicated topic that probably shouldn't be brought up.
 Let's look at some examples where the borrow checker is and isn't happy.
 
 ```rust
-fn main() {
-    let string1 = String::from("long string is long");
-
-    {
-        let string2 = String::from("xyz");
-        let result = longest(string1.as_str(), string2.as_str());
-        println!("The longest string is {}", result);
-    }
+let string1 = String::from("long string is long");
+{
+    let string2 = String::from("xyz");
+    let result = longest(string1.as_str(), string2.as_str());
+    println!("The longest string is {}", result);
 }
 ```
 
@@ -463,18 +460,20 @@ fn main() {
 Let's reorder some things around.
 
 ```rust
-fn main() {
-    let string1 = String::from("xyz");
-    let result;
-    {
-        let string2 = String::from("long string is long");
-        result = longest(string1.as_str(), string2.as_str());
-    }
-    println!("The longest string is {}", result);
+let string1 = String::from("xyz");
+let result;
+{
+    let string2 = String::from("long string is long");
+    result = longest(string1.as_str(), string2.as_str());
 }
+println!("The longest string is {}", result);
 ```
 
 * `result` should only be valid in the smaller (inner) scope, but we try to reference it in the outer scope
+
+<!--
+`result` doesn't need to be `mut` because we haven't assigned it anything yet
+-->
 
 
 ---
@@ -482,7 +481,7 @@ fn main() {
 
 # Borrow Checker Example 2
 
-Sure enough, this does not compile, and Rust gives us this error:
+Sure enough, this does not compile! Rust gives us this error:
 
 ```
 error[E0597]: `string2` does not live long enough
@@ -577,6 +576,10 @@ fn dangling<'a>(x: &str, y: &str) -> &'a str {
 
 * If it didn't depend on an input, then it would _always_ be a dangling reference!
 
+<!--
+In other words, all valid references must be _derived_ from other valid references.
+-->
+
 
 ---
 
@@ -644,7 +647,6 @@ fn foo<'a>(x: &'a i32);
 fn bar(x: &i32, y: &i32);
 fn bar<'a, 'b>(x: &'a i32, y: &'b i32);
 ```
-
 
 
 ---
@@ -769,14 +771,13 @@ struct ImportantExcerpt<'a> {
     importance: i32,
 }
 
-fn main() {
-    let novel = String::from("Call me Ishmael. Some years ago...");
-    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
-    let i = ImportantExcerpt {
-        part: first_sentence,
-        importance: 42,
-    };
-}
+let novel = String::from("Call me Ishmael. Some years ago...");
+let first_sentence: &str = novel.split('.').next().expect("No periods");
+
+let important = ImportantExcerpt {
+    part: first_sentence,
+    importance: 42,
+};
 ```
 
 
@@ -871,6 +872,10 @@ struct Ref<'a, T: 'a>(&'a T);
 * `T` is bounded such that any references _in_ `T` must live at least as long as `'a`
 * Additionally, the lifetime of `Ref` may not exceed `'a`
 
+<!--
+Note that these lifetime bound slides are REALLY not that important.
+-->
+
 
 ---
 
@@ -903,19 +908,17 @@ Putting the `Ref` and `print_ref` together:
 #[derive(Debug)]
 struct Ref<'a, T: 'a>(&'a T);
 
-fn print_ref<'a, T>(t: &'a T)
-where
-    T: Debug + 'a,
-{
+fn print_ref<'a, T>(t: &'a T) where T: Debug + 'a {
     println!("print_ref(t) is {:?}", t);
 }
 
-fn main() {
-    let x = vec![9, 8, 0, 0, 8];
-    let ref_x = Ref(&x);
-    print_ref(&ref_x);
-    // Prints to stdout: print_ref(t) is Ref([9, 8, 0, 0, 8])
-}
+let x = vec![9, 8, 0, 0, 8];
+let ref_x = Ref(&x);
+print_ref(&ref_x);
+```
+
+```
+print_ref(t) is Ref([9, 8, 0, 0, 8])
 ```
 
 <!--
@@ -989,6 +992,20 @@ help: consider using the `'static` lifetime, but this is uncommon unless you're
   |              +++++++
 ```
 
+
+---
+
+
+# `'static` Error Messages
+
+```
+help: consider using the `'static` lifetime, but this is uncommon unless you're
+      returning a borrowed value from a `const` or a `static`
+  |
+2 | fn foo() -> &'static i32 {
+  |              +++++++
+```
+
 * Before making a change, think about if your reference will _really_ live until the end of the program
 * You may actually be trying to create a dangling reference!
 
@@ -1023,6 +1040,11 @@ fn main() {
 Hello World 42!
 ```
 
+<!--
+If time allows, explain the difference between `const` and `static`.
+-->
+
+
 ---
 
 
@@ -1038,14 +1060,18 @@ fn random_vec() -> &'static [usize; 100] {
     Box::leak(boxed)
 }
 
-fn main() {
-    let first: &'static [usize; 100] = random_vec();
-    let second: &'static [usize; 100] = random_vec();
-    assert_ne!(first, second)
-}
+let first: &'static [usize; 100] = random_vec();
+let second: &'static [usize; 100] = random_vec();
+assert_ne!(first, second)
 ```
 
 * This allows us to _dynamically_ create a `'static` reference!
+
+<!--
+Make sure to explain that leaking memory is NOT UNDEFINED BEHAVIOR. Memory corruption cannot happen
+just because memory has been leaked. On most operating systems nowadays, if you start running out of
+memory the OS is just going to kill your process.
+-->
 
 
 ---
@@ -1079,13 +1105,13 @@ fn print_it(input: impl Debug + 'static) {
 }
 
 fn main() {
-    // i is owned and contains no references,
-    // thus it has a 'static bound
+    // `i` is owned and contains no references,
+    // thus it has a 'static bound.
     let i = 5;
     print_it(i);
 
-    // oops, &i only has the lifetime defined by
-    // the scope of main, so it's not 'static
+    // Oops, `&i` only has the lifetime defined by
+    // the scope of main, so it's not 'static.
     print_it(&i);
 }
 ```
@@ -1128,7 +1154,7 @@ error[E0597]: `i` does not live long enough
 # Further Reading
 
 * You can find some more examples here: [Rust By Example](https://doc.rust-lang.org/rust-by-example/scope/lifetime.html)
-* If you want to go _really_ in depth, read the Rustonomicon chapter on [lifetimes](https://doc.rust-lang.org/nomicon/lifetimes.html)
+* If you want to go _really_ in depth, read the Rustonomicon chapters on [lifetimes](https://doc.rust-lang.org/nomicon/lifetimes.html)
 
 
 ---
@@ -1166,14 +1192,14 @@ Some quick points:
 ---
 
 
-# Feedback
+# Homework 9
 
-Please fill out the [feedback form](https://forms.gle/HGE62Duah9YRcJRa7) (on Piazza).
-
-* It will help us make this semester better for you
-* It will also help make future offerings of this course better for others!
-* Feedback is anonymous, so please be honest
-* You will receive a homework's worth of extra credit!
+* In this homework, you will be following a live-coding stream on YouTube!
+* [Crust of Rust: Lifetime Annotations](https://youtu.be/rAl-9HwD858?si=VTQfI8Re7DvrtDqy)
+* Jon Gjengset is a well-known educator in the Rust community
+    * _He is also the inspiration for a lot of content in the second half of this course!_
+* The livestream is 1.5 hours, but the writeup shows sections you can skip
+* We would recommend watching the livestream and _then_ writing code!
 
 
 ---
