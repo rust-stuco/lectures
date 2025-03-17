@@ -1194,12 +1194,14 @@ Some quick points:
 
 # Homework 9
 
-* In this homework, you will be following a live-coding stream on YouTube!
-* [Crust of Rust: Lifetime Annotations](https://youtu.be/rAl-9HwD858?si=VTQfI8Re7DvrtDqy)
+* In this homework, you will be following a live-coding stream on YouTube:
+    * [Crust of Rust: Lifetime Annotations](https://youtu.be/rAl-9HwD858?si=VTQfI8Re7DvrtDqy)
 * Jon Gjengset is a well-known educator in the Rust community
     * _He is also the inspiration for a lot of content in the second half of this course!_
 * The livestream is 1.5 hours, but the writeup shows sections you can skip
-* We would recommend watching the livestream and _then_ writing code!
+    * We would recommend watching the livestream and _then_ writing code!
+* This homework is more about getting the tests to compile
+    * _You'll only need to write about 20-30 lines of code!_
 
 
 ---
