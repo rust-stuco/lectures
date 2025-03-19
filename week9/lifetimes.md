@@ -140,25 +140,24 @@ fn main() {
 
 # The Borrow Checker
 
-![bg right:25% 75%](../images/ferris_does_not_compile.svg)
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+The borrow checker will compare the "size" of the two lifetimes
 
 ```rust
 fn main() {
     let r;                // ---------+-- 'a
-                          //          |
     {                     //          |
         let x = 5;        // -+-- 'b  |
         r = &x;           //  |       |
     }                     // -+       |
-                          //          |
     println!("r: {}", r); //          |
 }                         // ---------+
 ```
 
-- The borrow checker will compare the "size" of the two lifetimes
-    * `r` has a lifetime of `'a`
-    * `r` refers to a variable with lifetime `'b`
-    * Rejects because `'b` is shorter than `'a`
+* `r` has a lifetime of `'a`
+* `r` refers to a variable with lifetime `'b`
+* Rejects because `'b` is shorter than `'a`
 
 
 ---
@@ -217,7 +216,7 @@ The longest string is abcd
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-Here's a first attempt:
+Here is a first attempt:
 
 ```rust
 fn longest(x: &str, y: &str) -> &str {
@@ -288,7 +287,7 @@ fn longest(x: &str, y: &str) -> &str {
 }
 ```
 
-- We don't know which execution path this code will take
+* We don't know which execution path this code will take
 * We also don't know the lifetimes of the input references
 * Thus we cannot determine the lifetime we return!
 * We will need to _annotate_ these references
@@ -437,15 +436,16 @@ Let's look at some examples where the borrow checker is and isn't happy.
 
 ```rust
 let string1 = String::from("long string is long");
+
 {
     let string2 = String::from("xyz");
+
     let result = longest(string1.as_str(), string2.as_str());
     println!("The longest string is {}", result);
 }
 ```
 
-* `string1` is valid in the outer scope
-* `string2` is valid in the inner scope
+* `string1` is valid in the outer scope, `string2` is valid in the inner scope
 * `result` should only be  valid in the smaller scope (by our lifetime annotations)
     * Since `println!` is in the smaller (inner) scope, this works!
 
@@ -460,12 +460,14 @@ let string1 = String::from("long string is long");
 Let's reorder some things around.
 
 ```rust
-let string1 = String::from("xyz");
 let result;
+let string1 = String::from("xyz");
+
 {
     let string2 = String::from("long string is long");
     result = longest(string1.as_str(), string2.as_str());
 }
+
 println!("The longest string is {}", result);
 ```
 
@@ -485,15 +487,18 @@ Sure enough, this does not compile! Rust gives us this error:
 
 ```
 error[E0597]: `string2` does not live long enough
- --> src/main.rs:6:44
-  |
-6 |         result = longest(string1.as_str(), string2.as_str());
-  |                                            ^^^^^^^^^^^^^^^^
-                       borrowed value does not live long enough
-7 |     }
-  |     - `string2` dropped here while still borrowed
-8 |     println!("The longest string is {}", result);
-  |                                          ------ borrow later used here
+  --> src/main.rs:7:44
+   |
+6  |         let string2 = String::from("long string is long");
+   |             ------- binding `string2` declared here
+7  |         result = longest(string1.as_str(), string2.as_str());
+   |                                            ^^^^^^^ borrowed value does
+                                                        not live long enough
+8  |     }
+   |     - `string2` dropped here while still borrowed
+9  |
+10 |     println!("The longest string is {}", result);
+   |                                          ------ borrow later used here
 ```
 
 
@@ -508,12 +513,14 @@ What if we knew (as the programmer) that `string1` is always longer than `string
 
 Let's switch the strings around:
 ```rust
-let string1 = String::from("long string is long");
 let result;
+let string1 = String::from("long string is long"); // Longer!
+
 {
-    let string2 = String::from("xyz");
+    let string2 = String::from("xyz"); // Shorter!
     result = longest(string1.as_str(), string2.as_str());
 }
+
 println!("The longest string is {}", result);
 ```
 
@@ -526,16 +533,18 @@ println!("The longest string is {}", result);
 ![bg right:20% 90%](../images/ferris_does_not_compile.svg)
 
 ```rust
-let string1 = String::from("long string is long");
 let result;
+let string1 = String::from("long string is long"); // Longer!
+
 {
-    let string2 = String::from("xyz");
+    let string2 = String::from("xyz"); // Shorter!
     result = longest(string1.as_str(), string2.as_str());
 }
+
 println!("The longest string is {}", result);
 ```
 
-* Even though we know (as a human) that the reference will be valid, the compiler does not know
+* Even though we know (as humans) that the reference will be valid, the compiler does not know
 
 <!--
 * We even told the compiler that the returned lifetime would be the same as the smaller of the input lifetimes!
@@ -569,8 +578,12 @@ The lifetime of a return value _must_ match the lifetime of one of the inputs.
 
 ```rust
 fn dangling<'a>(x: &str, y: &str) -> &'a str {
+
     let result = String::from("really long string");
+
+    // What lifetime would we give this `&str`?
     result.as_str()
+
 }
 ```
 
@@ -629,7 +642,7 @@ fn first_word<'a>(s: &'a str) -> &'a str {
 # Lifetime Elision
 
 * Lifetime elision does not provide full inference, it will only infer when it is absolutely sure it is correct
-* Lifetimes on function or method arguments are called _input lifetimes_, and lifetimes on return values are called _output lifetimes_
+* Lifetimes on function or method arguments are called **input lifetimes**, and lifetimes on return values are called **output lifetimes**
 * There are only 3 lifetime elision rules, the first for input lifetimes, the last two for output lifetimes
 
 
@@ -1065,7 +1078,8 @@ let second: &'static [usize; 100] = random_vec();
 assert_ne!(first, second)
 ```
 
-* This allows us to _dynamically_ create a `'static` reference!
+* This allows us to _dynamically_ create a `'static` reference
+* _Note that leaking memory is NOT undefined behavior!_
 
 <!--
 Make sure to explain that leaking memory is NOT UNDEFINED BEHAVIOR. Memory corruption cannot happen
