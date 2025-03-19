@@ -619,6 +619,10 @@ fn first_word(s: &str) -> &str {
 
 * There are no lifetime annotations here!
 
+<!--
+This is a function we saw back in week 2
+-->
+
 
 ---
 
