@@ -1406,10 +1406,6 @@ Creating a reference `x` to `v` also changes the permissions of `v`:
 - Removes W
 - Removes O
 
-<!--
-TODO: It might be the case that `v` also loses R permissions unless it needs to be used later?
--->
-
 
 ---
 
