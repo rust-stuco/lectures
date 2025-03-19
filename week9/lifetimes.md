@@ -603,8 +603,6 @@ In other words, all valid references must be _derived_ from other valid referenc
 
 All references must have a lifetime. But we've seen many references without lifetime annotations...
 
-This is a version of a function we saw back in week 2:
-
 ```rust
 fn first_word(s: &str) -> &str {
     let bytes = s.as_bytes();
