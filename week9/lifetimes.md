@@ -309,7 +309,7 @@ We can annotate lifetimes with generic parameters that start with a `'`, like `'
 &'world bool  // as long as it starts with a tick (')
 ```
 
-* Annotations do not change the how long references live, they only describe the _relationship_ between lifetimes of references
+* Annotations do not change how long references live, they only describe the _relationship_ between lifetimes of references
     * Think of `'a` as a lower bound for the lifetime of the reference
     * `x: 'a i32` means `x` lives at least as long as some lifetime `'a`
     * Borrow checker identifies if references share a lower bound
