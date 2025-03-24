@@ -28,17 +28,53 @@ code {
 
 # Today: Smart Pointers and Trait Objects
 
+- Smart Pointers
 - `Box<T>`
 - The `Deref` trait
 - The `Drop` trait
 - Trait Objects
-- Smart Pointers
 
 
 ---
 
 
-# **Motivation for `Box<T>`**
+# Pointers
+
+What is a pointer?
+
+* A _pointer_ is a general concept for a variable that contains an address in memory.
+* The address "points to" or "points at" some other data
+* In Rust, the most common pointer is a reference (`&`)
+* No overhead other than dereferencing
+
+
+---
+
+
+# Smart Pointers
+
+What is a _smart pointer?_
+
+* Data structures that act like a pointer
+* Contain additional metadata and capabilities beyond dereferencing
+* This concept is not unique to Rust (C++)
+
+
+---
+
+
+# Surprise!
+
+We've actually seen several smart pointers, but we haven't called them as such.
+
+* `String`
+* `Vec<T>`
+* `Box<T>`
+
+<!--
+String, for example, stores its capacity as metadata and has the extra ability to ensure its data
+will always be valid UTF-8.
+-->
 
 
 ---
@@ -52,15 +88,20 @@ Let's say we wanted to make a recursive-style list:
 
 ```rust
 enum List {
-  Cons(i32, List),
-  Nil,
+    Cons(i32, List),
+    Nil,
 }
 
 fn main() {
-  // List of [1, 2, 3]
-  let list = Cons(1, Cons(2, Cons(3, Nil)));
+    // List of [1, 2, 3]?
+    let list = Cons(1, Cons(2, Cons(3, Nil)));
 }
 ```
+
+<!--
+This should look familiar to people who have taken / are taking 15-150!
+-->
+
 
 
 ---
@@ -82,8 +123,48 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 2 |     Cons(i32, Box<List>),
   |               ++++    +
 ```
+
 * The compiler is complaining because we've defined a type with _infinite size_
-* The suggestion is to use a `Box<List>`
+
+
+---
+
+
+# Computing the Size of Types
+
+Recall the Message enum we defined back in week 3:
+
+```rust
+enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+    Write(String),
+    ChangeColor(i32, i32, i32),
+}
+```
+
+* How does Rust compute the size of this type?
+  * _How much space do we need to allocate for a `Message` instance?_
+* Simply choose the largest of its variants + some tag bits
+
+
+---
+
+
+# Size of Recursive Types?
+
+![bg right:45% 100%](../images/cons.svg)
+
+What happens when we try to determine the size of a recursive type?
+
+```rust
+enum List {
+    Cons(i32, List),
+    Nil,
+}
+```
+
+* Infinite size!
 
 
 ---
@@ -91,16 +172,85 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 
 # Indirection with `Box<T>`
 
-```rust
-let singleton = Cons(1, Box::new(Nil));
-let list = Cons(1, Box::new(Cons(2,
-                     Box::new(Cons(3,
-                       Box::new(Nil))))));
+The compiler gives an error with a helpful suggestion:
+
+```
+help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
+  |
+2 |     Cons(i32, Box<List>),
+  |               ++++    +
 ```
 
-* In the suggestion, "indirection" means we store a _pointer_ to a `List` rather than an entire `List`
-  * Pointers have fixed size, so our enum is no longer of infinite size!
-* We create a `Box<List>` with the `Box::new` associated function
+* The suggestion is to use a `Box<List>`
+* In the suggestion, "indirection" means we store a _pointer_ to a `List`
+* Pointers have fixed size, so our enum is no longer of infinite size!
+
+
+---
+
+
+# A Finite `List`
+
+![bg right:45% 90%](../images/cons-finite.svg)
+
+```rust
+enum List {
+    Cons(i32, Box<List>),
+    Nil,
+}
+```
+
+* Now we have a finite size!
+
+
+---
+
+
+# A Finite `List`
+
+```rust
+enum List {
+    Cons(i32, Box<List>),
+    Nil,
+}
+
+let end = Nil;
+let three = Cons(3, Box::new(end));
+let two = Cons(2, Box::new(three));
+let one = Cons(1, Box::new(two));
+
+println!("{:?}", one);
+```
+
+```
+Cons(1, Cons(2, Cons(3, Nil)))
+```
+
+* Pop Quiz: How would we make this generic?
+
+
+---
+
+
+# A Finite Generic `List<T>`
+
+```rust
+enum List<T> {
+    Cons(T, Box<List<T>>),
+    Nil,
+}
+
+let end = Nil;
+let three = Cons(3.3, Box::new(end));
+let two = Cons(2.2, Box::new(three));
+let one = Cons(1.1, Box::new(two));
+
+println!("{:?}", one);
+```
+
+```
+Cons(1.1, Cons(2.2, Cons(3.3, Nil)))
+```
 
 
 ---
@@ -109,9 +259,13 @@ let list = Cons(1, Box::new(Cons(2,
 # More about `Box<T>`
 
 * `Box<T>` is a simple "smart" pointer to memory allocated on the heap*
-  * It is "smart" because it frees the memory when dropped
-* Other than the cost of allocation and pointer indirection, `Box` has no performance overhead
 * `Box<T>` fully owns the data it points to (just like `Vec<T>`)
+  * It is a "smart" pointer because it frees the data it owns when dropped
+* Low overhead (other than allocation)
+
+<!--
+Technically the compiler is allowed to store data of Boxes on the stack if it wants to
+-->
 
 
 ---
@@ -123,7 +277,7 @@ let list = Cons(1, Box::new(Cons(2,
 * When you have a large amount of data and want to transfer ownership
   * Transferring ownership of a pointer is faster than a large chunk of data
 * Trait Objects
-  * We'll get to this soon...
+  * Coming soon...
 
 
 <!--
@@ -150,9 +304,12 @@ assert_eq!(5, *y);
 ---
 
 
-# `Deref` Trait
+# The `Deref` Trait
+
+Implementing the `Deref` trait allows you to customize the behavior of the _dereference_ operator (`*`).
 
 The deref trait is defined as follows:
+
 ```rust
 pub trait Deref {
     type Target: ?Sized;
@@ -161,9 +318,33 @@ pub trait Deref {
     fn deref(&self) -> &Self::Target;
 }
 ```
+
 * Behind the scenes `*y` is actually `*(y.deref())`
-* Note this does not recurse infinitely
+  * Note that this does not recurse infinitely
 * We can treat anything that implements `Deref` like a pointer!
+
+
+---
+
+
+# The `Deref` Trait on `Box<T>`
+
+```rust
+impl<T: ?Sized, A: Allocator> Deref for Box<T, A> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &**self
+    }
+}
+```
+
+* Don't worry about the generics, just focus on the `deref()` method!
+
+<!--
+This code is copied and pasted directly from the standard library
+https://doc.rust-lang.org/std/boxed/struct.Box.html#impl-Deref-for-Box%3CT,+A%3E
+-->
 
 
 ---
@@ -178,14 +359,12 @@ fn hello(name: &str) {
     println!("Hello, {name}!");
 }
 
-fn main() {
-    let m = Box::new(String::from("Rust"));
-    hello(&m);
-}
+let m: Box<String> = Box::new(String::from("Rust"));
+hello(&m);
 ```
 
 * Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
-* Example: Deref coercion can convert a `&String` into `&str`
+* Example: Deref Coercion can convert a `&String` into `&str`
   * `String` implements the `Deref` trait such that `Deref::Target = &str`
 
 
@@ -212,10 +391,10 @@ fn foo(s: &[i32]) {
     print(s[0])
 }
 
-// Vec<T> implements Deref<Target=[T]>.
+// `Vec<T>` implements `Deref<Target=[T]>`.
 let owned = vec![1, 2, 3];
 
-// Here we coerce &Vec<T> to &[T]
+// Here we coerce `&Vec<T>` to `&[T]`.
 foo(&owned);
 
 println!("{:?}", owned);
@@ -235,10 +414,10 @@ fn foo(s: &mut [i32]) {
     s[0] += 1;
 }
 
-// Vec<T> implements DerefMut<Target=[T]>.
+// `Vec<T>` implements `DerefMut<Target=[T]>`.
 let mut owned = vec![1, 2, 3];
 
-// Here we coerce &mut Vec<T> to &mut [T]
+// Here we coerce `&mut Vec<T>` to `&mut [T]`.
 foo(&mut owned);
 
 println!("{:?}", owned);
@@ -250,14 +429,15 @@ println!("{:?}", owned);
 
 * `DerefMut` also allows coercing to &[T]
 
-<!--
-
--->
 
 ---
 
 
 # The `Drop` Trait
+
+Smart pointers implement both `Deref` and the `Drop` trait.
+
+The `Drop` trait customizes controls what happens when a value is about to go out of scope.
 
 ```rust
 pub trait Drop {
@@ -265,9 +445,25 @@ pub trait Drop {
 }
 ```
 
-* Values are dropped when they go out of scope
-* Dropping a value will recursively drop all its fields by default
-    * This mechanism allows automatically freeing memory
+* This allows for the RAII pattern (Resource Acquisition Is Initialization)
+* Data cleans up after itself!
+
+
+---
+
+
+# The `Drop` Trait
+
+Recall that values in Rust are dropped when they go out of scope.
+
+```rust
+pub trait Drop {
+    fn drop(&mut self);
+}
+```
+
+* Dropping a struct value will recursively drop all its fields by default
+    * This mechanism allows for automatically freeing memory
 * You can also provide a custom implementation of `Drop` on your types
     * Allows us to run user code when values are dropped
 
@@ -295,7 +491,7 @@ impl Drop for CustomSmartPointer {
 
 * This is a custom implementation that simply prints the data on drop
 * The data will still be freed automatically
-    * This method does not include automatic memory freeing logic
+    * After `CustomSmartPointer::drop` is called, `String::drop` will be called
 
 
 ---
@@ -307,28 +503,33 @@ impl Drop for CustomSmartPointer {
 let c = CustomSmartPointer {
     data: String::from("my stuff"),
 };
+
 let d = CustomSmartPointer {
     data: String::from("other stuff"),
 };
+
 println!("CustomSmartPointers created.");
 ```
+
 ```
 CustomSmartPointers created.
 Dropping CustomSmartPointer with data `other stuff`!
 Dropping CustomSmartPointer with data `my stuff`!
 ```
-* Notice how values are dropped in reverse order of creation
+* Notice how values are dropped in _reverse order_ of creation
 
 ---
+
+
 # `Drop` Trait Usage
 
 `Drop` trait implementations are typically not needed unless:
-- You are manually managing memory
-    - This likely involves using `unsafe` under the hood
-- You need to do something special before a value is dropped
-    - Might involve managing OS resources
-    - Might involve signalling other parts of your codebase
 
+* You are manually managing memory
+    * This likely involves using `unsafe` under the hood
+* You need to do something special before a value is dropped
+    * Might involve managing OS resources
+    * Might involve signalling other parts of your codebase
 
 
 ---
@@ -344,6 +545,7 @@ What if we want to manually drop a value before the end of the scope?
 let csm = CustomSmartPointer {
     data: String::from("some data"),
 };
+
 println!("CSM created.");
 
 csm.drop();
@@ -368,7 +570,7 @@ error[E0040]: explicit use of destructor method
    |     help: consider using `drop` function: `drop(c)`
 ```
 
-* Rust won't let you explicitly call the drop trait method to avoid double drops
+* Rust won't let you explicitly call the drop trait method
 
 
 ---
@@ -409,7 +611,6 @@ pub fn drop<T>(_x: T) {}
 This is beautiful!!
 https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
 -->
-
 
 
 ---
