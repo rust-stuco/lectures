@@ -1204,6 +1204,24 @@ if let Some(link) = a.tail() {
 
 
 ---
+---
+
+# Introducing`Weak<T>`
+
+* Currently, `Rc<T>` counts the number of *strong references*
+* Think of `strong_count` as the number of votes against it being dropped
+* We want *weak references*, which don't have this voting power
+
+
+# Mechanism of`Weak<T>`
+
+* Creating a weak reference increments `weak_count`
+* When you want to access a weak reference, you _upgrade_ it to a strong reference
+* If the value has not been dropped, the upgrade succeeds, and `weak_count` is decremented in favor of `strong_count`
+* Otherwise, the counts are unaffected
+
+
+---
 
 
 # Avoiding Reference Cycles with `Weak<T>`
