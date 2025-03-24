@@ -571,7 +571,10 @@ impl LaptopScreen {
 
 # Generic Version
 
-What about a version implemented with generics?
+Why can't we implement this with generics?
+<!--
+Because we cannot create a 'LaptopScreen' with two different types of windows in it.
+-->
 
 ```rust
 pub struct LaptopScreen<T: Window> {
@@ -589,8 +592,6 @@ where
     }
 }
 ```
-* What is wrong with this version?
-  * We can't create a `LaptopScreen` with two different types of windows in it
 
 ---
 
@@ -634,15 +635,15 @@ screen.run();
 
 ---
 
-
-# Smart Pointers
-- `Rc<T>`
-- `RefCell<T>`
-- Interior Mutability
-- Memory Leaks
+# What is a smart pointer?
+* Wraps around some data and acts as a pointer to it.
+  * While offering extra functionality and information.
+* We've already seen some!
+  * Box<T>, String, Vec<T>.
+* Many kinds of smart pointer in Rust.
+  * We will cover `Rc<T>` and `RefCell<T>`.
 
 ---
-
 
 # **Motivation for `Rc<T>`**
 
@@ -716,13 +717,12 @@ fn main() {
   let d = Cons(4, &a);
 }
 ```
-* While it can be done, it's a little messy
-
+* This can be fixed with references, but it's a little messy!
 
 ---
 
 
-# Introducing `Rc<T>`
+# Introducing `Rc<T>`!
 
 ```rust
 enum List {
@@ -739,21 +739,19 @@ fn main() {
   let c = Cons(4, Rc::clone(&a));
 }
 ```
-* Short for reference counted
-* Keeps track of the number of references to a value
-
+* Why does using `Rc<T>` instead of `Box<T>` fix the code?
 
 
 ---
 
 
 # `Rc<T>`: Reference Counted
-
-* Use `Rc::new(T)` to create a new `Rc<T>`
-  * `Rc::clone()` isn't a deep clone, it increments the ref counter
-* When an `Rc` is cloned, increment reference count
-* When an `Rc` is dropped, decrement reference count
-* When the reference count reaches zero, free the memory
+`Rc<T>` keeps track of the number of references to a value to ensure safety.
+* When an `Rc` is cloned, increment reference count.
+* When an `Rc` is dropped, decrement reference count.
+* When the reference count reaches zero, free the memory.
+* **Importantly:** `Rc::clone()` isn't a deep clone.
+    * It just increments the counter.
 
 
 ---
@@ -761,10 +759,11 @@ fn main() {
 
 # When to use `Rc<T>`
 
-* Share one instance of allocated memory throughout the program
+* To share one instance of allocated memory throughout the program
     * We can only access the data as read-only
     * We don't need to know what part of the program is going to use it last
-* Only used for single-threaded scenarios
+* Only use for single-threaded scenarios
+    * `Rc<T>` is not thread safe
     * `Arc<T>` for multi-threaded (more on that soon)
 
 
@@ -790,9 +789,6 @@ fn main() {
 }
 // Ref count after dropping b and c: 0
 ```
-* The ref count is incremented on each clone
-* The ref count is decremented on each drop
-* Once the ref count reaches 0, the stored string data is deallocated.
 
 ---
 
@@ -813,7 +809,7 @@ second line: Should be used when last user of the data is unknown
 
 
 
-# **`RefCell<T>` and Interior Mutability**
+# **`RefCell<T>` (and Interior Mutability)**
 
 
 ---
@@ -833,24 +829,21 @@ c1.swap(&c2);
 assert_eq!(10, c1.into_inner()); // consumes cell
 assert_eq!(15, c2.get()); // returns copy of value
 ```
-* Shareable, mutable container
-* Values can be moved in and out of a cell
-* Used for `Copy` types
-  * (where copying or moving values isn’t too resource intensive)
-
+* A shareable, mutable container, where values can be moved in and out of the cell.
+* Used for `Copy` types, (where copying or moving values isn’t too resource intensive).
 
 ---
 
 
 # `RefCell<T>`
 
-* Hold's sole ownership like `Box<T>`
-* Allows borrow checker rules to be enforced at **runtime**
-  * Interface with `.borrow()` or `borrow_mut()`
-  * If borrowing rules are violated, `panic!`
-* Typically used when Rust's conservative compile-time checking "gets in the way"
+* Has sole ownership, like `Box<T>`.
+* Allows borrow checker rules to be enforced at **runtime** (rather than compile time).
+  * Interface with `.borrow()` or `borrow_mut()`.
+  * Will `panic!` at runtime if borrowing rules are violated.
+* Typically used when Rust's conservative compile-time checking "gets in the way".
 * It is **not** thread safe!
-  * Use `Mutex<T>` instead
+  * Use `Mutex<T>` instead.
 
 
 ---
@@ -865,9 +858,10 @@ fn main() {
 }
 ```
 
-* It would be useful for a value to mutate itself in its methods but appear immutable to other code
-* Code outside the value's methods wouldn't be able to mutate it
-* This can be achieved with `RefCell<T>`
+* It would be useful for a value to mutate itself in its methods but appear immutable to other code.
+  * This is called *interior mutability*.
+* Code outside the value's methods wouldn't be able to mutate it.
+* This can be achieved with `RefCell<T>`.
 
 
 ---
@@ -888,8 +882,8 @@ pub struct LimitTracker<'a, T: Messenger> {
 }
 ```
 
-* `LimitTracker` tracks a value against a maximum value and sends messages based on how close to the maximum value the current value is
-* We want to mock a messenger for our limit tracker to keep track of messages for testing
+* `LimitTracker` tracks a value against a maximum value and sends messages based on how close to the maximum value the current value is.
+* We want to mock a messenger for our limit tracker to keep track of messages *for testing* `LimitTracker`.
 
 
 ---
@@ -912,19 +906,19 @@ where
         } else if percentage_of_max >= 0.9 {
             self.messenger
                 .send("Urgent warning: You've used up over 90% of your quota!");
-        } else if percentage_of_max >= 0.75 {
-            self.messenger
-                .send("Warning: You've used up over 75% of your quota!");
-        }
+        } // --- snip ---
     }
 }
 ```
-
+<!--
+Important to point out the send method on messenger, which takes an IMMUTABLE reference to self.
+-->
 
 ---
 
 
 # Our Mock Messenger
+![bg right:30% 80%](../images/ferris_does_not_compile.svg)
 
 ```rust
 struct MockMessenger {
@@ -943,8 +937,31 @@ impl Messenger for MockMessenger {
   }
 }
 ```
+---
+# Our Mock Messenger
+```
+$ cargo test
+   Compiling limit-tracker v0.1.0 (file:///projects/limit-tracker)
+error[E0596]: cannot borrow `self.sent_messages` as mutable, as it is behind a `&` reference
+  --> src/lib.rs:58:13
+   |
+58 |             self.sent_messages.push(String::from(message));
+   |             ^^^^^^^^^^^^^^^^^^ `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+   |
+help: consider changing this to be a mutable reference in the `impl` method and the `trait` definition
+   |
+2  ~     fn send(&mut self, msg: &str);
+3  | }
+...
+56 |     impl Messenger for MockMessenger {
+57 ~         fn send(&mut self, message: &str) {
+   |
 
-* This code won't compile! `self.sent_messages.push` requires `&mut self`
+For more information about this error, try `rustc --explain E0596`.
+error: could not compile `limit-tracker` (lib test) due to 1 previous error
+
+```
+* We shouldn't follow compiler instructions and change the `Messenger` trait just for testing purposes.
 
 
 ---
@@ -978,7 +995,17 @@ impl Messenger for MockMessenger {
 ---
 
 
-# Managing Borrows
+# Managing Borrows at Runtime
+*Recall:* `RefCell<T>` manages borrow checking at runtime, not compile time.
+* Like `Rc<T>`, keeps track of references with a counter.
+* To borrow immutably: use `.borrow`, which returns `Ref<T>`, which implements `Deref`
+* To borrow mutably: use `.borrow_mut`, which returns `RefMut<T>`, which implements `DerefMut`
+* Deref coercion applies: can be treated as standard references.
+
+---
+
+# Managing Borrows at Runtime
+
 
 ![bg right:30% 80%](../images/ferris_panics.svg)
 ```rust
@@ -993,20 +1020,44 @@ impl Messenger for MockMessenger {
 }
 ```
 
-* We still use the `&` and `mut` syntax for `RefCell`
-* `borrow` returns either a `Ref` or `RefMut` which implement `Deref`/`DerefMut`
-  * Deref coercion applies: Can be treated as standard references
+---
+# Managing Borrows at Runtime
+
+```
+$ cargo test
+   Compiling limit-tracker v0.1.0 (file:///projects/limit-tracker)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.91s
+     Running unittests src/lib.rs (target/debug/deps/limit_tracker-e599811fa246dbde)
+
+running 1 test
+test tests::it_sends_an_over_75_percent_warning_message ... FAILED
+
+failures:
+
+---- tests::it_sends_an_over_75_percent_warning_message stdout ----
+thread 'tests::it_sends_an_over_75_percent_warning_message' panicked at src/lib.rs:60:53:
+already borrowed: BorrowMutError
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::it_sends_an_over_75_percent_warning_message
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`
+```
 
 
 ---
 
 
-# What Makes Each Smart Pointer Unique
+# Checkpoint: What Makes Each Smart Pointer Unique
 
 
-* `Rc<T>` - Enables multiple read-only owners of the same data
-* `Box<T>` - Allows immutable or mutable borrows that are checked at compile time
-* `RefCell<T>` - Allows immutable/mutable borrows that are checked at ***runtime***
+* `Rc<T>`: Allows multiple read-only owners of the same data.
+* `Box<T>`: Allows immutable/mutable borrows that are checked at compile time.
+* `RefCell<T>`: Allows immutable/mutable borrows that are checked at ***runtime***.
 
 
 ---
@@ -1022,9 +1073,9 @@ enum List {
 }
 ```
 
-* Common type seen in Rust
-* Enables multiple owners of mutable data (with runtime checks)
-* Extremely powerful, but comes with some overhead
+* Common type seen in Rust.
+* Enables multiple owners of mutable data (with runtime checks).
+* Extremely powerful, but comes with some overhead.
 
 
 ---
@@ -1050,6 +1101,9 @@ a after = Cons(RefCell { value: 15 }, Nil)
 b after = Cons(RefCell { value: 3 }, Cons(RefCell { value: 15 }, Nil))
 c after = Cons(RefCell { value: 4 }, Cons(RefCell { value: 15 }, Nil))
 ```
+<!--
+This demonstrates that this smart pointer combo can be used to create a data structure which can have multiple owners and also have interior mutability.
+-->
 
 ---
 
@@ -1071,14 +1125,14 @@ impl List {
   }
 }
 ```
-* This implementation allows modifying the list structure instead of list values
-* Now we have a function `tail` that gets the rest of our list
+* This implementation allows modifying the list *structure* instead of list *values*.
+* Now we have a function `tail` that gets the rest of our list.
 
 
 ---
 
 
-# What Happens?
+# What Happens Here?
 
 ```rust
 let a = Rc::new(Cons(5, RefCell::new(Rc::new(Nil))));
@@ -1106,7 +1160,7 @@ println!("a next item = {:?}", a.tail());
 ---
 
 
-# Answer
+# A Reference Cycle
 
 ```
 Exited with signal 6 (SIGABRT): abort program
@@ -1122,6 +1176,7 @@ a next item = Some(RefCell { value: Cons(10, RefCell { value: Cons(5, RefCell...
 ```
 
 * We see that at the end we have a reference cycle!
+    * The lists continue to point to each other with no stopping point.
 
 
 ---
@@ -1145,19 +1200,37 @@ if let Some(link) = a.tail() {
 ```
 
 * This can cause a memory leak!
-  * `Rc` only frees when the `strong_count` is 0
+  * `Rc<T>` only frees when the `strong_count` (e.g., reference count) is 0.
+
+
+---
+---
+
+# Introducing`Weak<T>`
+
+* Currently, `Rc<T>` counts the number of *strong references*
+* Think of `strong_count` as the number of votes against it being dropped
+* We want *weak references*, which don't have this voting power
+
+
+# Mechanism of`Weak<T>`
+
+* Creating a weak reference increments `weak_count`
+* When you want to access a weak reference, you _upgrade_ it to a strong reference
+* If the value has not been dropped, the upgrade succeeds, and `weak_count` is decremented in favor of `strong_count`
+* Otherwise, the counts are unaffected
 
 
 ---
 
 
-# Avoiding Reference Cycles
+# Avoiding Reference Cycles with `Weak<T>`
 
-* We know `Rc::clone` increases the `strong_count`
-* You can create a `Weak<T>` reference to a value with `Rc::downgrade`
-  * This increases the `weak_count` and can be nonzero when the `Rc` is freed
-* To ensure valid references, `Weak<T>` must be upgraded before any use
-  * Returns an `Option<Rc<T>>`
+* We know `Rc::clone` increases the `strong_count`.
+* You can create a `Weak<T>` reference to a value with `Rc::downgrade`.
+  * This increases the `weak_count` and can be nonzero when the `Rc` is freed.
+* To ensure valid references, `Weak<T>` must be upgraded before any use.
+  * Returns an `Option<Rc<T>>`.
 
 
 ---
@@ -1176,6 +1249,9 @@ struct Node {
   children: RefCell<Vec<Rc<Node>>>,
 }
 ```
+<!--
+Main point is that parent is a weak<t> and children are rc<t>.
+-->
 
 
 ---
