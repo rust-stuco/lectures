@@ -642,36 +642,95 @@ https://doc.rust-lang.org/src/core/mem/mod.rs.html#942
 ---
 
 
-# Let's Make a List (again)
-Let's continue making the recursive-style list from the beginning of lecture with `Box<T>`.
+# Rules of Ownership
 
-```rust
-enum List {
-  Cons(i32, Box<List>),
-  Nil,
-}
+Recall the rules of ownership.
 
-fn main() {
-  let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
-  let b = Cons(3, Box::new(a));
-  let c = Cons(4, Box::new(a));
-}
-```
+* Each value in Rust has an _owner_
+* A value can only have one owner at a time
+* When the owner goes out of scope, the value will be _dropped_
 
-![bg right:30% 80%](../images/ferris_does_not_compile.svg)
 
 ---
 
 
-# Cargo's Suggestion
+# Rules were meant to be broken...
+
+There are ways we can get past these rules in completely safe Rust, with a few minor caveats.
+
+* There are cases where it makes sense for a value to have multiple owners
+  * What is a well-known data structure where values have multiple things pointing at / to a value?
+  * _Edges pointing to nodes?_
+  * Graphs!
+    * _And any graph-like data structures_
+
+
+---
+
+
+# Multiple Ownership with `Rc<T>`
+
+To enable multiple ownership, you must use the `Rc<T>` type.
+
+* Abbreviation for _reference counting_
+* Keeps track of the number of references to a value
+* When there are zero references, the value can safely be dropped
+
+
+---
+
+
+# Let's Make a List (again)
+
+![bg right:25% 85%](../images/ferris_does_not_compile.svg)
+
+Let's go back to our `List`.
+
+```rust
+enum List {
+    Cons(i32, Box<List>),
+    Nil,
+}
+
+let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+let b = Cons(3, Box::new(a));
+let c = Cons(4, Box::new(a));
+```
+
+* What's wrong with this code?
+  * _Think about ownership_
+
+
+---
+
+
+# Single Ownership
 
 ```
-   Compiling cons-list v0.1.0 (file:///projects/cons-list)
 error[E0382]: use of moved value: `a`
   --> src/main.rs:11:30
    |
 9  |     let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
-   |         - move occurs because `a` has type `List`, which does not implement the `Copy` trait
+   |         - move occurs because `a` has type `List`,
+   |           which does not implement the `Copy` trait
+   |
+10 |     let b = Cons(3, Box::new(a));
+   |                              - value moved here
+11 |     let c = Cons(4, Box::new(a));
+   |                              ^ value used here after move
+
+```
+
+
+---
+
+
+# Single Ownership
+
+```
+error[E0382]: use of moved value: `a`
+  --> src/main.rs:11:30
+   |
 10 |     let b = Cons(3, Box::new(a));
    |                              - value moved here
 11 |     let c = Cons(4, Box::new(a));
@@ -679,8 +738,8 @@ error[E0382]: use of moved value: `a`
 
 ```
 * `Cons` needs to **own** the data it holds
+* `a` was already moved into `b` when we create `c`
 * We want both `b` and `c` to point to the same instance `a`
-    * `a` was already moved into `b` when we create `c`
 
 <!--
 Cloning is expensive + then b and c refer to different tails---no cloning!
@@ -690,7 +749,19 @@ Cloning is expensive + then b and c refer to different tails---no cloning!
 ---
 
 
+# Shared Ownership?
+
+Ideally, we want something like this:
+
+![bg right:60% 95%](../images/cons-rc.svg)
+
+
+---
+
+
 # References?
+
+We _could_ achieve this with references:
 
 ```rust
 enum List<'a> {
@@ -698,51 +769,70 @@ enum List<'a> {
     Nil,
 }
 
-use crate::List::{Cons, Nil};
-
-fn main() {
-  let nil = Nil;
-  let a = Cons(10, &nil);
-  let b = Cons(5, &a);
-  let c = Cons(3, &a);
-  let d = Cons(4, &a);
-}
+let end = Cons(10, &Nil);
+let a = Cons(5, &end);
+let b = Cons(3, &a);
+let c = Cons(4, &a);
 ```
-* This can be fixed with references, but it's a little messy!
+* This is kind of ugly...
+  * It is also tied to the current scope via lifetimes
+
 
 ---
 
 
-# Introducing `Rc<T>`!
+# Shared List with `Rc<T>`
+
+Let's use `Rc<T>` instead to enable shared ownership!
 
 ```rust
 enum List {
-  Cons(i32, Rc<List>),
-  Nil,
+    Cons(i32, Rc<List>),
+    Nil,
 }
 
-use crate::List::{Cons, Nil};
-use std::rc::Rc;
+let end = Rc::new(Cons(10, Rc::new(Nil)));
 
-fn main() {
-  let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
-  let b = Cons(3, Rc::clone(&a));
-  let c = Cons(4, Rc::clone(&a));
-}
+let a: Rc<List> = Rc::new(Cons(5, end));
+
+let b = Cons(3, Rc::clone(&a));
+let c = Cons(4, Rc::clone(&a));
 ```
-* Why does using `Rc<T>` instead of `Box<T>` fix the code?
+
+* Note that `Rc::clone(&a)` is a cheap copy, not a deep clone
 
 
 ---
 
 
-# `Rc<T>`: Reference Counted
+# `Rc<T>`
+
+![bg right:50% 95%](../images/cons-rc.svg)
+
+```rust
+let end = Rc::new(
+    Cons(10, Rc::new(Nil))
+);
+
+let a: Rc<List> =
+    Rc::new(Cons(5, end));
+
+let b = Cons(3, Rc::clone(&a));
+let c = Cons(4, Rc::clone(&a));
+```
+
+
+---
+
+
+# `Rc<T>` Reference Count
+
 `Rc<T>` keeps track of the number of references to a value to ensure safety.
-* When an `Rc` is cloned, increment reference count.
-* When an `Rc` is dropped, decrement reference count.
-* When the reference count reaches zero, free the memory.
-* **Importantly:** `Rc::clone()` isn't a deep clone.
-    * It just increments the counter.
+
+* When an `Rc` is cloned, it increments the reference count
+* When an `Rc` is dropped, it decrements reference count
+* When the reference count reaches zero, free the owned value
+  * No "references" can be invalid after freeing!
 
 
 ---
@@ -750,9 +840,9 @@ fn main() {
 
 # When to use `Rc<T>`
 
-* To share one instance of allocated memory throughout the program
-    * We can only access the data as read-only
-    * We don't need to know what part of the program is going to use it last
+* Want to allocate data on the heap
+* Want multiple parts of our program to _read_ the data
+* We don't know at compile-time which part will finish reading the data last
 * Only use for single-threaded scenarios
     * `Rc<T>` is not thread safe
     * `Arc<T>` for multi-threaded (more on that soon)
@@ -761,12 +851,15 @@ fn main() {
 ---
 
 
-# `Rc<T>` Reference Counting Demonstrated
+# `Rc<T>` Example 1
 
+Here's an annotated example of using `Rc<T>`.
 
 ```rust
 fn main() {
-    let a = Rc::new(String::new("TODO: Steal Connor's identity"));
+    let plan = String::new("Plan to steal Connor's identity, do not distribute");
+
+    let a = Rc::new(plan);
     // Ref count after creating a: 1
 
     let b = Rc::clone(&a);
@@ -778,24 +871,64 @@ fn main() {
     }
     // Ref count after dropping c: 2
 }
-// Ref count after dropping b and c: 0
+// Ref count after dropping a and b: 0
 ```
+
+
+---
+
+
+# `Rc<T>` Example 2
+
+Here is a similar example, but with `Rc::strong_count(&a)`.
+
+```rust
+fn main() {
+    let a = Rc::new(Cons(5, Rc::new(Cons(10, Rc::new(Nil)))));
+    println!("count after creating a = {}", Rc::strong_count(&a));
+
+    let b = Cons(3, Rc::clone(&a));
+    println!("count after creating b = {}", Rc::strong_count(&a));
+
+    {
+        let c = Cons(4, Rc::clone(&a));
+        println!("count after creating c = {}", Rc::strong_count(&a));
+    }
+
+    println!("count after c goes out of scope = {}", Rc::strong_count(&a));
+}
+```
+
+
+---
+
+
+# `Rc<T>` Example 2
+
+```
+$ cargo run
+count after creating a = 1
+count after creating b = 2
+count after creating c = 3
+count after c goes out of scope = 2
+```
+
 
 ---
 
 
 # `Rc<T>` Recap
 
-* Allows sharing ***immutable*** references without lifetimes
+* Allows sharing data betwen multiple parts of your program
+  * Read-only immutable references without lifetimes
 * Should be used when the last user of the data is unknown
 * Very low overhead for providing this capability
   * O(1) increment/decrement of counter
   * Potential allocation/de-allocation on heap
 * Implemented using the `Drop` trait and `unsafe`!
+  * Recommended watch: [Crust of Rust](https://www.youtube.com/watch?v=8O0Nt9qY_vo)
 
-<!---
-second line: Should be used when last user of the data is unknown
--->
+
 ---
 
 
