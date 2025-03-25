@@ -28,11 +28,11 @@ code {
 
 # Today: Smart Pointers and Trait Objects
 
-- `Box<T>`
-- The `Deref` trait
-- The `Drop` trait
-- `Rc<T>`
-- `RefCell<T>`
+- Smart Pointers
+    - `Box<T>`
+    - The `Deref` trait
+    - The `Drop` trait
+    - `Rc<T>`
 - Trait Objects
 
 
@@ -1282,11 +1282,11 @@ If you are interested, here is some more content that explains this in more dept
 
 # Recap
 
-- `Box<T>`
-- The `Deref` trait
-- The `Drop` trait
-- `Rc<T>`
-- `RefCell<T>`
+- Smart Pointers
+    - `Box<T>`
+    - The `Deref` trait
+    - The `Drop` trait
+    - `Rc<T>`
 - Trait Objects
 
 
