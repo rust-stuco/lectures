@@ -988,6 +988,25 @@ count after c goes out of scope = 2
 ---
 
 
+# `RefCell<T>` Spotted!
+
+Another single-threaded smart pointer you might encounter is `RefCell<T>`.
+
+* `RefCell` uses Rust’s lifetimes to implement “dynamic borrowing”
+* Instead of enforcing reference rules at compile-time, enforce at _runtime_
+    * Use `borrow()` to get a `&T`, or `borrow_mut()` to get a `&mut T`
+* A common pattern in graph-like structures is `Rc<RefCell<T>>`
+* Further reading: [Rust Book](https://doc.rust-lang.org/book/ch15-05-interior-mutability.html), [`std` docs](https://doc.rust-lang.org/std/cell/index.html), [Crust of Rust: Smart Pointers](https://www.youtube.com/watch?v=8O0Nt9qY_vo)
+
+<!--
+* Any number of immutable (shared) references to the same data (`borrow`)
+* One mutable (exclusive) reference to data (`borrow_mut`)
+-->
+
+
+---
+
+
 # **Trait Objects**
 
 
@@ -1000,9 +1019,10 @@ OOP is a way of modeling programs.
 
 * The concept of objects dates back to 1960 (Simula)
 * Influenced Alan Kay's programming architecture
-  * Objects pass messages to each other ([like biological cells](https://www.youtube.com/watch?v=oKg1hTOQXoY))
+  * Objects pass messages to each other
+  * [The computer revolution hasn't happened yet (1997)](https://www.youtube.com/watch?v=oKg1hTOQXoY)
 * Nowadays, there are many competing definitions for OOP
-* By some definitions, Rust is object-oriented, by others it is not
+* By some definitions Rust is object-oriented, by others it is not
 
 <!--
 "Alan Kay at OOPSLA 1997 - The computer revolution hasn't happened yet"
@@ -1323,14 +1343,8 @@ If you are interested, here is some more content that explains this in more dept
 - [The Rust Book (Brown Edition)](https://rust-book.cs.brown.edu/ch18-02-trait-objects.html)
     - Goes into more depth
 - [Crust of Rust: Dispatch and Fat Pointers](https://www.youtube.com/watch?v=xcygqF5LVmM)
-    - Explains how objects work under the hood (dynamic dispatch)
-    - _Applicable to C++ as well!_
-
-
----
-
-
-# TODO
+    - Explains how trait objects work under the hood (dynamic dispatch)
+    - _Applicable to understanding C++ objects as well!_
 
 
 ---
