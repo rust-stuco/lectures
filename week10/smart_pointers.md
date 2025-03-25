@@ -857,7 +857,7 @@ Here's an annotated example of using `Rc<T>`.
 
 ```rust
 fn main() {
-    let plan = String::new("Plan to steal Connor's identity, do not distribute");
+    let plan = String::from("Plan to steal Connor's identity, do not distribute");
 
     let a = Rc::new(plan);
     // Ref count after creating a: 1
@@ -919,7 +919,7 @@ count after c goes out of scope = 2
 
 # `Rc<T>` Recap
 
-* Allows sharing data betwen multiple parts of your program
+* Allows sharing data between multiple parts of your program
   * Read-only immutable references without lifetimes
 * Should be used when the last user of the data is unknown
 * Very low overhead for providing this capability
