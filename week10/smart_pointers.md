@@ -1090,7 +1090,7 @@ Rust structs cannot "inherit" anything from another struct...
 * If we want to wrap another struct's functionality, we can use composition
 * If we want to define interfaces, we can use traits
 * If we want polymorphism...
-    * Rust has something called "trait objects"
+    * Rust has something called _Trait Objects_
 
 <!--
 Composition is usually preferred in other languages nowadays too, not just with data types but also
@@ -1101,174 +1101,180 @@ composition of functions
 ---
 
 
+# Values of Different Types
+
+Recall this example from week 4:
+
+```rust
+enum SpreadsheetCell {
+    Int(i32),
+    Float(f64),
+    Text(String),
+}
+
+let row = vec![
+    SpreadsheetCell::Int(3),
+    SpreadsheetCell::Text(String::from("blue")),
+    SpreadsheetCell::Float(10.12),
+];
+```
+
+* What if we didn't know what types it could be at compile-time?
+
+
+---
+
+
+# GUI Library
+
+GUI stands for "Graphical User Interface". Suppose we want to create a library that draws components on a screen.
+
+* For example, the user provides a `Button` or `TextField` or `SelectBox`
+* The components need to have a user-provided `draw` method
+* The library draws all components provided by calling `draw` on all of them
+
+
+---
+
+
+# The Python / C++ Way
+
+In an inheritance-based language like Python or C++, we would:
+
+* Create a `class` named `Component`
+* `Component` would have a method called `draw`
+* Other classes like `Button` and `SelectBox` would inherit from `Component`
+* They can override the inherited `draw` method
+* _Rust cannot do this_
+
+
+---
+
+
+# The Rust Way
+
+Instead of defining a base class, we can define a trait in Rust.
+
+```rust
+pub trait Draw {
+    fn draw(&self);
+}
+```
+
+* Components that we want to draw must implement `Draw`
+* But what if we want a collection of `Draw`able items?
+
+<!--
+We could have called the trait `Component` but we're naming it `Draw` to make the difference clear
+-->
+
+
+---
+
+
+# Generics?
+
+Can we use generics to create a collection of `Draw`able items?
+
+```rust
+pub struct Screen<T: Draw> {
+    components: Vec<T>,
+}
+
+impl<T: Draw> Screen<T> {
+    pub fn run(&self) {
+        for component in &self.components {
+            component.draw();
+        }
+    }
+}
+```
+
+* What's wrong with this?
+
+
+---
+
+
+# Monomorphization
+
+```rust
+pub struct Screen<T: Draw> {
+    components: Vec<T>,
+}
+```
+
+Recall that Rust generics are implemented via monomorphization.
+
+* We can fill in a _single_ type in place of `T: Draw`
+* We cannot define a vector of "anything that implements `Draw` like this
+* We must use _Trait Objects_
+
+<!--
+Rust has bounded parametric polymorphism
+-->
+
+
+---
+
+
 # Trait Objects
 
 Trait objects allow us to store objects that implement a trait.
 
 ```rust
-pub trait Window {
-    fn draw(&self);
-}
-
-pub struct LaptopScreen {
-    pub windows: Vec<Box<dyn Window>>,
+pub struct Screen {
+    pub components: Vec<Box<dyn Draw>>,
 }
 ```
 
-* In this example, `LaptopScreen` holds a vector of `Window` objects
-* We use the `dyn` keyword to describe any type that implements `Window`
-    * In a `Box`, since objects implementing `Window` could be of any size at runtime
-
-
-<!--
-key: Not size at compile time
-Note that converting a type into a trait object _erases_ the original type
--->
-
----
-
-
-# Trait Objects and Closures
-
-Since closures implement the `Fn` traits, they can be represented as trait objects!
-
-```rust
-fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
-    Box::new(|x| x + 1)
-}
-
-fn main() {
-    let closure = returns_closure();
-    print!("{}", closure(5)); // prints 6
-}
-```
-
-* We can use trait objects to return dynamic types
-* Deref coercion happening in the background to keep ergonomics clean!
+* In this example, `Screen` holds a vector of `Draw` objects in `Box`es
+* We use the `dyn` keyword to describe _any_ type that implements `Draw`
+    * We have no idea what the original types were (type erasure)
+* We must use a `Box` because the types have dynamic size at runtime
 
 
 ---
 
 
-# Working With Trait Objects
+# The Real Rust Way
 
 ```rust
-struct ChromeWindow {
-    width: u32,
-    height: u32,
-    evil_tracking: bool
+pub struct Screen {
+    pub components: Vec<Box<dyn Draw>>,
 }
 
-struct FirefoxWindow {
-    width: u32,
-    height: u32,
-}
-
-impl Window for ChromeWindow { fn draw(&self) { ... } }
-impl Window for FirefoxWindow { fn draw(&self) { .. } }
-```
-
-* Say we have **multiple** types that implement `Window`
-
-
----
-
-
-# Working With Trait Objects: Dynamic Dispatch
-
-```rust
-impl LaptopScreen {
+impl Screen {
     pub fn run(&self) {
-        // `windows` is of type Vec<Box<dyn Window>>
-        for window in self.windows.iter() {
-            window.draw();
+        for component in &self.components {
+            component.draw();
         }
     }
 }
 ```
 
-* This is different than if `windows` was `Vec<ChromeWindow>`
-  * The generic parameter (in `Vec`) is known at compile time.
-* Trait objects allow for types to fill in for the trait object **at runtime**
+* No generics!
+* _Anyone_ who comes up with a type that implements `Draw` can use our library!
 
 
 ---
 
 
-# Generic Version
+# Further Reading
 
-Why can't we implement this with generics?
-<!--
-Because we cannot create a 'LaptopScreen' with two different types of windows in it.
--->
+If you are interested, here is some more content that explains this in more depth:
 
-```rust
-pub struct LaptopScreen<T: Window> {
-    pub windows: Vec<T>,
-}
-
-impl<T> LaptopScreen<T>
-where
-    T: Window,
-{
-    pub fn run(&self) {
-        for window in self.windows.iter() {
-            window.draw();
-        }
-    }
-}
-```
-
----
-
-# Trait Objects: Mixing Objects
-
-```rust
-let screen = LaptopScreen {
-    windows: vec![
-        Box::new(ChromeWindow {
-            width: 1280,
-            width: 720,
-            evil_tracking: true,
-        }),
-        Box::new(FirefoxWindow {
-            <-- snip -->
-        }),
-    ],
-};
-screen.run();
-```
-
-* This is not possible with the version using generics
+- [The Rust Book (Brown Edition)](https://rust-book.cs.brown.edu/ch18-02-trait-objects.html)
+    - Goes into more depth
+- [Crust of Rust: Dispatch and Fat Pointers](https://www.youtube.com/watch?v=xcygqF5LVmM)
+    - Explains how objects work under the hood (dynamic dispatch)
+    - _Applicable to C++ as well!_
 
 
 ---
 
 
-# Aside: Dynamically Sized Types
-
-* `dyn Window` is an example of a dynamically sized type (DST)
-* DSTs have to be in a `Box`, because we don't know the size at compile time
-    * A `dyn Window` could be a `ChromeWindow` or `FirefoxWindow` object
-    * How much space should we make on the stack?
-* Pointers to DSTs are double the size (wide pointers)
-    * If you're interested in more information, ask us after lecture!
-
-
----
-
-# Smart Pointers
-
----
-
-# What is a smart pointer?
-* Wraps around some data and acts as a pointer to it.
-  * While offering extra functionality and information.
-* We've already seen some!
-  * Box<T>, String, Vec<T>.
-* Many kinds of smart pointer in Rust.
-  * We will cover `Rc<T>` and `RefCell<T>`.
-
+# TODO
 
 
 ---
@@ -1279,8 +1285,10 @@ screen.run();
 - `Box<T>`
 - The `Deref` trait
 - The `Drop` trait
+- `Rc<T>`
+- `RefCell<T>`
 - Trait Objects
-- Smart Pointers
+
 
 ---
 
