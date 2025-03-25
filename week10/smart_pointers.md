@@ -139,7 +139,7 @@ help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
 
 # Computing the Size of Types
 
-Recall the Message enum we defined back in week 3:
+Recall the `Message` enum we defined back in Week 3:
 
 ```rust
 enum Message {
@@ -286,11 +286,11 @@ Technically the compiler is allowed to store data of Boxes on the stack if it wa
 * Trait Objects
   * Coming soon...
 
-
 <!--
 The reasoning for why transferring ownership is faster is that data
 won't need to be copied to another stack for example, just the pointer.
 -->
+
 
 ---
 
@@ -363,9 +363,46 @@ https://doc.rust-lang.org/std/boxed/struct.Box.html#impl-Deref-for-Box%3CT,+A%3E
 ---
 
 
+# `DerefMut`
+
+There is also a mutable version of `Deref` called `DerefMut`.
+
+```rust
+pub trait DerefMut: Deref {
+    // Required method
+    fn deref_mut(&mut self) -> &mut Self::Target;
+}
+```
+
+* Notice how `DerefMut` is a subtrait of `Deref`
+* Only adds functionality to mutably dereference to the same `Target`
+
+
+---
+
+
 # Deref Coercion
 
-Recall that we were able to coerce a `&String` into a `&str`. We can also coerce a `&Box<String>` into a `&str`!
+Recall that we were able to coerce a `&String` into a `&str`. We can also coerce a `&Box<T>` into a `&T`!
+
+```rust
+fn hello_number(number: &i32) {
+    println!("Hello, {number}!");
+}
+
+let m: Box<i32> = Box::new(42);
+hello(&m);
+```
+
+* Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
+
+
+---
+
+
+# Deref Coercion
+
+We can also coerce several layers deep, so a `&Box<String>` can coerce to `&str`.
 
 ```rust
 fn hello(name: &str) {
@@ -376,10 +413,9 @@ let m: Box<String> = Box::new(String::from("Rust"));
 hello(&m);
 ```
 
-* Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
-* Example: Deref Coercion can convert a `&String` into `&str`
+* Deref Coercion converts a `&Box<T>` into a `&T`
+* Deref Coercion converts a `&String` into `&str`
   * `String` implements the `Deref` trait such that `Deref::Target = &str`
-
 
 
 ---
@@ -397,7 +433,7 @@ Rust is able to coerce mutable to immutable but not the reverse.
 
 ---
 
-# `&T` to `&U` Example
+# `&Vec<T>` to `&[T]`
 
 ```rust
 fn foo(s: &[i32]) {
@@ -420,7 +456,7 @@ println!("{:?}", owned);
 
 ---
 
-# `&mut T` to `&mut U` Example
+# `&mut Vec<T>` to `&mut [T]`
 
 ```rust
 fn foo(s: &mut [i32]) {
@@ -440,7 +476,26 @@ println!("{:?}", owned);
 [2, 2, 3]
 ```
 
-* `DerefMut` also allows coercing to &[T]
+
+---
+
+
+# Better Function Signatures
+
+Try to encourage coercion in your function signatures:
+
+```rust
+fn foo(x: &Box<T>) { ... }
+fn bar(x: &T) { ... }
+
+fn baz(s: &String) { ... }
+fn qux(s: &str) { ... }
+
+fn corge(v: Vec<T>) { ... }
+fn grault(v: &[T]) { ... }
+```
+
+* `bar`, `qux`, and `grault` are strictly more powerful!
 
 
 ---
@@ -454,7 +509,7 @@ println!("{:?}", owned);
 
 # The `Drop` Trait
 
-Smart pointers implement both `Deref` and the `Drop` trait.
+Smart pointers implement both the `Deref` and the `Drop` trait.
 
 The `Drop` trait customizes controls what happens when a value is about to go out of scope.
 
@@ -601,6 +656,7 @@ error[E0040]: explicit use of destructor method
 let csm = CustomSmartPointer {
     data: String::from("some data"),
 };
+
 println!("CSM created.");
 
 std::mem::drop(csm);
