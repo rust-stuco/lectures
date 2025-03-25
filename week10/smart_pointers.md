@@ -49,7 +49,7 @@ code {
 
 What is a pointer?
 
-* A _pointer_ is a general concept for a variable that contains an address in memory.
+* A _pointer_ is a general concept for a variable that contains an address in memory
 * The address "points to" or "points at" some other data
 * In Rust, the most common pointer is a reference (`&`)
 * No overhead other than dereferencing
@@ -74,9 +74,9 @@ What is a _smart pointer?_
 
 We've actually seen several smart pointers, but we haven't called them as such.
 
-* `String`
-* `Vec<T>`
-* `Box<T>`
+- `String`
+- `Vec<T>`
+- `Box<T>`
 
 <!--
 String, for example, stores its capacity as metadata and has the extra ability to ensure its data
@@ -321,8 +321,6 @@ assert_eq!(5, *y);
 
 Implementing the `Deref` trait allows you to customize the behavior of the _dereference_ operator (`*`).
 
-The deref trait is defined as follows:
-
 ```rust
 pub trait Deref {
     type Target: ?Sized;
@@ -341,6 +339,8 @@ pub trait Deref {
 
 
 # The `Deref` Trait on `Box<T>`
+
+Here is the implementation of `Deref` for `Box<T>`.
 
 ```rust
 impl<T: ?Sized, A: Allocator> Deref for Box<T, A> {
@@ -369,8 +369,10 @@ There is also a mutable version of `Deref` called `DerefMut`.
 
 ```rust
 pub trait DerefMut: Deref {
+
     // Required method
     fn deref_mut(&mut self) -> &mut Self::Target;
+
 }
 ```
 
@@ -391,7 +393,12 @@ fn hello_number(number: &i32) {
 }
 
 let m: Box<i32> = Box::new(42);
-hello(&m);
+
+hello_number(&m);
+```
+
+```
+Hello, 42!
 ```
 
 * Deref coercion converts a `&T` into `&U` if `Deref::Target = U`
@@ -402,7 +409,7 @@ hello(&m);
 
 # Deref Coercion
 
-We can also coerce several layers deep, so a `&Box<String>` can coerce to `&str`.
+We can also coerce several layers deep, so a `&Box<String>` can coerce to a `&str`.
 
 ```rust
 fn hello(name: &str) {
@@ -410,10 +417,11 @@ fn hello(name: &str) {
 }
 
 let m: Box<String> = Box::new(String::from("Rust"));
+
 hello(&m);
 ```
 
-* Deref Coercion converts a `&Box<T>` into a `&T`
+* Deref Coercion converts a `&Box<String>` into a `&String`
 * Deref Coercion converts a `&String` into `&str`
   * `String` implements the `Deref` trait such that `Deref::Target = &str`
 
@@ -509,9 +517,9 @@ fn grault(v: &[T]) { ... }
 
 # The `Drop` Trait
 
-Smart pointers implement both the `Deref` and the `Drop` trait.
+Smart pointers implement both the `Deref` _and_ the `Drop` trait.
 
-The `Drop` trait customizes controls what happens when a value is about to go out of scope.
+The `Drop` trait customizes what happens when a value is _about_ to go out of scope.
 
 ```rust
 pub trait Drop {
@@ -521,6 +529,10 @@ pub trait Drop {
 
 * This allows for the RAII pattern (Resource Acquisition Is Initialization)
 * Data cleans up after itself!
+
+<!--
+You see RAII a lot in modern C++ as well
+-->
 
 
 ---
@@ -539,12 +551,8 @@ pub trait Drop {
 * Dropping a struct value will recursively drop all its fields by default
     * This mechanism allows for automatically freeing memory
 * You can also provide a custom implementation of `Drop` on your types
-    * Allows us to run user code when values are dropped
+    * Allows us to run user code _before_ values are dropped
 
-<!--
-first bullet: RAII
-your types -> specifically types declared in the crate per the orphan rule
--->
 
 ---
 
@@ -558,14 +566,14 @@ struct CustomSmartPointer {
 
 impl Drop for CustomSmartPointer {
     fn drop(&mut self) {
-        println!("Dropping `CustomSmartPointer` with data `{}`!", self.data);
+        println!("Dropping `CustomSmartPointer` with data \"{}\"", self.data);
     }
 }
 ```
 
-* This is a custom implementation that simply prints the data on drop
-* The data will still be freed automatically
-    * After `CustomSmartPointer::drop` is called, `String::drop` will be called
+* This is a custom implementation that simply prints the data before dropping
+* The data will still be freed automatically after
+    * _After `CustomSmartPointer::drop` is called, `String::drop` will be called_
 
 
 ---
@@ -574,23 +582,22 @@ impl Drop for CustomSmartPointer {
 # `Drop` Trait Example
 
 ```rust
-let c = CustomSmartPointer {
-    data: String::from("my stuff"),
-};
+fn main(){
+    let c = CustomSmartPointer { data: String::from("I'm Connor") };
+    let d = CustomSmartPointer { data: String::from("I'm David") };
 
-let d = CustomSmartPointer {
-    data: String::from("other stuff"),
-};
-
-println!("CustomSmartPointers created.");
+    println!("CustomSmartPointers created.");
+}
 ```
 
 ```
 CustomSmartPointers created.
-Dropping CustomSmartPointer with data `other stuff`!
-Dropping CustomSmartPointer with data `my stuff`!
+Dropping `CustomSmartPointer` with data "I'm David"
+Dropping `CustomSmartPointer` with data "I'm Connor"
 ```
+
 * Notice how values are dropped in _reverse order_ of creation
+
 
 ---
 
@@ -749,6 +756,7 @@ enum List {
 }
 
 let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+
 let b = Cons(3, Box::new(a));
 let c = Cons(4, Box::new(a));
 ```
@@ -794,7 +802,7 @@ error[E0382]: use of moved value: `a`
 
 ```
 * `Cons` needs to **own** the data it holds
-* `a` was already moved into `b` when we create `c`
+* `a` was already moved into `b` when we try to create `c`
 * We want both `b` and `c` to point to the same instance `a`
 
 <!--
@@ -886,9 +894,14 @@ let c = Cons(4, Rc::clone(&a));
 `Rc<T>` keeps track of the number of references to a value to ensure safety.
 
 * When an `Rc` is cloned, it increments the reference count
-* When an `Rc` is dropped, it decrements reference count
-* When the reference count reaches zero, free the owned value
+* When an `Rc` is dropped, it decrements the reference count
+* When the reference count reaches zero, the owned value is freed
   * No "references" can be invalid after freeing!
+
+<!--
+"References" in quotations because logically they are references but they are
+not the same as Rust references.
+-->
 
 
 ---
@@ -896,8 +909,8 @@ let c = Cons(4, Rc::clone(&a));
 
 # When to use `Rc<T>`
 
-* Want to allocate data on the heap
-* Want multiple parts of our program to _read_ the data
+* We want to allocate data on the heap
+* We want multiple parts of our program to _read_ the data
 * We don't know at compile-time which part will finish reading the data last
 * Only use for single-threaded scenarios
     * `Rc<T>` is not thread safe
@@ -1108,10 +1121,10 @@ Most people will associate OOP with _inheritance_.
 
 * Inheritance is a mechanism in which an object can inherit elements from another object's definition
 * If you define OOP to require inheritance, then Rust is _not_ object-oriented
-    * There is no way to "inherit" a parent's struct fields*
+    * There is no way in vanilla Rust to "inherit" a parent's struct fields
 
 <!--
-* Unless you use macros
+Unless you use macros, but that is very cursed
 -->
 
 
@@ -1148,7 +1161,7 @@ Inheritance has recently fallen out of favor as a programming design solution.
 
 * You risk sharing more code than necessary
 * Subclasses don't always need to share _every_ characteristic of their parent, but they _will_ with inheritance
-* Reduces and restricts flexibility and expression
+* Arguably reduces and restricts flexibility and expression (in most cases)
 * Can make a program hard to debug
 
 <!--
@@ -1195,7 +1208,7 @@ let row = vec![
 ];
 ```
 
-* What if we didn't know what types it could be at compile-time?
+* What if we didn't know what types the values could be at compile-time?
 
 
 ---
@@ -1283,7 +1296,7 @@ pub struct Screen<T: Draw> {
 Recall that Rust generics are implemented via monomorphization.
 
 * We can fill in a _single_ type in place of `T: Draw`
-* We cannot define a vector of "anything that implements `Draw` like this
+* We cannot define a vector of "anything that implements `Draw`" like this
 * We must use _Trait Objects_
 
 <!--
@@ -1304,7 +1317,7 @@ pub struct Screen {
 }
 ```
 
-* In this example, `Screen` holds a vector of `Draw` objects in `Box`es
+* In this example, `Screen` holds a vector of `Draw` trait objects in `Box`es
 * We use the `dyn` keyword to describe _any_ type that implements `Draw`
     * We have no idea what the original types were (type erasure)
 * We must use a `Box` because the types have dynamic size at runtime
