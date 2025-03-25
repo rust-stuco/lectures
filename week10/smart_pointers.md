@@ -959,58 +959,143 @@ One of the more important talks in Computer Science History
 
 # Characteristics of Object-Oriented Languages
 
-TODO
+There is no real consensus about what features an OOP language must have.
+
+A very simple definition is this:
+
+> Object-oriented programs are made up of objects. An object packages both data and the procedures that operate on that data. The procedures are typically called methods or operations.
+> _Design Patterns: Elements of Reusable Object-Oriented Software (1994)_
+
+* If we used this definition, structs and enums would be considered objects!
+
+<!--
+The book Design Patterns: Elements of Reusable Object-Oriented Software by Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides (Addison-Wesley Professional, 1994), colloquially referred to as The Gang of Four book, is a catalog of object-oriented design patterns. It defines OOP this way:
+-->
 
 
 ---
 
 
-# What We Know So Far...
+# Encapsulation
+
+Another aspect associated with OOP is the idea of _encapsulation_.
+
+* Implementation details of an object aren't accessible to code using the object
+* We get this by default in Rust with the opt-in `pub` keyword
+
+
+---
+
+
+# Encapsulation and Privacy
 
 ```rust
 pub struct AveragedCollection {
     list: Vec<i32>,
     average: f64,
 }
-
-impl AveragedCollection {
-    pub fn add(&mut self, value: i32) {
-        self.list.push(value);
-        self.update_average();
-    }
-
-    <-- snip -->
-}
 ```
-* Encapsulation within `impl` blocks and crates
-* Public and private functions and methods with `pub`
+
+* The struct is marked `pub`, but the fields are not
 
 
 ---
 
 
-# Inheritence?
-Rust structs cannot "inherit" the implementations of methods or data fields from another struct...
+# Encapsulation and Privacy
+
+```rust
+impl AveragedCollection {
+
+    pub fn add(&mut self, value: i32) { ... }
+
+    pub fn remove(&mut self) -> Option<i32> { ... }
+
+    pub fn average(&self) -> f64 { ... }
+
+    fn update_average(&mut self) { ... } // Helper method for the above!
+
+}
+```
+
+* We can choose what functionality to expose and what to keep private
+* Keep invariants and contracts validated
+
+
+---
+
+
+# Inheritance
+
+Most people will associate OOP with _inheritance_.
+
+
+* Inheritance is a mechanism in which an object can inherit elements from another object's definition
+* If you define OOP to require inheritance, then Rust is _not_ object-oriented
+    * There is no way to "inherit" a parent's struct fields*
+
+<!--
+* Unless you use macros
+-->
+
+
+---
+
+
+# Why Inheritance?
+
+There are several reason why you might want inheritance:
+
+* Enables to reuse an implementation for a different type
+    * In Rust, you can have default trait method implementations (overridable)
+* Enables a child type to be used in the same place as a parent type
+    * This _can_ be called _polymorphism_
+    * You can substitute multiple objects for each other at runtime
+
+<!--
+This could potentially be its own slide in the future;
+
+# Polymorphism
+
+To many people, polymorphism is synonymous with inheritance. But it’s actually a more general concept that refers to code that can work with data of multiple types. For inheritance, those types are generally subclasses.
+
+Rust instead uses generics to abstract over different possible types and trait bounds to impose constraints on what those types must provide. This is sometimes called bounded parametric polymorphism.
+-->
+
+
+---
+
+
+# Why Not Inheritance?
+
+Inheritance has recently fallen out of favor as a programming design solution.
+
+* You risk sharing more code than necessary
+* Subclasses don't always need to share _every_ characteristic of their parent, but they _will_ with inheritance
+* Reduces and restricts flexibility and expression
+* Can make a program hard to debug
+
+<!--
+Most languages only allow single inheritance as well, making it even less flexible
+-->
+
+
+---
+
+
+# Rust Inheritance?
+
+Rust structs cannot "inherit" anything from another struct...
+
 * If we want to wrap another struct's functionality, we can use composition
 * If we want to define interfaces, we can use traits
 * If we want polymorphism...
     * Rust has something called "trait objects"
 
 <!--
-Composition is usually preferred in other languages nowadays too
+Composition is usually preferred in other languages nowadays too, not just with data types but also
+composition of functions
 --->
-
----
-
-
-# Polymorphism
-
-* Polymorphism != Inheritance
-* Polymorphism == "Code that can work with multiple data types"
-* In object oriented languages, polymorphism is usually expressed with classes
-* Rust expresses polymorphism with generics and traits:
-  * Generics are abstract over different possible types
-  * Traits impose constraints on what behaviors types must have
 
 
 ---
