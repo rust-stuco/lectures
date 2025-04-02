@@ -25,156 +25,420 @@ code {
 
 ---
 
+
 # Parallelism vs. Concurrency
 
 <div class="columns">
 <div>
 
-## Parallelism
-
-- Work on multiple tasks at the same time
-- Utilizes multiple processors/cores
-
-</div>
-<div>
-
 ## Concurrency
 
-- Manage multiple tasks, but only do one thing at a time.
-- Better utilizes a single processor/core
+**Problem** of handling many tasks at once
 
-</div>
-</div>
-<center>
 
-* These terms are used (and abused) interchangably
+## Parallelism
 
-</center>
+**Solution** of working on multiple tasks at the same time
+
+* **Key difference:** Parallelism utilizes **multiple** workers
 
 ---
+
+
+# Workers
+
+Parallelism divides tasks among workers.
+
+* In hardwareland, we call these workers **processors** and **cores**.
+
+* In softwareland, <!-- "we give these workers a different name" -->
+  * "Processors" => Processes
+  * "Cores" => Threads
+
+* **Key difference:** Parallelism utilizes **multiple** processors/cores
+  * Some concurrency models don't!
+
+
+<!-- Note:
+Students coming from 122 may be unfamiliar with processors/cores,
+so I added this for clarification.
+
+Alternate suggestion is to remove mention of hardware,
+so that this slide is shortened to
+  "Examples of workers: 
+      * Processes
+      * Threads"
+-->
+
+
+---
+
 
 # Parallelism vs. Concurrency
 
 
 <img src="img/concvspar.jpg" style="width: 85%; margin-left: auto; margin-right: auto;">
 
+
 ---
 
-# Parallelism vs. Concurrency
+
+# Parallelism vs. Concurrency: Examples
 <div class="columns">
 <div>
 
 ## Parallelism
 
-<img src="img/psychotic-chefs.jpg" style="width: 88%">
+* 8 cores, 8 threads
+* 4 threads load the webpage, 4 threads update the progress bar
 
 </div>
 <div>
 
-## Concurrency
+## Alternate Concurrency Model
 
-<img src="img/lonely-chef.jpg" style="width: 88%">
+* 1 core, 1 thread
+* When blocked on loading the webpage, update the progress bar
+
 
 </div>
 </div>
 
----
-
-# Parallelism vs. Concurrency (Examples)
-<div class="columns">
-<div>
-
-## Parallelism
-
-
-- Have one processor work on loading the webpage, while another updates the progress bar
-* Often used to divide tasks into smaller units that can run at the same time
-  * e.g. Processing 100x100px regions of an image on each core
-  * "Divide and conquer"
-</div>
-<div>
-
-## Concurrency
-
-* As we load a webpage, take a break sometimes to update the loading progress bar
-* Often used to do other things while we wait for blocking I/O operations
-  * e.g. Running garbage collection while we wait for a response over the network
-
-</div>
-</div>
 
 ---
 
 
-# Today: Parallelism
-- Threads
-- Synchronization
-- Message Passing
-- `Send` and `Sync`
-- More Synchronization
+# Today
+- Multithreading
+- Interthread Communication
+  - Shared Memory
+    - Data Races
+    - Synchronization, Atomics
+  - Message Passing
+    - `Send` and `Sync`
 
 
 ---
 
-# Terminology: Threads
 
-* Dangerously overloaded term—can mean one of many things
-* For this lecture, we define it as a "stream of instructions"
-* In Rust, language threads are 1:1 with OS threads
-* **Key point:** Threads share the same resources
+# Multithreading
 
----
+For this lecture only,
+* Our workers are threads
+* **Thread:** "stream of instructions"
 
-# Sharing Resources
+<!--Speaker note:
+Same principles can be applied to multiprocessing
+Emphasize that "thread" is overloaded term
+-->
 
-```c
-static int x = 0;
-
-static void thread(void) {
-  int temp = x;
-  temp += 1;
-  x = temp;
-}
-// <!-- snip -->
-for (int i = 0; i < 20; ++i) {
-  create_thread(thread); // helper function not shown
-}
-```
-
-* What is the value of `x` after we join on all 20 threads?
-  * What is the next slide's title going to be?
-
-<!-- Define atomic verbally -->
----
-
-# Race Conditions
-When multiple threads have access to the same data, things get complicated...
-* Specifically, this is about *data races*
 
 ---
 
-# The Bad Slide
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x (temp = 0)   |               |
-|               | temp = x (temp = 0)   |
-| temp += 1 (temp = 0 + 1) |               |
-|               | temp += 1 (temp = 0 + 1) |
-| x = temp (x = 1)  |               |
-|               | x = temp (x = 1)  |
+# Multithreading
 
-* Uh oh...
+Suppose we're painting an image to the screen.
 
-<!--
-Is that working correctly? Look at the code—it's doing exactly what it is supposed to do. Maybe we weren't specific enough...
+* Divide image into eight regions
+
+* One region per thread
+
+* Easy! "Embarassingly parallel"
+
+<!--Speaker note:
+"Embarassingly parallel" refers to problems where
+we can easily utilize our hardware in full,
+usually because tasks are super independent
+
+Each thread retires to their cave
+  to paint all day,
+  not too different from modern artists
 -->
 
 ---
 
+
+# Motivating Communication
+
+Say our image is more complex.
+
+* We're painting circles
+* Circles overlap
+* The _order_ we paint circles affects their color
+
+<!--Note:
+  This is 418's circle rendering problem
+  Can add images to illustrate the color mixing
+-->
+
+
+---
+
+
+# Motivating Communication
+
+Now threads need to talk to each other!
+
+* For each pixel
+  * How many circles have been drawn?
+  * Do _not_ paint this pixel until previous circles are done
+
+
+---
+
+
+# Motivating Communication
+
+**Problem:** How do threads communicate?
+
+**Solution:**
+* Approach 1: Shared Memory
+* Approach 2: Message Passing
+
+<!--Speaker note:
+  Now our threads must talk to each other
+-->
+
+
+---
+
+
+# Approach 1: Shared Memory
+
+For each pixel,
+* Create shared variable `x`
+* Increment `x` when thread touches pixel
+
+```c
+static int x = 0;
+```
+
+Now threads know
+* How many circles have been drawn?
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Are we done?
+
+Not quite...
+
+* Shared memory is ingredient for **data races**
+* Let's illustrate
+
+<!--Speaker note:
+We'll walk through the other ingredients
+-->
+
+---
+
+
+# Shared Memory: Data Races
+
+First, we have a shared variable `x`.
+
+```c
+static int x = 0;
+```
+
+<!-- Speaker note:
+(1) This is pseudocode; we'll explain Rust's interface in second half
+(2) `static` => shared
+-->
+
+
+---
+
+
+# Shared Memory: Data Races
+
+First, we have a shared variable `x`.
+
+`x` must satisfy a property to be correct.
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+```
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Second, `x` becomes incorrect mid-update.
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+
+static void update_x(void) {
+  int temp = x; // <- x is INCORRECT
+  temp += 1;    // <- x is INCORRECT
+  x = temp;     // <- x is CORRECT
+}
+```
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Third, when multiple threads update at once...
+
+```c
+// x is # of times *any* thread has called `update_x`
+static int x = 0;
+
+static void update_x(void) {
+  int temp = x; // <- x is INCORRECT
+  temp += 1;    // <- x is INCORRECT
+  x = temp;     // <- x is CORRECT
+}
+// <!-- snip -->
+for (int i = 0; i < 20; ++i) {
+  create_thread(update_x);
+}
+```
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Third, when multiple threads update at once...they interleave!
+
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| temp = x      |               |
+|               | temp = x      |
+| temp += 1     |               |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
+
+
+<!--
+Q: Can someone tell me the outcome of this sequence?
+A: Next slide
+-->
+
+
+---
+
+
+# Shared Memory: Data Races
+
+We want `x = 2`, but we get `x = 1`!
+
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| Read temp = 0 |               |
+|               | Read temp = 0 |
+| Set temp = 1  |               |
+|               | Set temp = 1  |
+| Set x = 1     |               |
+|               | Set x = 1     |
+
+
+---
+
+
+# Shared Memory: Data Races
+
+Want bolded operations to be **atomic**.
+
+<!--Speaker Note:
+"That is, while Thread 1 is executing these instructions,
+  Thread 2 cannot cut in.
+"
+-->
+
+<style>
+    .container {
+        display: flex;
+        gap: 16px;
+    }
+    .col {
+        flex: 1;
+    }
+</style>
+<div class = "container">
+
+<div class = "col">
+
+**Not Atomic**
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| **temp = x**  |               |
+|               | temp = x      |
+| **temp += 1** |               |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
+
+</div>
+<div class = "col">
+
+**Atomic**
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| **temp = x**  |               |
+| **temp += 1** |               |
+|               | temp = x      |
+|               | temp += 1     |
+| x = temp      |               |
+|               | x = temp      |
+
+</div>
+</div>
+
+
+---
+
+
+# Fixing a Data Race
+
+We must eliminate one:
+1. `x` is shared
+2. `x` becomes incorrect mid-update
+3. Unsynchronized updates
+
+<!--
+Speaker note: Unsynchronized = parties can "cut in" mid-update
+-->
+
+---
+
+
+# Fixing a Data Race
+
+**Approach 1: Synchronization**
+
+Take turns! No "cutting in" mid-update.
+
+1. `x` is shared
+2. `x` becomes incorrect mid-update
+3. ~~Unsynchronized updates~~
+
+
+---
+
+
 # Synchronization
 
-To make sure instructions happen in a reasonable order, we need to establish *mutual exclusion*, so that threads don't interfere with each other.
+We need to establish *mutual exclusion*, so that threads don't interfere with each other.
 * Mutual exclusion means "Only one thread can do something at a time"
 * A common tool for this is a mutex lock
 
@@ -205,7 +469,256 @@ static void thread(void) {
 
 ---
 
+
+# Fixing a Data Race
+
+**Approach 2: Atomics**
+
+One airtight update! Cannot be "incorrect" mid-update.
+
+1. `x` is shared
+2. ~~`x` becomes incorrect mid-update~~
+3. Unsynchronized updates
+
+
+---
+
+
+# Atomics
+
+Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
+* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
+* 100% lock free, using bespoke assembly instructions
+* Highly performant, but very difficult to use
+* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
+* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
+
+<!-- Note:
+This is a pre-existing slide
+Was originally the last slide; I moved it all the way up here
+We can reduce words
+-->
+
+---
+
+
+# Fixing a Data Race
+
+**Approach 3: No Shared Memory**
+
+If we eliminate shared memory,
+
+1. ~~`x` is shared~~
+2. `x` becomes incorrect mid-update
+3. Unsynchronized updates
+
+
+---
+
+
+# Fixing a Data Race
+
+**Approach 3: No Shared Memory**
+
+If we eliminate shared memory, race is trivially gone.
+
+1. ~~`x` is shared~~
+2. ~~`x` becomes incorrect mid-update~~
+3. ~~Unsynchronized updates~~
+
+
+---
+
+
+# Message Passing
+
+**Problem:** How do threads communicate?
+
+**Solution:**
+- Approach 1: Shared Memory
+* Approach 2: Message Passing
+  * Eliminates shared memory
+
+
+---
+
+# Message Passing
+
+* Threads communicate via channels
+
+<!-- Speaker note: Golang famously uses this approach -->
+
+
+---
+
+
+# Approach 2: Message Passing
+
+Previously, shared memory solution was
+
+> For each pixel,
+> - Create shared variable `x`
+> - Increment `x` when thread touches pixel
+
+
+---
+
+
+# Approach 2: Message Passing
+
+In message passing, we eliminate shared memory,
+
+For each pixel,
+- Create a counter `x` for each thread
+> - Increment `x` when thread touches pixel
+
+
+---
+
+
+# Approach 2: Message Passing
+
+We broadcast updates to other threads via **message passing**.
+
+For each pixel,
+- Create a counter `x` for each thread
+- Increment `x` when thread touches pixel
+  * Send message to other threads
+  * So they update their copies of `x`
+
+
+---
+
+
+# Message Passing Example
+
+```rust
+let (tx, rx) = mpsc::channel();
+```
+* Channels have two halves, a transmitter and a receiver
+* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
+  * Ben finds the duck downstream, and reads the message (receiver)
+* Note that communication is one-way here
+* Note also that each channel can only transmit/receive one type
+  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
+
+---
+
+
+# Message Passing Example
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+});
+
+let received = rx.recv().unwrap(); // receive val through the receiver
+println!("I am too busy to {}!", received);
+```
+* Note that, after we send `val`, we no longer have ownership of it!
+
+---
+
+# Message Passing in Rust
+We can also use receivers as iterators!
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+thread::spawn(move || { // Take ownership of `tx`
+    let val = String::from("review the ZFOD PR!");
+    tx.send(val).unwrap(); // Send val through the transmitter
+    tx.send("buy Connor lunch".into()).unwrap();
+});
+
+for msg in rx {
+  println!("I am too busy to {}!", msg);
+}
+```
+* Wait, what does `mpsc` stand for?
+
+
+---
+
+
+# `mpsc` ⟹ Multiple Producer, Single Consumer
+
+This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
+
+```rust
+let (tx, rx) = mpsc::channel();
+
+let tx1 = tx.clone();
+thread::spawn(move || { // owns tx1
+      tx1.send("yo".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+thread::spawn(move || { // owns tx
+      tx.send("hello".into()).unwrap();
+      thread::sleep(Duration::from_secs(1));
+});
+
+for received in rx {
+    println!("Got: {}", received);
+}
+```
+
+---
+
+# `Send` and `Sync`
+
+---
+
+# `Send` and `Sync`
+
+Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
+
+
+<!-- Marker trait == no implementation, signal to the compiler -->
+
+---
+
+# `Send` vs. `Sync`
+
+
+## `Send`
+
+* Indicates that the type is safe to *send* between threads.
+* `Rc<T>` does not implement this trait, because it is not thread safe.
+
+
+## `Sync`
+
+* Indicates that the type implementing `Send` can be referenced from multiple threads
+* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
+* `Rc<T>` does not implement `Sync` either
+
+<!-- MutexGuard implements Sync, but not Send, actually! -->
+
+
+---
+
+# Using `Send` and `Sync`
+* It is generally rare that you would implement these traits yourself
+  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
+  * Explicitly implementing either one requires using `unsafe`
+* This would be an example of a trait you might want to *unimplement*
+  * e.g. If you are doing something with `unsafe` that is not thread-safe
+  * `impl !Send for CoolType<T> {}`
+
+<!-- Notice this negative impl is not unsafe-->
+
+
+---
+
+
 # Threads in Rust
+
+Some implementation gotcha's
 
 ---
 
