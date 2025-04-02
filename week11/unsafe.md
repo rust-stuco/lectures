@@ -93,7 +93,7 @@ So far, we've only seen code where memory safety is guaranteed at compile time.
 
 If you take anything away from today, it should be this:
 
-**Unsafe code is the mechanism Rust gives developers for taking advantage of invariants that, for whatever reason, the compiler cannot check.**
+> **Unsafe code is the mechanism Rust gives developers for taking advantage of invariants that, for whatever reason, the compiler cannot check.**
 
 - _Jon Gjengset, Rust for Rustaceans_
 
@@ -154,7 +154,9 @@ impl<T> SomeType<T> {
 ```
 
 * Here, the `unsafe` keyword serves as a warning to the caller
+* Notice how the function body is totally normal!
 * There may be additional invariants that must be upheld _before_ calling `decr`
+
 
 
 ---
@@ -180,7 +182,7 @@ impl<T> SomeType<T> {
 
 ```rust
 impl<T> SomeType<T> {
-    pub unsafe fn decr_ref_count(&self) {
+    pub unsafe fn decr(&self) {
         self.some_usize -= 1;
     }
 
@@ -203,7 +205,7 @@ Imagine is `SomeType<T>` was really `Rc<T>`:
 
 ```rust
 impl<T> Rc<T> {
-    pub unsafe fn decr(&self) {
+    pub unsafe fn decr_ref_count(&self) {
         self.count -= 1;
     }
 
@@ -824,10 +826,10 @@ you should really not be using `unsafe` unless you really need to
 
 You may recall that all references must be valid. A valid reference:
 
-* must never dangle
-* must always be aligned
-* must always point to a valid value for their target type
-* must either be immutably shared or mutably exclusive
+* Must never dangle
+* Must always be aligned
+* Must always point to a valid value for their target type
+* Must either be immutably shared or mutably exclusive
 * Plus more guarantees relating to lifetimes
 * If you create a reference from a pointer, make sure all of these are true!
 
@@ -849,7 +851,8 @@ Some primitive types have other guarantees:
 * If Rust didn't enforce this, it wouldn't be able to make niche optimizations
     * `Option<&T>` is a good example
     * What if `Option<Option<bool>>` used `0x00` through `0x03`?
-* It doesn't matter if Rust does make the optimization, all that matters is that it is _allowed_ to whenever it wants
+* It doesn't really matter if Rust does or does not make the optimization
+    * All that matters is that it is _allowed_ to whenever it wants
 
 
 ---
@@ -864,6 +867,11 @@ Here are some even more requirements:
 * All code must prepared to handle `panic!`s and _stack unwinding_
 * Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...
 * All variables are subject to something called the _Drop Check_, and if you drop something incorrectly, you might cause undefined behavior
+
+<!--
+For the first point, this is the equivalent of Rust saying that all pointers are `restrict` in C
+or `__restrict__` in C++.
+-->
 
 
 ---
@@ -898,13 +906,14 @@ It is tempting to reason about unsafety _locally_.
 
 # Miri
 
-Miri is an undefined behavior detection tool for Rust.
+[Miri](https://github.com/rust-lang/miri) is an undefined behavior detection tool for Rust.
 
 * An interpreter for Rust's mid-level intermediate representation
 * Can detect out-of-bounds memory accesses and use-after-free
 * Invalid use of uninitialized data
 * Not sufficiently aligned memory accesses and references
-* Can also detect data races!
+* Can also detect data races
+* Think of Miri as Valgrind, address sanitizer, and thread sanitizer, all in one!
 
 
 ---
