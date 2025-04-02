@@ -123,7 +123,7 @@ so that this slide is shortened to
 
 # Multithreading
 
-For this lecture only,
+For this lecture only...
 * Our workers are threads
 * **Thread:** "stream of instructions"
 
@@ -131,6 +131,24 @@ For this lecture only,
 Same principles can be applied to multiprocessing
 Emphasize that "thread" is overloaded term
 -->
+
+
+---
+
+
+# Example: Creating a Thread
+Threads can be created ("spawned") using `thread::spawn`.
+```rust
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+});
+```
+* `thread::spawn` takes a function as argument
+  * This is the function that the thread runs
+* We can spawn multiple of these, to run multiple functions at once!
 
 
 ---
@@ -164,7 +182,7 @@ Each thread retires to their cave
 Say our image is more complex.
 
 * We're painting circles
-* Circles overlap
+* Circles overlap and constantly moving
 * The _order_ we paint circles affects their color
 
 <!--Note:
@@ -178,7 +196,7 @@ Say our image is more complex.
 
 # Motivating Communication
 
-Now threads need to talk to each other!
+Now our threads need to talk to each other!
 
 * For each pixel
   * How many circles have been drawn?
@@ -227,7 +245,7 @@ Are we done?
 
 Not quite...
 
-* Shared memory is ingredient for **data races**
+* Shared memory is an ingredient for **data races**
 * Let's illustrate
 
 <!--Speaker note:
@@ -239,9 +257,10 @@ We'll walk through the other ingredients
 
 # Shared Memory: Data Races
 
-First, we have a shared variable `x`.
+Suppose we have a shared variable `x`.
 
 ```c
+// Note this is C pseudocode
 static int x = 0;
 ```
 
@@ -256,9 +275,7 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-First, we have a shared variable `x`.
-
-`x` must satisfy a property to be correct.
+First ingredient: `x` must satisfy a property to be correct.
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -271,7 +288,7 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-Second, `x` becomes incorrect mid-update.
+Second ingredient: `x` becomes incorrect mid-update.
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -290,7 +307,7 @@ static void update_x(void) {
 
 # Shared Memory: Data Races
 
-Third, when multiple threads update at once...
+Third ingredient: when multiple threads update at once...
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -313,7 +330,7 @@ for (int i = 0; i < 20; ++i) {
 
 # Shared Memory: Data Races
 
-Third, when multiple threads update at once...they interleave!
+Third ingredient: when multiple threads update at once...they interleave!
 
 
 | Thread 1      |   Thread 2    |
@@ -410,7 +427,7 @@ Want bolded operations to be **atomic**.
 
 # Fixing a Data Race
 
-We must eliminate one:
+We must eliminate one of the following:
 1. `x` is shared
 2. `x` becomes incorrect mid-update
 3. Unsynchronized updates
@@ -493,11 +510,6 @@ Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsiz
 * Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
 * We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
 
-<!-- Note:
-This is a pre-existing slide
-Was originally the last slide; I moved it all the way up here
-We can reduce words
--->
 
 ---
 
@@ -669,56 +681,22 @@ for received in rx {
 
 ---
 
-# `Send` and `Sync`
 
----
+# Recap
 
-# `Send` and `Sync`
+When tackling a parallelism problem, think:
 
-Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
-
-
-<!-- Marker trait == no implementation, signal to the compiler -->
-
----
-
-# `Send` vs. `Sync`
-
-
-## `Send`
-
-* Indicates that the type is safe to *send* between threads.
-* `Rc<T>` does not implement this trait, because it is not thread safe.
-
-
-## `Sync`
-
-* Indicates that the type implementing `Send` can be referenced from multiple threads
-* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
-* `Rc<T>` does not implement `Sync` either
-
-<!-- MutexGuard implements Sync, but not Send, actually! -->
+* What are my workers and how many do I have?
+* How should I divide the work among my workers?
+* Do I need to share data between workers?
+  * Shared Memory vs Message Passing
 
 
 ---
-
-# Using `Send` and `Sync`
-* It is generally rare that you would implement these traits yourself
-  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
-  * Explicitly implementing either one requires using `unsafe`
-* This would be an example of a trait you might want to *unimplement*
-  * e.g. If you are doing something with `unsafe` that is not thread-safe
-  * `impl !Send for CoolType<T> {}`
-
-<!-- Notice this negative impl is not unsafe-->
-
-
----
-
 
 # Threads in Rust
 
-Some implementation gotcha's
+Now that we have an framework for parallelism problems, let's dive into the Rust specifics!
 
 ---
 
@@ -1025,95 +1003,6 @@ println!("Final value of x: {}", *x.lock().unwrap());
 * `x` is 20, *every time*.
   * And it is illegal for it to be anything else in safe Rust.
 
----
-
-# Parallelism Checkpoint
-Up until now, we have been talking about parallelism with *shared state*. Let's shift gears and talk about *message passing*.
-
----
-
-# Message Passing
-
-Rather than sharing state between threads, an increasingly popular approach to safe concurrency is message passing.
-* In this approach, threads communicate with each other through channels
-* Golang famously utilizes this approach
-
-
----
-
-# Message Passing Example
-
-```rust
-let (tx, rx) = mpsc::channel();
-```
-* Channels have two halves, a transmitter and a receiver
-* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
-  * Ben finds the duck downstream, and reads the message (receiver)
-* Note that communication is one-way here
-* Note also that each channel can only transmit/receive one type
-  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
-
----
-
-# Message Passing Example
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-});
-
-let received = rx.recv().unwrap(); // receive val through the receiver
-println!("I am too busy to {}!", received);
-```
-* Note that, after we send `val`, we no longer have ownership of it!
-
----
-
-# Message Passing Example
-We can also use receivers as iterators!
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-thread::spawn(move || { // Take ownership of `tx`
-    let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-    tx.send("buy Connor lunch".into()).unwrap();
-});
-
-for msg in rx {
-  println!("I am too busy to {}!", msg);
-}
-```
-* Wait, what does `mpsc` stand for?
-
----
-
-# `mpsc` ⟹ Multiple Producer, Single Consumer
-
-This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
-
-```rust
-let (tx, rx) = mpsc::channel();
-
-let tx1 = tx.clone();
-thread::spawn(move || { // owns tx1
-      tx1.send("yo".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-thread::spawn(move || { // owns tx
-      tx.send("hello".into()).unwrap();
-      thread::sleep(Duration::from_secs(1));
-});
-
-for received in rx {
-    println!("Got: {}", received);
-}
-```
 
 ---
 
@@ -1212,20 +1101,6 @@ thread::spawn(move || {
 
 ---
 
-# One more thing...
-
----
-
-# `std::sync::atomic`
-
-Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
-* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
-* 100% lock free, using bespoke assembly instructions
-* Highly performant, but very difficult to use
-* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
-* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
-
----
 
 # Review: "Fearless Concurrency"
 
