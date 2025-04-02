@@ -110,7 +110,7 @@ so that this slide is shortened to
 
 # Today
 - Multithreading
-- Interthread Communication
+- Inter-thread Communication
   - Shared Memory
     - Data Races
     - Synchronization, Atomics
@@ -159,10 +159,8 @@ let handle = thread::spawn(|| {
 Suppose we're painting an image to the screen.
 
 * Divide image into eight regions
-
-* One region per thread
-
-* Easy! "Embarassingly parallel"
+* Assign each thread to paint one region
+* Easy! "Embarassingly parallel" - threads don't need to keep tabs on each other
 
 <!--Speaker note:
 "Embarassingly parallel" refers to problems where
@@ -179,7 +177,7 @@ Each thread retires to their cave
 
 # Motivating Communication
 
-Say our image is more complex.
+What if our image is more complex?
 
 * We're painting circles
 * Circles overlap and constantly moving
@@ -224,16 +222,14 @@ Now our threads need to talk to each other!
 
 # Approach 1: Shared Memory
 
-For each pixel,
-* Create shared variable `x`
-* Increment `x` when thread touches pixel
+For each pixel, create a shared variable `x`:
 
 ```c
-static int x = 0;
+static int x = 0; // one per pixel
 ```
 
-Now threads know
-* How many circles have been drawn?
+* When a thread touches a pixel, increment the pixel's associated `x`
+* Now each thread knows how many layers of paint on that pixel
 
 
 ---
@@ -275,7 +271,7 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-First ingredient: `x` must satisfy a property to be correct.
+First ingredient: `x` is shared, and `x` must satisfy some property to be correct.
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -301,6 +297,8 @@ static void update_x(void) {
 }
 ```
 
+* We don't actually write code like this
+  * This is how it gets compiled to machine instructions
 
 ---
 
@@ -413,9 +411,9 @@ Want bolded operations to be **atomic**.
 |---------------|---------------|
 | **temp = x**  |               |
 | **temp += 1** |               |
+| **x = temp**  |               |
 |               | temp = x      |
 |               | temp += 1     |
-| x = temp      |               |
 |               | x = temp      |
 
 </div>
@@ -496,6 +494,67 @@ One airtight update! Cannot be "incorrect" mid-update.
 1. `x` is shared
 2. ~~`x` becomes incorrect mid-update~~
 3. Unsynchronized updates
+
+
+---
+
+
+# Atomics
+
+The compiler usually translates the following operation...
+
+```c
+x += 1;
+```
+
+...into the machine instruction equivalent of this:
+
+```c
+int temp = x;
+temp += 1;
+x = temp;
+```
+
+
+---
+
+
+# Atomics
+
+However, we can use an atomic operation like this:
+
+```c
+__sync_fetch_and_add(&x, 1); // syntax depends on library
+```
+
+...which is implemented in hardware with just one machine instruction:
+
+```c
+x += 1;
+```
+
+* `fetch_and_add`: performs the operation suggested by the name, and returns the value that was previously in memory
+  * Also `fetch_and_sub`, `fetch_and_or`, `fetch_and_and`, ...
+
+---
+
+# Atomics
+
+Other common atomic is `compare_and_swap`
+* If the current value matches some old value, then write new value into memory
+  * Depending on variant, returns a boolean for whether new value was written into memory
+* "Lock-free" programming:
+  * No locks! Just `compare_and_swap` until we successfully write new value
+  
+<!-- Speaker note:
+Rule of thumb: conventional wisdom is that locking code is perceived as slower than lockless code
+
+This does NOT mean that lock-free solutions are more performant than lock-based solutions.
+
+Lock-based solutions are slow due to _contention_ for locks, not _presence_ of locks
+If multiple threads are contending for same memory location, i.e. stuck in a `compare_and_swap` loop, that can be equally slow
+This is why benchmarking is importnat, because we can't crystal-ball the performance of our solutions!
+-->
 
 
 ---
@@ -687,7 +746,7 @@ for received in rx {
 When tackling a parallelism problem, think:
 
 * What are my workers and how many do I have?
-* How should I divide the work among my workers?
+* How to divide the work among workers
 * Do I need to share data between workers?
   * Shared Memory vs Message Passing
 
