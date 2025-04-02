@@ -29,7 +29,7 @@ code {
 # The Story So Far...
 
 * We have covered all of the basic features of Rust, as well as many of the intermediate concepts
-* If you are confident you understand the past 11 lectures, you can probably say you are proficient with Rust!
+* If you are confident you understand the past 10 lectures, you can say you are proficient with Rust!
 
 
 ---
@@ -37,7 +37,7 @@ code {
 
 # Epilogue
 
-As much as we'd love to dive deep into each of these topics in depth, we simply do not have time.
+As much as we'd have loved to dive deep into all of these topics, we simply do not have that much time.
 
 However...
 
@@ -72,12 +72,15 @@ So far, we've only seen code where memory safety is guaranteed at compile time.
 * By definition, it enforces _soundness_ rather than _completeness_
 * We need a way to tell the compiler: "Trust me, I know what I'm doing"
 * Additionally, computer hardware is inherently unsafe
+    * _Network goes down..._
+    * _Someone unplugs your hard drive..._
+    * _Bit flip from cosmic ray..._
 
 
 ---
 
 
-# `unsafe` in 2024
+# `unsafe` in 2025
 
 * Rust's precise requirements for `unsafe` code are still being determined
 * There's an entire book dedicated to `unsafe` Rust called the [Rustonomicon](https://doc.rust-lang.org/nomicon/)
@@ -100,18 +103,37 @@ If you take anything away from today, it should be this:
 
 # What `unsafe` is not
 
-It's important to understand that `unsafe` is _not_ just a way to skirt the rules of Rust.
+It's important to understand that `unsafe` is _not_ just a way to skirt the rules of Rust. Recall the rules of Rust:
 
 * Ownership
 * Borrow Checking
 * Lifetimes
 * `unsafe` is a way to _enforce_ these rules using reasoning beyond the compiler
-* The onus is on _you_ to ensure the code is **safe**
+    * The onus is on _you_ to ensure the code is **safe**
+    * _This is usually the case with memory-unsafe languages!_
 
 <!--
 unsafe is a misleading keyword: it's not that the code _is_ unsafe, it is that the
 code is allowed to perform otherwise unsafe operations because in this particular context,
 those operations _are_ safe
+-->
+
+
+---
+
+
+# Other Languages
+
+You will likely not have to deal with `unsafe` unless you are dealing with low-level systems primitives and concepts.
+
+However, a lot of the concepts you will learn in this lecture can be applied to other languages, even if people don't usually explicitly say so.
+
+* Understanding undefined behavior is _super_ important in C and C++
+
+<!--
+Arguably, it is even more important to understand undefined behavior in C/C++ than in Rust, but most
+people never actually learn these things from tutorials. Instead, they learn the hard way (by
+encountering corrupted memory that they don't understand).
 -->
 
 
@@ -140,7 +162,7 @@ impl<T> SomeType<T> {
 
 # The `unsafe` Keyword
 
-The second way is marking an _expression_ as `unsafe`
+The second way is marking an _expression_ as `unsafe`.
 
 ```rust
 impl<T> SomeType<T> {
@@ -158,7 +180,7 @@ impl<T> SomeType<T> {
 
 ```rust
 impl<T> SomeType<T> {
-    pub unsafe fn decr(&self) {
+    pub unsafe fn decr_ref_count(&self) {
         self.some_usize -= 1;
     }
 
@@ -192,7 +214,7 @@ impl<T> Rc<T> {
 ```
 
 * When `self.count` hits 0, `T` is dropped
-* What if someone else constructed `&T` without incrementing `count`?
+* What if someone else constructed `&T` without incrementing `self.count`?
 * As long as nobody corrupts the reference count, this code is safe
 
 
@@ -235,6 +257,12 @@ The **biggest** superpower of all is superpower 5!
     * That's it!
     * _But honestly, it's enough to wreak all sorts of havoc..._
 
+<!--
+In other words, essentially everything that you think of with respect to undefined behavior is
+simply because you are allowed to dereference a raw pointer. Now, think about how often you are
+doing that in C and C++...
+-->
+
 
 ---
 
@@ -256,7 +284,7 @@ Unsafe Rust has 2 types of Raw Pointers:
 
 Raw Pointers themselves are allowed to do some special things:
 
-* They can ignore borrowing rules by have multiple immutable and mutable pointers to the same location
+* They can ignore borrowing rules by having multiple immutable and mutable pointers to the same location
 * They are not guaranteed to point to valid memory
 * They don't implement any automatic cleanup
 * They can be `NULL` 💀
@@ -267,7 +295,7 @@ Raw Pointers themselves are allowed to do some special things:
 
 # Raw Pointers Example
 
-Here's an example of creating raw pointers.
+Here's an example of creating raw pointers:
 
 ```rust
 let mut num = 5;
@@ -286,14 +314,14 @@ let r2 = &mut num as *mut i32;
 
 # Raw Pointers Example
 
-Here is another example of creating a raw pointer.
+Here is another example of creating a raw pointer:
 
 ```rust
 let address: usize = 0xDEADBEEF;
 let r = address as *const i32;
 ```
 
-* We construct a pointer to (likely) invalid memory
+* We construct a pointer to (likely invalid) memory
 * Again, no `unsafe` keyword necessary here!
 
 
@@ -302,7 +330,7 @@ let r = address as *const i32;
 
 # Raw Pointers and `unsafe`
 
-Let's actually try and dereference these pointers.
+Let's actually try and dereference these pointers:
 
 ```rust
 let mut num = 5;
@@ -319,6 +347,10 @@ unsafe {
 * There's no undefined behavior here? Right?
 * _Right?_
 * Right! 🦀
+
+<!--
+We'll get to why this is totally safe in a bit...
+-->
 
 
 ---
@@ -371,10 +403,33 @@ fn main() {
 }
 ```
 
-* The `"C"` defines the _Application Binary Interface (ABI)_ that the external function uses
-* We have no idea if `abs` is doing what it is supposed to be doing, so it is on us as the programmer to ensure safety
 
-<!-- Really emphasize here that `abs` is allowed to completely obliterate your program -->
+---
+
+
+# `extern "C"`
+
+```rust
+extern "C" {
+    fn abs(input: i32) -> i32;
+}
+
+fn main() {
+    unsafe {
+        println!("Absolute value of -3 according to C: {}", abs(-3));
+    }
+}
+```
+
+* The `extern "C"` declares the _Application Binary Interface (ABI)_ that this foreign function uses
+* We have no idea if `abs` is doing what it is supposed to be doing
+    * It is on us as the programmer to ensure safety
+
+<!--
+Remember that C has literally no guarantees on the behavior of a function.
+`abs` is allowed to completely obliterate your stack if it wants to.
+You as the developer have to verify and ensure that this function is safe to call
+-->
 
 
 ---
@@ -391,7 +446,8 @@ pub extern "C" fn call_from_c() {
 }
 ```
 
-* Note how the usage of `extern` does not require `unsafe`
+* Note that this is _not_ a foreign function, this us "exporting" our Rust function to other languages
+* Also observe how the usage of `extern` does not require `unsafe`
 
 
 ---
@@ -412,7 +468,6 @@ fn add_to_count(inc: u32) {
 
 fn main() {
     add_to_count(3);
-
     unsafe {
         println!("COUNTER: {}", COUNTER);
     }
@@ -429,6 +484,7 @@ The last 2 superpowers are implementing an `unsafe` trait and accessing fields o
 
 * `Send` and `Sync` are both `unsafe` traits
     * The developer must provide their own proof of thread safety
+    * _More on thread safety in the next lecture!_
 * `union`s are primarily used to interface with unions in C code
 
 
@@ -479,6 +535,8 @@ fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]);
 
 # `split_at_mut` Implementation
 
+Here is a trivial first attempt:
+
 ```rust
 fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
     let len = values.len();
@@ -492,6 +550,10 @@ fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
 * What is the issue with this?
 * Can you figure out what the compiler will tell us _just by looking at the function signature_?
 
+<!--
+Pretend that confused ferris is somewhere on the right looking worried (not enough slide space)
+-->
+
 
 ---
 
@@ -501,8 +563,6 @@ fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
 If we try to compile, we get this error:
 
 ```
-$ cargo run
-   Compiling unsafe-example v0.1.0 (file:///projects/unsafe-example)
 error[E0499]: cannot borrow `*values` as mutable more than once at a time
  --> src/main.rs:6:31
   |
@@ -520,6 +580,11 @@ For more information about this error, try `rustc --explain E0499`.
 error: could not compile `unsafe-example` due to previous error
 ```
 
+<!--
+Cannot mutably borrow from the same reference twice!
+This goes back to the permissions of places from ownership part 2
+-->
+
 
 ---
 
@@ -529,8 +594,6 @@ error: could not compile `unsafe-example` due to previous error
 Let's try again with `unsafe`.
 
 ```rust
-use std::slice;
-
 fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
     let len = values.len();
     let ptr = values.as_mut_ptr();
@@ -539,8 +602,8 @@ fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
 
     unsafe {
         (
-            slice::from_raw_parts_mut(ptr, mid),
-            slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+            std::slice::slice::from_raw_parts_mut(ptr, mid),
+            std::slice::slice::from_raw_parts_mut(ptr.add(mid), len - mid),
         )
     }
 }
@@ -552,17 +615,19 @@ fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
 
 # `split_at_mut` Implementation
 
+`from_raw_parts_mut` is `unsafe` because it takes a raw pointer and length, and it must trust that these form a valid slice.
+
 ```rust
 unsafe {
     (
-        slice::from_raw_parts_mut(ptr, mid),
-        slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+        std::slice::slice::from_raw_parts_mut(ptr, mid),
+        std::slice::slice::from_raw_parts_mut(ptr.add(mid), len - mid),
     )
 }
 ```
 
-* `from_raw_parts_mut` is `unsafe` because it takes a raw pointer and must trust it is valid
-* Since the `ptr` came from a valid slice, we know it is valid!
+* Since the `ptr` came from a valid slice, we know the first is valid
+* Since we know `[mid, len)` is valid memory, we also know the second is valid!
 
 
 ---
@@ -599,6 +664,11 @@ Here is the actual safety contract for `from_raw_parts_mut`:
 ///   See the safety documentation of [`pointer::offset`].
 ```
 
+<!--
+Basically, you need to make sure (as the programmer) that this (very long) contract is satisfied
+whenever you call `from_raw_parts_mut`.
+-->
+
 
 ---
 
@@ -622,6 +692,74 @@ let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
 ---
 
 
+# SAFETY Contracts
+
+Whenever you use `unsafe`, make sure to write proof of why your code is not undefined behavior.
+
+```rust
+let mut v: Vec<i32> = vec![1, 2, 3, 4];
+// SAFETY: We know that `v` has 4 elements, so adding `3 * size_of::<i32>()`
+// cannot overflow (wrap around the address space).
+let p: *const i32 = unsafe { v.as_ptr().add(3) };
+
+v.push(5);
+
+// SAFETY: We have checked that a resize will never happen with only
+// 5 elements, so this dereference is safe.
+let elem: i32 = unsafe { *p };
+println!("{}", elem);
+```
+
+* This is simplified!
+
+<!--
+Recall this code snippet from Ownership part 2
+-->
+
+
+---
+
+
+Note that this is what the `unsafe` code should _really_ look like:
+
+```rust
+let mut v: Vec<i32> = vec![1, 2, 3, 4];
+
+// SAFETY: We know that `v` has 4 valid elements, which means that the pointers at
+// offsets +1, +2, and +3 are all valid pointers that point to values of type `i32`.
+// This also means it cannot be the case that adding `3 * size_of::<i32>()` to
+// `v.as_ptr()` overflows, otherwise that last element could not even exist in the
+// first place. With these two guarantees, we fulfill `add`'s safety contract.
+let p: *const i32 = unsafe { v.as_ptr().add(3) };
+
+v.push(5);
+
+// SAFETY: We showed above that `p` was a valid pointer to an `i32` value. We have
+// also checked in the code of `Vec::push` that a resize and reallocation
+// **cannot** happen when there are only 5 elements. So since there is no
+// reallocation, and `v` is still in scope (so the memory has not been freed), this
+// dereference of `p` to an `i32` value is valid.
+let elem: i32 = unsafe { *p };
+
+println!("{}", elem);
+```
+
+<!--
+In general, it is good practice to do this for other languages as well (C/C++). Obviously, you don't
+have to do a pretty large proof like this for every single pointer dereference in C.
+
+But it is a good exercise to ask when writing C or C++: Is this dereference guaranteed to point to
+somewhere that is valid memory? Am I sure that I am not pointing to NULL? Am I sure that the memory
+I am pointing to has not been freed?
+
+This is especially good when you are dealing with a memory corruption bug (Segmentation Fault) and
+you have no idea what is wrong!
+-->
+
+
+---
+
+
 # With Great Power...
 
 What could go wrong?
@@ -639,7 +777,7 @@ What could go wrong?
 
 If you get something wrong, your program now has _undefined behavior_.
 
-* It should go without saying that undefined behavior is bad
+* It should go without saying that undefined behavior is bad...
 * The best scenario is you get a visible error:
     * Segfaults
     * Unexpected deadlocks
@@ -653,7 +791,7 @@ If you get something wrong, your program now has _undefined behavior_.
 
 # Undefined Behavior
 
-The worst case scenario is that your program state is invisibly corrupted.
+The worst case scenario is that your program state is _invisibly_ corrupted.
 
 * Data races
 * Transactions aren't atomic
@@ -673,6 +811,11 @@ Unsafe code is not defined.
 * It could also miscompile surrounding, safe code!
 * In a lot of ways, `unsafe` Rust is far worse than C/C++ because it assumes _all_ of Rust's safety guarantees
 
+<!--
+For that first part, this is obviously not true in general, but it should paint the picture that
+you should really not be using `unsafe` unless you really need to
+-->
+
 
 ---
 
@@ -686,6 +829,7 @@ You may recall that all references must be valid. A valid reference:
 * must always point to a valid value for their target type
 * must either be immutably shared or mutably exclusive
 * Plus more guarantees relating to lifetimes
+* If you create a reference from a pointer, make sure all of these are true!
 
 <!--
 Remember, Rust does not have a stable ABI! `repr(Rust)`
@@ -760,6 +904,7 @@ Miri is an undefined behavior detection tool for Rust.
 * Can detect out-of-bounds memory accesses and use-after-free
 * Invalid use of uninitialized data
 * Not sufficiently aligned memory accesses and references
+* Can also detect data races!
 
 
 ---
