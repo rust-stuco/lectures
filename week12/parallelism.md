@@ -51,7 +51,7 @@ Parallelism divides tasks among workers.
 
 * In hardwareland, we call these workers **processors** and **cores**.
 
-* In softwareland,
+* In softwareland...
   * "Processors" => Processes
   * "Cores" => Threads
 
@@ -115,8 +115,8 @@ Two big questions to ask:
   * Who are the workers and how do we divide the work?
 * Inter-thread / Inter-process Communication (IPC)
   * What needs to be shared and how?
-  * Approach 1: Shared Memory
-  * Approach 2: Message Passing
+    * Approach 1: Shared Memory
+    * Approach 2: Message Passing
 
 
 ---
@@ -235,7 +235,7 @@ static int x = 0; // One per pixel
 ```
 
 * When a thread touches a pixel, increment the pixel's associated `x`
-* Now each thread knows how many layers of paint on that pixel
+* Now each thread knows how many layers of paint on that pixel has
 
 
 ---
