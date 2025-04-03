@@ -51,7 +51,7 @@ Parallelism divides tasks among workers.
 
 * In hardwareland, we call these workers **processors** and **cores**.
 
-* In softwareland, <!-- "we give these workers a different name" -->
+* In softwareland,
   * "Processors" => Processes
   * "Cores" => Threads
 
@@ -60,14 +60,14 @@ Parallelism divides tasks among workers.
 
 
 <!-- Note:
-Students coming from 122 may be unfamiliar with processors/cores,
-so I added this for clarification.
+21st century relevance of parallelism is due to the slowing of Moore's Law
+=> fall on software optimizations to squeeze performance out of cores
 
-Alternate suggestion is to remove mention of hardware,
-so that this slide is shortened to
-  "Examples of workers: 
-      * Processes
-      * Threads"
+Emphasize that parallel programming is more like a workaround to hardware constraints,
+rather than the inherent goal.
+Don't overindex on the quirks of particular parallel programming frameworks;
+the ultimate goal is still to advance technology s.t. parallel programming becomes
+invisible to the programmer
 -->
 
 
@@ -263,14 +263,10 @@ We'll walk through the other ingredients
 Suppose we have a shared variable `x`.
 
 ```c
-// Note this is C pseudocode
 static int x = 0;
 ```
 
-<!-- Speaker note:
-(1) This is pseudocode; we'll explain Rust's interface in second half
-(2) `static` => shared
--->
+* This is C pseudocode; we'll explain Rust's interface in second half
 
 
 ---
@@ -460,6 +456,8 @@ We need to establish *mutual exclusion*, so that threads don't interfere with ea
 
 
 <!-- Explain what mutual exclusion is, what a mutex is, high level, verbally -->
+
+
 ---
 
 
