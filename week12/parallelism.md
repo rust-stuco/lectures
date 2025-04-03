@@ -108,14 +108,15 @@ so that this slide is shortened to
 ---
 
 
-# Today
-- Multithreading
-- Inter-thread Communication
-  - Shared Memory
-    - Data Races
-    - Synchronization, Atomics
-  - Message Passing
-    - `Send` and `Sync`
+# Designing Parallel Solutions
+
+Two big questions to ask:
+* Division of Work
+  * Who are the workers and how do we divide the work?
+* Inter-thread / Inter-process Communication (IPC)
+  * What needs to be shared and how?
+  * Approach 1: Shared Memory
+  * Approach 2: Message Passing
 
 
 ---
@@ -148,7 +149,7 @@ let handle = thread::spawn(|| {
 ```
 * `thread::spawn` takes a function as argument
   * This is the function that the thread runs
-* We can spawn multiple of these, to run multiple functions at once!
+* We can spawn multiple of these, to run multiple functions at once
 
 
 ---
@@ -156,11 +157,13 @@ let handle = thread::spawn(|| {
 
 # Multithreading
 
-Suppose we're painting an image to the screen.
+Suppose we're painting an image to the screen, and we have eight threads.
 
-* Divide image into eight regions
-* Assign each thread to paint one region
-* Easy! "Embarassingly parallel" - threads don't need to keep tabs on each other
+* How should we divide the work?
+  * Divide image into eight regions
+  * Assign each thread to paint one region
+* Easy! "Embarassingly parallel"
+  * Threads don't need to keep tabs on each other
 
 <!--Speaker note:
 "Embarassingly parallel" refers to problems where
@@ -175,24 +178,27 @@ Each thread retires to their cave
 ---
 
 
-# Motivating Communication
+# The Case for Communication
 
 What if our image is more complex?
 
-* We're painting circles
-* Circles overlap and constantly moving
-* The _order_ we paint circles affects their color
+* We're painting semi-transparent circles
+* Circles overlap and are constantly moving
+* The _order_ we paint circles affects the color mixing
 
-<!--Note:
-  This is 418's circle rendering problem
-  Can add images to illustrate the color mixing
+![bg right 100%](../images/week12/circle-order-A-then-B.png)
+
+![bg right 100%](../images/week12/circle-order-B-then-A.png)
+
+<!--
+This is also known as the painter's algorithm
 -->
 
 
 ---
 
 
-# Motivating Communication
+# The Case for Communication
 
 Now our threads need to talk to each other!
 
@@ -208,7 +214,7 @@ Now our threads need to talk to each other!
 
 **Problem:** How do threads communicate?
 
-**Solution:**
+**Solutions:** We'll discuss two approaches...
 * Approach 1: Shared Memory
 * Approach 2: Message Passing
 
@@ -225,7 +231,7 @@ Now our threads need to talk to each other!
 For each pixel, create a shared variable `x`:
 
 ```c
-static int x = 0; // one per pixel
+static int x = 0; // One per pixel
 ```
 
 * When a thread touches a pixel, increment the pixel's associated `x`
@@ -247,6 +253,7 @@ Not quite...
 <!--Speaker note:
 We'll walk through the other ingredients
 -->
+
 
 ---
 
@@ -271,7 +278,7 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-First ingredient: `x` is shared, and `x` must satisfy some property to be correct.
+First ingredient: `x` is in shared memory, and `x` must satisfy some property to be correct.
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -370,13 +377,7 @@ We want `x = 2`, but we get `x = 1`!
 
 # Shared Memory: Data Races
 
-Want bolded operations to be **atomic**.
-
-<!--Speaker Note:
-"That is, while Thread 1 is executing these instructions,
-  Thread 2 cannot cut in.
-"
--->
+We want the read-set operations to be **atomic**.
 
 <style>
     .container {
@@ -395,9 +396,9 @@ Want bolded operations to be **atomic**.
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
-| **temp = x**  |               |
+| temp = x  |               |
 |               | temp = x      |
-| **temp += 1** |               |
+| temp += 1 |               |
 |               | temp += 1     |
 | x = temp      |               |
 |               | x = temp      |
@@ -409,9 +410,9 @@ Want bolded operations to be **atomic**.
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
-| **temp = x**  |               |
-| **temp += 1** |               |
-| **x = temp**  |               |
+| temp = x  |               |
+| temp += 1 |               |
+| x = temp  |               |
 |               | temp = x      |
 |               | temp += 1     |
 |               | x = temp      |
@@ -419,19 +420,9 @@ Want bolded operations to be **atomic**.
 </div>
 </div>
 
-
----
-
-
-# Fixing a Data Race
-
-We must eliminate one of the following:
-1. `x` is shared
-2. `x` becomes incorrect mid-update
-3. Unsynchronized updates
-
-<!--
-Speaker note: Unsynchronized = parties can "cut in" mid-update
+<!--Speaker Note:
+That is, while Thread 1 is executing these instructions,
+  Thread 2 cannot cut in.
 -->
 
 ---
@@ -439,19 +430,29 @@ Speaker note: Unsynchronized = parties can "cut in" mid-update
 
 # Fixing a Data Race
 
-**Approach 1: Synchronization**
-
-Take turns! No "cutting in" mid-update.
-
-1. `x` is shared
+We must eliminate one of the following:
+1. `x` is shared memory
 2. `x` becomes incorrect mid-update
-3. ~~Unsynchronized updates~~
+3. Unsynchronized updates (parties can "cut in" mid-update)
 
 
 ---
 
 
-# Synchronization
+# Approach 1: Mutual Exclusion
+
+
+Take turns! No "cutting in" mid-update.
+
+1. `x` is shared memory
+2. `x` becomes incorrect mid-update
+3. ~~Unsynchronized updates (parties can "cut in" mid-update)~~
+
+
+---
+
+
+# Approach 1: Mutual Exclusion
 
 We need to establish *mutual exclusion*, so that threads don't interfere with each other.
 * Mutual exclusion means "Only one thread can do something at a time"
@@ -462,7 +463,7 @@ We need to establish *mutual exclusion*, so that threads don't interfere with ea
 ---
 
 
-# Sharing Resources With Mutual Exclusion
+# Approach 1: Mutual Exclusion
 
 ```c
 static int x = 0;
@@ -485,21 +486,20 @@ static void thread(void) {
 ---
 
 
-# Fixing a Data Race
+# Approach 2: Atomics
 
-**Approach 2: Atomics**
 
 One airtight update! Cannot be "incorrect" mid-update.
 
-1. `x` is shared
+1. `x` is shared memory
 2. ~~`x` becomes incorrect mid-update~~
-3. Unsynchronized updates
+3. Unsynchronized updates (parties can "cut in" mid-update)
 
 
 ---
 
 
-# Atomics
+# Approach 2: Atomics
 
 The compiler usually translates the following operation...
 
@@ -519,7 +519,7 @@ x = temp;
 ---
 
 
-# Atomics
+# Approach 2: Atomics
 
 However, we can use an atomic operation like this:
 
@@ -527,7 +527,7 @@ However, we can use an atomic operation like this:
 __sync_fetch_and_add(&x, 1); // syntax depends on library
 ```
 
-...which is implemented in hardware with just one machine instruction:
+...which is implemented in hardware with just one instruction:
 
 ```c
 x += 1;
@@ -545,6 +545,8 @@ Other common atomic is `compare_and_swap`
   * Depending on variant, returns a boolean for whether new value was written into memory
 * "Lock-free" programming:
   * No locks! Just `compare_and_swap` until we successfully write new value
+  * Not necessarily more performant than lock-based solutions
+    * Contention is bottleneck, not presence of locks
   
 <!-- Speaker note:
 Rule of thumb: conventional wisdom is that locking code is perceived as slower than lockless code
@@ -563,11 +565,10 @@ This is why benchmarking is importnat, because we can't crystal-ball the perform
 # Atomics
 
 Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
-* Safe to share between threads (implementing `Sync`), providing ways to access the values atomically from any thread
-* 100% lock free, using bespoke assembly instructions
-* Highly performant, but very difficult to use
-* Requires an understanding of *memory ordering*—one of the most difficult topics in computer systems
-* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics.
+* Provides a way to access values atomically from any thread
+  * Safe to share between threads implementing `Sync`
+* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics
+  * If interested in pitfalls, read up on *memory ordering* in computer systems
 
 
 ---
@@ -577,9 +578,9 @@ Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsiz
 
 **Approach 3: No Shared Memory**
 
-If we eliminate shared memory,
+If we eliminate shared memory...
 
-1. ~~`x` is shared~~
+1. ~~`x` is shared memory~~
 2. `x` becomes incorrect mid-update
 3. Unsynchronized updates
 
@@ -591,7 +592,7 @@ If we eliminate shared memory,
 
 **Approach 3: No Shared Memory**
 
-If we eliminate shared memory, race is trivially gone.
+If we eliminate shared memory... race is trivially gone.
 
 1. ~~`x` is shared~~
 2. ~~`x` becomes incorrect mid-update~~
@@ -603,9 +604,8 @@ If we eliminate shared memory, race is trivially gone.
 
 # Message Passing
 
-**Problem:** How do threads communicate?
+Now we talk about the second approach to inter-thread communication:
 
-**Solution:**
 - Approach 1: Shared Memory
 * Approach 2: Message Passing
   * Eliminates shared memory
@@ -613,52 +613,56 @@ If we eliminate shared memory, race is trivially gone.
 
 ---
 
+
+# Approach 2: Message Passing
+
+Previously, our shared memory solution was
+
+* For each pixel...
+  * Create shared variable `x`
+  * Increment `x` when thread touches pixel
+
+
+---
+
+
+
+# Approach 2: Message Passing
+
+In our **message passing** solution, we do *not* share `x`, but create a thread-local copy.
+
+- For each pixel...
+  - Create a local variable `x` for each thread (not shared!)
+  - Increment `x` when thread touches pixel
+
+
+---
+
+
+# Approach 2: Message Passing
+
+When threads update their local copy, they notify other threads via **message passing**.
+
+- For each pixel...
+  - Create a local variable `x` for each thread (not shared!)
+  - Increment `x` when thread touches pixel
+    - Send message to other threads, so they update their copies of `x`
+* Left as an exercise:
+  * There's another way to divide the work with less communication costs
+  * Ferris (and Clarabelle) will be proud of you if you find it
+
+
+---
+
+
 # Message Passing
 
 * Threads communicate via channels
-
-<!-- Speaker note: Golang famously uses this approach -->
-
-
----
-
-
-# Approach 2: Message Passing
-
-Previously, shared memory solution was
-
-> For each pixel,
-> - Create shared variable `x`
-> - Increment `x` when thread touches pixel
+* Golang famously uses this approach
 
 
 ---
 
-
-# Approach 2: Message Passing
-
-In message passing, we eliminate shared memory,
-
-For each pixel,
-- Create a counter `x` for each thread
-> - Increment `x` when thread touches pixel
-
-
----
-
-
-# Approach 2: Message Passing
-
-We broadcast updates to other threads via **message passing**.
-
-For each pixel,
-- Create a counter `x` for each thread
-- Increment `x` when thread touches pixel
-  * Send message to other threads
-  * So they update their copies of `x`
-
-
----
 
 
 # Message Passing Example
