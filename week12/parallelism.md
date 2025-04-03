@@ -677,6 +677,13 @@ let (tx, rx) = mpsc::channel();
 * Note also that each channel can only transmit/receive one type
   * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
 
+
+<!-- Speaker note:
+One-way communication plays well with Rust's ownership model,
+hence why message passing emerges as a beloved choice
+- this programming practice is a product of its environment
+-->
+
 ---
 
 
@@ -694,6 +701,7 @@ let received = rx.recv().unwrap(); // receive val through the receiver
 println!("I am too busy to {}!", received);
 ```
 * Note that, after we send `val`, we no longer have ownership of it!
+
 
 ---
 
@@ -745,35 +753,25 @@ for received in rx {
 ---
 
 
-# Recap
-
-When tackling a parallelism problem, think:
-
-* What are my workers and how many do I have?
-* How to divide the work among workers
-* Do I need to share data between workers?
-  * Shared Memory vs Message Passing
-
-
----
-
 # Threads in Rust
 
-Now that we have an framework for parallelism problems, let's dive into the Rust specifics!
+Rust uniquely provides some nice guarantees for parallel code, and at the same time introduces a few complications...
+
 
 ---
 
 # Threads in Rust
 * Rust's typechecker guarantees an absence of *data races*
-  * (Unless you use unsafe)
+  * ...unless you use unsafe
 * General race conditions are not prevented
 * Deadlocks are still allowed
 
 <!-- In my opinion, this is the single best reason to use this language -->
 
+
 ---
 
-# Creating Threads
+# Creating Threads, In More Detail
 Threads can be created/spawned using `thread::spawn`.
 ```rust
 let handle = thread::spawn(|| {
@@ -784,9 +782,10 @@ let handle = thread::spawn(|| {
 });
 ```
 * `thread::spawn` takes in a function, implementing the `FnOnce` and `Send` traits.
-  * Closures are often used to allow capturing values, but functions work as well
   * More on the `Send` trait later...
 * Returns a `JoinHandle` type
+
+<!-- Closures are often used to allow capturing values, but functions work as well -->
 
 
 ---
@@ -838,26 +837,83 @@ let handle = thread::spawn(move || {
 ```
 * `v` is no longer accessible in the main thread
 * You could clone `v` to solve this problem
-  * But, what if we *wanted* to share `v`?
+  * But, what if we wanted to share `v`?
 
 ---
 
-# Multiple Owners
+# `Rc` for Shared Data
 
-Recall `Rc<T>` from last lecture.
-* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value.
-* The difference is, `Rc<T>` has an internal reference count, and the heap allocated value will only be dropped when the reference count reaches zero.
-* The only problem is, `Rc<T>` is not thread safe...
+Recall `Rc<T>` from our Smart Pointers lecture.
+* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value
+  * Difference being, `Box<T>` drops the value when it goes out of scope
+  * `Rc<T>` drops the value when its refcount hits zero
+    * refcount is number of references to the value
 
 <!-- Make sure people know about reference counts -->
 
 ---
 
+
+# Shared Memory: Data Races
+
+However, `Rc<T>` is not thread-safe... updates to refcount aren't atomic!
+
+<style>
+    .container {
+        display: flex;
+        gap: 16px;
+    }
+    .col {
+        flex: 1;
+    }
+</style>
+<div class = "container">
+
+<div class = "col">
+
+**Not Atomic**
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| temp = refcount  |               |
+|               | temp = refcount      |
+| temp += 1 |               |
+|               | temp += 1     |
+| refcount = temp      |               |
+|               | refcount = temp      |
+
+</div>
+<div class = "col">
+
+**Atomic**
+
+| Thread 1      |   Thread 2    |
+|---------------|---------------|
+| temp = x  |               |
+| temp += 1 |               |
+| x = temp  |               |
+|               | temp = x      |
+|               | temp += 1     |
+|               | x = temp      |
+
+</div>
+</div>
+
+<!--Speaker Note:
+That is, while Thread 1 is executing these instructions,
+  Thread 2 cannot cut in.
+-->
+
+---
+
 # `Arc<T>`
 
-"Arc" stands for "Atomically Reference Counted". This means, it is thread-safe, at the cost of slightly slower operations.
+Arc: "**A**tomically **R**eference **C**ounted"
+* Think of the refcount as atomically updated with `fetch_add`
+
 * General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads
   * The compiler will not let you use `Rc` across threads
+  * `Arc<T>` is thread-safe, at the cost of slightly slower operations
 
 ---
 
@@ -884,44 +940,33 @@ handle.join().unwrap();
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-# Sharing Mutable Resources in Rust
-If we attempt to mutate the vector, we will indeed encounter an error
+# Sharing *Mutable* Resources in Rust
+
+However, if we introduce a write, we would have a data race:
+
 ```rust
 let v = Arc::new(vec![1, 2, 3]);
 
 let v_copy = v.clone();
 let handle = thread::spawn(move || {
-    v_copy.push(4);
+    v_copy.push(4); // <- added this line
     println!("Here's a vector: {:?}", v_copy);
 });
 
-v.push(5);
+v.push(5); // <- added this line
 println!("Here's a vector: {:?}", v);
 
 handle.join().unwrap();
 ```
-* This prevents a data race
-  * If we allowed this, it would violate one of the rules—only one mutable reference at a time
+
 
 ---
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
 # Sharing Mutable Resources in Rust
-```rust
-let v = Arc::new(vec![1, 2, 3]);
 
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    v_copy.push(4);
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-v.push(5);
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
+The compiler indeed stops us:
 
 ```
 cannot borrow data in an Arc as mutable
@@ -930,11 +975,17 @@ help: trait DerefMut is required to modify through a dereference,
 but it is not implemented for Arc<Vec<i32>>
 ```
 
+* Note how this check is baked into the type and traits system for `Arc`
+  * Rust's typechecker guarantees absence of data races!
+
+<!-- If we allowed this, it would violate the borrowing rules of only one mutable reference at a time -->
+
 ---
 
 
 # Sharing Mutable Resources in Rust
 The solution to this is actually the same as in C—we introduce a mutex.
+
 
 ---
 
