@@ -108,10 +108,31 @@ Emphasize that "thread" is overloaded term
 
 ---
 
+# Example: The Main Thread
+
+The thread that runs by default is the main thread.
+
+```rust
+for i in 1..5 {
+    println!("hi number {i} from the main thread!");
+    thread::sleep(Duration::from_millis(1));
+}
+```
+
+
+---
+
 
 # Example: Creating a Thread
-Threads can be created ("spawned") using `thread::spawn`.
+
+We can create ("spawn") more threads with `thread::spawn`:
+
 ```rust
+for i in 1..5 {
+    println!("hi number {i} from the main thread!");
+    thread::sleep(Duration::from_millis(1));
+}
+
 let handle = thread::spawn(|| {
     for i in 1..10 {
         println!("hi number {} from the spawned thread!", i);
@@ -119,9 +140,58 @@ let handle = thread::spawn(|| {
     }
 });
 ```
+
 * `thread::spawn` takes a closure as argument
   * This is the function that the thread runs
-* We can spawn multiple of these, to run multiple functions at once
+
+
+---
+
+
+# Example: Joining Threads
+
+We join threads when we want to wait for a particular thread to finish execution:
+
+```rust
+for i in 1..5 {
+    println!("hi number {i} from the main thread!");
+    thread::sleep(Duration::from_millis(1));
+}
+
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        println!("hi number {} from the spawned thread!", i);
+        thread::sleep(Duration::from_millis(1));
+    }
+});
+
+handle.join().unwrap();
+```
+
+* Blocks the current thread until the thread associated with `handle` finishes
+
+
+---
+
+
+# Example: Multithreading Output
+
+See how the threads are alternating, effectively counting up at once:
+```
+hi number 1 from the main thread!
+hi number 2 from the main thread!
+hi number 1 from the spawned thread!
+hi number 3 from the main thread!
+hi number 2 from the spawned thread!
+hi number 4 from the main thread!
+hi number 3 from the spawned thread!
+hi number 4 from the spawned thread!
+hi number 5 from the spawned thread!
+hi number 6 from the spawned thread!
+hi number 7 from the spawned thread!
+hi number 8 from the spawned thread!
+hi number 9 from the spawned thread!
+```
 
 
 ---
@@ -345,7 +415,7 @@ We want `x = 2`, but we get `x = 1`!
 
 # Shared Memory: Data Races
 
-We want the read-set operations to be **atomic**.
+We want the update to be **atomic**. That is, other threads cannot cut in mid-update.
 
 <style>
     .container {
@@ -387,8 +457,6 @@ We want the read-set operations to be **atomic**.
 
 </div>
 </div>
-
-* That is, while Thread 1 is executing its sequence of instructions, Thread 2 cannot cut in
 
 
 ---
@@ -712,10 +780,6 @@ thread::spawn(move || { // owns tx
       tx.send("hello".into()).unwrap();
       thread::sleep(Duration::from_secs(1));
 });
-
-for received in rx {
-    println!("Got: {}", received);
-}
 ```
 
 ---
@@ -751,8 +815,8 @@ let handle = thread::spawn(|| {
 });
 ```
 * `thread::spawn` takes in a closure, implementing the `FnOnce` and `Send` traits.
+  * `FnOnce` implies we cannot spawn multiple threads of the same closure
   * More on the `Send` trait later...
-* Returns a `JoinHandle` type
 
 <!-- Closures are often used to allow capturing values, but functions work as well -->
 
@@ -760,6 +824,7 @@ let handle = thread::spawn(|| {
 ---
 
 # Joining Threads
+
 To wait for a thread to complete, we *join* on it.
 ```rust
 let handle = thread::spawn(|| {
