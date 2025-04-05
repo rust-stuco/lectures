@@ -28,9 +28,6 @@ code {
 
 # Parallelism vs. Concurrency
 
-<div class="columns">
-<div>
-
 ## Concurrency
 
 **Problem** of handling many tasks at once
