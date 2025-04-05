@@ -74,32 +74,7 @@ invisible to the programmer
 # Parallelism vs. Concurrency
 
 
-<img src="img/concvspar.jpg" style="width: 85%; margin-left: auto; margin-right: auto;">
-
-
----
-
-
-# Parallelism vs. Concurrency: Examples
-<div class="columns">
-<div>
-
-## Parallelism
-
-* 8 cores, 8 threads
-* 4 threads load the webpage, 4 threads update the progress bar
-
-</div>
-<div>
-
-## Alternate Concurrency Model
-
-* 1 core, 1 thread
-* When blocked on loading the webpage, update the progress bar
-
-
-</div>
-</div>
+<img src="img/concvspar-2.png" style="width: 85%; margin-left: auto; margin-right: auto;">
 
 
 ---
@@ -110,7 +85,7 @@ invisible to the programmer
 Two big questions to ask:
 * Division of Work
   * Who are the workers and how do we divide the work?
-* Inter-thread / Inter-process Communication (IPC)
+* Thread Communication
   * What needs to be shared and how?
     * Approach 1: Shared Memory
     * Approach 2: Message Passing
@@ -144,7 +119,7 @@ let handle = thread::spawn(|| {
     }
 });
 ```
-* `thread::spawn` takes a function as argument
+* `thread::spawn` takes a closure as argument
   * This is the function that the thread runs
 * We can spawn multiple of these, to run multiple functions at once
 
@@ -159,11 +134,11 @@ Suppose we're painting an image to the screen, and we have eight threads.
 * How should we divide the work?
   * Divide image into eight regions
   * Assign each thread to paint one region
-* Easy! "Embarassingly parallel"
+* Easy! "Embarrassingly parallel"
   * Threads don't need to keep tabs on each other
 
 <!--Speaker note:
-"Embarassingly parallel" refers to problems where
+"Embarrassingly parallel" refers to problems where
 we can easily utilize our hardware in full,
 usually because tasks are super independent
 
@@ -413,10 +388,8 @@ We want the read-set operations to be **atomic**.
 </div>
 </div>
 
-<!--Speaker Note:
-That is, while Thread 1 is executing these instructions,
-  Thread 2 cannot cut in.
--->
+* That is, while Thread 1 is executing its sequence of instructions, Thread 2 cannot cut in
+
 
 ---
 
@@ -599,7 +572,7 @@ If we eliminate shared memory... race is trivially gone.
 
 # Message Passing
 
-Now we talk about the second approach to inter-thread communication:
+Now we talk about the second approach to communication:
 
 - Approach 1: Shared Memory
 * Approach 2: Message Passing
@@ -766,6 +739,7 @@ Rust uniquely provides some nice guarantees for parallel code, and at the same t
 
 ---
 
+
 # Creating Threads, In More Detail
 Threads can be created/spawned using `thread::spawn`.
 ```rust
@@ -776,7 +750,7 @@ let handle = thread::spawn(|| {
     }
 });
 ```
-* `thread::spawn` takes in a function, implementing the `FnOnce` and `Send` traits.
+* `thread::spawn` takes in a closure, implementing the `FnOnce` and `Send` traits.
   * More on the `Send` trait later...
 * Returns a `JoinHandle` type
 
