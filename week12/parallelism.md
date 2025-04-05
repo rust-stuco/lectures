@@ -114,7 +114,7 @@ The thread that runs by default is the main thread.
 
 ```rust
 for i in 1..5 {
-    println!("hi number {i} from the main thread!");
+    println!("working on item {i} from the main thread!");
     thread::sleep(Duration::from_millis(1));
 }
 ```
@@ -129,13 +129,13 @@ We can create ("spawn") more threads with `thread::spawn`:
 
 ```rust
 for i in 1..5 {
-    println!("hi number {i} from the main thread!");
+    println!("working on item {i} from the main thread!");
     thread::sleep(Duration::from_millis(1));
 }
 
 let handle = thread::spawn(|| {
     for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
+        println!("working on item {} from the spawned thread!", i);
         thread::sleep(Duration::from_millis(1));
     }
 });
@@ -154,13 +154,13 @@ We join threads when we want to wait for a particular thread to finish execution
 
 ```rust
 for i in 1..5 {
-    println!("hi number {i} from the main thread!");
+    println!("working on item {i} from the main thread!");
     thread::sleep(Duration::from_millis(1));
 }
 
 let handle = thread::spawn(|| {
     for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
+        println!("working on item {} from the spawned thread!", i);
         thread::sleep(Duration::from_millis(1));
     }
 });
@@ -178,19 +178,19 @@ handle.join().unwrap();
 
 See how the threads are alternating, effectively counting up at once:
 ```
-hi number 1 from the main thread!
-hi number 2 from the main thread!
-hi number 1 from the spawned thread!
-hi number 3 from the main thread!
-hi number 2 from the spawned thread!
-hi number 4 from the main thread!
-hi number 3 from the spawned thread!
-hi number 4 from the spawned thread!
-hi number 5 from the spawned thread!
-hi number 6 from the spawned thread!
-hi number 7 from the spawned thread!
-hi number 8 from the spawned thread!
-hi number 9 from the spawned thread!
+working on item 1 from the main thread!
+working on item 2 from the main thread!
+working on item 1 from the spawned thread!
+working on item 3 from the main thread!
+working on item 2 from the spawned thread!
+working on item 4 from the main thread!
+working on item 3 from the spawned thread!
+working on item 4 from the spawned thread!
+working on item 5 from the spawned thread!
+working on item 6 from the spawned thread!
+working on item 7 from the spawned thread!
+working on item 8 from the spawned thread!
+working on item 9 from the spawned thread!
 ```
 
 
@@ -809,7 +809,7 @@ Threads can be created/spawned using `thread::spawn`.
 ```rust
 let handle = thread::spawn(|| {
     for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
+        println!("working on item {} from the spawned thread!", i);
         thread::sleep(Duration::from_millis(1));
     }
 });
@@ -825,21 +825,112 @@ let handle = thread::spawn(|| {
 
 # Joining Threads
 
-To wait for a thread to complete, we *join* on it.
+Recall that to wait for a thread to complete, we *join* on it.
 ```rust
 let handle = thread::spawn(|| {
     for i in 1..10 {
-        println!("hi number {} from the spawned thread!", i);
-        thread::sleep(Duration::from_millis(1));
+        // print from spawned thread
     }
 });
 
-handle.join().unwrap();
+handle.join().unwrap(); // <- join here
 ```
 * Execution of the main thread is halted until the spawned thread finishes
 
 
 ---
+
+
+# Joining Threads
+
+Be mindful of when you join threads!
+```rust
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        // print from spawned thread
+    }
+});
+
+handle.join().unwrap(); // <- join here
+
+for i in 1..5 {
+    // print from main thread
+}
+```
+
+* Suppose that the main and spawned thread are both doing work in `for` loops
+
+
+---
+
+
+# Joining Threads
+
+The main thread will wait for the spawned thread to finish before it begins work:
+```
+working on item 1 from the spawned thread!
+working on item 2 from the spawned thread!
+working on item 3 from the spawned thread!
+working on item 4 from the spawned thread!
+working on item 5 from the spawned thread!
+working on item 6 from the spawned thread!
+working on item 7 from the spawned thread!
+working on item 8 from the spawned thread!
+working on item 9 from the spawned thread!
+working on item 1 from the main thread!
+working on item 2 from the main thread!
+working on item 3 from the main thread!
+working on item 4 from the main thread!
+```
+
+* We don't want this
+
+
+---
+
+
+# Joining Threads
+
+This is why we `join` _after_ the main thread has finished its work:
+```rust
+let handle = thread::spawn(|| {
+    for i in 1..10 {
+        // print from spawned thread
+    }
+});
+
+for i in 1..5 {
+    // print from main thread
+}
+
+handle.join().unwrap(); // <- join here
+```
+
+
+---
+
+# Joining Threads
+
+This produces the alternating output as desired:
+```
+working on item 1 from the main thread!
+working on item 2 from the main thread!
+working on item 1 from the spawned thread!
+working on item 3 from the main thread!
+working on item 2 from the spawned thread!
+working on item 4 from the main thread!
+working on item 3 from the spawned thread!
+working on item 4 from the spawned thread!
+working on item 5 from the spawned thread!
+working on item 6 from the spawned thread!
+working on item 7 from the spawned thread!
+working on item 8 from the spawned thread!
+working on item 9 from the spawned thread!
+```
+
+
+---
+
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
@@ -963,7 +1054,7 @@ let handle = thread::spawn(move || {
 
 println!("Here's a vector: {:?}", v);
 
-handle.join().unwrap();
+handle.join().unwrap(); // <- join here
 ```
 * `v` and `v_copy` both point to the same value
 * When both  are dropped, only then will the underlying vector be dropped
