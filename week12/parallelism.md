@@ -277,7 +277,7 @@ static int x = 0; // One per pixel
 ```
 
 * When a thread touches a pixel, increment the pixel's associated `x`
-* Now each thread knows how many layers of paint on that pixel has
+* Now each thread knows how many layers of paint there are on that pixel
 
 
 ---
@@ -299,15 +299,15 @@ We'll walk through the other ingredients
 
 ---
 
-
 # Shared Memory: Data Races
-
 Suppose we have a shared variable `x`.
 
+**First ingredient**: `x` is in shared memory, and `x` must satisfy some property to be correct.
+
 ```c
+// Invariant: `x` is total number of times **any** thread has called `update_x`
 static int x = 0;
 ```
-
 * This is C pseudocode; we'll explain Rust's interface in second half
 
 
@@ -316,20 +316,7 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-First ingredient: `x` is in shared memory, and `x` must satisfy some property to be correct.
-
-```c
-// x is # of times *any* thread has called `update_x`
-static int x = 0;
-```
-
-
----
-
-
-# Shared Memory: Data Races
-
-Second ingredient: `x` becomes incorrect mid-update.
+**Second ingredient**: `x` becomes incorrect mid-update.
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -350,7 +337,7 @@ static void update_x(void) {
 
 # Shared Memory: Data Races
 
-Third ingredient: when multiple threads update at once...
+**Third ingredient**: when multiple threads update at once...
 
 ```c
 // x is # of times *any* thread has called `update_x`
@@ -363,7 +350,7 @@ static void update_x(void) {
 }
 // <!-- snip -->
 for (int i = 0; i < 20; ++i) {
-  create_thread(update_x);
+  spawn_thread(update_x);
 }
 ```
 
@@ -373,7 +360,7 @@ for (int i = 0; i < 20; ++i) {
 
 # Shared Memory: Data Races
 
-Third ingredient: when multiple threads update at once...they interleave!
+**Third ingredient**: when multiple threads update at once...they interleave!
 
 
 | Thread 1      |   Thread 2    |
@@ -390,6 +377,8 @@ Third ingredient: when multiple threads update at once...they interleave!
 Q: Can someone tell me the outcome of this sequence?
 A: Next slide
 -->
+
+<!-- Speaker's note: This is just one possible way of incorrect interleaving. -->
 
 
 ---
@@ -514,7 +503,7 @@ static void thread(void) {
 }
 // <!-- snip -->
 ```
-- Only one thread can hold the mutex lock at a time
+- Only one thread can hold the mutex lock (`mtx_t`) at a time
 
 - This provides *mutual exclusion*--only one thread may access `x` at the same time.
 
@@ -574,7 +563,7 @@ x += 1;
 
 ---
 
-# Atomics
+# Sneak Peak of CAS Atomic
 
 Other common atomic is `compare_and_swap`
 * If the current value matches some old value, then write new value into memory
@@ -584,6 +573,9 @@ Other common atomic is `compare_and_swap`
   * Not necessarily more performant than lock-based solutions
     * Contention is bottleneck, not presence of locks
   
+<!--Speaker note: can skip over this slide during lecture and students can look at it if they want.
+-->
+
 <!-- Speaker note:
 Rule of thumb: conventional wisdom is that locking code is perceived as slower than lockless code
 
@@ -642,9 +634,9 @@ If we eliminate shared memory... race is trivially gone.
 
 Now we talk about the second approach to communication:
 
-- Approach 1: Shared Memory
+* Approach 1: Shared Memory
 * Approach 2: Message Passing
-  * Eliminates shared memory
+  * **Eliminates shared memory**
 
 
 ---
@@ -918,7 +910,7 @@ fn compute_squares(numbers: &mut [i32]) {
 
 # Approach 1: `thread::scope`
 
-The Rust compiler ensures that the borrowed data, `nunbers`, outlives the threads:
+The Rust compiler ensures that the borrowed data, `numbers`, outlives the threads:
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
@@ -932,9 +924,9 @@ fn compute_squares(numbers: &mut [i32]) {
 }
 ```
 
-* The Scope object `s` has a lifetime tied to the `thread::scope` call
-  * The closure *cannot* smuggle a reference to borrowed data outside this lifetime
-  * You *cannot* return thread handles (`t1`, `t2`) outside the scope
+The Scope object `s` has a lifetime tied to the `thread::scope` call
+* The closure *cannot* smuggle a reference to borrowed data outside this lifetime
+* You *cannot* return thread handles (`t1`, `t2`) outside the scope
 
 ---
 
