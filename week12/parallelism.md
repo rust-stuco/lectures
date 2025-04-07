@@ -952,6 +952,7 @@ but it borrows `v`, which is owned by the current function
 ---
 
 # Capturing Values in Threads
+
 To solve this problem, we can take ownership of values, *moving* them into the closure.
 ```rust
 let v = vec![1, 2, 3];
@@ -960,11 +961,141 @@ let handle = thread::spawn(move || {
     println!("Here's a vector: {:?}", v);
 });
 ```
-* `v` is no longer accessible in the main thread
+* What if we want `v` to be accessible in the main thread?
 * You could clone `v` to solve this problem
   * But, what if we wanted to share `v`?
 
 ---
+
+# Moving is Expensive
+
+What if we wanted to share `v`? Cloning can be expensive...
+
+```rust
+let v = vec![1, 2, 3];
+
+let handle = thread::spawn(move || {
+    println!("Here's a vector: {:?}", v);
+});
+```
+
+* Two alternatives:
+  * Approach 1: `thread::scope`
+  * Approach 2: `Arc`, `Mutex`
+
+
+---
+
+
+# Approach 1: `thread::scope`
+
+Suppose we're writing a function to process a large array in parallel:
+
+```rust
+let mut data = [1, 2, 3, 4, 5, 6];
+compute_squares(data);
+```
+
+* The array is local to the function (stack-allocated)
+  * We don't want to move ownership
+  * We don't want to allocate it on the heap unnecessarily (no `Arc` or `Mutex` like Approach 2)
+
+
+---
+
+# Approach 1: `thread::scope`
+
+`thread::scope` creates a scope for spawning threads that *borrow* data from the environment.
+
+```rust
+fn compute_squares(numbers: &mut [i32]) {
+    thread::scope(|s| {
+        let mid = numbers.len() / 2;
+        let (left, right) = numbers.split_at_mut(mid);
+        
+        let t1 = s.spawn(/* do stuff on left */);
+        let t2 = s.spawn(/* do stuff on right */);
+    });
+}
+```
+
+* `thread::scope`'s closure takes a `Scope` object `s`
+  * You use this `Scope` object to spawn threads via `Scope::spawn` 
+
+---
+
+# Approach 1: `thread::scope`
+
+The Rust compiler ensures that the borrowed data, `nunbers`, outlives the threads:
+
+```rust
+fn compute_squares(numbers: &mut [i32]) {
+    thread::scope(|s| {
+        let mid = numbers.len() / 2;
+        let (left, right) = numbers.split_at_mut(mid);
+        
+        let t1 = s.spawn(/* do stuff on left */);
+        let t2 = s.spawn(/* do stuff on right */);
+    });
+}
+```
+
+* The Scope object `s` has a lifetime tied to the `thread::scope` call
+  * The closure *cannot* smuggle a reference to borrowed data outside this lifetime
+  * You *cannot* return thread handles (`t1`, `t2`) outside the scope
+
+---
+
+# Approach 1: `thread::scope`
+
+Threads are joined automatically when the scope exits, no explicit `join` needed:
+
+```rust
+fn compute_squares(numbers: &mut [i32]) {
+    thread::scope(|s| {
+        let mid = numbers.len() / 2;
+        let (left, right) = numbers.split_at_mut(mid);
+
+        let t1 = s.spawn(/* do stuff on left */);
+        let t2 = s.spawn(/* do stuff on right */);
+    });
+}
+```
+* See how clean this is!
+
+---
+
+# Approach 2: `Arc`, `Mutex`
+
+Here's how it would look without `thread::scope`:
+
+```rust
+let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5, 6]));
+let data1 = Arc::clone(&data);
+let t1 = thread::spawn(move || {
+    let mut numbers = data1.lock().unwrap();
+    // do stuff on left half
+});
+let data2 = Arc::clone(&data);
+let t2 = thread::spawn(move || {
+    let mut numbers = data2.lock().unwrap();
+    // do stuff on right half
+});
+t1.join().unwrap();
+t2.join().unwrap();
+```
+
+* What do `Arc` and `Mutex` do?
+
+---
+
+
+# Approach 2: `Arc`, `Mutex`
+
+* Before we explain `Arc`, let's revisit `Rc`
+
+---
+
 
 # `Rc` for Shared Data
 
