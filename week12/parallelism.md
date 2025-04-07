@@ -859,7 +859,7 @@ let handle = thread::spawn(move || {
 
 ---
 
-# Moving is Expensive
+# Cloning is Expensive
 
 What if we wanted to share `v`? Cloning can be expensive...
 
