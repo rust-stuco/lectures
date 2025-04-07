@@ -128,17 +128,17 @@ for i in 1..5 {
 We can create ("spawn") more threads with `thread::spawn`:
 
 ```rust
-for i in 1..5 {
-    println!("working on item {i} from the main thread!");
-    thread::sleep(Duration::from_millis(1));
-}
-
 let handle = thread::spawn(|| {
     for i in 1..10 {
         println!("working on item {} from the spawned thread!", i);
         thread::sleep(Duration::from_millis(1));
     }
 });
+
+for i in 1..5 {
+    println!("working on item {i} from the main thread!");
+    thread::sleep(Duration::from_millis(1));
+}
 ```
 
 * `thread::spawn` takes a closure as argument
@@ -153,17 +153,17 @@ let handle = thread::spawn(|| {
 We join threads when we want to wait for a particular thread to finish execution:
 
 ```rust
-for i in 1..5 {
-    println!("working on item {i} from the main thread!");
-    thread::sleep(Duration::from_millis(1));
-}
-
 let handle = thread::spawn(|| {
     for i in 1..10 {
         println!("working on item {} from the spawned thread!", i);
         thread::sleep(Duration::from_millis(1));
     }
 });
+
+for i in 1..5 {
+    println!("working on item {i} from the main thread!");
+    thread::sleep(Duration::from_millis(1));
+}
 
 handle.join().unwrap();
 ```
