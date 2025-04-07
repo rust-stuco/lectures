@@ -890,7 +890,7 @@ compute_squares(data);
 
 * The array is local to the function (stack-allocated)
   * We don't want to move ownership
-  * We don't want to allocate it on the heap unnecessarily (no `Arc` or `Mutex` like Approach 2)
+  * We don't want to allocate it on the heap unnecessarily
 
 
 ---
