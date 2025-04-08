@@ -759,6 +759,40 @@ why it is impossible to create any data races in safe rust.
 ---
 
 
+# `Mutex::lock`
+
+Here is the signature for `Mutex::lock`:
+
+```rust
+pub fn lock(&self) -> LockResult<MutexGuard<'_, T>> {}
+```
+
+* Do you notice anything strange about this?
+* Remember that you are able to _mutate_ the data once you have the guard
+
+
+---
+
+
+# Interior Mutability
+
+```rust
+pub fn lock(&self) -> LockResult<MutexGuard<'_, T>> {}
+```
+
+* This allows multiple workers to access the lock without a mutable reference
+* Even though `lock` takes an _immutable_ reference, we are allowed to _mutate_ the data that the guard is protecting
+* We call this _interior mutability_
+* More experienced rustaceans call references "shared" and exclusive" instead of "immutable" and "mutable" for this exact reason
+
+<!--
+Go watch this livestream for more info: https://www.youtube.com/watch?v=8O0Nt9qY_vo
+-->
+
+
+---
+
+
 # **Atomics**
 
 
@@ -1345,7 +1379,7 @@ fn compute_squares(numbers: &mut [i32]) {
 
 # Approach 1: `thread::scope`
 
-The Rust compiler ensures that the borrowed data, `numbers`, outlives all threads.
+The Rust compiler ensures that the borrowed data (`numbers`) outlives all threads.
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
@@ -1372,45 +1406,90 @@ fn compute_squares(numbers: &mut [i32]) {
 ---
 
 
-# Approach 2: `Arc`, `Mutex`
+# Multiple Thread Access
+
+* With `thread::scope`, we can share local data across threads
+* What if we actually wanted different threads to access and own the data?
+
+
+---
+
+
+# Multiple Thread Access
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+Let's say we two threads to access a mutex-protected vector.
 
 ```rust
-let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5, 6]));
-let data1 = Arc::clone(&data);
-let t1 = thread::spawn(move || {
-    let mut numbers = data1.lock().unwrap();
-    // do stuff on left half
+let data = Mutex::new(vec![2, 3, 4, 5]);
+
+let t1 = thread::spawn(|| {
+    let mut data_guard = data.lock().unwrap();
+    data_guard.insert(0, 1);
 });
-let data2 = Arc::clone(&data);
-let t2 = thread::spawn(move || {
-    let mut numbers = data2.lock().unwrap();
-    // do stuff on right half
+let t2 = thread::spawn(|| {
+    let mut data_guard = data.lock().unwrap();
+    data_guard.push(6);
 });
-t1.join().unwrap();
-t2.join().unwrap();
 ```
 
-* So what's going on here?
+
+---
+
+
+# Multiple Thread Access
+
+```
+error[E0373]: closure may outlive the current function, but it borrows
+              `data`, which is owned by the current function
+  --> src/main.rs:7:28
+   |
+7  |     let t1 = thread::spawn(|| {
+   |                            ^^ may outlive borrowed value `data`
+8  |         let mut data_guard = data.lock().unwrap();
+   |                              ---- `data` is borrowed here
+   |
+help: to force the closure to take ownership of `data` (and any other
+      referenced variables), use the `move` keyword
+   |
+7  |     let t1 = thread::spawn(move || {
+   |                            ++++
+```
+
+
+---
+
+
+# Multiple Thread Access
+
+* We can't access the local Mutex from the child threads because the parent thread might finish first
+* We also cannot `move` the mutex into both threads (can only move into one)
+* What we really want is for both threads to _own_ the data
+  * This should remind you of `Rc<T>`!
+
 
 ---
 
 
 # Remember `Rc<T>`?
 
-Recall `Rc<T>` (Reference Counted) from our Smart Pointers lecture
-* `Rc<T>` points to a heap-allocated value*
-  * It keeps track of references to the value (*refcount*)
-  * It drops the value when its *refcount* hits zero
-* Key Point: Provides **shared ownership** of the value
+Recall the `Rc<T>` (Reference Counted) Smart Pointer.
+
+* `Rc<T>` points to a heap-allocated value
+  * Keeps track of the number of references to the value (refcount)
+  * The data is dropped when the reference count hits zero
+* Provides **shared ownership** of the value
 
 <!-- Make sure people know about reference counts -->
+
 
 ---
 
 
 # `Rc<T>`
 
-But, `Rc<T>` is not thread-safe... updates to *refcount* are not atomic!
+But, `Rc<T>` is not thread-safe... updates to the reference count are not atomic!
 
 <style>
     .container {
@@ -1427,15 +1506,14 @@ But, `Rc<T>` is not thread-safe... updates to *refcount* are not atomic!
 
 <div class = "col">
 
-
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = refcount  |               |
-|               | temp = refcount      |
-| temp += 1 |               |
-|               | temp += 1     |
-| refcount = temp      |               |
-|               | refcount = temp      |
+| Thread 1          | Thread 2          |
+|-------------------|-------------------|
+| `temp = refcount` |                   |
+|                   | `temp = refcount` |
+| `temp += 1`       |                   |
+|                   | `temp += 1`       |
+| `refcount = temp` |                   |
+|                   | `refcount = temp` |
 
 </div>
 </div>
@@ -1445,20 +1523,85 @@ That is, while Thread 1 is executing these instructions,
   Thread 2 cannot cut in.
 -->
 
+
 ---
+
 
 # `Arc<T>`
 
-"**A**tomically **R**eference **C**ounted"
-* Same functionality as `Rc<T>`, but thread safe
-  * Think of the *refcount* as atomically updated with `fetch_add`
-* Default to `Rc<T>` and switch to `Arc<T>` to share ownership across threads
-  * The compiler will prevent you from using `Rc<T>` across threads
-  * `Arc<T>` has slightly slower operations
+`Rc<T>` has an equivalent atomic version `Arc<T>`.
+
+* "**A**tomically **R**eference **C**ounted"
+* Same functionality as `Rc<T>`, but thread-safe
+  * Reference count is atomically updated
+* Use `Rc<T>` for single-threaded operations, `Arc<T>` for multi-threaded
+
+<!--
+The `Arc<T>` will have a slightly higher overhead, though it's more that you want to
+use `Rc<T>` with non-sendable types.
+-->
+
 
 ---
 
+
+# Approach 2: `Arc<Mutex<T>>`
+
+Here is the other approach, using `Arc<T>` and `Mutex<T>`.
+
+```rust
+let data = Arc::new(Mutex::new(vec![2, 3, 4, 5]));
+let data_clone = Arc::clone(&data);
+
+let t1 = thread::spawn(move || {
+    let mut data_guard = data.lock().unwrap();
+    data_guard.insert(0, 1);
+});
+let t2 = thread::spawn(move || {
+    let mut data_guard = data_clone.lock().unwrap();
+    data_guard.push(6);
+});
+```
+
+* Both threads own the mutex!
+
+<!--
+Removed the joins at the end for slide space
+-->
+
+
+---
+
+
+# Approach 2: `Arc<Mutex<T>>`
+
+Here is a more practical application of `Arc<Mutex<T>>`:
+
+```rust
+let data = Arc::new(Mutex::new(vec![]));
+
+for i in 0..10 {
+    let data = data.clone();
+    handles.push(thread::spawn(move || {
+        let mut guard = data.lock().expect("lock was somehow poisoned");
+        guard.push(i);
+    }));
+}
+
+// Code for joining handles and printing omitted.
+```
+
+```
+[1, 0, 3, 6, 5, 4, 2, 7, 9, 8]
+```
+
+
+
+---
+
+
 # Sharing Resources in Rust
+
 Let's attempt to implement thread resource-sharing with `Arc<T>`
 ```rust
 let v = Arc::new(vec![1, 2, 3]);
