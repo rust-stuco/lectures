@@ -128,7 +128,7 @@ The thread that runs by default is the main thread.
 
 ```rust
 fn main() {
-    for i in 1..8 {
+    for i in 1..3 {
         println!("Main thread says: Hello {i}!");
         thread::sleep(Duration::from_millis(1));
     }
@@ -1008,36 +1008,6 @@ Previously, our shared memory solution was
 ---
 
 
-# Approach 2: Message Passing
-
-In our **message passing** solution, we do _not_ share `x:
-
-* For each pixel...
-  * Create a local variable `x` for each thread (not shared!)
-  * Increment `x` when thread touches pixel
-
-TODO does this make sense?
-
-
----
-
-
-# Approach 2: Message Passing
-
-When threads update their local copy, they notify other threads via **message passing**.
-
-- For each pixel...
-  - Create a local variable `x` for each thread (not shared!)
-  - Increment `x` when thread touches pixel
-    - Send message to other threads, so they update their copies of `x`
-* Left as an exercise:
-  * There's another way to divide the work with less communication costs
-  * Ferris (and Clarabelle) will be proud of you if you find it
-
-
----
-
-
 # Message Passing
 
 * Threads communicate via _channels_
@@ -1058,7 +1028,7 @@ let (tx, rx) = mpsc::channel();
 ```
 
 * **Transmitter**: Connor writes "Review the ZFOD PR" and sends it down a river
-* **Reciever**: Ben finds the duck downstream and reads the message
+* **Receiver**: Ben finds the duck downstream and reads the message
 * Each channel can only transmit/receive one type
 * Communication is only one-way
 * This is an `mpsc`-flavored channel...
@@ -1613,7 +1583,7 @@ for i in 0..10 {
 ---
 
 
-# Some Other Shared State Things
+# Other Synchronization Primitives
 
 There are shared state **primitives** other than `Arc<T>` and `Mutex<T>`:
 
