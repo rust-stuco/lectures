@@ -26,7 +26,20 @@ code {
 ---
 
 
-# Parallelism vs. Concurrency
+# Today: Parallelism
+
+- Parallelism vs Concurrency
+  - Workers, Processes, and Threads
+- Multithreading
+- Mutual Exclusion
+- Atomics
+- Message Passing
+
+
+---
+
+
+# Parallelism vs Concurrency
 
 ## Concurrency
 
@@ -39,6 +52,7 @@ code {
 
 * **Key difference:** Parallelism utilizes **multiple** workers
 
+
 ---
 
 
@@ -46,15 +60,11 @@ code {
 
 Parallelism divides tasks among workers.
 
-* In hardwareland, we call these workers **processors** and **cores**.
-
-* In softwareland...
-  * "Processors" => Processes
-  * "Cores" => Threads
-
-* **Key difference:** Parallelism utilizes **multiple** processors/cores
-  * Some concurrency models don't!
-
+* In hardware, we call these workers **processors** and **cores**
+* In software, workers are abstracted as **processes** and **threads**
+  * Processes contain many threads
+* Parallelism requires **multiple** workers
+  * Concurrency models can have any number of workers!
 
 <!-- Note:
 21st century relevance of parallelism is due to the slowing of Moore's Law
@@ -73,7 +83,6 @@ invisible to the programmer
 
 # Parallelism vs. Concurrency
 
-
 <img src="img/concvspar-2.png" style="width: 85%; margin-left: auto; margin-right: auto;">
 
 
@@ -82,11 +91,12 @@ invisible to the programmer
 
 # Designing Parallel Solutions
 
-Two big questions to ask:
-* Division of Work
+There are two important questions we need to ask
+
+* Division of labour
   * Who are the workers and how do we divide the work?
-* Thread Communication
-  * What needs to be shared and how?
+* Thread communication
+  * What information needs to be shared and how?
     * Approach 1: Shared Memory
     * Approach 2: Message Passing
 
@@ -96,135 +106,251 @@ Two big questions to ask:
 
 # Multithreading
 
-For this lecture only...
-* Our workers are threads
-* **Thread:** "stream of instructions"
+For today, we will simplify terminology that can be overloaded.
+
+* Our workers are _threads_
+* You can think of threads as a "stream of instructions"
 
 <!--Speaker note:
 Same principles can be applied to multiprocessing
-Emphasize that "thread" is overloaded term
+Emphasize that "thread" can be an overloaded term
 -->
 
 
 ---
 
-# Example: The Main Thread
+
+# The Main Thread
 
 The thread that runs by default is the main thread.
 
 ```rust
-for i in 1..5 {
-    println!("working on item {i} from the main thread!");
-    thread::sleep(Duration::from_millis(1));
+fn main() {
+    for i in 1..8 {
+        println!("Main thread says: Hello {i}!");
+        thread::sleep(Duration::from_millis(1));
+    }
 }
 ```
+
+* So far, we have only been running code on the main thread!
 
 
 ---
 
 
-# Example: Creating a Thread
+# Spawning a Thread
 
-We can create ("spawn") more threads with `thread::spawn`:
+We can create (spawn) more threads using `std::thread::spawn`.
 
 ```rust
-let handle = thread::spawn(|| {
-    for i in 1..10 {
-        println!("working on item {} from the spawned thread!", i);
+fn main() {
+    let child_handle = thread::spawn(|| {
+        for i in 1..=8 {
+            println!("Child thread says: Hello {i}!");
+            thread::sleep(Duration::from_millis(1));
+        }
+    });
+
+    for i in 1..=3 {
+        println!("Main thread says: Hello {i}!");
+        thread::sleep(Duration::from_millis(1));
+    }
+}
+```
+
+<!--
+Omitted some code at the top:
+```
+use std::thread;
+use std::time::Duration;
+```
+-->
+
+
+---
+
+
+# Spawning a Thread
+
+```rust
+let child_handle = thread::spawn(|| {
+    for i in 1..=8 {
+        println!("Child thread says: Hello {i}!");
         thread::sleep(Duration::from_millis(1));
     }
 });
 
-for i in 1..5 {
-    println!("working on item {i} from the main thread!");
+for i in 1..=3 {
+    println!("Main thread says: Hello {i}!");
     thread::sleep(Duration::from_millis(1));
 }
 ```
 
-* `thread::spawn` takes a closure as argument
-  * This is the function that the thread runs
+* `thread::spawn` takes a `FnOnce` closure
+  * The closure will be run on the newly-created thread
+* Question: What should this program's output be?
 
 <!--Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads. -->
 
----
-# Example: Creating a Thread
-What is the output?
-```
-working on item 1 from the main thread!
-working on item 1 from the spawned thread!
-working on item 2 from the main thread!
-working on item 2 from the spawned thread!
-working on item 3 from the main thread!
-working on item 3 from the spawned thread!
-working on item 4 from the main thread!
-working on item 4 from the spawned thread!
-working on item 5 from the spawned thread!
-```
-* Where did the other four spawned threads go?
-  * The main thread ended before they executed.
-  * To prevent this, **join** threads to mandate executed.
-
 
 ---
 
 
-# Example: Joining Threads
+# Possible Output 1
 
-We join threads when we want to wait for a particular thread to finish execution:
+Here is one possible program output:
+
+```
+Main thread says: Hello 1!
+Child thread says: Hello 1!
+Child thread says: Hello 2!
+Main thread says: Hello 2!
+Child thread says: Hello 3!
+Main thread says: Hello 3!
+Child thread says: Hello 4!
+Child thread says: Hello 5!
+```
+
+---
+
+
+# Possible Output 2
+
+Here is another possible program output:
+
+```
+Main thread says: Hello 1!
+Child thread says: Hello 1!
+Main thread says: Hello 2!
+Main thread says: Hello 3
+```
+
+<!--
+Note that this _probably_ won't happen, but it could!
+-->
+
+
+---
+
+
+# Possible Output 3
+
+And here is yet another possible program output!
+
+```
+Main thread says: Hello 1!
+Child thread says: Hello 1!
+Main thread says: Hello 2!
+Child thread says: Hello 2!
+Main thread says: Hello 3!
+Child thread says: Hello 3!
+```
+
+* What's going on here?
+
+
+---
+
+
+# Multithreaded Code is Non-Deterministic
+
+* Most of the code we have written this semester has been deterministic
+* The only counterexamples have been when we've used random number generators or interacted with I/O
+* The execution of multi-threaded code can interleave with each other in undeterminable ways!
+
+
+---
+
+
+# Multithreaded Code is Non-Deterministic
+
+In this example, the child thread can interleave its prints with the main thread.
 
 ```rust
-let handle = thread::spawn(|| {
-    for i in 1..10 {
-        println!("working on item {} from the spawned thread!", i);
+let child_handle = thread::spawn(|| {
+    for i in 1..=8 {
+        println!("Child thread says: Hello {i}!");
         thread::sleep(Duration::from_millis(1));
     }
 });
 
-for i in 1..5 {
-    println!("working on item {i} from the main thread!");
+for i in 1..=3 {
+    println!("Main thread says: Hello {i}!");
     thread::sleep(Duration::from_millis(1));
 }
-
-handle.join().unwrap();
 ```
 
-* Blocks the current thread until the thread associated with `handle` finishes
+* Why doesn't the child thread always print "Hello" 8 times?
+
+
+---
+
+
+# Process Exit `SIGKILL`s Threads
+
+* When the main thread finishes execution, the process it belongs to exits
+* Once the process exits, all threads in the process are `SIGKILL`ed
+* If we want to let our child threads finish, we have to wait for them!
+
+
+---
+
+
+# Joining Threads
+
+We can `join` a thread when we want to wait for it to finish.
+
+```rust
+// Spawn the child thread.
+let child_handle = thread::spawn(|| time_consuming_function());
+
+// Run some code on the main thread.
+main_thread_foo();
+
+// Wait for the child thread to finish running.
+child_handle.join().unwrap();
+```
+
+* `join` will block the calling thread until the child thread finishes
+  * In this example, the calling thread is the main thread
 
 <!-- Speaker note: Ask again what students believe will happen with this program. -->
 
----
-
-
-# Example: Multithreading Output
-
-What is the output now?
-```
-working on item 1 from the main thread!
-working on item 2 from the main thread!
-working on item 1 from the spawned thread!
-working on item 3 from the main thread!
-working on item 2 from the spawned thread!
-working on item 4 from the main thread!
-working on item 3 from the spawned thread!
-working on item 4 from the spawned thread!
-working on item 5 from the spawned thread!
-working on item 6 from the spawned thread!
-working on item 7 from the spawned thread!
-working on item 8 from the spawned thread!
-working on item 9 from the spawned thread!
-```
-* All ten spawned threads are executed!
 
 ---
 
 
-# Multithreading
+# Joining Threads
+
+If we go back to our original example and add a `join` on the child's handle at the end of the program, then the child thread can run to completion!
+
+```
+Main thread says: Hello 1!
+Child thread says: Hello 1!
+Main thread says: Hello 2!
+Child thread says: Hello 2!
+Main thread says: Hello 3!
+Child thread says: Hello 3!
+Child thread says: Hello 4!
+Child thread says: Hello 5!
+Child thread says: Hello 6!
+Child thread says: Hello 7!
+Child thread says: Hello 8!
+```
+
+
+---
+
+
+# Example: Multithreaded Drawing
 
 Suppose we're painting an image to the screen, and we have eight threads.
 
-* How should we divide the work?
-  * Divide image into eight regions
-  * Assign each thread to paint one region
+How should we divide up the work between the threads?
+
+* Divide image into eight regions
+* Assign each thread to paint one region
 * Easy! "Embarrassingly parallel"
   * Threads don't need to keep tabs on each other
 
@@ -238,20 +364,21 @@ Each thread retires to their cave
   not too different from modern artists
 -->
 
+
 ---
 
 
-# The Case for Communication
+# Example: Multithreaded Drawing
+
+![bg right:45% 100%](../images/week12/circle-order-A-then-B.png)
+
+![bg right:45% 100%](../images/week12/circle-order-B-then-A.png)
 
 What if our image is more complex?
 
-* We're painting semi-transparent circles
-* Circles overlap and are constantly moving
-* The _order_ we paint circles affects the color mixing
-
-![bg right 100%](../images/week12/circle-order-A-then-B.png)
-
-![bg right 100%](../images/week12/circle-order-B-then-A.png)
+* We could be painting semi-transparent circles
+* Circles could overlap and/or could be constantly moving
+* The _order_ in which we paint circles changes the colors of pixels
 
 <!--
 This is also known as the painter's algorithm
@@ -263,11 +390,18 @@ This is also known as the painter's algorithm
 
 # The Case for Communication
 
-Now our threads need to talk to each other!
+If we want a consistent drawings, we need a way for our threads to talk / communicate with each other!
 
-* For each pixel
-  * How many circles have been drawn?
-  * Do _not_ paint this pixel until previous circles are done
+* For each pixel:
+  * Which color circle should it draw?
+  * How many circles have been drawn on this pixel?
+  * Do we need to wait for other circles to finish being drawn?
+* Simplification for today: each pixel tracks how many circles it has to draw
+
+<!--
+For the sake of the later examples, explain here that we are supposing we just want to know
+how many times a pixel has been painted over. This has nothing to do with the end result drawing.
+-->
 
 
 ---
@@ -278,6 +412,7 @@ Now our threads need to talk to each other!
 **Problem:** How do threads communicate?
 
 **Solutions:** We'll discuss two approaches...
+
 * Approach 1: Shared Memory
 * Approach 2: Message Passing
 
@@ -291,27 +426,30 @@ Now our threads need to talk to each other!
 
 # Approach 1: Shared Memory
 
-For each pixel, create a shared variable `x`:
+For each pixel, create a shared variable `x` that represents the number of circles that overlap on this pixel:
 
 ```c
-static int x = 0; // One per pixel
+static int x = 0; // One per pixel.
 ```
 
+* _Note that this is C pseudocode: we'll explain the Rust way soon_
 * When a thread touches a pixel, increment the pixel's associated `x`
 * Now each thread knows how many layers of paint there are on that pixel
+
+<!--
+This is C code!
+-->
 
 
 ---
 
 
-# Shared Memory: Data Races
+# Approach 1: Shared Memory
 
 Are we done?
 
-Not quite...
-
-* Shared memory is an ingredient for **data races**
-* Let's illustrate
+* Not quite...
+* Shared memory is prone to **data races**
 
 <!--Speaker note:
 We'll walk through the other ingredients
@@ -320,16 +458,19 @@ We'll walk through the other ingredients
 
 ---
 
-# Shared Memory: Data Races
-Suppose we have a shared variable `x`.
 
-**First ingredient**: `x` is in shared memory, and `x` must satisfy some property to be correct.
+# Shared Memory: Data Races
+
+**Step 1**: `x` is in shared memory, and `x` must uphold some invariant to be correct.
 
 ```c
-// Invariant: `x` is total number of times **any** thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`.
 static int x = 0;
+
+static void update_x(void) {
+    x += 1;
+}
 ```
-* This is C pseudocode; we'll explain Rust's interface in second half
 
 
 ---
@@ -337,41 +478,48 @@ static int x = 0;
 
 # Shared Memory: Data Races
 
-**Second ingredient**: `x` becomes incorrect mid-update.
+**Step 2**: `x` temporarily becomes incorrect (mid-update).
 
 ```c
-// Invariant: `x` is total number of times **any** thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`.
 static int x = 0;
 
 static void update_x(void) {
-  int temp = x; // <- x is INCORRECT
-  temp += 1;    // <- x is INCORRECT
-  x = temp;     // <- x is CORRECT
+    int temp = x;   // `x` lags the number of times `update_x` has been called by 1.
+    temp += 1;      // `x` is still incorrect...
+    x = temp;       // `x` is now correct!
 }
 ```
 
 * We don't actually write code like this
   * This is how it gets compiled to machine instructions
 
+<!--
+The `static int x` exists somewhere in memory (static region of binary). The CPU (usually) can't
+just modify memory directly: it has to first copy the data into its registers, update the data, and
+then write that updated data back out to memory. So you can think of the `temp` variable here as
+being the register.
+-->
+
 ---
 
 
 # Shared Memory: Data Races
 
-**Third ingredient**: when multiple threads update at once...
+**Step 3**: Multiple threads update `x` at the same time...
 
 ```c
-// Invariant: `x` is total number of times **any** thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`.
 static int x = 0;
 
 static void update_x(void) {
-  int temp = x; // <- x is INCORRECT
-  temp += 1;    // <- x is INCORRECT
-  x = temp;     // <- x is CORRECT
+    x += 1;
 }
+
 // <!-- snip -->
+
 for (int i = 0; i < 20; ++i) {
-  spawn_thread(update_x);
+    spawn_thread(update_x);
 }
 ```
 
@@ -381,49 +529,50 @@ for (int i = 0; i < 20; ++i) {
 
 # Shared Memory: Data Races
 
-**Third ingredient**: when multiple threads update at once...they interleave!
+**Stpe 3**: When multiple threads update `x` at the same time... they interleave!
 
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x      |               |
-|               | temp = x      |
-| temp += 1     |               |
-|               | temp += 1     |
-| x = temp      |               |
-|               | x = temp      |
+| Thread 1    | Thread 2    |
+|-------------|-------------|
+| `temp = x ` |             |
+|             | `temp = x`  |
+| `temp += 1` |             |
+|             | `temp += 1` |
+| `x = temp`  |             |
+|             | `x = temp`  |
+
 
 
 <!--
 Q: Can someone tell me the outcome of this sequence?
 A: Next slide
+
+Note that this is just one possible way of incorrect interleaving.
 -->
 
-<!-- Speaker's note: This is just one possible way of incorrect interleaving. -->
-
 
 ---
 
 
 # Shared Memory: Data Races
 
-We want `x = 2`, but we get `x = 1`!
+We want `x = 2`, but we could get `x = 1`!
 
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| Read temp = 0 |               |
-|               | Read temp = 0 |
-| Set temp = 1  |               |
-|               | Set temp = 1  |
-| Set x = 1     |               |
-|               | Set x = 1     |
+| Thread 1        | Thread 2        |
+|-----------------|-----------------|
+| Read `temp = 0` |                 |
+|                 | Read `temp = 0` |
+| Set `temp = 1`  |                 |
+|                 | Set `temp = 1`  |
+| Set `x = 1`     |                 |
+|                 | Set `x = 1`     |
 
 
 ---
 
 
-# Shared Memory: Data Races
+# Shared Memory: Atomicity
 
 We want the update to be **atomic**. That is, other threads cannot cut in mid-update.
 
@@ -442,28 +591,28 @@ We want the update to be **atomic**. That is, other threads cannot cut in mid-up
 
 **Not Atomic**
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x  |               |
-|               | temp = x      |
-| temp += 1 |               |
-|               | temp += 1     |
-| x = temp      |               |
-|               | x = temp      |
+| Thread 1    | Thread 2    |
+|-------------|-------------|
+| `temp = x`  |             |
+|             | `temp = x`  |
+| `temp += 1` |             |
+|             | `temp += 1` |
+| `x = temp`  |             |
+|             | `x = temp`  |
 
 </div>
 <div class = "col">
 
 **Atomic**
 
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x  |               |
-| temp += 1 |               |
-| x = temp  |               |
-|               | temp = x      |
-|               | temp += 1     |
-|               | x = temp      |
+| Thread 1    | Thread 2    |
+|-------------|-------------|
+| `temp = x`  |             |
+| `temp += 1` |             |
+| `x = temp`  |             |
+|             | `temp = x`  |
+|             | `temp += 1` |
+|             | `x = temp`  |
 
 </div>
 </div>
@@ -475,9 +624,15 @@ We want the update to be **atomic**. That is, other threads cannot cut in mid-up
 # Fixing a Data Race
 
 We must eliminate one of the following:
-1. `x` is shared memory
-2. `x` becomes incorrect mid-update
+1. `x` is in shared memory
+2. `x` temporarily becomes incorrect (mid-update)
 3. Unsynchronized updates (parties can "cut in" mid-update)
+
+
+---
+
+
+# **Mutual Exclusion**
 
 
 ---
@@ -485,11 +640,10 @@ We must eliminate one of the following:
 
 # Approach 1: Mutual Exclusion
 
-
 Take turns! No "cutting in" mid-update.
 
-1. `x` is shared memory
-2. `x` becomes incorrect mid-update
+1. `x` is in shared memory
+2. `x` temporarily becomes incorrect (mid-update)
 3. ~~Unsynchronized updates (parties can "cut in" mid-update)~~
 
 
@@ -498,9 +652,11 @@ Take turns! No "cutting in" mid-update.
 
 # Approach 1: Mutual Exclusion
 
-We need to establish *mutual exclusion*, so that threads don't interfere with each other.
-* Mutual exclusion means "Only one thread can do something at a time"
-* A common tool for this is a mutex lock
+We need to establish _mutual exclusion_.
+
+* You can think of mutual exclusion as "Only one thread at a time"
+  * Mutual exclusion means threads don't interfere with each other
+* A common tool for this is a `mutex` lock
 
 
 <!-- Explain what mutual exclusion is, what a mutex is, high level, verbally -->
@@ -509,45 +665,99 @@ We need to establish *mutual exclusion*, so that threads don't interfere with ea
 ---
 
 
-# Approach 1: Mutual Exclusion
+# Mutual Exclusion in C
+
+Here is how you would use a `mutex` in C:
 
 ```c
 static int x = 0;
-static mtx_t x_lock;
+static mutex_t x_lock;
 
-static void thread(void) {
-  mtx_lock(&x_lock);
-  int temp = x;
-  temp += 1;
-  x = temp;
-  mtx_unlock(&x_lock);
+static void run_thread(void) {
+    mtx_lock(&x_lock);
+    x += 1;
+    mtx_unlock(&x_lock);
 }
-// <!-- snip -->
 ```
-- Only one thread can hold the mutex lock (`mtx_t`) at a time
 
-- This provides *mutual exclusion*--only one thread may access `x` at the same time
+* Only one thread can hold the mutex lock (`mutex_t`) at a time
+* Other threads block / wait until they get their turn to hold the lock
+* Each thread gets "mutual exclusion" over `x`
 
 
 ---
 
 
-# Approach 1: Mutual Exclusion
-In Rust, the `Mutex` lock can be found in the standard library.
+# Mutual Exclusion in Rust
+
+In Rust, the `Mutex` exists in the standard library!
+
 ```rust
 use std::sync::Mutex;
 
 fn main() {
-    let m = Mutex::new(5);
+    let m: Mutex<i32> = Mutex::new(5);
 
     {
         let mut num = m.lock().unwrap();
-        *num = 6;
+        *num += 1;
     }
 
-    println!("m = {m:?}");
+    println!("m = {:?}", m);
 }
 ```
+
+
+---
+
+
+# `Mutex<T>`
+
+Rust's `Mutex` is a smart pointer!
+
+* `Mutex<T>` owns the data it protects
+  * In C, you as the programmer have to ensure the mutex is locked correctly
+  * In Rust, you cannot access the data unless you hold the lock!
+* Rust can achieve this using a `MutexGuard<'a, T>`
+  * You can think of a `Mutex` as the lock provider and the `MutexGuard` as the lock itself
+
+
+---
+
+
+# `MutexGuard<'a, T>`
+
+The `MutexGuard<'a, T>` created from the `Mutex<T>` is also a smart pointer!
+
+```rust
+let m: Mutex<i32> = Mutex::new(5);
+{
+    // Create a `MutexGuard` that gives the current thead exclusive access.
+    let guard1 = m.lock().expect("lock was somehow poisoned");
+
+    // Dereference the guard to get to the data.
+    let num = *guard1;
+    println!("{num}");
+}
+// At the end of the scope, `guard1` gets dropped and the lock is released.
+
+// Since the first guard was dropped, we can take the lock again!
+let guard2 = m.lock().expect("lock was somehow poisoned");
+```
+
+* _Ask us after lecture if you're interested in why there is a [lifetime](https://doc.rust-lang.org/std/sync/struct.MutexGuard.html) there..._
+
+<!--
+The lifetime basically guarantees that we only hold the lock in the scope that we created the
+mutex guard. This means it is impossible to "leak" out the lock unintentionally! This is part of
+why it is impossible to create any data races in safe rust.
+-->
+
+
+---
+
+
+# **Atomics**
 
 
 ---
@@ -555,26 +765,25 @@ fn main() {
 
 # Approach 2: Atomics
 
+One airtight, _atomic_ update! Cannot be "temporarily incorrect" mid-update.
 
-One airtight update! Cannot be "incorrect" mid-update.
-
-1. `x` is shared memory
-2. ~~`x` becomes incorrect mid-update~~
+1. `x` is in shared memory
+2. ~~`x` temporarily becomes incorrect (mid-update)~~
 3. Unsynchronized updates (parties can "cut in" mid-update)
 
 
 ---
 
 
-# Approach 2: Atomics
+# Code to Machine Instructions
 
-The compiler usually translates the following operation...
+Recall that the compiler will usually translate the following operation...
 
 ```c
 x += 1;
 ```
 
-...into the machine instruction equivalent of this:
+...into the machine instruction equivalent of this code:
 
 ```c
 int temp = x;
@@ -586,7 +795,7 @@ x = temp;
 ---
 
 
-# Approach 2: Atomics
+# Atomics
 
 However, we can use an atomic operation like this:
 
@@ -603,30 +812,33 @@ x += 1;
 * `fetch_and_add`: performs the operation suggested by the name, and returns the value that was previously in memory
   * Also `fetch_and_sub`, `fetch_and_or`, `fetch_and_and`, ...
 
+
 ---
 
-# Sneak Peak of CAS Atomic
+# Aside: `compare_and_swap`
 
-Other common atomic is `compare_and_swap`
-* If the current value matches some old value, then write new value into memory
-  * Depending on variant, returns a boolean for whether new value was written into memory
-* "Lock-free" programming:
+Another common atomic operation is `compare_and_swap`
+
+* If the current value matches an old value, update the value
+  * Returns whether or not the value was updated
+* You can do "lock-free" programming with just CAS
   * No locks! Just `compare_and_swap` until we successfully write new value
-  * Not necessarily more performant than lock-based solutions
-    * Contention is bottleneck, not presence of locks
-  
-<!--Speaker note: can skip over this slide during lecture and students can look at it if they want.
--->
+    * _Not necessarily more performant than lock-based solutions_
+
 
 <!-- Speaker note:
+Skip over this slide during lecture and students can look at it if they want.
+
 Rule of thumb: conventional wisdom is that locking code is perceived as slower than lockless code
 
 This does NOT mean that lock-free solutions are more performant than lock-based solutions.
 
 Lock-based solutions are slow due to _contention_ for locks, not _presence_ of locks
 If multiple threads are contending for same memory location, i.e. stuck in a `compare_and_swap` loop, that can be equally slow
-This is why benchmarking is importnat, because we can't crystal-ball the performance of our solutions!
+This is why benchmarking is important, because we can't crystal-ball the performance of our solutions!
 -->
+
+
 ---
 
 # Atomics
@@ -647,11 +859,57 @@ println!("Atomic Output: {}!", x);
 
 # Atomics
 
-Rust provides atomic primitive types, like `AtomicBool`, `AtomicI8`, `AtomicIsize`, etc.
-* Provides a way to access values atomically from any thread
-  * Safe to share between threads implementing `Sync`
-* We won't cover it further in this course, but the API is largely 1:1 with the C++20 atomics
-  * If interested in pitfalls, read up on *memory ordering* in computer systems
+These atomic operations are also implemented in the Rust standard library.
+
+```rust
+use std::sync::atomic::{AtomicI32, Ordering};
+
+let x = AtomicI32::new(0);
+
+x.fetch_add(10, Ordering::SeqCst);
+x.fetch_sub(2, Ordering::SeqCst);
+
+println!("Atomic Output: {}!", x);
+```
+
+* The API is largely identical to C++20 atomics
+  * If interested in the `Ordering`, research "memory ordering"
+
+<!--
+A trivial example, but gives a brief look at the atomic API in Rust.
+
+Memory ordering has to do with memory ordering at the CPU cache level.
+-->
+
+
+---
+
+
+# Atomic Action
+
+Here is an example of incrementing an atomic counter from multiple threads!
+
+```rust
+static counter: AtomicUsize = AtomicUsize::new(0);
+
+fn main() {
+    // Spawn 100 threads that each increment the counter by 1.
+    let handles: Vec<JoinHandle<_>> = (0..100)
+        .map(|_| thread::spawn(|| counter.fetch_add(1, Ordering::Relaxed)))
+        .collect();
+
+    // Wait for all threads to finish.
+    handles.into_iter().for_each(|handle| { handle.join().unwrap(); });
+
+    assert_eq!(counter.load(Ordering::Relaxed), 100);
+}
+```
+
+
+---
+
+
+# **Message Passing**
 
 
 ---
