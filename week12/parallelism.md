@@ -529,7 +529,7 @@ for (int i = 0; i < 20; ++i) {
 
 # Shared Memory: Data Races
 
-**Stpe 3**: When multiple threads update `x` at the same time... they interleave!
+**Step 3**: When multiple threads update `x` at the same time... they interleave!
 
 
 | Thread 1    | Thread 2    |
@@ -841,21 +841,6 @@ This is why benchmarking is important, because we can't crystal-ball the perform
 
 ---
 
-# Atomics
-These atomic operations are also implemented in the Rust standard library.
-```rust
-use std::sync::atomic::{AtomicIsize, Ordering};
-
-let x = AtomicIsize::new(0);
-
-x.fetch_add(10, Ordering::SeqCst);
-x.fetch_sub(2, Ordering::SeqCst);
-
-println!("Atomic Output: {}!", x);
-```
-<!-- A trivial example, but gives a brief look at the atomic API in Rust. -->
-
----
 
 # Atomics
 
@@ -1012,11 +997,10 @@ When threads update their local copy, they notify other threads via **message pa
 let (tx, rx) = mpsc::channel();
 ```
 * Channels have two halves, a transmitter and a receiver
-* Connor writes "Review the ZFOD PR" on a rubber duck and floats it down a river (transmitter)
-  * Ben finds the duck downstream, and reads the message (receiver)
+  * *Transmitter*: Connor writes "Review the ZFOD PR" on a rubber duck and floats it down a river
+  * *Reciever*: Ben finds the duck downstream and reads the message
 * Note that communication is one-way here
-* Note also that each channel can only transmit/receive one type
-  * e.g. `Sender<String>`, `Receiver<String>` can't transmit integers
+* Each channel can only transmit/receive one type
 
 
 <!-- Speaker note:
@@ -1041,7 +1025,7 @@ thread::spawn(move || { // Take ownership of `tx`
 let received = rx.recv().unwrap(); // receive val through the receiver
 println!("I am too busy to {}!", received);
 ```
-* Note that, after we send `val`, we no longer have ownership of it!
+* After we send `val`, we no longer have ownership of it
 
 
 ---
@@ -1070,7 +1054,7 @@ for msg in rx {
 
 # `mpsc` ⟹ Multiple Producer, Single Consumer
 
-This means we can `clone` the transmitter end of the channel, and have *multiple producers*.
+This means we can `clone` the transmitter to get *multiple producers*.
 
 ```rust
 let (tx, rx) = mpsc::channel();
@@ -1110,7 +1094,7 @@ Rust uniquely provides some nice guarantees for parallel code, and at the same t
 
 
 # Creating Threads, In More Detail
-Threads can be created/spawned using `thread::spawn`.
+Recall: threads can be spawned with `thread::spawn`.
 ```rust
 let handle = thread::spawn(|| {
     for i in 1..10 {
@@ -1119,7 +1103,7 @@ let handle = thread::spawn(|| {
     }
 });
 ```
-* `thread::spawn` takes in a closure, implementing the `FnOnce` and `Send` traits.
+* `thread::spawn` takes in a closure, implementing the `FnOnce` and `Send` traits
   * `FnOnce` implies we cannot spawn multiple threads of the same closure
   * More on the `Send` trait later...
 
@@ -1132,7 +1116,7 @@ let handle = thread::spawn(|| {
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
 # Capturing Values in Threads
-We often want to use things outside of the closure, but borrowing them can be problematic.
+What if we want to use a value from outside the closure?
 ```rust
 let v = vec![1, 2, 3];
 
@@ -1150,7 +1134,7 @@ but it borrows `v`, which is owned by the current function
 
 # Capturing Values in Threads
 
-To solve this problem, we can take ownership of values, *moving* them into the closure.
+To solve this, we can take ownership of values by *moving* them into the closure.
 ```rust
 let v = vec![1, 2, 3];
 
@@ -1158,25 +1142,16 @@ let handle = thread::spawn(move || {
     println!("Here's a vector: {:?}", v);
 });
 ```
-* What if we want `v` to be accessible in the main thread?
-* You could clone `v` to solve this problem
-  * But, what if we wanted to share `v`?
+* What if we want `v` to remain accessible in the main thread?
 
 ---
 
-# Cloning is Expensive
+# Capturing Values in Threads
+We could clone `v` to keep it accessible in the main thread
+  * But cloning can be expensive
+  * And what if we want to share `v` between the threads?
 
-What if we wanted to share `v`? Cloning can be expensive...
-
-```rust
-let v = vec![1, 2, 3];
-
-let handle = thread::spawn(move || {
-    println!("Here's a vector: {:?}", v);
-});
-```
-
-* Two alternatives:
+Two alternatives to cloning:
   * Approach 1: `thread::scope`
   * Approach 2: `Arc`, `Mutex`
 
@@ -1202,7 +1177,7 @@ compute_squares(data);
 
 # Approach 1: `thread::scope`
 
-`thread::scope` creates a scope for spawning threads that *borrow* data from the environment.
+`thread::scope` creates a scope for spawning threads that *borrow* in-scope data
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
@@ -1217,13 +1192,13 @@ fn compute_squares(numbers: &mut [i32]) {
 ```
 
 * `thread::scope`'s closure takes a `Scope` object `s`
-  * You use this `Scope` object to spawn threads via `Scope::spawn` 
+  * You use this `s` to spawn threads via `Scope::spawn` 
 
 ---
 
 # Approach 1: `thread::scope`
 
-The Rust compiler ensures that the borrowed data, `numbers`, outlives the threads:
+The Rust compiler ensures that the borrowed data, `numbers`, outlives the threads
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
@@ -1237,15 +1212,15 @@ fn compute_squares(numbers: &mut [i32]) {
 }
 ```
 
-The Scope object `s` has a lifetime tied to the `thread::scope` call
-* The closure *cannot* smuggle a reference to borrowed data outside this lifetime
-* You *cannot* return thread handles (`t1`, `t2`) outside the scope
+* `s` has a lifetime tied to the `thread::scope` call
+  * References to borrowed data cannot be smuggled out of this lifetime
+  * Neither can the thread handles (`t1`, `t2`)
 
 ---
 
 # Approach 1: `thread::scope`
 
-Threads are joined automatically when the scope exits, no explicit `join` needed:
+Threads are joined automatically when the scope exits
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
@@ -1258,13 +1233,12 @@ fn compute_squares(numbers: &mut [i32]) {
     });
 }
 ```
+* No explicit `join` is needed
 * See how clean this is!
 
 ---
 
 # Approach 2: `Arc`, `Mutex`
-
-Here's how it would look without `thread::scope`:
 
 ```rust
 let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5, 6]));
@@ -1282,42 +1256,43 @@ t1.join().unwrap();
 t2.join().unwrap();
 ```
 
-* What do `Arc` and `Mutex` do?
+* So what's going on here?
 
 ---
 
 
-# Remember `Rc`?
+# Remember `Rc<T>`?
 
-Recall `Rc<T>` (Reference Counted) from our Smart Pointers lecture.
-* `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value
-  * Difference being, `Box<T>` drops the value when it goes out of scope
-  * `Rc<T>` drops the value when its refcount hits zero
-    * refcount is number of references to the value
+Recall `Rc<T>` (Reference Counted) from our Smart Pointers lecture
+* `Rc<T>` points to a heap-allocated value*
+  * It keeps track of references to the value (*refcount*)
+  * It drops the value when its *refcount* hits zero
+* Key Point: Provides **shared ownership** of the value
 
 <!-- Make sure people know about reference counts -->
 
 ---
 
 
-# Shared Memory: Data Races
+# `Rc<T>`
 
-However, `Rc<T>` is not thread-safe... updates to refcount aren't atomic!
+But, `Rc<T>` is not thread-safe... updates to *refcount* are not atomic!
 
 <style>
     .container {
         display: flex;
         gap: 16px;
+        padding-top: 16px;
     }
     .col {
         flex: 1;
+
     }
 </style>
 <div class = "container">
 
 <div class = "col">
 
-**Not Atomic**
 
 | Thread 1      |   Thread 2    |
 |---------------|---------------|
@@ -1327,20 +1302,6 @@ However, `Rc<T>` is not thread-safe... updates to refcount aren't atomic!
 |               | temp += 1     |
 | refcount = temp      |               |
 |               | refcount = temp      |
-
-</div>
-<div class = "col">
-
-**Atomic**
-
-| Thread 1      |   Thread 2    |
-|---------------|---------------|
-| temp = x  |               |
-| temp += 1 |               |
-| x = temp  |               |
-|               | temp = x      |
-|               | temp += 1     |
-|               | x = temp      |
 
 </div>
 </div>
@@ -1354,16 +1315,17 @@ That is, while Thread 1 is executing these instructions,
 
 # `Arc<T>`
 
-Arc: "**A**tomically **R**eference **C**ounted"
-* Think of the refcount as atomically updated with `fetch_add`
-
-* General advice: default to using `Rc<T>`, and switch to `Arc<T>` if you need to share ownership across threads
-  * The compiler will not let you use `Rc` across threads
-  * `Arc<T>` is thread-safe, at the cost of slightly slower operations
+"**A**tomically **R**eference **C**ounted"
+* Same functionality as `Rc<T>`, but thread safe
+  * Think of the *refcount* as atomically updated with `fetch_add`
+* Default to `Rc<T>` and switch to `Arc<T>` to share ownership across threads
+  * The compiler will prevent you from using `Rc<T>` across threads
+  * `Arc<T>` has slightly slower operations
 
 ---
 
 # Sharing Resources in Rust
+Let's attempt to implement thread resource-sharing with `Arc<T>`
 ```rust
 let v = Arc::new(vec![1, 2, 3]);
 
@@ -1377,9 +1339,8 @@ println!("Here's a vector: {:?}", v);
 handle.join().unwrap(); // <- join here
 ```
 * `v` and `v_copy` both point to the same value
-  *  Only when both are dropped will the underlying vector be dropped
+  *  So the value is only dropped when *both* pointers are dropped
 * Is this a data race?
-  * No, because we are only performing reads
 
 ---
 
@@ -1421,7 +1382,7 @@ help: trait DerefMut is required to modify through a dereference,
 but it is not implemented for Arc<Vec<i32>>
 ```
 
-* Note how this check is baked into the type and traits system for `Arc`
+* Note how this check is baked into the type and traits system for `Arc<T>`
   * Rust's typechecker guarantees absence of data races!
 
 <!-- If we allowed this, it would violate the borrowing rules of only one mutable reference at a time -->
@@ -1437,55 +1398,46 @@ The solution to this is actually the same as in C: we introduce a **mutex**.
 
 # Mutexes in Rust
 
-Unlike in C, mutexes in Rust actually *wrap* values.
+```rust
+let x = Mutex::new(0);
+let x_data = x.lock().unwrap();
+```
+* Unlike in C, mutexes *wrap* values
+  * This means `Mutex<T>` is also a smart pointer
+* The typechecker verifies that the lock is *acquired* before accessing the value
+  * If we know this, our multiple mutable references rule is not broken!
+  * This eliminates an entire class of bugs
+
+---
+
+# Mutexes in Rust
 
 ```rust
 let x = Mutex::new(0);
 let x_data = x.lock().unwrap();
 ```
-* This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
-  * If we know this, our multiple mutable references rule is not broken!
-* `x_data` is a `MutexGuard` type.
+* Recall `x_data` is a `MutexGuard` type
   * It has deref coercion, so we can operate on it as if it was the true value
   * When `x_data` is dropped, the mutex will be unlocked
-* `lock` may return an error if another thread panics
+* `lock` may return an error if another thread panics to prevent *poisoning*
 
----
-
-# Sharing Mutable Resources in Rust
-```rust
-let v = Arc::new(Mutex::new(vec![1, 2, 3]));
-
-let v_copy = v.clone();
-let handle = thread::spawn(move || {
-    v_copy.lock().unwrap().push(4);
-    println!("Here's a vector: {:?}", v_copy);
-});
-
-v.lock().unwrap().push(5);
-println!("Here's a vector: {:?}", v);
-
-handle.join().unwrap();
-```
-* The other thread cannot access the mutex until it is dropped (unlocked)
-* This prevents multiple mutable references, and the data race, by providing mutual exclusion!
 
 ---
 
 # C to Rust Example
-Remember this C example from before? 
+Remember this C code from earlier?
 ```c
-// Invariant: `x` is total number of times **any** thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`.
 static int x = 0;
 
 static void update_x(void) {
-  int temp = x; // <- x is INCORRECT
-  temp += 1;    // <- x is INCORRECT
-  x = temp;     // <- x is CORRECT
+    x += 1;
 }
+
 // <!-- snip -->
+
 for (int i = 0; i < 20; ++i) {
-  spawn_thread(update_x);
+    spawn_thread(update_x);
 }
 ```
 * We've established this is a data race, but the C compiler does not prevent it
@@ -1496,7 +1448,7 @@ for (int i = 0; i < 20; ++i) {
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Attempting to transfer this code *directly* to Rust won't work.
+Attempting to transfer this code *directly* to Rust won't work
 
 ```rust
 let mut x = 0;
@@ -1517,7 +1469,7 @@ Because we can't have multiple mutable references at once!
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Let's try to use `Mutex`
+Let's try to use `Mutex<T>`
 
 ```rust
 let x = Mutex::new(0);
@@ -1550,7 +1502,7 @@ for _ in 0..20 {
 ```
 * Notice that we `move` each clone of `x` into each thread, taking ownership of it
 * Each thread has a pointer to the mutex
-  * The mutex is not deallocated until all of the `Arc`s pointing to it are dropped (and the reference count is zero)
+  * The mutex is not deallocated until all of the `Arc<T>`s pointing to it are dropped (and the reference count is zero)
 
 
 <!--
@@ -1582,111 +1534,30 @@ println!("Final value of x: {}", *x.lock().unwrap());
 
 ---
 
-# `Send` and `Sync`
+# Some Other Shared State Things
+* `Send` and `Sync`: **marker traits** used to enforce safety with multiple threads
+  * `Send`: indicates that `T` can be safely sent between threads
+  * `Sync`: indicates that `T` can be safely referenced between threads
+    * *Only if `&T` implements `Send`
 
 ---
+# Some Other Shared State Things
+* There are shared state **primitives** other than `Arc<T>` and `Mutex<T>`
+  * `RwLock<T>`: a lock which can have concurrent *readers*
+  * `CondVar<T>`: blocks a thread until a condition is met
+  * `Barrier`: memory barrier where threads can wait for others to reach it
+  * and more...
 
-# `Send` and `Sync`
-
-* Everything we have gone over so far is a *standard library* feature
-* The language itself provides two **marker traits** to enforce safety when dealing with multiple threads: `Send` and `Sync`
-
-
-<!-- Marker trait == no implementation, signal to the compiler -->
-
----
-
-# `Send` vs. `Sync`
-
-
-## `Send`
-
-* Indicates that the type is safe to *send* between threads
-* `Rc<T>` does not implement this trait, because it is not thread safe
-  * But `Arc<T>` does, if `T` does as well
-
-
-## `Sync`
-
-* Indicates that the type (also implementing `Send`) can be referenced from multiple threads
-* `RefCell<T>` implement `Send` but not `Sync`
-* `Rc<T>` does not implement `Sync` either
-
-<!-- MutexGuard implements Sync, but not Send, actually! -->
-
-
----
-
-# Using `Send` and `Sync`
-* It is generally rare that you would implement these traits yourself
-  * Structs containing all `Send`/`Sync` types automatically derive `Send`/`Sync`
-  * Explicitly implementing either one requires using `unsafe`
-* This would be an example of a trait you might want to *unimplement*
-  * e.g. If you are doing something with `unsafe` that is not thread-safe
-  * `impl !Send for CoolType<T> {}`
-
-<!-- Notice this negative impl is not unsafe-->
-
----
-
-# More Shared State Primitives
-
----
-
-# `RwLock<T>` (Reader-Writer Lock)
-
-A reader-writer lock is like a mutex, except it allows concurrent access between readers (not writers).
-* We can acquire a read lock (or shared lock)
-  * Can be held by multiple readers at once
-  * No writers can hold the lock
-* We can acquire a write lock (or exclusive lock),
-  * Can be held by only one writer
-  * No readers can hold the lock
-
----
-
-# `RwLock<T>` Example
-
-```rust
-let shared_data = Arc::new(RwLock::new(Vec::<i32>::new()));
-
-// All of the readers can hold the read lock simultaneously
-for _ in 0..5 {
-    let shared_data_clone = Arc::clone(&shared_data);
-    thread::spawn(move || {
-        let data = shared_data_clone.read().unwrap();
-        println!("Reader: {:?}", *data);
-    });
-}
-
-// The writer has to be the only one with the lock
-let shared_data_clone = Arc::clone(&shared_data);
-thread::spawn(move || {
-    let mut data = shared_data_clone.write().unwrap();
-    data.push(42);
-    println!("Writer: {:?}", *data);
-});
-```
-
----
-
-# Even More Primitives
-
-* `CondVar<T>`—release a mutex and atomically wait to be signaled to re-acquire it
-* `Barrier`—Memory barrier, allows multiple threads to wait at a certain point, until all relevant threads reach that point
-* `Weak<T>`—downgraded version of `Rc` or `Arc` that holds a pointer, but does not count as an owner
-  * Retrieving the value can fail, if it has been deallocated already
-
+<!-- If interested, can read more in the Rust documentation. -->
 ---
 
 
 # Review: "Fearless Concurrency"
 
-What we have gone over today is referred to as "fearless concurrency" in the Rust community
+Today's content is referred to as "fearless concurrency" in the Rust community
 * By leveraging the ownership system, we can move entire classes of concurrency bugs to compile-time
 * Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
 * Subjectively, this may be the single best reason to use this language
-* Both parallelism and concurrency, as introduced in this lecture, benefit from these guarantees
 
 ---
 
