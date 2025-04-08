@@ -34,6 +34,8 @@ code {
 - Mutual Exclusion
 - Atomics
 - Message Passing
+- `thread::scope`
+- `Arc`
 
 
 ---
@@ -851,14 +853,35 @@ use std::sync::atomic::{AtomicI32, Ordering};
 
 let x = AtomicI32::new(0);
 
-x.fetch_add(10, Ordering::SeqCst);
-x.fetch_sub(2, Ordering::SeqCst);
+x.fetch_add(10, Ordering::Relaxed);
+x.fetch_sub(2, Ordering::AcqRel);
 
-println!("Atomic Output: {}!", x);
+println!("Atomic Output: {}!", x.load(Ordering::SeqCst));
 ```
 
-* The API is largely identical to C++20 atomics
-  * If interested in the `Ordering`, research "memory ordering"
+```
+Atomic Output: 8!
+```
+
+<!-- A trivial example, but gives a brief look at the atomic API in Rust. -->
+
+
+---
+
+
+# Atomics
+
+```rust
+let x = AtomicI32::new(0);
+
+x.fetch_add(10, Ordering::Relaxed);
+x.fetch_sub(2, Ordering::AcqRel);
+
+println!("Atomic Output: {}!", x.load(Ordering::SeqCst));
+```
+
+* The [API](https://doc.rust-lang.org/std/sync/atomic/) is largely identical to C++20 atomics
+* If you're interested in what the `Ordering` is, look up "memory ordering"
 
 <!--
 A trivial example, but gives a brief look at the atomic API in Rust.
@@ -900,9 +923,7 @@ fn main() {
 ---
 
 
-# Fixing a Data Race
-
-**Approach 3: No Shared Memory**
+# Eliminating Shared Memory
 
 If we eliminate shared memory...
 
@@ -914,11 +935,9 @@ If we eliminate shared memory...
 ---
 
 
-# Fixing a Data Race
+# Eliminating Shared Memory
 
-**Approach 3: No Shared Memory**
-
-If we eliminate shared memory... race is trivially gone.
+If we eliminate shared memory... any data races are trivially gone.
 
 1. ~~`x` is shared~~
 2. ~~`x` becomes incorrect mid-update~~
@@ -930,11 +949,11 @@ If we eliminate shared memory... race is trivially gone.
 
 # Message Passing
 
-Now we talk about the second approach to communication:
+Now we'll talk about the second approach to communication, message passing!
 
-* Approach 1: Shared Memory
-* Approach 2: Message Passing
-  * **Eliminates shared memory**
+- Approach 1: Shared Memory
+- Approach 2: Message Passing
+  - **Eliminates shared memory**
 
 
 ---
@@ -945,21 +964,22 @@ Now we talk about the second approach to communication:
 Previously, our shared memory solution was
 
 * For each pixel...
-  * Create shared variable `x`
-  * Increment `x` when thread touches pixel
+  * Create a shared variable `x`
+  * Increment `x` when a thread draws over the pixel
 
 
 ---
 
 
-
 # Approach 2: Message Passing
 
-In our **message passing** solution, we do *not* share `x`, but create a thread-local copy.
+In our **message passing** solution, we do _not_ share `x:
 
-- For each pixel...
-  - Create a local variable `x` for each thread (not shared!)
-  - Increment `x` when thread touches pixel
+* For each pixel...
+  * Create a local variable `x` for each thread (not shared!)
+  * Increment `x` when thread touches pixel
+
+TODO does this make sense?
 
 
 ---
@@ -983,69 +1003,82 @@ When threads update their local copy, they notify other threads via **message pa
 
 # Message Passing
 
-* Threads communicate via channels
-* Golang famously uses this approach
+* Threads communicate via _channels_
+  * You can think of a sending thread sending a message down a river
+  * Receiving thread picks up the message downstream
+* Popular mechanism for concurrency and synchronization in the Go language
 
 
 ---
 
 
+# Creating channels
 
-# Message Passing Example
+Channels consist of both a transmitter and a receiver.
 
 ```rust
 let (tx, rx) = mpsc::channel();
 ```
-* Channels have two halves, a transmitter and a receiver
-  * *Transmitter*: Connor writes "Review the ZFOD PR" on a rubber duck and floats it down a river
-  * *Reciever*: Ben finds the duck downstream and reads the message
-* Note that communication is one-way here
-* Each channel can only transmit/receive one type
 
+* **Transmitter**: Connor writes "Review the ZFOD PR" and sends it down a river
+* **Reciever**: Ben finds the duck downstream and reads the message
+* Each channel can only transmit/receive one type
+* Communication is only one-way
+* This is an `mpsc`-flavored channel...
 
 <!-- Speaker note:
+Discussion of `mpsc` incoming soon...
+
 One-way communication plays well with Rust's ownership model,
 hence why message passing emerges as a beloved choice
 - this programming practice is a product of its environment
 -->
 
+
 ---
 
 
 # Message Passing Example
 
+Here's an example of a child thread sending a message to the main thread.
+
 ```rust
 let (tx, rx) = mpsc::channel();
 
-thread::spawn(move || { // Take ownership of `tx`
+thread::spawn(move || { // Takes ownership of `tx`.
     let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
+    tx.send(val).unwrap(); // Send `val` through the transmitter.
 });
 
-let received = rx.recv().unwrap(); // receive val through the receiver
+let received = rx.recv().unwrap(); // Receive `val` through the receiver.
 println!("I am too busy to {}!", received);
 ```
+
 * After we send `val`, we no longer have ownership of it
 
 
 ---
 
-# Message Passing in Rust
+
+# Message Passing Iterator
+
 We can also use receivers as iterators!
 
 ```rust
 let (tx, rx) = mpsc::channel();
 
-thread::spawn(move || { // Take ownership of `tx`
+thread::spawn(move || { // Takes ownership of `tx`.
     let val = String::from("review the ZFOD PR!");
-    tx.send(val).unwrap(); // Send val through the transmitter
-    tx.send("buy Connor lunch".into()).unwrap();
+
+    tx.send(val).unwrap(); // Send `val` through the transmitter.
+    tx.send("buy Connor lunch".into()).unwrap(); // Send another message!
 });
 
-for msg in rx {
-  println!("I am too busy to {}!", msg);
+for msg in rx { // Iterate through messages until all transmitters are dropped.
+    println!("I am too busy to {}!", msg);
 }
 ```
+
 * Wait, what does `mpsc` stand for?
 
 
@@ -1054,22 +1087,34 @@ for msg in rx {
 
 # `mpsc` ⟹ Multiple Producer, Single Consumer
 
-This means we can `clone` the transmitter to get *multiple producers*.
+This means we can `clone` the transmitter to get _multiple message producers_.
 
 ```rust
 let (tx, rx) = mpsc::channel();
 
-let tx1 = tx.clone();
-thread::spawn(move || { // owns tx1
-      tx1.send("yo".into()).unwrap();
+let tx_clone = tx.clone();
+thread::spawn(move || { // Takes ownership of `tx_clone`.
+      tx_clone.send("yo".into()).unwrap();
       thread::sleep(Duration::from_secs(1));
 });
 
-thread::spawn(move || { // owns tx
+thread::spawn(move || { // Takes ownership of `tx`.
       tx.send("hello".into()).unwrap();
       thread::sleep(Duration::from_secs(1));
 });
 ```
+
+<!--
+This will do approximately the same thing as the previous slide, but we don't know which message
+we will receive first.
+-->
+
+
+---
+
+
+# **Parallelism in Rust**
+
 
 ---
 
@@ -1078,63 +1123,115 @@ thread::spawn(move || { // owns tx
 
 Rust uniquely provides some nice guarantees for parallel code, and at the same time introduces a few complications...
 
+* Rust's typechecker guarantees an absence of _any data races_
+  * Unless you use `unsafe`
+  * This is a super powerful guarantee!
+* General race conditions are not prevented (non-determinism)
+  * Deadlocks are still possible
+
+<!--
+The absence of data races alone should be enough of a reason to use this language!
+-->
+
 
 ---
 
-# Threads in Rust
-* Rust's typechecker guarantees an absence of *data races*
-  * ...unless you use unsafe
-* General race conditions are not prevented
-* Deadlocks are still allowed
 
-<!-- In my opinion, this is the single best reason to use this language -->
+# Creating Threads: Detailed
 
+Recall that threads can be spawned with `thread::spawn`.
 
----
-
-
-# Creating Threads, In More Detail
-Recall: threads can be spawned with `thread::spawn`.
 ```rust
-let handle = thread::spawn(|| {
-    for i in 1..10 {
-        println!("working on item {} from the spawned thread!", i);
+let child_handle = thread::spawn(|| {
+    for i in 1..=8 {
+        println!("Child thread says: Hello {i}!");
         thread::sleep(Duration::from_millis(1));
     }
 });
 ```
 * `thread::spawn` takes in a closure, implementing the `FnOnce` and `Send` traits
   * `FnOnce` implies we cannot spawn multiple threads of the same closure
-  * More on the `Send` trait later...
+  * `Send` is a marker trait that says the type is safe to send to another thread
+    * You can read more about `Send` [here in the Rustonomicon](https://doc.rust-lang.org/nomicon/send-and-sync.html)
 
-<!-- Closures are often used to allow capturing values, but functions work as well -->
+<!--
+Closures are often used to allow capturing values, but functions work as well
+
+A TLDR of `Send` is that it is an unsafe trait but auto-implemented trait. If you create a struct
+that has only `Send` fields, then Rust will auto-implement `Send` for your struct. However, there
+are non-`Send` types that you know about already: raw pointers are not `Send` and neither are
+`MutexGuard`s: you can't send a lock you are holding to a different thread.
+
+However, a common use case for interacting with the `Send` trait yourself is creating your own
+type that does not have safe fields (for example, a raw pointer), and `unsafe impl Send`ing your
+own type. You as the programmer have to guarantee to the compiler that your type is safe to send to
+a different thread.
+
+See the nomicon for more information, or watch this livestream: https://www.youtube.com/watch?v=yOezcP-XaIw
+-->
 
 
 ---
 
+
+# Capturing Values in Threads
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-# Capturing Values in Threads
 What if we want to use a value from outside the closure?
+
 ```rust
 let v = vec![1, 2, 3];
 
-let handle = thread::spawn(|| {
+thread::spawn(|| {
     println!("Here's a vector: {:?}", v);
 });
 ```
-```
-error[E0373]: closure may outlive the current function,
-but it borrows `v`, which is owned by the current function
-```
-* In other words, what if `v` goes out of scope while the thread is still running?
+
 
 ---
 
+
 # Capturing Values in Threads
 
-To solve this, we can take ownership of values by *moving* them into the closure.
+```
+error[E0373]: closure may outlive the current function, but it borrows `v`, which is owned by the current function
+ --> src/main.rs:6:19
+  |
+6 |     thread::spawn(|| {
+  |                   ^^ may outlive borrowed value `v`
+7 |         println!("Here's a vector: {:?}", v);
+  |                                           - `v` is borrowed here
+  |
+
+note: function requires argument type to outlive `'static`
+ --> src/main.rs:6:5
+  |
+6 | /     thread::spawn(|| {
+7 | |         println!("Here's a vector: {:?}", v);
+8 | |     });
+  | |______^
+
+help: to force the closure to take ownership of `v` (and any other referenced variables), use the `move` keyword
+  |
+6 |     thread::spawn(move || {
+  |                   ++++
+```
+
+* In other words, what if `v` goes out of scope while the thread is still running?
+
+<!--
+Big slide, break it down and read everything!
+-->
+
+
+---
+
+
+# Moving Values into Threads
+
+To solve this, we can take ownership of values by _moving_ them into the closure.
+
 ```rust
 let v = vec![1, 2, 3];
 
@@ -1142,30 +1239,56 @@ let handle = thread::spawn(move || {
     println!("Here's a vector: {:?}", v);
 });
 ```
-* What if we want `v` to remain accessible in the main thread?
+
 
 ---
 
-# Capturing Values in Threads
-We could clone `v` to keep it accessible in the main thread
+
+# Access from Different Threads
+
+![bg right:20% 75%](../images/ferris_does_not_compile.svg)
+
+What if we want `v` to remain accessible in the main thread?
+
+```rust
+fn main() {
+    let v = vec![1, 2, 3];
+
+    thread::spawn(move || {
+        println!("Vector from child: {:?}", v);
+    });
+
+    // THIS DOESN'T COMPILE!
+    println!("Vector from parent: {:?}", v);
+}
+```
+
+
+---
+
+
+# Access from Different Threads
+
+* We could clone `v` to keep it accessible in the main thread
   * But cloning can be expensive
-  * And what if we want to share `v` between the threads?
-
-Two alternatives to cloning:
+  * And what if we actually want to share `v` between the threads?
+* There are at least two alternatives to cloning here:
   * Approach 1: `thread::scope`
-  * Approach 2: `Arc`, `Mutex`
+  * Approach 2: `Arc` and `Mutex`
 
 
 ---
 
 
-# Approach 1: `thread::scope`
+# Local Data?
 
 Suppose we're writing a function to process a large array in parallel:
 
 ```rust
-let mut data = [1, 2, 3, 4, 5, 6];
-compute_squares(data);
+fn main() {
+    let mut data = [1, 2, 3, 4, 5, 6]; // Pretend this is much larger...
+    compute_squares(data);
+}
 ```
 
 * The array is local to the function (stack-allocated)
@@ -1177,46 +1300,26 @@ compute_squares(data);
 
 # Approach 1: `thread::scope`
 
-`thread::scope` creates a scope for spawning threads that *borrow* in-scope data
+`thread::scope` creates a scope for spawning threads that _borrows_ local data.
 
 ```rust
 fn compute_squares(numbers: &mut [i32]) {
     thread::scope(|s| {
         let mid = numbers.len() / 2;
         let (left, right) = numbers.split_at_mut(mid);
-        
-        let t1 = s.spawn(/* do stuff on left */);
-        let t2 = s.spawn(/* do stuff on right */);
+
+        let t1 = s.spawn(/* do stuff with `left` */);
+        let t2 = s.spawn(/* do stuff with `right` */);
     });
 }
 ```
 
 * `thread::scope`'s closure takes a `Scope` object `s`
-  * You use this `s` to spawn threads via `Scope::spawn` 
+  * You use this `s` to spawn threads with `s.spawn`
 
 ---
 
-# Approach 1: `thread::scope`
 
-The Rust compiler ensures that the borrowed data, `numbers`, outlives the threads
-
-```rust
-fn compute_squares(numbers: &mut [i32]) {
-    thread::scope(|s| {
-        let mid = numbers.len() / 2;
-        let (left, right) = numbers.split_at_mut(mid);
-        
-        let t1 = s.spawn(/* do stuff on left */);
-        let t2 = s.spawn(/* do stuff on right */);
-    });
-}
-```
-
-* `s` has a lifetime tied to the `thread::scope` call
-  * References to borrowed data cannot be smuggled out of this lifetime
-  * Neither can the thread handles (`t1`, `t2`)
-
----
 
 # Approach 1: `thread::scope`
 
@@ -1228,15 +1331,46 @@ fn compute_squares(numbers: &mut [i32]) {
         let mid = numbers.len() / 2;
         let (left, right) = numbers.split_at_mut(mid);
 
-        let t1 = s.spawn(/* do stuff on left */);
-        let t2 = s.spawn(/* do stuff on right */);
+        let t1 = s.spawn(/* do stuff with `left` */);
+        let t2 = s.spawn(/* do stuff with `right` */);
     });
 }
 ```
 * No explicit `join` is needed
-* See how clean this is!
+  * Very clean!
+
 
 ---
+
+
+# Approach 1: `thread::scope`
+
+The Rust compiler ensures that the borrowed data, `numbers`, outlives all threads.
+
+```rust
+fn compute_squares(numbers: &mut [i32]) {
+    thread::scope(|s| {
+        let mid = numbers.len() / 2;
+        let (left, right) = numbers.split_at_mut(mid);
+
+        let t1 = s.spawn(/* do stuff with `left` */);
+        let t2 = s.spawn(/* do stuff with `right` */);
+    });
+
+    // Can still access `numbers`!
+    println!("Finished computing squares: {:?}", numbers);
+}
+```
+
+<!--
+* `s` has a lifetime tied to the `thread::scope` call
+  * References to borrowed data cannot be smuggled out of this lifetime
+  * Neither can the thread handles (`t1`, `t2`)
+-->
+
+
+---
+
 
 # Approach 2: `Arc`, `Mutex`
 
@@ -1481,7 +1615,7 @@ for _ in 0..20 {
     });
 }
 ```
-* What if the main function ends? 
+* What if the main function ends?
   * It owns `x`, so the references to `x` will be invalid
 * How can we have multiple owners?
 
