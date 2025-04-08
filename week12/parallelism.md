@@ -144,6 +144,26 @@ for i in 1..5 {
 * `thread::spawn` takes a closure as argument
   * This is the function that the thread runs
 
+<!--Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads. -->
+
+---
+# Example: Creating a Thread
+What is the output?
+```
+working on item 1 from the main thread!
+working on item 1 from the spawned thread!
+working on item 2 from the main thread!
+working on item 2 from the spawned thread!
+working on item 3 from the main thread!
+working on item 3 from the spawned thread!
+working on item 4 from the main thread!
+working on item 4 from the spawned thread!
+working on item 5 from the spawned thread!
+```
+* Where did the other four spawned threads go?
+  * The main thread ended before they executed.
+  * To prevent this, **join** threads to mandate executed.
+
 
 ---
 
@@ -170,13 +190,14 @@ handle.join().unwrap();
 
 * Blocks the current thread until the thread associated with `handle` finishes
 
+<!-- Speaker note: Ask again what students believe will happen with this program. -->
 
 ---
 
 
 # Example: Multithreading Output
 
-See how the threads are alternating, effectively counting up at once:
+What is the output now?
 ```
 working on item 1 from the main thread!
 working on item 2 from the main thread!
@@ -192,7 +213,7 @@ working on item 7 from the spawned thread!
 working on item 8 from the spawned thread!
 working on item 9 from the spawned thread!
 ```
-
+* All ten spawned threads are executed!
 
 ---
 
@@ -319,7 +340,7 @@ static int x = 0;
 **Second ingredient**: `x` becomes incorrect mid-update.
 
 ```c
-// x is # of times *any* thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`
 static int x = 0;
 
 static void update_x(void) {
@@ -340,7 +361,7 @@ static void update_x(void) {
 **Third ingredient**: when multiple threads update at once...
 
 ```c
-// x is # of times *any* thread has called `update_x`
+// Invariant: `x` is total number of times **any** thread has called `update_x`
 static int x = 0;
 
 static void update_x(void) {
@@ -505,7 +526,28 @@ static void thread(void) {
 ```
 - Only one thread can hold the mutex lock (`mtx_t`) at a time
 
-- This provides *mutual exclusion*--only one thread may access `x` at the same time.
+- This provides *mutual exclusion*--only one thread may access `x` at the same time
+
+
+---
+
+
+# Approach 1: Mutual Exclusion
+In Rust, the `Mutex` lock can be found in the standard library.
+```rust
+use std::sync::Mutex;
+
+fn main() {
+    let m = Mutex::new(5);
+
+    {
+        let mut num = m.lock().unwrap();
+        *num = 6;
+    }
+
+    println!("m = {m:?}");
+}
+```
 
 
 ---
@@ -585,8 +627,6 @@ Lock-based solutions are slow due to _contention_ for locks, not _presence_ of l
 If multiple threads are contending for same memory location, i.e. stuck in a `compare_and_swap` loop, that can be equally slow
 This is why benchmarking is importnat, because we can't crystal-ball the performance of our solutions!
 -->
-
-
 ---
 
 
@@ -699,7 +739,7 @@ When threads update their local copy, they notify other threads via **message pa
 let (tx, rx) = mpsc::channel();
 ```
 * Channels have two halves, a transmitter and a receiver
-* Connor writes "Review the ZFOD PR" on a rubber duck and it floats down the river (transmitter)
+* Connor writes "Review the ZFOD PR" on a rubber duck and floats it down a river (transmitter)
   * Ben finds the duck downstream, and reads the message (receiver)
 * Note that communication is one-way here
 * Note also that each channel can only transmit/receive one type
@@ -819,7 +859,7 @@ let handle = thread::spawn(|| {
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
 # Capturing Values in Threads
-We often want to use things outside of the the closure, but borrowing them can be problematic.
+We often want to use things outside of the closure, but borrowing them can be problematic.
 ```rust
 let v = vec![1, 2, 3];
 
@@ -974,16 +1014,9 @@ t2.join().unwrap();
 ---
 
 
-# Approach 2: `Arc`, `Mutex`
+# Remember `Rc`?
 
-* Before we explain `Arc`, let's revisit `Rc`
-
----
-
-
-# `Rc` for Shared Data
-
-Recall `Rc<T>` from our Smart Pointers lecture.
+Recall `Rc<T>` (Reference Counted) from our Smart Pointers lecture.
 * `Rc<T>` works like `Box<T>`, providing a (spiritually) heap-allocated value
   * Difference being, `Box<T>` drops the value when it goes out of scope
   * `Rc<T>` drops the value when its refcount hits zero
@@ -1058,7 +1091,6 @@ Arc: "**A**tomically **R**eference **C**ounted"
 ---
 
 # Sharing Resources in Rust
-We can give the vector multiple owners by using an `Arc`.
 ```rust
 let v = Arc::new(vec![1, 2, 3]);
 
@@ -1072,7 +1104,7 @@ println!("Here's a vector: {:?}", v);
 handle.join().unwrap(); // <- join here
 ```
 * `v` and `v_copy` both point to the same value
-* When both  are dropped, only then will the underlying vector be dropped
+  *  Only when both are dropped will the underlying vector be dropped
 * Is this a data race?
   * No, because we are only performing reads
 
@@ -1082,7 +1114,7 @@ handle.join().unwrap(); // <- join here
 
 # Sharing *Mutable* Resources in Rust
 
-However, if we introduce a write, we would have a data race:
+But what happens if we introduce writes?
 
 ```rust
 let v = Arc::new(vec![1, 2, 3]);
@@ -1098,6 +1130,7 @@ println!("Here's a vector: {:?}", v);
 
 handle.join().unwrap();
 ```
+* This is a data race!
 
 
 ---
@@ -1124,7 +1157,7 @@ but it is not implemented for Arc<Vec<i32>>
 
 
 # Sharing Mutable Resources in Rust
-The solution to this is actually the same as in C—we introduce a mutex.
+The solution to this is actually the same as in C: we introduce a **mutex**.
 
 
 ---
@@ -1140,8 +1173,8 @@ let x_data = x.lock().unwrap();
 * This allows the typechecker to verify that the lock is acquired before accessing a value (and eliminates a class of bugs)
   * If we know this, our multiple mutable references rule is not broken!
 * `x_data` is a `MutexGuard` type.
-  * It has deref coercion, so one can operate on it just like it was the actual data
-* When `x_data` is dropped, the mutex will be unlocked.
+  * It has deref coercion, so we can operate on it as if it was the true value
+  * When `x_data` is dropped, the mutex will be unlocked
 * `lock` may return an error if another thread panics
 
 ---
@@ -1167,6 +1200,22 @@ handle.join().unwrap();
 ---
 
 # C to Rust Example
+Remember this C example from before? 
+```c
+// Invariant: `x` is total number of times **any** thread has called `update_x`
+static int x = 0;
+
+static void update_x(void) {
+  int temp = x; // <- x is INCORRECT
+  temp += 1;    // <- x is INCORRECT
+  x = temp;     // <- x is CORRECT
+}
+// <!-- snip -->
+for (int i = 0; i < 20; ++i) {
+  spawn_thread(update_x);
+}
+```
+* We've established this is a data race, but the C compiler does not prevent it
 
 ---
 
@@ -1174,7 +1223,7 @@ handle.join().unwrap();
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Here's the C code from before, turned into Rust directly.
+Attempting to transfer this code *directly* to Rust won't work.
 
 ```rust
 let mut x = 0;
@@ -1185,8 +1234,8 @@ for _ in 0..20 {
     });
 }
 ```
-* A sea of errors ensues of course, but the key idea is that this violates one of our rules.
-  * We can't have multiple mutable references at the same time!
+Because we can't have multiple mutable references at once!
+* And how do we solve this?
 
 
 ---
@@ -1195,7 +1244,7 @@ for _ in 0..20 {
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Here's our code from before, with mutexes incorporated
+Let's try to use `Mutex`
 
 ```rust
 let x = Mutex::new(0);
@@ -1207,8 +1256,8 @@ for _ in 0..20 {
     });
 }
 ```
-* What is wrong now?
-  * What if the main function ends? It owns `x`, so the thread references to `x` will be invalid...
+* What if the main function ends? 
+  * It owns `x`, so the references to `x` will be invalid
 * How can we have multiple owners?
 
 ---
@@ -1254,8 +1303,8 @@ for _ in 0..20 {
 for handle in handles { handle.join().unwrap(); } // Wait for all threads
 println!("Final value of x: {}", *x.lock().unwrap());
 ```
-* `x` is 20, *every time*.
-  * And it is illegal for it to be anything else in safe Rust.
+* `x` is 20, *every time*
+  * And it is illegal for it to be anything else in safe Rust
 
 
 ---
@@ -1266,7 +1315,8 @@ println!("Final value of x: {}", *x.lock().unwrap());
 
 # `Send` and `Sync`
 
-Everything we have gone over so far is a *standard library* feature. The language itself provides two marker traits to enforce safety when dealing with multiple threads, `Send` and `Sync`.
+* Everything we have gone over so far is a *standard library* feature
+* The language itself provides two **marker traits** to enforce safety when dealing with multiple threads: `Send` and `Sync`
 
 
 <!-- Marker trait == no implementation, signal to the compiler -->
@@ -1278,14 +1328,15 @@ Everything we have gone over so far is a *standard library* feature. The languag
 
 ## `Send`
 
-* Indicates that the type is safe to *send* between threads.
-* `Rc<T>` does not implement this trait, because it is not thread safe.
+* Indicates that the type is safe to *send* between threads
+* `Rc<T>` does not implement this trait, because it is not thread safe
+  * But `Arc<T>` does, if `T` does as well
 
 
 ## `Sync`
 
-* Indicates that the type implementing `Send` can be referenced from multiple threads
-* For example, `RefCell<T>` from last lecture implements `Send` but not `Sync`
+* Indicates that the type (also implementing `Send`) can be referenced from multiple threads
+* `RefCell<T>` implement `Send` but not `Sync`
 * `Rc<T>` does not implement `Sync` either
 
 <!-- MutexGuard implements Sync, but not Send, actually! -->
@@ -1346,19 +1397,19 @@ thread::spawn(move || {
 
 ---
 
-# Even More  Primitives
+# Even More Primitives
 
 * `CondVar<T>`—release a mutex and atomically wait to be signaled to re-acquire it
 * `Barrier`—Memory barrier, allows multiple threads to wait at a certain point, until all relevant threads reach that point
-* `Weak<T>`—downgraded version of `Rc` or `Arc` that holds a pointer, but does not count as an owner.
-  * Retrieving the value can fail, if it has been deallocated already.
+* `Weak<T>`—downgraded version of `Rc` or `Arc` that holds a pointer, but does not count as an owner
+  * Retrieving the value can fail, if it has been deallocated already
 
 ---
 
 
 # Review: "Fearless Concurrency"
 
-What we have gone over today is referred to as "fearless concurrency" in the rust community.
+What we have gone over today is referred to as "fearless concurrency" in the Rust community
 * By leveraging the ownership system, we can move entire classes of concurrency bugs to compile-time
 * Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many approaches, *safely*
 * Subjectively, this may be the single best reason to use this language
