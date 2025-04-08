@@ -629,6 +629,21 @@ This is why benchmarking is importnat, because we can't crystal-ball the perform
 -->
 ---
 
+# Atomics
+These atomic operations are also implemented in the Rust standard library.
+```rust
+use std::sync::atomic::{AtomicIsize, Ordering};
+
+let x = AtomicIsize::new(0);
+
+x.fetch_add(10, Ordering::SeqCst);
+x.fetch_sub(2, Ordering::SeqCst);
+
+println!("Atomic Output: {}!", x);
+```
+<!-- A trivial example, but gives a brief look at the atomic API in Rust. -->
+
+---
 
 # Atomics
 
