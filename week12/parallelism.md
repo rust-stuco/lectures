@@ -996,18 +996,6 @@ Now we'll talk about the second approach to communication, message passing!
 ---
 
 
-# Approach 2: Message Passing
-
-Previously, our shared memory solution was
-
-* For each pixel...
-  * Create a shared variable `x`
-  * Increment `x` when a thread draws over the pixel
-
-
----
-
-
 # Message Passing
 
 * Threads communicate via _channels_
