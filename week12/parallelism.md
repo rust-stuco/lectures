@@ -28,9 +28,9 @@ code {
 
 # Today: Parallelism
 
-- Parallelism vs Concurrency
+- Parallelism
   - Workers, Processes, and Threads
-- Multithreading
+  - Multithreading
 - Mutual Exclusion and `Mutex<T>`
 - Atomics
 - Message Passing
@@ -93,7 +93,7 @@ invisible to the programmer
 
 # Designing Parallel Solutions
 
-There are two important questions we need to ask
+There are two important questions we need to ask:
 
 * Division of labour
   * Who are the workers and how do we divide the work?
@@ -283,16 +283,16 @@ for i in 1..=3 {
 }
 ```
 
-* Why doesn't the child thread always print "Hello" 8 times?
+* Why doesn't the child thread print `"Hello"` 8 times?
 
 
 ---
 
 
-# Process Exit `SIGKILL`s Threads
+# Process Exit Kills Threads
 
 * When the main thread finishes execution, the process it belongs to exits
-* Once the process exits, all threads in the process are `SIGKILL`ed
+* Once the process exits, all threads in the process are killed
 * If we want to let our child threads finish, we have to wait for them!
 
 
@@ -317,7 +317,11 @@ child_handle.join().unwrap();
 * `join` will block the calling thread until the child thread finishes
   * In this example, the calling thread is the main thread
 
-<!-- Speaker note: Ask again what students believe will happen with this program. -->
+<!--
+Speaker note: Ask again what students believe will happen with this program.
+
+Why is it called `join`? This comes from the the fork-join model!
+-->
 
 
 ---

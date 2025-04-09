@@ -15,12 +15,12 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="2" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="82">
 <h1 id="today-parallelism">Today: Parallelism</h1>
 <ul>
-<li>Parallelism vs Concurrency
+<li>Parallelism
 <ul>
 <li>Workers, Processes, and Threads</li>
+<li>Multithreading</li>
 </ul>
 </li>
-<li>Multithreading</li>
 <li>Mutual Exclusion and <code>Mutex&lt;T&gt;</code></li>
 <li>Atomics</li>
 <li>Message Passing</li>
@@ -61,7 +61,7 @@
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="6" data-marpit-fragments="6" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="6" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="82">
 <h1 id="designing-parallel-solutions">Designing Parallel Solutions</h1>
-<p>There are two important questions we need to ask</p>
+<p>There are two important questions we need to ask:</p>
 <ul>
 <li data-marpit-fragment="1">Division of labour
 <ul>
@@ -203,14 +203,14 @@ Child thread says: Hello 3!
 }
 </code></pre>
 <ul>
-<li data-marpit-fragment="1">Why doesn't the child thread always print &quot;Hello&quot; 8 times?</li>
+<li data-marpit-fragment="1">Why doesn't the child thread print <code>&quot;Hello&quot;</code> 8 times?</li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="16" data-marpit-fragments="3" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="16" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="82">
-<h1 id="process-exit-sigkills-threads">Process Exit <code>SIGKILL</code>s Threads</h1>
+<h1 id="process-exit-kills-threads">Process Exit Kills Threads</h1>
 <ul>
 <li data-marpit-fragment="1">When the main thread finishes execution, the process it belongs to exits</li>
-<li data-marpit-fragment="2">Once the process exits, all threads in the process are <code>SIGKILL</code>ed</li>
+<li data-marpit-fragment="2">Once the process exits, all threads in the process are killed</li>
 <li data-marpit-fragment="3">If we want to let our child threads finish, we have to wait for them!</li>
 </ul>
 </section>
@@ -1284,7 +1284,9 @@ Emphasize that &quot;thread&quot; can be an overloaded term</p></div><div class=
 ```
 use std::thread;
 use std::time::Duration;
-```</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads.</p></div><div class="bespoke-marp-note" data-index="11" tabindex="0"><p>Note that this _probably_ won't happen, but it could!</p></div><div class="bespoke-marp-note" data-index="16" tabindex="0"><p>Speaker note: Ask again what students believe will happen with this program.</p></div><div class="bespoke-marp-note" data-index="18" tabindex="0"><p>Speaker note:
+```</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads.</p></div><div class="bespoke-marp-note" data-index="11" tabindex="0"><p>Note that this _probably_ won't happen, but it could!</p></div><div class="bespoke-marp-note" data-index="16" tabindex="0"><p>Speaker note: Ask again what students believe will happen with this program.
+
+Why is it called `join`? This comes from the the fork-join model!</p></div><div class="bespoke-marp-note" data-index="18" tabindex="0"><p>Speaker note:
 &quot;Embarrassingly parallel&quot; refers to problems where
 we can easily utilize our hardware in full,
 usually because tasks are super independent
