@@ -1,16 +1,16 @@
-## Week 13: Rust Ecosystem
+## Week 13: The Rust Ecosystem
 
 ### Lecture
 
-- Rust Toolchain
+- The Rust Toolchain
     - `rustup`
     - `clippy`
     - `rustfmt`
-    - `flamegraph`
     - `criterion`?
+    - `flamegraph`
 - Reading Documentation
-    - `rand`
     - `clap`
+    - `rand`
     - `time` vs `chrono`
     - `anyhow` vs `thiserror` vs `snafu`?
     - `derive_more`?
