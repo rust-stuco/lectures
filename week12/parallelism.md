@@ -189,7 +189,7 @@ for i in 1..=3 {
 }
 ```
 
-* `thread::spawn` takes a `FnOnce` closure
+* `thread::spawn` takes an `FnOnce` closure
   * The closure will be run on the newly-created thread
 * Question: What should this program's output be?
 
@@ -401,7 +401,7 @@ This is also known as the painter's algorithm
 
 # The Case for Communication
 
-If we want a consistent drawings, we need a way for our threads to talk / communicate with each other!
+If we want consistent drawings, we need a way for our threads to talk / communicate with each other!
 
 * For each pixel:
   * Which color circle should it draw?
@@ -1389,7 +1389,7 @@ fn compute_squares(numbers: &mut [i32]) {
 
 ![bg right:20% 75%](../images/ferris_does_not_compile.svg)
 
-Let's say we two threads to access a mutex-protected vector.
+Let's say we want two threads to access a mutex-protected vector.
 
 ```rust
 let data = Mutex::new(vec![2, 3, 4, 5]);
@@ -1599,7 +1599,7 @@ Today's content is referred to as "fearless concurrency" in the Rust community:
 
 * By leveraging Rust's type system, we can move entire classes of concurrency and parallelism bugs to compile-time
 * Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many different approaches, all of which are completely safe
-* Some people believe that this may be the  _best reason_ to use this language
+* Some people believe that this may be the  _best reason_ to use Rust
 
 
 ---
