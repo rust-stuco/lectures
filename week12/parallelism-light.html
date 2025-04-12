@@ -82,7 +82,7 @@
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="7" data-marpit-fragments="2" data-paginate="true" data-theme="rust" lang="en-US" data-marpit-pagination="7" style="--paginate:true;--theme:rust;" data-marpit-pagination-total="82">
 <h1 id="multithreading">Multithreading</h1>
-<p>For today, we will simplify terminology that can be overloaded.</p>
+<p>For today, we will simplify terminology (that tends to get overloaded).</p>
 <ul>
 <li data-marpit-fragment="1">Our workers are <em>threads</em></li>
 <li data-marpit-fragment="2">You can think of threads as a &quot;stream of instructions&quot;</li>
@@ -241,8 +241,8 @@ child_handle.<span class="hljs-title function_ invoke__">join</span>().<span cla
 Child thread says: Hello 1!
 Main thread says: Hello 2!
 Child thread says: Hello 2!
-Main thread says: Hello 3!
 Child thread says: Hello 3!
+Main thread says: Hello 3!
 Child thread says: Hello 4!
 Child thread says: Hello 5!
 Child thread says: Hello 6!
@@ -271,7 +271,7 @@ Child thread says: Hello 8!
 <ul>
 <li data-marpit-fragment="1">We could be painting semi-transparent circles</li>
 <li data-marpit-fragment="2">Circles could overlap and/or could be constantly moving</li>
-<li data-marpit-fragment="3">The <em>order</em> in which we paint circles changes the colors of pixels</li>
+<li data-marpit-fragment="3">The <em>order</em> in which we paint circles changes what we need to draw</li>
 </ul>
 </section>
 </foreignObject><foreignObject width="1280" height="720" data-marpit-advanced-background="pseudo"><section data-marpit-fragments="3" data-paginate="true" data-theme="rust" lang="en-US" data-marpit-pagination="20" style="" data-marpit-pagination-total="82" data-marpit-advanced-background="pseudo" data-marpit-advanced-background-split="right"></section></foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="21" data-marpit-fragments="5" data-paginate="true" data-theme="rust" lang="en-US" data-marpit-pagination="21" style="--paginate:true;--theme:rust;" data-marpit-pagination-total="82">
@@ -1284,9 +1284,10 @@ Emphasize that &quot;thread&quot; can be an overloaded term</p></div><div class=
 ```
 use std::thread;
 use std::time::Duration;
-```</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads.</p></div><div class="bespoke-marp-note" data-index="11" tabindex="0"><p>Note that this _probably_ won't happen, but it could!</p></div><div class="bespoke-marp-note" data-index="16" tabindex="0"><p>Speaker note: Ask again what students believe will happen with this program.
+```</p></div><div class="bespoke-marp-note" data-index="9" tabindex="0"><p>Speaker note: Ask students what they believe the output of this program is. Want to demonstrate the nondeterministic nature of threads.</p></div><div class="bespoke-marp-note" data-index="11" tabindex="0"><p>Note that this _probably_ won't happen, but it could!</p></div><div class="bespoke-marp-note" data-index="16" tabindex="0"><p>Ask again what students believe will happen with this program.
 
-Why is it called `join`? This comes from the the fork-join model!</p></div><div class="bespoke-marp-note" data-index="18" tabindex="0"><p>Speaker note:
+Why do we call it `join`? This comes from the &quot;Fork-Join&quot; model of computation. You fork off new
+threads of execution and eventually they are joined back in.</p></div><div class="bespoke-marp-note" data-index="17" tabindex="0"><p>Remember that this is just one possible interleaving of print statements!</p></div><div class="bespoke-marp-note" data-index="18" tabindex="0"><p>Speaker note:
 &quot;Embarrassingly parallel&quot; refers to problems where
 we can easily utilize our hardware in full,
 usually because tasks are super independent

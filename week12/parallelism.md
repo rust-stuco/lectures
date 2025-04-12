@@ -108,7 +108,7 @@ There are two important questions we need to ask:
 
 # Multithreading
 
-For today, we will simplify terminology that can be overloaded.
+For today, we will simplify terminology (that tends to get overloaded).
 
 * Our workers are _threads_
 * You can think of threads as a "stream of instructions"
@@ -318,9 +318,10 @@ child_handle.join().unwrap();
   * In this example, the calling thread is the main thread
 
 <!--
-Speaker note: Ask again what students believe will happen with this program.
+Ask again what students believe will happen with this program.
 
-Why is it called `join`? This comes from the the fork-join model!
+Why do we call it `join`? This comes from the "Fork-Join" model of computation. You fork off new
+threads of execution and eventually they are joined back in.
 -->
 
 
@@ -336,14 +337,18 @@ Main thread says: Hello 1!
 Child thread says: Hello 1!
 Main thread says: Hello 2!
 Child thread says: Hello 2!
-Main thread says: Hello 3!
 Child thread says: Hello 3!
+Main thread says: Hello 3!
 Child thread says: Hello 4!
 Child thread says: Hello 5!
 Child thread says: Hello 6!
 Child thread says: Hello 7!
 Child thread says: Hello 8!
 ```
+
+<!--
+Remember that this is just one possible interleaving of print statements!
+-->
 
 
 ---
@@ -384,7 +389,7 @@ What if our image is more complex?
 
 * We could be painting semi-transparent circles
 * Circles could overlap and/or could be constantly moving
-* The _order_ in which we paint circles changes the colors of pixels
+* The _order_ in which we paint circles changes what we need to draw
 
 <!--
 This is also known as the painter's algorithm
