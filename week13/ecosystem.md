@@ -131,106 +131,289 @@ Talk briefly about how consistent formatting across all Rust projects is super i
 ---
 
 
-# Criterion?
+# Performance Analysis
 
-Maybe talk about criterion before talking about flamegraphs
-
-TODO: https://bheisler.github.io/criterion.rs/book/
+* `criterion` and `flamegraph`
 
 
 ---
 
 
-Criterion
+# Problem: Statistical Significance
 
-Basic Usage code
+Say we wanted to profile our Rust code:
+
+```rust
+fn fibonacci(n: u64) -> u64 {
+    match n {
+        0 => 1,
+        1 => 1,
+        n => fibonacci(n-1) + fibonacci(n-2),
+    }
+}
+```
+
+How do we control our environment?
+* Seeing a number go up is one thing, whether it's statistically significant is another
+* Compiler optimizations skew results, OS noise creates performance variations
 
 
 ---
 
 
-Criterion
+# `criterion`
 
-More basic usage code
+
+Add `criterion` as a development dependency:
+
+```toml
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "my_benchmark"
+harness = false
+```
+
+* `name = "my_benchmark"` declares a benchmark `my_benchmark`
+* Since we're use our benchmark `my_benchmark`, we disable the standard benchmarking harness with `harness = false`
+
+
+<!-- https://bheisler.github.io/criterion.rs/book/-->
 
 
 ---
 
 
-Criterion
+# `criterion`
 
-Basic usage CLI
+Create a benchmark file at `$PROJECT/benches/my_benchmark.rs`:
 
+```rust
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use mycrate::fibonacci;
+```
+
+* Import `criterion`
+* Import the function we're benchmarking, `mycrate::fibonacci`
+
+<!--
+Note we import the crate we're benchmarking as an external crate.
+This is because Cargo compiles each benchmark under `/benches` as if each was a separate crate from the main crate
+-->
+
+---
+
+
+# `criterion`
+
+Next, create a benchmark using the `Criterion` object:
+
+```rust
+pub fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+}
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
+```
+
+* We define benchmark with `bench_function`, which takes two arguments:
+    * Name of the benchmark, `"fib 20"`
+    * A closure that gets run for that benchmark
+* `black_box` stops the compiler from optimizing away our whole function
+    * Otherwise, the compiler may replace `fibonacci(20)` with a constant
+
+<!--
+Two macros:
+- criterion_group! macro generates a benchmark group called `benches`, containing the criterion_benchmark function defined earlier
+- criterion_main! macro generates a main function which executes the `benches` group
+-->
+
+---
+
+
+# `criterion`
+
+Run the benchmark with `cargo bench`:
+
+```
+Running target/release/deps/example-423eedc43b2b3a93
+Benchmarking fib 20
+Benchmarking fib 20: Warming up for 3.0000 s
+Benchmarking fib 20: Collecting 100 samples in estimated 5.0658 s (188100 iterations)
+Benchmarking fib 20: Analyzing
+fib 20                  time:   [26.029 us 26.251 us 26.505 us]
+Found 11 outliers among 99 measurements (11.11%)
+  6 (6.06%) high mild
+  5 (5.05%) high severe
+slope  [26.029 us 26.505 us] R^2            [0.8745662 0.8728027]
+mean   [26.106 us 26.561 us] std. dev.      [808.98 ns 1.4722 us]
+median [25.733 us 25.988 us] med. abs. dev. [234.09 ns 544.07 ns]
+```
+
+
+---
+
+# `criterion`
+
+Okay, our Fibonacci implementation needs improvement:
+
+```rust
+fn fibonacci(n: u64) -> u64 {
+    match n {
+        0 => 1,
+        1 => 1,
+        n => fibonacci(n-1) + fibonacci(n-2),
+    }
+}
+```
+
+---
+
+# `criterion`
+
+Let's write a second version for comparison:
+
+```rust
+fn fibonacci(n: u64) -> u64 {
+    let mut a = 0;
+    let mut b = 1;
+    match n {
+        0 => b,
+        _ => {
+            for _ in 0..n {
+                let c = a + b;
+                a = b;
+                b = c;
+            }
+            b
+        }
+    }
+}
+```
+
+---
+
+# `criterion`
+
+Upon rerunning `cargo bench`, `criterion` compares it with our previous run:
+
+```
+Running target/release/deps/example-423eedc43b2b3a93
+Benchmarking fib 20
+Benchmarking fib 20: Warming up for 3.0000 s
+Benchmarking fib 20: Collecting 100 samples in estimated 5.0000 s (13548862800 iterations)
+Benchmarking fib 20: Analyzing
+fib 20                  time:   [353.59 ps 356.19 ps 359.07 ps]
+                        change: [-99.999% -99.999% -99.999%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 99 measurements (6.06%)
+  4 (4.04%) high mild
+  2 (2.02%) high severe
+slope  [353.59 ps 359.07 ps] R^2            [0.8734356 0.8722124]
+mean   [356.57 ps 362.74 ps] std. dev.      [10.672 ps 20.419 ps]
+median [351.57 ps 355.85 ps] med. abs. dev. [4.6479 ps 10.059 ps]
+```
+
+* `change: [-99.999% -99.999% -99.999%] (p = 0.00 < 0.05)` => Statistically significant improvement!
 
 ---
 
 
 # Flamegraphs
 
-Explain what a flamgraph is
+* Manually adding timers is error-prone, misses deeper call stacks
+* That's why we have `flamegraph`
+
+
+---
+
+# `flamegraph` Example: Concatenating Strings
+
+Suppose we have the following function, and we want to know where it's time-consuming:
+
+```rust
+fn build_string(n: usize) -> String {
+    let mut s = String::new();
+    for i in 0..n {
+        s += &format!("{}", i);
+    }
+    s
+}
+build_string(5); // produces "01234"
+build_string(15); // produces "01234567891011121314"
+```
+
+* Let's `cargo install flamegraph` and profile `build_string(100_000)`
+
+---
+
+
+# Flamegraph
+
+We can generate flamegraphs with `cargo flamegraph`:
+
+![](../images/week13/flamegraph_format_yesprint.svg)
+
+* Displays call stack from bottom to top
+    * Width of block is relative time spent in that function
+    * Colors indicate different libraries or components
+    * Taller stacks indicate deeper call chains, more overhead
 
 
 ---
 
 
-High-quality high-resolution image of a flamegraph (is it possible to use the same svg?)
+# Flamegraph
+
+It's more informative to have a side-by-side comparison:
+
+```rust
+fn build_string_format(n: usize) -> String {
+    let mut s = String::new();
+    for i in 0..n {
+        s += &format!("{}", i);
+    }
+    s
+}
+```
+```rust
+fn build_string_pushstr(n: usize) -> String {
+    let mut s = String::with_capacity(n * 2);
+    for i in 0..n {
+        s.push_str(&i.to_string());
+    }
+    s
+}
+```
 
 
 ---
 
 
-Flamegraph
+# Flamegraph
 
-Things you can do with it (how to go about optimizing code?)
+Below are the graphs for the `format!` and `push_str` approaches respectively:
 
+![](../images/week13/flamegraph_format_yesprint.svg)
+![](../images/week13/flamegraph_pushstr_yesprint.svg)
 
----
+<!--
+We can ignore the bottom portion, since that's shared among graphs
+    All graphs start from `dyldstart`, which is macOS's dynamic linker,
+    moving up through the main function and various Rust standard library calls
+We care about the top portion, which shows the different string handling approaches
 
-
-Flamegraph
-
-
----
-
-
-Flamegraph
-
-
----
-
-
-Flamegraph
-
-
----
-
-
-Padding
-
-
----
-
-
-Padding
-
-
----
-
-
-Padding
-
-
-
----
-
-
-Padding
-
-
----
-
-
-Padding
+KEY OBSERVATIONS:
+- format! approach has wider + more blocks dedicated to memory allocation and string formatting operations
+    `alloc::raw_vec::RawVecInner`, `alloc::string::String`, `core::fmt`
+    - markedly taller call chain than push_str, more time spent in overhead functions than main algorithm
+- push_str shows fewer allocations and less time spent in string manipulation operations
+    - narrower sections for memory operations because pre-allocation
+        reduces the number of reallocations needed
+    - more time in the main algorithm, as opposed to overhead functions
+-->
 
 
 ---
