@@ -29,7 +29,7 @@ code {
 # Today: The Rust Ecosystem
 
 - The Rust Toolchain: `rustup`, `clippy`, `rustfmt`
-- Performance: `criterion`, `flamegraph`
+- Performance and Analysis: `criterion`, `flamegraph`
 - Reading Documentation
     - `clap`
     - `rand`
@@ -62,7 +62,7 @@ code {
 
 `rustup` is a _toolchain multiplexer_.
 
-* A _toolchain_ is a complete installation of the Rust compiler (rustc) and related tools (like cargo)
+* A _toolchain_ is a complete installation of the Rust compiler (rustc) and related tools (like `cargo`)
     * Defined by release channel / version, and the host platform triple
         * `stable-x86_64-pc-windows-msvc`, `beta-aarch64-unknown-linux-gnu`
 * `rustup` consolidates them as a single set of tools installed in `~/.cargo/bin`
@@ -77,7 +77,7 @@ code {
 * There are 3 different channels
     * Stable: `rustc` and `cargo` release every 6 weeks
     * Beta: the next stable release
-    * Nightly: `master` branch, release made every night
+    * Nightly: release made every night, based on the `master` branch
 
 
 ---
@@ -87,8 +87,8 @@ code {
 # Stability without Stagnation
 
 * Rust cares _a lot_ about the stability of your code
-* At the same time, we want to be able to experiment with new features
-* You should never need to worry about breaking your code after updating Rust
+* At the same time, we all want to experiment with new features
+* You should _never_ need to worry about breaking your code after updating Rust
 * But you should also be able to opt-in to newer "unstable" features!
 
 <!--
@@ -141,9 +141,9 @@ Here are some basic `rustup` commands to remember:
 
 * `rustup update`
     * Updates your Rust toolchains to the latest versions
-* `rustup default set ___`
-    * Sets the default rust toolchain (to stable/beta/nightly, etc.)
-* `rustup override set ___`
+* `rustup default set <stable/beta/nightly>`
+    * Sets the default rust toolchain
+* `rustup override set <stable/beta/nightly>`
     * Overrides the toolchain for the specific directory
 
 
@@ -158,7 +158,9 @@ Clippy is a collection of lints that can catch common mistakes when writing Rust
 ---
 
 # Clippy Lint Levels
-Clippy offers many levels of lints, based on your needs
+
+Clippy offers many different lint levels.
+
 *  `clippy::all`: all lints that are on by default
     * `clippy::correctness`: code that is outright wrong or useless
     * `clippy::suspicious`: code that is most likely wrong or useless
@@ -171,41 +173,51 @@ Clippy offers many levels of lints, based on your needs
 
 ---
 
-# Clippy CLI Usage
-* Likely already installed if using `rustup`
-    * Otherwise: `rustup component add clippy [--toolchain=<name>]`
-* Run all lints: `cargo clippy`
-    * Run specific lint: `cargo clippy::__`
-* Automatically apply suggestions: `cargo clippy --fix`
+# `clippy` Usage
+
+* Already installed if using `rustup` (default profile)
+* To run all lints, run `cargo clippy`
+    * To run a specific lint, run `cargo clippy::___`
+* To automatically apply suggestions, run `cargo clippy --fix`
+* To run lints on tests and other files, run `cargo clippy --all-targets`
 
 
 ---
 
 
 # Clippy Source Code Usage
-You can also configure lint levels in your source code
-```rust
-#![allow(clippy::style)]
 
-#[warn(clippy::box_default)]
+You can also configure lint levels directly in your source code.
+
+```rust
 fn main() {
-    let _ = Box::<String>::new(Default::default());
-    // ^ warning: `Box::new(_)` of default value
+    #[allow(unused_variables)]
+    let not_used = 42;
+
+    println!("Hello, World!");
 }
 ```
+
+<!--
+This is a very basic example, look online for more information!
+-->
 
 
 ---
 
 
-
 # `rustfmt`
-`rustfmt` is a formatting tool that checks adhearance to formatting standards
-* To install: `rustup component add rustfmt`
+
+`rustfmt` is a formatting tool that checks adherence to Rust's strict formatting standards.
+
+* Already installed if using `rustup` (default profile)
 * To format one file: `rustfmt file.rs`
 * To format whole project: `cargo fmt`
 * To only *check* format: `cargo fmt -- --check`
 
+<!--
+It's pretty rare that you would use `rustfmt` by itself, usually you are running `cargo fmt` for everything.
+-->
 
 
 ---
@@ -213,31 +225,38 @@ fn main() {
 
 # Configuring `rustfmt`
 
-
 You can configure format options with a `rustfmt.toml` file
+
 ```
 indent_style = "Block"
 reorder_imports = false
 ```
+
 * There are many configuration [options](https://rust-lang.github.io/rustfmt/?version=v1.8.0&search=) for `rustfmt`
+* **You probably shouldn't create your own formatting style**
 
 
 ---
 
 
 # Consistent Formatting
-* The default Rust style is defined in the Rust Style Guide
-    * Recommended that developers use this style
+
+* The default Rust style is defined in the [Rust Style Guide](https://doc.rust-lang.org/style-guide/index.html)
+    * It is **strongly recommended** that developers use this style
 * Consistent formatting makes code more readable
     * Also makes it easier to collaborate with others
+
+<!--
+This is a subtle thing, but when jumping into an unknown codebase, having consistent formatting of code across every single Rust repository lowers the barrier to entry (much more than you probably think).
+
+This is one of the reasons it is much easier to start contributing to a code base over something like a C or C++ codebase. When jumping into a C or C++ codebase, a significant fraction of the time there will be custom macros and/or templates that you have to learn before you can even understand the code. TLDR you are basically learning a new language every time you jump into a C/C++ codebase.
+-->
 
 
 ---
 
 
-# Performance Analysis
-
-* `criterion` and `flamegraph`
+# **Performance and Analysis**
 
 
 ---
