@@ -58,6 +58,12 @@ code {
 ---
 
 
+# **`rustup`**
+
+
+---
+
+
 # `rustup`
 
 `rustup` is a _toolchain multiplexer_.
@@ -150,6 +156,12 @@ Here are some basic `rustup` commands to remember:
 ---
 
 
+# **Clippy**
+
+
+---
+
+
 # Clippy
 
 Clippy is a collection of lints that can catch common mistakes when writing Rust, improving the quality of your code.
@@ -201,6 +213,12 @@ fn main() {
 <!--
 This is a very basic example, look online for more information!
 -->
+
+
+---
+
+
+# **`rustfmt`**
 
 
 ---
@@ -328,6 +346,12 @@ Elapsed: 20.95ms
 ---
 
 
+# **Criterion**
+
+
+---
+
+
 # Criterion
 
 Criterion is a statistics-driven micro-benchmarking library written in Rust.
@@ -446,9 +470,9 @@ median [25.733 us 25.988 us] med. abs. dev. [234.09 ns 544.07 ns]
 ---
 
 
-# `criterion`
+# Fibonacci Improvements
 
-Okay, our Fibonacci implementation needs improvement:
+Our Fibonacci could probably be improved...
 
 ```rust
 fn fibonacci(n: u64) -> u64 {
@@ -460,33 +484,34 @@ fn fibonacci(n: u64) -> u64 {
 }
 ```
 
+* What's the complexity of the algorithm?
+    * Exponential!
+
+
 ---
 
-# `criterion`
+
+# Fibonacci Improvements
 
 Let's write a second version for comparison:
 
 ```rust
-fn fibonacci(n: u64) -> u64 {
-    let mut a = 0;
-    let mut b = 1;
-    match n {
-        0 => b,
-        _ => {
-            for _ in 0..n {
-                let c = a + b;
-                a = b;
-                b = c;
-            }
-            b
+pub fn fib(n: usize) -> usize {
+    fn fib_helper(from: (usize, usize), n: usize) -> usize {
+        if n == 0 {
+            from.0
+        } else {
+            fib_helper((from.1, from.0 + from.1), n - 1)
         }
     }
+    fib_helper((0, 1), n)
 }
 ```
 
 ---
 
-# `criterion`
+
+# Fibonacci Improvements
 
 Upon rerunning `cargo bench`, `criterion` compares it with our previous run:
 
@@ -507,7 +532,15 @@ mean   [356.57 ps 362.74 ps] std. dev.      [10.672 ps 20.419 ps]
 median [351.57 ps 355.85 ps] med. abs. dev. [4.6479 ps 10.059 ps]
 ```
 
+TODO actually re-run this with criterion with newer version
+
 * `change: [-99.999% -99.999% -99.999%] (p = 0.00 < 0.05)` => Statistically significant improvement!
+
+---
+
+
+# Flamegraphs
+
 
 ---
 
