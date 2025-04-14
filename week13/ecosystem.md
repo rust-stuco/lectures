@@ -51,37 +51,45 @@ TODO
 
 # `rustup`
 
-`rustup` is a _toolchain multiplexer_.
+`rustup` is a _toolchain multiplexer_
+* Installs and manages many Rust toolchains 
+* Consolidates them as a single set of tools installed in `~/.cargo/bin`
+* Analogous to Ruby's _rbenv_, Python's _pyenv_, or Node's _nvm_
 
-TODO: https://rust-lang.github.io/rustup/concepts/index.html
+
+---
+
+# `rustup` Basic Usage
+
+* To update Rust: `rustup update`
+* To install a specific version: `rustup install __`
+* To set default global version: `rustup default set ___`
+* To override default for a specific project: `rustup override set ___`
 
 
 ---
 
 
-`rustup`
+# `rustup` Channels
 
-Talk about stable channel
-
-
----
-
-
-`rustup`
-
-Talk about beta and nightly
-
+* Rust has three different "channels" of releases
+* **Stable** channel: releases made every six weeks
+* **Beta** channel: the next stable release
+* **Nightly** channel: releases made every night
+    * Has experimental features and may fail to build
 
 ---
 
 
-`rustup`
+# `rustup` Channels
 
-Talk about basic usage of `rustup`
-
-- `rustup update`
-- `rustup default set ___`
-- `rustup override set ___`
+* Stable is the default channel used with `rustup` commands
+* To use the beta channel...
+    * Install: `rustup install beta`
+    * Set default: `rustup default beta`
+* To use the nightly channel...
+    * Install: `rustup toolchain install nightly`
+    * Set default: `rustup default nightly`
 
 
 ---
@@ -91,41 +99,82 @@ Talk about basic usage of `rustup`
 
 Clippy is a collection of lints that can catch common mistakes when writing Rust, improving the quality of your code.
 
-TODO: https://doc.rust-lang.org/clippy/
+
+---
+
+# Clippy Lint Levels
+Clippy offers many levels of lints, based on your needs
+*  `clippy::all`: all lints that are on by default
+    * `clippy::correctness`: code that is outright wrong or useless
+    * `clippy::suspicious`: code that is most likely wrong or useless
+    * `clippy::style`: code that should be written in a more idiomatic way
+    * `clippy::complexity`: code that does something simple in a complex way
+    * `clippy::perf`: code that can be written to run faster
+* And more...
+* You can even make your own lints!
+
+
+---
+
+# Clippy CLI Usage
+* Likely already installed if using `rustup`
+    * Otherwise: `rustup component add clippy [--toolchain=<name>]`
+* Run all lints: `cargo clippy`
+    * Run specific lint: `cargo clippy::__`
+* Automatically apply suggestions: `cargo clippy --fix`
 
 
 ---
 
 
-Clippy
+# Clippy Source Code Usage
+You can also configure lint levels in your source code
+```rust
+#![allow(clippy::style)]
+
+#[warn(clippy::box_default)]
+fn main() {
+    let _ = Box::<String>::new(Default::default());
+    // ^ warning: `Box::new(_)` of default value
+}
+```
 
 
 ---
 
-
-Clippy
-
-
----
-
-
-Clippy
-
-
----
 
 
 # `rustfmt`
+`rustfmt` is a formatting tool that checks adhearance to formatting standards
+* To install: `rustup component add rustfmt`
+* To format one file: `rustfmt file.rs`
+* To format whole project: `cargo fmt`
+* To only *check* format: `cargo fmt -- --check`
 
-Talk about `cargo fmt` options?
-
-TODO: https://rust-lang.github.io/rustfmt/?version=v1.8.0&search=
 
 
 ---
 
 
-Talk briefly about how consistent formatting across all Rust projects is super important
+# Configuring `rustfmt`
+
+
+You can configure format options with a `rustfmt.toml` file
+```
+indent_style = "Block"
+reorder_imports = false
+```
+* There are many configuration [options](https://rust-lang.github.io/rustfmt/?version=v1.8.0&search=) for `rustfmt`
+
+
+---
+
+
+# Consistent Formatting
+* The default Rust style is defined in the Rust Style Guide
+    * Recommended that developers use this style
+* Consistent formatting makes code more readable
+    * Also makes it easier to collaborate with others
 
 
 ---
