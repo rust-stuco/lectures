@@ -883,10 +883,12 @@ If we want to know the lower-level specific details about `rand`, then we need t
 ---
 
 
-# Google is your friend!
+# Google is your friend?
 
+![](../images/week13/normal-distr-wrong.png)
 
-TODO image of google search
+* This is actually not correct...
+    * Make sure you are looking at Docs.rs!
 
 <!--
 Again, you are free to use whatever search engine you prefer.
@@ -896,26 +898,50 @@ Again, you are free to use whatever search engine you prefer.
 ---
 
 
-# `rand_distr` crate
+# Google can help!
 
-```rust
-use rand::prelude::*;
-use rand_distr::StandardNormal;
+![](../images/week13/normal-distr-correct.png)
 
-let val: f64 = rand::rng().sample(StandardNormal);
-println!("{}", val);
-```
 
-- See how 3rd-party crates complement each other! Anyone can make their own `Distribution` if it implements that trait from rand
 
 ---
 
-# LLMs: good and bad for writing Rust code
 
-- Good because Rust has many guardrails for writing code (if it compiles, it is probably correct)
-- Bad because the type of problems Rust is trying to solve are usually very complex systems code
-  - LLMs fall over
-- But generally quite good at filling in patterns
+# `rand_distr`
+
+[`rust-random`](https://github.com/rust-random) breaks functionality into multiple crates. `rand_distr` is one of them!
+
+```rust
+use rand_distr::Normal;
+
+let normal = Normal::new(2.0, 3.0).unwrap(); // mean 2, standard deviation 3
+let v = normal.sample(&mut rand::rng());
+println!("{} is from a N(2, 9) distribution", v)
+```
+
+* `rand_distr` complements `rand` by providing more probability distributions
+* Crates that you use will often depend on each other
+* Anyone can create a type that implements `Distribution`, integrating it into the `rand` "ecosystem"
+    * Example: [`zipf`](https://docs.rs/zipf/latest/zipf/) distribution
+
+<!--
+Crates that you use will often depend on each other, and super important crates like rand will often have quite a lot of crates depending on it!
+-->
+
+
+---
+
+
+# Aside: Large Language Models
+
+Large Language Models have proven that they can boost developer productivity.
+
+* Due to Rust's strict guardrails and a "if it compiles it works" mentality, LLMs are actually quite good at helping with small amounts of Rust code
+* However, LLMs are generally quite bad at the types of hard problems that Rust aims to solve
+    * Complex software systems, concurrent and parallel programs, etc.
+* Generally not that much training data (compared to Python or Javascript)
+* Leverage LLMs for basic syntax and boilerplate!
+
 
 ---
 
