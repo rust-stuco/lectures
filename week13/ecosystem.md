@@ -342,6 +342,11 @@ Elapsed: 20.95ms
     * Compiler optimizations can skew results, the OS scheduler and other noise can create performance variations
     * Seeing a number go up/down is one thing, whether it's statistically significant is another
 
+<!--
+This is an overexaggeration, we ran other things at the same time on the same computer to make these
+numbers vary wildly.
+-->
+
 
 ---
 
@@ -451,20 +456,20 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 Run the benchmark with `cargo bench`:
 
 ```
-Running target/release/deps/example-423eedc43b2b3a93
-Benchmarking fib 20
+$ cargo bench
+
 Benchmarking fib 20: Warming up for 3.0000 s
-Benchmarking fib 20: Collecting 100 samples in estimated 5.0658 s
-                                                    (188100 iterations)
+Benchmarking fib 20: Collecting 100 samples in estimated 5.0329 s (475k iterations)
 Benchmarking fib 20: Analyzing
-fib 20                  time:   [26.029 us 26.251 us 26.505 us]
-Found 11 outliers among 99 measurements (11.11%)
-  6 (6.06%) high mild
-  5 (5.05%) high severe
-slope  [26.029 us 26.505 us] R^2            [0.8745662 0.8728027]
-mean   [26.106 us 26.561 us] std. dev.      [808.98 ns 1.4722 us]
-median [25.733 us 25.988 us] med. abs. dev. [234.09 ns 544.07 ns]
+
+fib 20                  time:   [10.404 µs 10.413 µs 10.422 µs]
+Found 10 outliers among 100 measurements (10.00%)
+  10 (10.00%) high mild
 ```
+
+<!--
+Some details omitted.
+-->
 
 
 ---
@@ -472,7 +477,7 @@ median [25.733 us 25.988 us] med. abs. dev. [234.09 ns 544.07 ns]
 
 # Fibonacci Improvements
 
-Our Fibonacci could probably be improved...
+Our Fibonacci could definitely be improved...
 
 ```rust
 fn fibonacci(n: u64) -> u64 {
@@ -508,6 +513,7 @@ pub fn fib(n: usize) -> usize {
 }
 ```
 
+
 ---
 
 
@@ -516,30 +522,25 @@ pub fn fib(n: usize) -> usize {
 Upon rerunning `cargo bench`, `criterion` compares it with our previous run:
 
 ```
-Running target/release/deps/example-423eedc43b2b3a93
-Benchmarking fib 20
+$ cargo bench
+
 Benchmarking fib 20: Warming up for 3.0000 s
-Benchmarking fib 20: Collecting 100 samples in estimated 5.0000 s (13548862800 iterations)
+Benchmarking fib 20: Collecting 100 samples in estimated 5.0000 s (2.2B iterations)
 Benchmarking fib 20: Analyzing
-fib 20                  time:   [353.59 ps 356.19 ps 359.07 ps]
-                        change: [-99.999% -99.999% -99.999%] (p = 0.00 < 0.05)
+
+fib 20                  time:   [2.2469 ns 2.2633 ns 2.2841 ns]
+                        change: [-99.978% -99.978% -99.978%] (p = 0.00 < 0.05)
                         Performance has improved.
-Found 6 outliers among 99 measurements (6.06%)
-  4 (4.04%) high mild
-  2 (2.02%) high severe
-slope  [353.59 ps 359.07 ps] R^2            [0.8734356 0.8722124]
-mean   [356.57 ps 362.74 ps] std. dev.      [10.672 ps 20.419 ps]
-median [351.57 ps 355.85 ps] med. abs. dev. [4.6479 ps 10.059 ps]
 ```
 
-TODO actually re-run this with criterion with newer version
+* `change: [-99.978% -99.978% -99.978%] (p = 0.00 < 0.05)`
+    * This is a statistically significant improvement!
 
-* `change: [-99.999% -99.999% -99.999%] (p = 0.00 < 0.05)` => Statistically significant improvement!
 
 ---
 
 
-# Flamegraphs
+# **Flamegraphs**
 
 
 ---
