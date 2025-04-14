@@ -1021,19 +1021,22 @@ Hopefully we all know what `Result` is by now!
 ---
 
 
-# How to choose between the 3 error handling libraries?
+# Error Handling Libraries
 
-- `anyhow`: "I don't want to care about error types"
+* `anyhow`
+    - "I don't want to care about error types"
+* `thiserror`
+    - "I want to easily define errors for my library"
+* `snafu`
+    - "I want BOTH!"
 
-- `thiserror`: "I want to easily define errors for my library"
-
-- `snafu`: "I want BOTH!"
 
 ---
 
-# `anyhow`: Type erasure
 
-- Remember how painful it was to define a proper error type?
+# `anyhow`
+
+You can think about `anyhow` as a library that provides type-erased errors.
 
 ```rust
 use anyhow::Result;
@@ -1045,22 +1048,32 @@ fn get_cluster_info() -> Result<ClusterMap> {
 }
 ```
 
+* Remember how painful it was to define a proper error type?
+* `anyhow` provides `anyhow::Error`, a trait object based error type for easy idiomatic error handling in Rust applications
+* Allows you to use `?` wherever you want (no more `Box<dyn Error>`)
+
+
 ---
+
 
 # `anyhow`: Attach context
 
-- `with_context` is a macro that attaches a context to the error
+You can add a `with_context` to attach a context to any errors.
 
 ```rust
 use anyhow::{Context, Result};
 
 fn main() -> Result<()> {
+    // <-- snip -->
+    it.detach().context("Failed to detach the important thing")?;
+
     let content = std::fs::read(path)
         .with_context(|| format!("Failed to read instrs from {}", path))?;
+    // <-- snip -->
 }
 ```
 
-```text
+```
 Error: Failed to read instrs from ./path/to/instrs.json
 Caused by:
     No such file or directory (os error 2)
@@ -1068,10 +1081,12 @@ Caused by:
 
 ---
 
-# Summary
 
-- `anyhow` is good for type erasure in binaries
-- `anyhow` is also good for attaching context to errors
+# Summary: `anyhow`
+
+* `anyhow` is good for type erasure in binaries
+* `anyhow` is also good for attaching dynamic context to errors
+
 
 ---
 
