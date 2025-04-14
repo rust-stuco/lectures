@@ -689,21 +689,31 @@ Reading the documentation of third-party libraries is super important!
 
 # `rustdoc`
 
-TODO cleanup slide
+Usually, you use `rustdoc` via `cargo doc`. Here are some useful commands:
 
-Useful `cargo doc` commands
-- `cargo doc --open`
-- `cargo doc --document-private-items`
-- `cargo doc --no-deps`
-- `cargo doc --test`
+* `cargo doc --open`: Generates docs and opens it in a browser
+* `cargo doc --document-private-items`: Generates documentation for private items like modules and functions
+* `cargo doc --no-deps`: Does not generate docs for any dependencies
+* `cargo doc --test`: Runs documentation tests
+
 
 
 ---
 
 
-# `mdbook`
+# Rust Documentation
 
-Mention mdbook as a popular alternative to just generating rust docs.
+All Rust library documentation has the same structure!
+
+* By making documentation consistent, it shortens the time needed to get familiar with a library
+    * This is more important than it might seem
+* Because Rust has _excellent_ first-party tooling for generating documentation, Rust library writers tend to invest in writing _excellent_ documentation, guides, and tutorials
+
+
+---
+
+
+# **`rand`**
 
 
 ---
@@ -711,12 +721,14 @@ Mention mdbook as a popular alternative to just generating rust docs.
 
 # `rand`
 
-- Rust does not* have a random module in the standard library
-- Instead, the de-facto crate for dealing with randomness in Rust is `rand`!
-- Use `rand` for
-  - Generating / sampling random numbers
-  - Creating probability distributions
-  - Providing random algorithms (like vector shuffling)
+Let's look at an example of a popular third-party crate, `rand`.
+
+* Rust does not have a random module in the standard library (unlike Python)
+* Instead, the de-facto crate for dealing with randomness in Rust is `rand`!
+* Use `rand` for:
+  * Generating / sampling random numbers
+  * Creating probability distributions
+  * Providing random algorithms (like vector shuffling)
 
 <!--
 Why do we not have a random module in the standard library?
@@ -729,18 +741,65 @@ Also, if you scroll down the comments, you'll find an example of randomness usin
 
 ---
 
-# `rand` Example
+
+# `rand`?
+
+* How do we use `rand`?
+* We should really be asking "how do we learn how to use `rand`"?
+* Google is our friend!
+    * Search "Rust rand"
+
+<!--
+Maybe google isn't actually your friend, but you get the point. Choose whatever search engine you would like!
+-->
+
+
+---
+
+
+# Docs.rs
+
+![bg right:50% 100%](../images/week13/google-rand.png)
+
+* Docs.rs has documentation for essentially every third-party Rust library
+* When publishing your own crate, the documentation gets pushed to Docs.rs
+
+
+---
+
+
+![bg 75%](../images/week13/rand-docs.png)
+
+
+---
+
+
+# Anatomy of `rustdoc`
+
+![bg right:50% 95%](../images/week13/hints.png)
+
+* Navigation Bar (on the left)
+* Search Bar (at the top)
+    * Press "s" to search
+* Settings (at the top right)
+* Help menu (at the top right)
+    * Press "?" for pop-up
+    * Lots of cool tricks!
+
+
+---
+
+
+# `rand`: Quick Start
 
 ```rust
-// The prelude import enables methods we use below
+// The prelude import enables methods we use below...
 use rand::prelude::*;
 
 // Get an RNG:
 let mut rng = rand::rng();
 
-// Try printing a random unicode code point (probably a bad idea)!
 println!("char: '{}'", rng.random::<char>());
-// Try printing a random alphanumeric value instead!
 println!("alpha: '{}'", rng.sample(rand::distr::Alphanumeric) as char);
 
 // Generate and shuffle a sequence:
@@ -750,56 +809,92 @@ nums.shuffle(&mut rng);
 let _ = nums.choose(&mut rng);
 ```
 
-<!-- 
+<!--
+Some comments omitted.
 Source: https://docs.rs/rand/latest/rand/
  -->
 
+
 ---
 
-# "The Rust Rand Book" (mbdook)
 
-- A comprehensive guide to using randomness in Rust
+# The Rust Rand Book
 
-<img src="./img/rand-book.png" alt="The Rust Rand Book" style="width: 70%; margin-left: auto; margin-right: auto;">
+If we click on the link under the Quick Start, we are taken to [The Rust Rand Book](https://rust-random.github.io/book/).
 
-<!-- 
-Google and find the book for demonstration purposes
-https://rust-random.github.io/book/intro.html 
+![](../images/week13/rand-book.png)
+
+
+---
+
+
+# Aside: mdBook
+
+* **mdBook** is a command line tool to create books with Markdown
+* Used to make the official Rust Book
+* Commonly used to make higher-level tutorials
+    * Rust documentation structure can't cover everything
+
+
+---
+
+
+# The Rust Rand Book
+
+The Rust Rand Book covers the higher-level concepts that might not be easily understandable in the `rustdoc` format.
+
+- Core concepts of randomness
+- Kinds of RNGs
+- Seeding strategies
+- Cryptographic vs non-cryptographic randomness
+- Performance considerations
+- Understanding the design and architecture of `rand`
+
+
+---
+
+
+# `rand` Lower-level Documentation
+
+If we want to know the lower-level specific details about `rand`, then we need to read through the actual documentation.
+
+* Specific RNG implementations and their guarantees
+    - `ThreadRng`, `StdRng`, `SmallRng`, etc.
+    - Security properties
+    - Performance characteristics
+* Detailed distribution implementations
+    - `Uniform`, `Bernoulli`, `Alphanumeric`
+    - Parameter configurations / constructors
+    - Sampling methods
+
+
+---
+
+
+# Normal Distribution?
+
+`rand` provides some basic probability distributions for us.
+
+* `Uniform`, `Bernoulli`, `Alphanumeric`
+* Where are the others?
+* What about a Normal / Gaussian distribution?
+
+
+---
+
+
+# Google is your friend!
+
+
+TODO image of google search
+
+<!--
+Again, you are free to use whatever search engine you prefer.
 -->
 
----
-
-# The mdbook is a high-level tutorial
-
-- It covers:
-  - Core concepts of randomness
-  - Different random number generators (RNGs)
-  - Seeding strategies
-  - Cryptographic vs non-cryptographic randomness
-  - Performance considerations
-- Great resource for understanding the design philosophy behind the `rand` crate
 
 ---
 
-# Have to actual go to the rand docs for more specific things
-
-- Specific RNG implementations and their guarantees
-  - `ThreadRng`, `StdRng`, `SmallRng`, etc.
-  - Performance characteristics
-  - Security properties
-
-- Detailed distribution implementations
-  - `Uniform`, `Standard`, `Normal`, etc.
-  - Parameter configurations
-  - Sampling methods
-
----
-
-# How do you create a standard normal distribution? Google is your friend!
-
-<img src="./img/rand-distr.png" alt="Rand Distributions" style="width: 70%; margin-left: auto; margin-right: auto;">
-
----
 
 # `rand_distr` crate
 
@@ -823,6 +918,15 @@ println!("{}", val);
 - But generally quite good at filling in patterns
 
 ---
+
+
+# **Rust Time**
+
+* Time for Rust!
+
+
+---
+
 
 # Time?
 
