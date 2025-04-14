@@ -28,7 +28,16 @@ code {
 
 # Today: The Rust Ecosystem
 
-TODO
+- The Rust Toolchain: `rustup`, `clippy`, `rustfmt`
+- Performance: `criterion`, `flamegraph`
+- Reading Documentation
+    - `clap`
+    - `rand`
+    - `time` vs `chrono`
+    - `anyhow` vs `thiserror`
+- Libraries / Frameworks
+    - `rayon`
+    - `serde`
 
 
 ---
@@ -51,20 +60,13 @@ TODO
 
 # `rustup`
 
-`rustup` is a _toolchain multiplexer_
-* Installs and manages many Rust toolchains 
-* Consolidates them as a single set of tools installed in `~/.cargo/bin`
-* Analogous to Ruby's _rbenv_, Python's _pyenv_, or Node's _nvm_
+`rustup` is a _toolchain multiplexer_.
 
-
----
-
-# `rustup` Basic Usage
-
-* To update Rust: `rustup update`
-* To install a specific version: `rustup install __`
-* To set default global version: `rustup default set ___`
-* To override default for a specific project: `rustup override set ___`
+* A _toolchain_ is a complete installation of the Rust compiler (rustc) and related tools (like cargo)
+    * Defined by release channel / version, and the host platform triple
+        * `stable-x86_64-pc-windows-msvc`, `beta-aarch64-unknown-linux-gnu`
+* `rustup` consolidates them as a single set of tools installed in `~/.cargo/bin`
+* Similar to Ruby's `rbenv`, Python's `pyenv`, or Node's `nvm`
 
 
 ---
@@ -72,24 +74,77 @@ TODO
 
 # `rustup` Channels
 
-* Rust has three different "channels" of releases
-* **Stable** channel: releases made every six weeks
-* **Beta** channel: the next stable release
-* **Nightly** channel: releases made every night
-    * Has experimental features and may fail to build
+* There are 3 different channels
+    * Stable: `rustc` and `cargo` release every 6 weeks
+    * Beta: the next stable release
+    * Nightly: `master` branch, release made every night
+
 
 ---
 
 
-# `rustup` Channels
 
-* Stable is the default channel used with `rustup` commands
-* To use the beta channel...
-    * Install: `rustup install beta`
-    * Set default: `rustup default beta`
-* To use the nightly channel...
-    * Install: `rustup toolchain install nightly`
-    * Set default: `rustup default nightly`
+# Stability without Stagnation
+
+* Rust cares _a lot_ about the stability of your code
+* At the same time, we want to be able to experiment with new features
+* You should never need to worry about breaking your code after updating Rust
+* But you should also be able to opt-in to newer "unstable" features!
+
+<!--
+https://doc.rust-lang.org/book/appendix-07-nightly-rust.html
+-->
+
+
+---
+
+
+# The Rust Train
+
+Here is a high-level diagram of Rust's release cycle.
+
+```
+nightly: * - - * - - * - - * - - * - - * - * - *
+                     |                         |
+beta:                * - - - - - - - - *       *
+                                       |
+stable:                                *
+```
+
+* This is called the “train model”
+* Every six weeks, a release “leaves the station”
+* Still has to take a journey through the beta channel before it arrives as a stable release
+
+
+---
+
+
+# Unstable Features
+
+We can use features under development by enabling _unstable features_.
+
+* You can only use unstable features on nightly
+* Allows you to access cool new things in Rust
+    * Example: [`downgrade` on `RwLock`](https://doc.rust-lang.org/std/sync/struct.RwLockWriteGuard.html#method.downgrade) with `#![feature(rwlock_downgrade)]`
+
+<!--
+Connor's PR to Rust :D https://github.com/rust-lang/rust/pull/128219
+-->
+
+
+---
+
+
+# `rustup` Usage
+
+Here are some basic `rustup` commands to remember:
+
+* `rustup update`
+    * Updates your Rust toolchains to the latest versions
+* `rustup default set ___`
+    * Sets the default rust toolchain (to stable/beta/nightly, etc.)
+* `rustup override set ___`
+    * Overrides the toolchain for the specific directory
 
 
 ---
