@@ -544,15 +544,14 @@ Derive tutorial: https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html
 
 ---
 
-
 # `rand`
 
-* Rust does not* have a random module in the standard library
-* Instead, the de-facto crate for dealing with randomness in Rust is `rand`!
-* Use `rand` for
-    * Generating / sampling random numbers
-    * Creating probability distributions
-    * Providing random algorithms (like vector shuffling)
+- Rust does not* have a random module in the standard library
+- Instead, the de-facto crate for dealing with randomness in Rust is `rand`!
+- Use `rand` for
+  - Generating / sampling random numbers
+  - Creating probability distributions
+  - Providing random algorithms (like vector shuffling)
 
 <!--
 Why do we not have a random module in the standard library?
@@ -562,131 +561,234 @@ https://www.reddit.com/r/rust/comments/rgueuz/why/
 Also, if you scroll down the comments, you'll find an example of randomness using the random state from the HashMap collection
 -->
 
+---
+
+# `rand` Example
+
+```rust
+// The prelude import enables methods we use below
+use rand::prelude::*;
+
+// Get an RNG:
+let mut rng = rand::rng();
+
+// Try printing a random unicode code point (probably a bad idea)!
+println!("char: '{}'", rng.random::<char>());
+// Try printing a random alphanumeric value instead!
+println!("alpha: '{}'", rng.sample(rand::distr::Alphanumeric) as char);
+
+// Generate and shuffle a sequence:
+let mut nums: Vec<i32> = (1..100).collect();
+nums.shuffle(&mut rng);
+// And take a random pick (yes, we didn't need to shuffle first!):
+let _ = nums.choose(&mut rng);
+```
+
+<!-- 
+Source: https://docs.rs/rand/latest/rand/
+ -->
 
 ---
 
+# "The Rust Rand Book" (mbdook)
 
-`rand` Example
+- A comprehensive guide to using randomness in Rust
 
+<img src="./img/rand-book.png" alt="The Rust Rand Book" style="width: 70%; margin-left: auto; margin-right: auto;">
 
----
-
-
-Do a google search and find "The Rust Rand Book" (mbdook)
-
-https://rust-random.github.io/book/intro.html
-
-
----
-
-
-The mdbook is a high-level tutorial
-
+<!-- 
+Google and find the book for demonstration purposes
+https://rust-random.github.io/book/intro.html 
+-->
 
 ---
 
+# The mdbook is a high-level tutorial
 
-Have to actual go to the rand docs for more specific things
-
-
----
-
-
-How do you create a normal probability distribution? Google is your friend!
-
-
----
-
-
-rand_distr crate
-
+- It covers:
+  - Core concepts of randomness
+  - Different random number generators (RNGs)
+  - Seeding strategies
+  - Cryptographic vs non-cryptographic randomness
+  - Performance considerations
+- Great resource for understanding the design philosophy behind the `rand` crate
 
 ---
 
+# Have to actual go to the rand docs for more specific things
 
-Maybe a note about LLMs? Both good and bad for writing Rust code
+- Specific RNG implementations and their guarantees
+  - `ThreadRng`, `StdRng`, `SmallRng`, etc.
+  - Performance characteristics
+  - Security properties
+
+- Detailed distribution implementations
+  - `Uniform`, `Standard`, `Normal`, etc.
+  - Parameter configurations
+  - Sampling methods
+
+---
+
+# How do you create a standard normal distribution? Google is your friend!
+
+<img src="./img/rand-distr.png" alt="Rand Distributions" style="width: 70%; margin-left: auto; margin-right: auto;">
+
+---
+
+# `rand_distr` crate
+
+```rust
+use rand::prelude::*;
+use rand_distr::StandardNormal;
+
+let val: f64 = rand::rng().sample(StandardNormal);
+println!("{}", val);
+```
+
+- See how 3rd-party crates complement each other! Anyone can make their own `Distribution` if it implements that trait from rand
+
+---
+
+# LLMs: good and bad for writing Rust code
 
 - Good because Rust has many guardrails for writing code (if it compiles, it is probably correct)
 - Bad because the type of problems Rust is trying to solve are usually very complex systems code
-    - LLMs fall over
+  - LLMs fall over
 - But generally quite good at filling in patterns
 
-
 ---
-
 
 # Time?
 
 How do we keep time in Rust?
 
-- std::time
-- time
-- chrono
-
-
----
-
-
-How do you choose which `time` to use?
-
+* `std::time`
+* `time`
+* `chrono`
 
 ---
 
+# How do you choose which `time` to use?
 
-Google is your friend!
-
-
----
-
-
-Answer: it depends, and you should go read through the documentation of each to figure out which is the best for you
-
+- `std::time`: Simple timing and benchmarking (built-in)
+- `time`: Modern, safe date/time operations
+- `chrono`: Full-featured with timezone support (legacy)
 
 ---
 
+# Google is your friend!
+
+---
+
+# Answer: it depends, and you should go read through the documentation of each to figure out which is the best for you
+
+- `std::time`: https://doc.rust-lang.org/std/time
+- `time`: https://docs.rs/time/latest/time/
+- `chrono`: https://docs.rs/chrono/latest/chrono/
+
+
+<!-- Look up the documentation of each of these crates -->
+
+---
 
 # Error Handling
 
-* `anyhow`
-* `thiserror`
-* `snafu`
+- `anyhow`
+- `thiserror`
+- `snafu`
+
+---
+
+# How to choose between the 3 error handling libraries?
+
+- `anyhow`: "I don't want to care about error types"
+
+- `thiserror`: "I want to easily define errors for my library"
+
+- `snafu`: "I want BOTH!"
+
+---
+
+# `anyhow`: Type erasure
+
+- Remember how painful it was to define a proper error type?
+
+```rust
+use anyhow::Result;
+
+fn get_cluster_info() -> Result<ClusterMap> {
+    let config = std::fs::read_to_string("cluster.json")?;
+    let map: ClusterMap = serde_json::from_str(&config)?;
+    Ok(map)
+}
+```
+
+---
+
+# `anyhow`: Attach context
+
+- `with_context` is a macro that attaches a context to the error
+
+```rust
+use anyhow::{Context, Result};
+
+fn main() -> Result<()> {
+    let content = std::fs::read(path)
+        .with_context(|| format!("Failed to read instrs from {}", path))?;
+}
+```
+
+```text
+Error: Failed to read instrs from ./path/to/instrs.json
+Caused by:
+    No such file or directory (os error 2)
+```
+
+---
+
+# Summary
+
+- `anyhow` is good for type erasure in binaries
+- `anyhow` is also good for attaching context to errors
+
+---
+
+
+# `thiserror`: Define errors for your library
+
+```rust
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum DataStoreError {
+    #[error("data store disconnected")]
+    Disconnect(#[from] io::Error),
+    #[error("the data for key `{0}` is not available")]
+    Redaction(String),
+    #[error("invalid header (expected {expected:?}, found {found:?})")]
+    InvalidHeader {
+        expected: String,
+        found: String,
+    },
+    #[error("unknown data store error")]
+    Unknown,
+}
+```
+
+---
+
+
+# Summary: `thiserror` is good for libraries with many kinds of errors
 
 
 ---
 
 
-How do you choose between the 3 error handling libraries?
+# `snafu` is like a combo of both
 
+* (Google it if you want to know more)
 
----
-
-
-Briefly go through docs of anyhow
-
-
----
-
-
-Summary: anyhow is good for type erasure in binaries
-
-
----
-
-
-Briefly go through docs of thiserror
-
-
----
-
-
-Summary: thiserror is good for libraries with many kinds of errors
-
-
----
-
-
-Aside about snafu and how it is like a combo of both (don't go through docs)
-
+<!-- don't go through docs -->
 
 ---
 
@@ -946,7 +1048,7 @@ When you call `par_iter()`:
 
 # How `rayon` Works: Work-Stealing
 
-Threads don’t sit idle:
+Threads don't sit idle:
 * If a thread finishes early, it _steals_ work from others
     * Balances load dynamically
 
@@ -1024,14 +1126,10 @@ Rayon creates the illusion that you are writing sequential code
 ---
 
 
-# Next Lecture: Concurrency
+`serde`
 
-![bg right:30% 80%](../images/ferris_happy.svg)
 
-Thanks for coming!
+---
 
-<br>
 
-_Slides created by:_
-Connor Tsui, Benjamin Owad, David Rudo,
-Jessica Ruan, Fiona Fisher, Terrance Chen
+`
