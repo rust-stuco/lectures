@@ -956,44 +956,70 @@ Large Language Models have proven that they can boost developer productivity.
 
 # Time?
 
-How do we keep time in Rust?
+How do we keep time in Rust? There are several options:
 
-* `std::time`
-* `time`
-* `chrono`
+* `std::time`: Basic system time functionality
+* `time`: Some more time functionality (dates, months, parsing, formatting)
+* `chrono`: Even more functionality (UTC time zones, Gregorian calendar)
+
 
 ---
+
 
 # How do you choose which `time` to use?
 
-- `std::time`: Simple timing and benchmarking (built-in)
-- `time`: Modern, safe date/time operations
-- `chrono`: Full-featured with timezone support (legacy)
+* Google is your friend!
+
 
 ---
+
 
 # Google is your friend!
 
+https://www.google.com/search?q=Rust+chrono+vs+time
+
+
 ---
 
-# Answer: it depends, and you should go read through the documentation of each to figure out which is the best for you
+
+# Answer: It Depends!
+
+You should read through the documentation of each to figure out which is the best for you.
 
 - `std::time`: https://doc.rust-lang.org/std/time
 - `time`: https://docs.rs/time/latest/time/
 - `chrono`: https://docs.rs/chrono/latest/chrono/
 
+<!--
+IMPORTANT: Actually go through the crate-level docs for each of these!
 
-<!-- Look up the documentation of each of these crates -->
+Note that you don't always want to use the most feature-full libraries! Simplicity >>> Complexity w.r.t. maintainability.
+-->
+
 
 ---
+
+
+# **Error Handling**
+
+
+---
+
 
 # Error Handling
 
-- `anyhow`
-- `thiserror`
-- `snafu`
+* In lecture 5, we talked about how to handle errors on your own.
+    * `Result<T, E>`
+* Creating `MyError` types for `Result<T, MyError>` everywhere can create a lot of boilerplate and become cumbersome
+* It is usually easier and faster to use a third-party library that can help you manage errors better!
+
+<!--
+Hopefully we all know what `Result` is by now!
+-->
+
 
 ---
+
 
 # How to choose between the 3 error handling libraries?
 
