@@ -262,9 +262,9 @@ This is one of the reasons it is much easier to start contributing to a code bas
 ---
 
 
-# Problem: Statistical Significance
+# Performance Profiling
 
-Say we wanted to profile our Rust code:
+Suppose we want to see how fast or slow our code runs.
 
 ```rust
 fn fibonacci(n: u64) -> u64 {
@@ -276,9 +276,65 @@ fn fibonacci(n: u64) -> u64 {
 }
 ```
 
-How do we control our environment?
-* Seeing a number go up is one thing, whether it's statistically significant is another
-* Compiler optimizations skew results, OS noise creates performance variations
+* How do we test/profile the _performance_ of our code?
+
+
+---
+
+
+# Performance Profiling: Timer
+
+A simple solution is to just use a timer!
+
+```rust
+use std::time::Instant;
+use std::hint::black_box;
+
+fn main() {
+    let start_time = Instant::now();
+
+    let _ = black_box(fibonacci(30));
+
+    let elapsed = start_time.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+}
+```
+
+```
+Elapsed: 14.00ms
+```
+
+
+---
+
+
+# Problem: Statistical Significance
+
+When we run this code multiple times, we could get different results...
+
+```
+Elapsed: 14.30ms
+Elapsed: 11.59ms
+Elapsed: 8.48ms
+Elapsed: 10.35ms
+Elapsed: 20.95ms
+```
+
+* How do we control our environment?
+    * Compiler optimizations can skew results, the OS scheduler and other noise can create performance variations
+    * Seeing a number go up/down is one thing, whether it's statistically significant is another
+
+
+---
+
+
+# Criterion
+
+Criterion is a statistics-driven micro-benchmarking library written in Rust.
+
+* Collects detailed statistics, providing strong confidence that changes to performance are real, not measurement noise
+* Produces detailed charts, providing thorough understanding of your code’s performance behavior
+* Make sure to read the (very well-written) [library docs](https://docs.rs/criterion/latest/criterion/) and [user guide](https://bheisler.github.io/criterion.rs/book/index.html)!
 
 
 ---
@@ -286,49 +342,49 @@ How do we control our environment?
 
 # `criterion`
 
-
 Add `criterion` as a development dependency:
 
 ```toml
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.5.1"
 
 [[bench]]
 name = "my_benchmark"
 harness = false
 ```
 
-* `name = "my_benchmark"` declares a benchmark `my_benchmark`
-* Since we're use our benchmark `my_benchmark`, we disable the standard benchmarking harness with `harness = false`
+* `name = "my_benchmark"` declares that there is a benchmark file located at `benches/my_benchmark.rs`
 
 
-<!-- https://bheisler.github.io/criterion.rs/book/-->
+<!--
+Don't worry too much about the `harness = false`.
+-->
 
 
 ---
 
 
-# `criterion`
+# Example: Simple `criterion` Benchmark
 
 Create a benchmark file at `$PROJECT/benches/my_benchmark.rs`:
 
 ```rust
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use mycrate::fibonacci;
+use my_crate::fibonacci;
 ```
 
-* Import `criterion`
-* Import the function we're benchmarking, `mycrate::fibonacci`
+* Import `criterion` items
+* Import the function we want to bench (in this case, `my_crate::fibonacci`)
 
 <!--
-Note we import the crate we're benchmarking as an external crate.
+Note we import the crate because we consider our crate an external crate when writing things like benchmarks and integration tests we're benchmarking as an external crate.
 This is because Cargo compiles each benchmark under `/benches` as if each was a separate crate from the main crate
 -->
 
 ---
 
 
-# `criterion`
+# Example: Simple `criterion` Benchmark
 
 Next, create a benchmark using the `Criterion` object:
 
@@ -341,17 +397,27 @@ criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
 ```
 
+* The `criterion_group!` macro generates a benchmark group called `benches`, containing the `criterion_benchmark` function defined earlier
+* The `criterion_main!` macro generates a `main` function which executes the `benches` group
+
+
+---
+
+
+# Example: Simple `criterion` Benchmark
+
+```rust
+pub fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+}
+```
+
 * We define benchmark with `bench_function`, which takes two arguments:
     * Name of the benchmark, `"fib 20"`
     * A closure that gets run for that benchmark
 * `black_box` stops the compiler from optimizing away our whole function
     * Otherwise, the compiler may replace `fibonacci(20)` with a constant
 
-<!--
-Two macros:
-- criterion_group! macro generates a benchmark group called `benches`, containing the criterion_benchmark function defined earlier
-- criterion_main! macro generates a main function which executes the `benches` group
--->
 
 ---
 
@@ -364,7 +430,8 @@ Run the benchmark with `cargo bench`:
 Running target/release/deps/example-423eedc43b2b3a93
 Benchmarking fib 20
 Benchmarking fib 20: Warming up for 3.0000 s
-Benchmarking fib 20: Collecting 100 samples in estimated 5.0658 s (188100 iterations)
+Benchmarking fib 20: Collecting 100 samples in estimated 5.0658 s
+                                                    (188100 iterations)
 Benchmarking fib 20: Analyzing
 fib 20                  time:   [26.029 us 26.251 us 26.505 us]
 Found 11 outliers among 99 measurements (11.11%)
@@ -377,6 +444,7 @@ median [25.733 us 25.988 us] med. abs. dev. [234.09 ns 544.07 ns]
 
 
 ---
+
 
 # `criterion`
 
