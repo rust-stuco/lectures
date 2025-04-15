@@ -1163,7 +1163,7 @@ pub struct MyError {
 
 * `thiserror` is good for creating error types in libraries
 * Use `thiserror` for libraries and `anyhow` for binaries
-* Use `snafu` for when you need both!
+* Use `snafu` when you need both!
 
 
 ---
