@@ -6,13 +6,10 @@
     - `rustup`
     - `clippy`
     - `rustfmt`
-    - `criterion`?
+    - `criterion`
     - `flamegraph`
 - Reading Documentation
     - `rand`
     - `time` vs `chrono`
-    - `anyhow` vs `thiserror` vs `snafu`?
-- Libraries / Frameworks
-    - `rayon`
-    - `serde`
+    - `anyhow` vs `thiserror` vs `snafu`
 

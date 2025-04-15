@@ -35,9 +35,6 @@ code {
     - `rand`
     - `time` vs `chrono`
     - `anyhow` vs `thiserror`
-- Libraries / Frameworks
-    - `rayon`
-    - `serde`
 
 
 ---
@@ -721,7 +718,7 @@ All Rust library documentation has the same structure!
 
 # `rand`
 
-Let's look at an example of a popular third-party crate, `rand`.
+Let's look at an example of a popular third-party crate, [`rand`](https://docs.rs/rand/latest/rand/).
 
 * Rust does not have a random module in the standard library (unlike Python)
 * Instead, the de-facto crate for dealing with randomness in Rust is `rand`!
@@ -909,7 +906,7 @@ Again, you are free to use whatever search engine you prefer.
 
 # `rand_distr`
 
-[`rust-random`](https://github.com/rust-random) breaks functionality into multiple crates. `rand_distr` is one of them!
+[`rust-random`](https://github.com/rust-random) breaks functionality into multiple crates. [`rand_distr`](https://docs.rs/rand_distr/latest/rand_distr/) is one of them!
 
 ```rust
 use rand_distr::Normal;
@@ -1082,7 +1079,7 @@ Caused by:
 ---
 
 
-# Summary: `anyhow`
+# Summary: [`anyhow`](https://docs.rs/anyhow/latest/anyhow/)
 
 * `anyhow` is good for type erasure in binaries
 * `anyhow` is also good for attaching dynamic context to errors
@@ -1162,7 +1159,7 @@ pub struct MyError {
 ---
 
 
-# Summary: `thiserror`
+# Summary: [`thiserror`](https://docs.rs/thiserror/latest/thiserror/)
 
 * `thiserror` is good for creating error types in libraries
 * Use `thiserror` for libraries and `anyhow` for binaries
@@ -1183,289 +1180,16 @@ pub struct MyError {
 ---
 
 
-# **Libraries and Frameworks**
+# Next Lecture: ISD
 
+_Instructors Still Debating_
 
----
+![bg right:30% 80%](../images/ferris_happy.svg)
 
+Thanks for coming!
 
-# Libraries and Frameworks
+<br>
 
-Libraries can come in all different shapes and sizes, but there are several libraries that are so integral to the Rust that they are basically their own sub-ecosystems.
-
-- **`rayon`**
-- **`serde`**
-- `tokio`
-- `reqwest`
-- `tracing`
-
-<!--
-Listed in no particular order. Well also only talk about the first 2
--->
-
-
----
-
-
-# `rayon`
-
-Write parallel code as easily as sequential code
-
----
-
-
-# `rayon`: The Problem
-
-Your sequential code:
-
-```rust
-let data = (1..1_000_000).collect::<Vec<i32>>();
-let sum: i32 = data.iter().sum();
-```
-
-* Say we want to parallelize this
-    * "Divide the vector into eight regions, spawn eight threads, give each thread a region, and combine their results..."
-
-
----
-
-
-# `rayon`: The Problem
-
-Question: do we really want to type all of this?
-
-```rust
-// ... some logic to divide the vector ...
-let handle1 = thread::spawn(|| { /* work */ });
-...
-let handle8 = thread::spawn(|| { /* work */ });
-handle1.join().unwrap();
-...
-handle8.join().unwrap();
-// ... then we have to combine results...
-```
-
-* "Gee, `data.iter().sum()` was so clean!"
-    * "If only we could type the equivalent of `data.iter().sum()`, and it'd be parallelized for us..."
-    * We can!
-
----
-
-# `rayon`: The Solution
-
-Add `rayon`:
-
-```toml
-[dependencies]
-rayon = "1.10"
-```
-
----
-
-
-# `rayon`: The Solution
-
-Then change `iter().sum()`...
-
-```rust
-let data = (1..1_000_000).collect::<Vec<i32>>();
-let sum: i32 = data.iter().sum();
-```
-
----
-
-
-# `rayon`: The Solution
-
-...to `par_iter().sum()`!
-
-```rust
-let data = (1..1_000_000).collect::<Vec<i32>>();
-let sum: i32 = data.par_iter().sum(); // done!
-```
-
-* No threading needed
-* Automatically parallelized
-
-
----
-
-
-# `rayon`: Chained Operations
-
-Recall that we can chain operations for iterators:
-
-```rust
-let result = numbers.iter()
-    .filter(|&&x| x % 2 == 0)
-    .map(|x| x * x)
-    .collect();
-```
-
-* We can parallelize these operations as well!
-
----
-
-
-# `rayon`: Chained Operations
-
-When we use `par_iter()`, subsequent operations are automatically parallelized:
-
-```rust
-let result = numbers.par_iter()
-    .filter(|&&x| x % 2 == 0)
-    .map(|x| x * x)
-    .collect();
-```
-
-* `filter`, `map`, and `collect` are now parallelized via Rayon's implementation
-* Yet it still reads like sequential code!
-
-
----
-
-
-# `rayon`: Parallelized Sort
-
-Need to sort a massive collection?
-
-```rust
-let mut data = (1..1_000_000).collect::<Vec<i32>>();
-data.sort();
-```
-
----
-
-
-# `rayon`: Parallelized Sort
-
-`rayon` to the rescue:
-
-```rust
-let mut data = (1..1_000_000).collect::<Vec<i32>>();
-data.par_sort();
-```
-
-* Just change `sort()` to `par_sort()`
-
-
----
-
-# How `rayon` Works
-
-* Suspiciously simple
-    * All we have to do is add `par_`?
-* How does Rayon work its magic?
-
----
-
-
-# How `rayon` Works: Thread Pool Basics
-
-Rayon creates a global thread pool:
-* One pool per program, initialized on first use
-* Number of threads matches your CPU cores (e.g., 8)
-* Threads are ready, waiting for work
-
-
----
-
-
-# How `rayon` Works: Splitting the Work
-
-When you call `par_iter()`:
-* Data (e.g., vector of `numbers`) is split into chunks
-* Each thread grabs a chunk to process (e.g., filter, map)
-* No manual division needed!
-
-
----
-
-
-# How `rayon` Works: Work-Stealing
-
-Threads don't sit idle:
-* If a thread finishes early, it _steals_ work from others
-    * Balances load dynamically
-
-
----
-
-
-# `rayon`: Key Idea
-
-Rayon creates the illusion that you are writing sequential code
-* Divides the labor and monitors utilization rates so you don't have to
-* _Dynamically_ manages the load balancing for high efficiency
-
-
----
-
-
-# `serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`serde`
-
-
----
-
-
-`
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
