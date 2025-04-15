@@ -1091,7 +1091,9 @@ Caused by:
 ---
 
 
-# `thiserror`: Define errors for your library
+# `thiserror`
+
+`thiserror` provides a single, convenient derive macro for the standard library’s `std::error::Error` trait.
 
 ```rust
 use thiserror::Error;
@@ -1102,30 +1104,80 @@ pub enum DataStoreError {
     Disconnect(#[from] io::Error),
     #[error("the data for key `{0}` is not available")]
     Redaction(String),
-    #[error("invalid header (expected {expected:?}, found {found:?})")]
-    InvalidHeader {
-        expected: String,
-        found: String,
-    },
     #[error("unknown data store error")]
     Unknown,
 }
 ```
 
----
-
-
-# Summary: `thiserror` is good for libraries with many kinds of errors
-
 
 ---
 
 
-# `snafu` is like a combo of both
+# `thiserror`: Format Strings
 
-* (Google it if you want to know more)
+```rust
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("invalid rdo_lookahead_frames {0} (expected < {max})", max = i32::MAX)]
+    InvalidLookahead(u32),
+}
+```
 
-<!-- don't go through docs -->
+```rust
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("first letter must be lowercase but was {:?}", first_char(.0))]
+    WrongCase(String),
+
+    #[error("invalid index {idx}, expected at least {} and at most {}",
+                                                .limits.lo, .limits.hi)]
+    OutOfBounds { idx: usize, limits: Limits },
+}
+```
+
+
+---
+
+
+# `thiserror`: To and `From`
+
+```rust
+#[derive(Error, Debug)]
+pub enum MyError {
+    Io(#[from] io::Error),
+    Glob(#[from] globset::Error),
+}
+```
+
+```rust
+#[derive(Error, Debug)]
+pub struct MyError {
+    msg: String,
+    #[source]  // optional if field name is `source`
+    source: anyhow::Error,
+}
+```
+
+
+---
+
+
+# Summary: `thiserror`
+
+* `thiserror` is good for creating error types in libraries
+* Use `thiserror` for libraries and `anyhow` for binaries
+* Use `snafu` for when you need both!
+
+
+---
+
+
+# Aside: `snafu`
+
+`snafu` is like a combination of both `anyhow` and `thiserror`.
+
+* Less mature, but picking up a lot of traction
+* Look at the [docs](https://docs.rs/snafu/latest/snafu/) if you are interested!
 
 
 ---
