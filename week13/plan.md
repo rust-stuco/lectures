@@ -2,14 +2,9 @@
 
 ### Lecture
 
-- The Rust Toolchain
-    - `rustup`
-    - `clippy`
-    - `rustfmt`
-    - `criterion`
-    - `flamegraph`
+- The Rust Toolchain: `rustup`, `clippy`, `rustfmt` (10 min)
+- Performance and Analysis: Criterion, Flamegraphs (14 min)
 - Reading Documentation
-    - `rand`
-    - `time` vs `chrono`
-    - `anyhow` vs `thiserror` vs `snafu`
-
+    - `rand` (12 min)
+    - `time` vs `chrono` (5 min)
+    - `anyhow` vs `thiserror` (9 min)

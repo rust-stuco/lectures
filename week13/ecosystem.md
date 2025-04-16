@@ -29,9 +29,8 @@ code {
 # Today: The Rust Ecosystem
 
 - The Rust Toolchain: `rustup`, `clippy`, `rustfmt`
-- Performance and Analysis: `criterion`, `flamegraph`
+- Performance and Analysis: Criterion, Flamegraphs
 - Reading Documentation
-    - `clap`
     - `rand`
     - `time` vs `chrono`
     - `anyhow` vs `thiserror`
