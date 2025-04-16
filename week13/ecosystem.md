@@ -46,10 +46,12 @@ code {
 ---
 
 
-# The Rust Toolchain
+# Toolchains
 
 * A toolchain is defined as a set of software tools used to build and develop software within a specific ecosystem
-* Rust has several toolchains, which you manage via `rustup`
+* A Rust toolchain is a complete installation of the Rust compiler (rustc) and related tools (like `cargo`)
+    * Defined by release channel / version, and the host platform triple
+    * `stable-x86_64-pc-windows-msvc`, `beta-aarch64-unknown-linux-gnu`
 
 
 ---
@@ -65,9 +67,7 @@ code {
 
 `rustup` is a _toolchain multiplexer_.
 
-* A _toolchain_ is a complete installation of the Rust compiler (rustc) and related tools (like `cargo`)
-    * Defined by release channel / version, and the host platform triple
-        * `stable-x86_64-pc-windows-msvc`, `beta-aarch64-unknown-linux-gnu`
+* Rust has several toolchains, which you manage via `rustup`
 * `rustup` consolidates them as a single set of tools installed in `~/.cargo/bin`
 * Similar to Ruby's `rbenv`, Python's `pyenv`, or Node's `nvm`
 
@@ -116,7 +116,7 @@ stable:                                *
 
 * This is called the “train model”
 * Every six weeks, a release “leaves the station”
-* Still has to take a journey through the beta channel before it arrives as a stable release
+* Still has to take a "journey" through the beta channel before it "arrives" as a stable release
 
 
 ---
@@ -128,6 +128,7 @@ We can use features under development by enabling _unstable features_.
 
 * You can only use unstable features on nightly
 * Allows you to access cool new things in Rust
+    * Example: [`try_blocks`](https://doc.rust-lang.org/beta/unstable-book/language-features/try-blocks.html) with `#![feature(try_blocks)]`
     * Example: [`downgrade` on `RwLock`](https://doc.rust-lang.org/std/sync/struct.RwLockWriteGuard.html#method.downgrade) with `#![feature(rwlock_downgrade)]`
 
 <!--
@@ -143,11 +144,11 @@ Connor's PR to Rust :D https://github.com/rust-lang/rust/pull/128219
 Here are some basic `rustup` commands to remember:
 
 * `rustup update`
-    * Updates your Rust toolchains to the latest versions
+    - Updates your Rust toolchains to the latest versions
 * `rustup default set <stable/beta/nightly>`
-    * Sets the default rust toolchain
+    - Sets the default rust toolchain
 * `rustup override set <stable/beta/nightly>`
-    * Overrides the toolchain for the specific directory
+    - Overrides the toolchain for the specific directory
 
 
 ---
@@ -163,24 +164,32 @@ Here are some basic `rustup` commands to remember:
 
 Clippy is a collection of lints that can catch common mistakes when writing Rust, improving the quality of your code.
 
+* _We have asked you to use clippy for your homeworks!_
+
 
 ---
+
 
 # Clippy Lint Levels
 
 Clippy offers many different lint levels.
 
 *  `clippy::all`: all lints that are on by default
-    * `clippy::correctness`: code that is outright wrong or useless
-    * `clippy::suspicious`: code that is most likely wrong or useless
-    * `clippy::style`: code that should be written in a more idiomatic way
-    * `clippy::complexity`: code that does something simple in a complex way
-    * `clippy::perf`: code that can be written to run faster
+    - `clippy::correctness`: code that is outright wrong or useless
+    - `clippy::suspicious`: code that is most likely wrong or useless
+    - `clippy::style`: code that should be written in a more idiomatic way
+    - `clippy::complexity`: code that does something simple in a complex way
+    - `clippy::perf`: code that can be written to run faster
 * And more...
 * You can even make your own lints!
 
+<!--
+You don't have to know all of these things, we're just showing this so you know that there _are_ a lot of things!
+-->
+
 
 ---
+
 
 # `clippy` Usage
 
@@ -189,6 +198,10 @@ Clippy offers many different lint levels.
     * To run a specific lint, run `cargo clippy::___`
 * To automatically apply suggestions, run `cargo clippy --fix`
 * To run lints on tests and other files, run `cargo clippy --all-targets`
+
+<!--
+When you initially install `rustup`, you should choose the default profile. If you don't want to, then you already know why you want a different profile...
+-->
 
 
 ---
@@ -248,7 +261,7 @@ reorder_imports = false
 ```
 
 * There are many configuration [options](https://rust-lang.github.io/rustfmt/?version=v1.8.0&search=) for `rustfmt`
-* **You probably shouldn't create your own formatting style**
+* **You probably shouldn't create your own unique formatting style**
 
 
 ---
@@ -359,7 +372,7 @@ numbers vary wildly.
 Criterion is a statistics-driven micro-benchmarking library written in Rust.
 
 * Collects detailed statistics, providing strong confidence that changes to performance are real, not measurement noise
-* Produces detailed charts, providing thorough understanding of your code’s performance behavior
+* Produces detailed charts and provides thorough understanding of your code’s performance behavior
 * Make sure to read the (very well-written) [library docs](https://docs.rs/criterion/latest/criterion/) and [user guide](https://bheisler.github.io/criterion.rs/book/index.html)!
 
 
@@ -372,14 +385,14 @@ Add `criterion` as a development dependency:
 
 ```toml
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = "0.5.0"
 
 [[bench]]
 name = "my_benchmark"
 harness = false
 ```
 
-* `name = "my_benchmark"` declares that there is a benchmark file located at `benches/my_benchmark.rs`
+* `name = "my_benchmark"` declares that there is a benchmark file located at `my_crate/benches/my_benchmark.rs` (not in `src/` directory)
 
 
 <!--
@@ -392,7 +405,7 @@ Don't worry too much about the `harness = false`.
 
 # Example: Simple `criterion` Benchmark
 
-Create a benchmark file at `$PROJECT/benches/my_benchmark.rs`:
+Create a benchmark file at `my_crate/benches/my_benchmark.rs`:
 
 ```rust
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -423,8 +436,9 @@ criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
 ```
 
-* The `criterion_group!` macro generates a benchmark group called `benches`, containing the `criterion_benchmark` function defined earlier
-* The `criterion_main!` macro generates a `main` function which executes the `benches` group
+<!--
+If you are interested in how exactly those two macros at the bottom work, go read the documentation!
+-->
 
 
 ---
@@ -438,11 +452,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 }
 ```
 
-* We define benchmark with `bench_function`, which takes two arguments:
-    * Name of the benchmark, `"fib 20"`
-    * A closure that gets run for that benchmark
-* `black_box` stops the compiler from optimizing away our whole function
-    * Otherwise, the compiler may replace `fibonacci(20)` with a constant
+* `black_box` stops the compiler from optimizing away our entire function
+    * The compiler is allowed to replace `fibonacci(20)` with a constant
 
 
 ---
@@ -499,6 +510,7 @@ Let's write a second version for comparison:
 
 ```rust
 pub fn fibonacci(n: usize) -> usize {
+
     fn fib_helper(from: (usize, usize), n: usize) -> usize {
         if n == 0 {
             from.0
@@ -506,9 +518,14 @@ pub fn fibonacci(n: usize) -> usize {
             fib_helper((from.1, from.0 + from.1), n - 1)
         }
     }
+
     fib_helper((0, 1), n)
 }
 ```
+
+<!--
+This is from our homework solutions!
+-->
 
 
 ---
@@ -532,6 +549,10 @@ fib 20                  time:   [2.2469 ns 2.2633 ns 2.2841 ns]
 
 * `change: [-99.978% -99.978% -99.978%] (p = 0.00 < 0.05)`
     * This is a statistically significant improvement!
+
+<!--
+Some details omitted.
+-->
 
 
 ---
@@ -563,9 +584,11 @@ Suppose we have the following function, and we want to know where most of the ti
 ```rust
 fn build_string(n: usize) -> String {
     let mut s = String::new();
+
     for i in 0..n {
         s += &format!("{}", i);
     }
+
     s
 }
 
@@ -594,7 +617,7 @@ We can generate flamegraphs for our code with `cargo flamegraph`:
 
 * Flamegraphs are generated by _sampling_ the call stack many times
 * Flamgegraphs display the call stack from bottom to top
-    * Width of block is the relative time spent in that function
+    * The width of a block is the relative time spent in that function
 
 
 ---
@@ -621,6 +644,10 @@ fn build_string_pushstr(n: usize) -> String {
     s
 }
 ```
+
+<!--
+Make sure students understand the differences and similarities between the two functions
+-->
 
 
 ---
@@ -650,6 +677,7 @@ And here is the flamegraph for `build_string_pushstr`:
 
 ![](../images/week13/flamegraph-pushstr.svg)
 
+* This one is faster!
 
 <!--
 KEY OBSERVATIONS:
@@ -703,8 +731,11 @@ Usually, you use `rustdoc` via `cargo doc`. Here are some useful commands:
 All Rust library documentation has the same structure!
 
 * By making documentation consistent, it shortens the time needed to get familiar with a library
-    * This is more important than it might seem
 * Because Rust has _excellent_ first-party tooling for generating documentation, Rust library writers tend to invest in writing _excellent_ documentation, guides, and tutorials
+
+<!--
+This is a much more important detail than it might seem at first. Many people do not understand that documentation is sometimes _even more_ important than the code it describes.
+-->
 
 
 ---
@@ -775,13 +806,23 @@ Maybe google isn't actually your friend, but you get the point. Choose whatever 
 
 ![bg right:50% 95%](../images/week13/hints.png)
 
-* Navigation Bar (on the left)
-* Search Bar (at the top)
-    * Press "s" to search
-* Settings (at the top right)
-* Help menu (at the top right)
-    * Press "?" for pop-up
-    * Lots of cool tricks!
+- Navigation Bar (on the left)
+- Search Bar (at the top)
+    - Press "s" to search
+- Settings (at the top right)
+- Help menu (at the top right)
+    - Press "?" for pop-up
+    - Lots of cool tricks!
+
+
+---
+
+
+# `rand` Docs
+
+Let's take a quick look at the actual documentation!
+
+https://docs.rs/rand/latest/rand/
 
 
 ---
@@ -880,7 +921,7 @@ If we want to know the lower-level specific details about `rand`, then we need t
 ---
 
 
-# Google is your friend?
+# Google is not your friend?
 
 ![](../images/week13/normal-distr-wrong.png)
 
@@ -895,10 +936,13 @@ Again, you are free to use whatever search engine you prefer.
 ---
 
 
-# Google can help!
+# Google can _help_!
 
 ![](../images/week13/normal-distr-correct.png)
 
+<!--
+Just like any tool, make sure you use it correctly! Do your due diligence.
+-->
 
 
 ---
@@ -907,6 +951,20 @@ Again, you are free to use whatever search engine you prefer.
 # `rand_distr`
 
 [`rust-random`](https://github.com/rust-random) breaks functionality into multiple crates. [`rand_distr`](https://docs.rs/rand_distr/latest/rand_distr/) is one of them!
+
+```rust
+use rand_distr::Normal;
+
+let normal = Normal::new(2.0, 3.0).unwrap(); // mean 2, standard deviation 3
+let v = normal.sample(&mut rand::rng());
+println!("{} is from a N(2, 9) distribution", v)
+```
+
+
+---
+
+
+# `rand_distr`
 
 ```rust
 use rand_distr::Normal;
@@ -1005,14 +1063,10 @@ Note that you don't always want to use the most feature-full libraries! Simplici
 
 # Error Handling
 
-* In lecture 5, we talked about how to handle errors on your own.
-    * `Result<T, E>`
+* In lecture 5, we talked about how to handle errors on your own
+    * Hopefully you know what `Result<T, E>` is...
 * Creating `MyError` types for `Result<T, MyError>` everywhere can create a lot of boilerplate and become cumbersome
 * It is usually easier and faster to use a third-party library that can help you manage errors better!
-
-<!--
-Hopefully we all know what `Result` is by now!
--->
 
 
 ---
@@ -1047,7 +1101,11 @@ fn get_cluster_info() -> Result<ClusterMap> {
 
 * Remember how painful it was to define a proper error type?
 * `anyhow` provides `anyhow::Error`, a trait object based error type for easy idiomatic error handling in Rust applications
-* Allows you to use `?` wherever you want (no more `Box<dyn Error>`)
+* Allows you to use `?` wherever you want (a better `Box<dyn Error>`)
+
+<!--
+Don't worry too much about the `serde_json`, basically it is a **deserializer** that can read in a structure like JSON and convert it into a proper rust struct (in this case, a `ClusterMap` - whatever that is)
+-->
 
 
 ---
@@ -1106,6 +1164,10 @@ pub enum DataStoreError {
 }
 ```
 
+<!--
+`thiserror` is literally just that single derive macro!
+-->
+
 
 ---
 
@@ -1132,11 +1194,17 @@ pub enum Error {
 }
 ```
 
+<!--
+These are just example use cases. `thiserror` is a relatively simple crate to use!
+-->
+
 
 ---
 
 
 # `thiserror`: To and `From`
+
+You can use `thiserror` to unify different error types!
 
 ```rust
 #[derive(Error, Debug)]
