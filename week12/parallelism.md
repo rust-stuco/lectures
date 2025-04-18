@@ -83,9 +83,7 @@ invisible to the programmer
 ---
 
 
-# Parallelism vs. Concurrency
-
-<img src="img/concvspar-2.png" style="width: 85%; margin-left: auto; margin-right: auto;">
+![bg 100%](../images/week12/conc-vs-par.jpg)
 
 
 ---
