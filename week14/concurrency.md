@@ -221,33 +221,129 @@ Tokio is useful for many projects, but there are some cases where this isn't tru
 ---
 
 
-# Title
+# Mini-Redis
 
+We are going to create a miniature [Redis](https://redis.io/) client and server.
 
-
-
----
-
-
-# Title
-
-
+* Start with the basics of asynchronous programming in Rust
+* Implement a subset of Redis commands
+* Take a comprehensive tour of Tokio
+* If you want to do the actual tutorial, follow along [here](https://tokio.rs/tokio/tutorial)
 
 
 ---
 
 
-# Title
+# Starter Code
 
+Set up a new crate called `my-redis` and add some dependencies.
 
+```sh
+$ cargo new my-redis
+$ cd my-redis
+```
+
+<br>
+
+###### `Cargo.toml`
+```
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+mini-redis = "0.4
+```
 
 
 ---
 
 
-# Title
+# Starter Code
+
+###### `src/main.rs`
+```rust
+use mini_redis::{client, Result};
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Open a connection to the mini-redis address.
+    let mut client = client::connect("127.0.0.1:9808").await?;
+
+    // Set the key "hello" with value "world"
+    client.set("hello", "world".into()).await?;
+
+    // Get key "hello"
+    let result = client.get("hello").await?;
+
+    println!("got value from the server; result={:?}", result);
+    Ok(())
+}
+```
 
 
+---
+
+
+# Running our Client
+
+Start the server:
+
+```sh
+$ cargo install mini-redis
+
+# Run the mini server
+$ mini-redis-server
+```
+
+Run the client:
+
+```sh
+$ cargo run
+got value from the server; result=Some(b"world")
+```
+
+
+---
+
+
+# Lecture Done!
+
+![bg right:30% 80%](../images/ferris_panics.svg)
+
+Thanks for coming!
+
+<br>
+
+_Slides created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
+
+
+---
+
+
+# Breaking it down
+
+Okay, let's actually break this down. There isn't much code, but a lot is happening.
+
+```rust
+use mini_redis::{client, Result};
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let mut client = client::connect("127.0.0.1:9808").await?;
+
+    client.set("hello", "world".into()).await?;
+
+    let result = client.get("hello").await?;
+
+    println!("got value from the server; result={:?}", result);
+
+    Ok(())
+}
+```
+
+<!--
+Comments omitted for slide real estate
+-->
 
 
 ---
