@@ -265,7 +265,7 @@ use mini_redis::{client, Result};
 #[tokio::main]
 async fn main() -> Result<()> {
     // Open a connection to the mini-redis address.
-    let mut client = client::connect("127.0.0.1:9808").await?;
+    let mut client = client::connect("127.0.0.1:6379").await?;
 
     // Set the key "hello" with value "world"
     client.set("hello", "world".into()).await?;
@@ -277,6 +277,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 ```
+
+<!--
+Note that 6379 is the actual dedicated redis port: https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+-->
 
 
 ---
@@ -329,7 +333,7 @@ use mini_redis::{client, Result};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut client = client::connect("127.0.0.1:9808").await?;
+    let mut client = client::connect("127.0.0.1:6379").await?;
 
     client.set("hello", "world".into()).await?;
 
@@ -354,7 +358,7 @@ Comments omitted for slide real estate
 What's going on here?
 
 ```rust
-let mut client = client::connect("127.0.0.1:9808").await?;
+let mut client = client::connect("127.0.0.1:6379").await?;
 ```
 
 * The `client::connect` function is provided by the `mini-redis` crate
@@ -451,7 +455,7 @@ pub async fn connect<T: ToSocketAddrs>(addr: T) -> Result<Client> {}
 # `.await`
 
 ```rust
-let mut client = client::connect("127.0.0.1:9808").await?;
+let mut client = client::connect("127.0.0.1:6379").await?;
 ```
 
 * When we call `.await` on an `async fn`, we _yield_ control back to the thread
@@ -507,7 +511,7 @@ async fn main() {
     // Calling `say_world()` does not execute the body of `say_world()`.
     let op = say_world();
 
-    // This println! comes first
+    // This println! comes first.
     println!("hello");
 
     // Calling `.await` on `op` starts executing `say_world`.
@@ -574,7 +578,7 @@ async fn main() {
     println!("hello");
 }
 
-/// Transformed into:
+/// The above gets transformed into:
 fn main() {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -587,145 +591,348 @@ fn main() {
 ---
 
 
-# Title
+# Back to the Server
 
+Let's go back to implementing a Redis server. We want to:
 
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+* Accept inbound TCP sockets in a loop
+* Process each socket
+    * Read the command
+    * Print to `stdout`
+    * For now, respond with an "unimplemented" error
 
 
 ---
 
 
-# Title
+# Accept TCP Connections
 
+```rust
+use tokio::net::{TcpListener, TcpStream};
+use mini_redis::{Connection, Frame};
 
+#[tokio::main]
+async fn main() {
+    // Bind the listener to the address.
+    let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
 
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+    loop {
+        // The second item contains the IP and port of the new connection.
+        let (socket, _) = listener.accept().await.unwrap();
+        process(socket).await;
+    }
+}
+```
 
 
 ---
 
 
-# Title
+# Process Sockets
 
+```rust
+async fn process(socket: TcpStream) {
+    // The `Connection` lets us read/write redis **frames** instead of
+    // byte streams. The `Connection` type is defined by mini-redis.
+    let mut connection = Connection::new(socket);
 
+    if let Some(frame) = connection.read_frame().await.unwrap() {
+        println!("GOT: {:?}", frame);
 
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+        // Respond with an error
+        let response = Frame::Error("unimplemented".to_string());
+        connection.write_frame(&response).await.unwrap();
+    }
+}
+```
 
 
 ---
 
 
-# Title
+# Server and Client
 
+If we run both the server and client programs:
 
+Server (example request):
 
+```
+GOT: Array([Bulk(b"set"), Bulk(b"hello"), Bulk(b"world")])
+```
 
----
+Client:
 
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+```
+Error: "unimplemented"
+```
 
 
 ---
 
 
-# Title
+# Server Problem
 
+Our server has a small problem...
 
+```rust
+#[tokio::main]
+async fn main() {
+    let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+
+    loop {
+        let (socket, _) = listener.accept().await.unwrap();
+        process(socket).await;
+    }
+}
+```
+
+* _Other than the fact that it only returns "unimplemented" errors_
+* Sockets are processed one at a time!
 
 
 ---
 
 
-# Title
+# Limited Concurrency
 
+```rust
+loop {
+    let (socket, _) = listener.accept().await.unwrap();
+    process(socket).await;
+}
+```
 
+* When a connection is accepted:
+    * The server `process`es the `socket` until completion
+    * Goes back to listening
+* Ideally, we want to process many requests concurrently
 
 
 ---
 
 
-# Title
+# More Concurrency
 
+If we want to process connections concurrently, we will need to `spawn` new tasks.
 
+* We can spawn a new concurrent task for each socket
+* This allows the executor to process each connection concurrently!
 
 
 ---
 
 
-# Title
+# `tokio::spawn`
+
+`tokio::spawn` spawns a new task on the `tokio` runtime.
+
+```rust
+loop {
+    let (socket, _) = listener.accept().await.unwrap();
+
+    // A new task is spawned for each inbound socket. The socket is
+    // moved to the new task and processed there.
+    tokio::spawn(async move {
+        process(socket).await;
+    });
+}
+```
+
+* Now our server can accept many concurrent requests!
 
 
+---
+
+
+# Tasks
+
+You may have noticed we have been using the word "Task".
+
+* A Tokio task is an asynchronous _green thread_
+* We create Tokio tasks by passing an `async` block / scope to `tokio::spawn`
+* Tokio tasks are _very_ lightweight
+    * Can spawn millions of tasks without much overhead!
+
+<!--
+A single tokio task requires only a single allocation an 64 bytes of memory
+-->
+
+
+---
+
+
+# Tasks vs Threads
+
+* When we talk about Tokio, **tasks** lightweight units of execution managed by the Tokio scheduler
+* On the other hand, **threads** are heavyweight units of execution managed by the operating system's scheduler
+    * You _cannot_ spawn millions of threads without any overhead
+* The tokio runtime (which manages tasks) run on top of OS threads
+
+
+---
+
+
+# Tasks and Threads
+
+Recall that Tokio is a **multi-threaded runtime** for **executing** asynchronous code.
+
+* When tasks are spawned, the Tokio scheduler will ensure that the task executes once it has work to do (when it needs to resume)
+* The scheduler might decide to execute the task on a different thread than the one it was originally spawned on
+* **Important: Not all asynchronous runtimes do this!**
+
+<!--
+More on the implications of this later in the lecture
+-->
+
+
+---
+
+
+# `std::thread::spawn`
+
+![bg right:30% 75%](../images/ferris_does_not_compile.svg)
+
+Recall that we often had to `move` things into `std::thread::spawn`.
+
+
+```rust
+let v = vec![1, 2, 3];
+
+thread::spawn(|| {
+    println!("Here's a vector: {:?}", v);
+});
+```
+
+```
+note: function requires argument type to outlive `'static`
+ --> src/main.rs:6:5
+  |
+6 | /     thread::spawn(|| {
+7 | |         println!("Here's a vector: {:?}", v);
+8 | |     });
+  | |______^
+```
+
+
+---
+
+
+# `'static` Bound
+
+* The closure that we pass to `thread::spawn` needs a `'static` bound
+* This is a more precise way of saying the closure cannot contain references to data owned elsewhere
+* Tasks require the exact same `'static` bound for the same reason
+
+
+---
+
+
+# `'static` Bound
+
+![bg right:30% 75%](../images/ferris_does_not_compile.svg)
+
+```rust
+#[tokio::main]
+async fn main() {
+    let v = vec![1, 2, 3];
+
+    tokio::task::spawn(async {
+        println!("Here's a vec: {:?}", v);
+    });
+}
+```
+
+
+---
+
+
+```
+error[E0373]: async block may outlive the current function, but it borrows `v`, which is owned by the current function
+ --> src/main.rs:7:23
+  |
+7 |       task::spawn(async {
+  |  _______________________^
+8 | |         println!("Here's a vec: {:?}", v);
+  | |                                        - `v` is borrowed here
+9 | |     });
+  | |_____^ may outlive borrowed value `v`
+  |
+
+note: function requires argument type to outlive `'static`
+ --> src/main.rs:7:17
+  |
+7 |       task::spawn(async {
+  |  _________________^
+8 | |         println!("Here's a vector: {:?}", v);
+9 | |     });
+  | |_____^
+
+help: to force the async block to take ownership of `v` (and any other
+      referenced variables), use the `move` keyword
+  |
+7 |     task::spawn(async move {
+8 |         println!("Here's a vec: {:?}", v);
+9 |     });
+  |
+```
+
+
+---
+
+
+# `async move`
+
+The solution is similar to the synchronous `thread::spawn` example.
+
+```rust
+#[tokio::main]
+async fn main() {
+    let v = vec![1, 2, 3];
+
+    //                       vvvv
+    tokio::task::spawn(async move {
+        println!("Here's a vec: {:?}", v);
+    });
+}
+```
+
+* Note that this is _not_ an asynchronous closure
+* `async` closures were stabilized in the Rust 2024 Edition (_2/20/2025_)!
+
+
+---
+
+
+# `Send` Bound
+
+Since Tokio is a multi-threaded runtime, it also requires a `Send` bound.
+
+* Because tasks can execute on multiple threads, the runtime needs to be able to `Send` the task between threads
+* This is a huge (and almost controversial) topic that we won't get into
+
+
+---
+
+
+# The `Send` Bound Problem
+
+If you see this error (or something similar):
+
+```
+error: future cannot be sent between threads safely
+   --> src/main.rs:6:5
+    |
+6   |     tokio::spawn(async {
+    |     ^^^^^^^^^^^^ future created by async block is not `Send`
+    |
+```
+
+* RUN!!!
+* If you can't run, then that is a good time to dive deeper into how `async` and `Future`s work under the hood
+
+<!--
+TODO: Write down why we're not going to talk about this
+-->
 
 
 ---
