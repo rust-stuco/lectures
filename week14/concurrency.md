@@ -105,8 +105,8 @@ Due to the high complexity of Rust's rules and features, `async` is _even harder
 
 * It would be quite challenging to teach you what you need to know about `async`/`.await` in Rust in one lecture
 * Instead, we will use `tokio` as a practical medium to learn how to use `async`
-* There are **many** online resources dedicated to Async Rust (_see website_)
-* We will give a sneak peek of `async`, and hopefully in the future you will be able to teach yourself how to use it!
+* There are **many** online resources dedicated to Async Rust (_see speaker note_)
+* We will give you a sneak peek of `async`, and hopefully in the future you will be able to teach yourself how to use it!
 
 <!--
 The rust book has a new chapter about async and await and it is quite well writte:
@@ -169,7 +169,7 @@ but hopefully by the end of the lecture everyone will be able to figure out what
 * Making your program asynchronous allows it to scale much better
     * Reduces the cost of doing many things at the same time
 * However, asynchronous Rust code does not run on its own
-    * You must choose a runtime to execute it
+    * You must choose an _asynchronous runtime_ to execute it
 * The Tokio library is the most widely used runtime
 
 <!--
@@ -225,13 +225,14 @@ Please remember: today we are talking about Tokio idioms, which are not necessar
 
 We are going to create a miniature [Redis](https://redis.io/) client and server.
 
-* Start with the basics of asynchronous programming in Rust
+* We'll start with the basics of asynchronous programming in Rust
 * Implement a subset of Redis commands (`GET` and `SET` key-value pairs)
-* Take a comprehensive tour of Tokio
 * If you want to do the actual tutorial, follow along [here](https://tokio.rs/tokio/tutorial)
 
 <!--
-We will be writing code for TWO programs
+Redis is a in-memory key-value store. Think of a `HashMap<Key, Value>`.
+
+We will be demoing code for TWO programs, the server and the client
 -->
 
 
@@ -654,10 +655,9 @@ Now we can write the asynchronous `process` function:
 
 ```rust
 async fn process(socket: TcpStream) {
-    // The `Connection` lets us read/write redis **frames** instead of
-    // byte streams. The `Connection` type is defined by mini-redis.
     let mut connection = Connection::new(socket);
 
+    // Read the request.
     if let Some(frame) = connection.read_frame().await.unwrap() {
         println!("GOT: {:?}", frame);
 
@@ -667,6 +667,10 @@ async fn process(socket: TcpStream) {
     }
 }
 ```
+
+<!--
+Don't worry too much about the syntax here, all you really need to understand is that we are reading some data and responding with some other data.
+-->
 
 
 ---
@@ -710,6 +714,10 @@ async fn main() {
 
 * _Other than the fact that it only returns "unimplemented" errors_
 * Sockets are processed one at a time!
+
+<!--
+In our example, we have very simple GET and SET requests, but imagine if we got a request to run `very_expensive_computation()`: then the entire server would halt because of this one connection!
+-->
 
 
 ---
@@ -772,7 +780,7 @@ loop {
 You may have noticed we have been using the word "Task".
 
 * A Tokio task is an asynchronous _green thread_
-* We create Tokio tasks by passing an `async` block / scope to `tokio::spawn`
+* We create Tokio tasks by passing an `async` block/scope to `tokio::spawn`
 * Tokio tasks are _very_ lightweight
     * Can spawn millions of tasks without much overhead!
 
@@ -848,8 +856,10 @@ note: function requires argument type to outlive `'static`
 
 # `T: 'static` Bound
 
+More precisely:
+
 * The closure that we pass to `thread::spawn` needs a `'static` bound
-* This is a more precise way of saying the closure cannot contain references to data owned elsewhere
+* The closure cannot contain references to data owned elsewhere
 * Tasks require the exact same `T: 'static` bound for the same reason
 
 
@@ -913,7 +923,7 @@ help: to force the async block to take ownership of `v` (and any other
 
 # `async move`
 
-The solution is similar to the synchronous `thread::spawn` example.
+The solution is similar to the synchronous `thread::spawn` example: Add `move`!
 
 ```rust
 #[tokio::main]
@@ -945,7 +955,7 @@ Since Tokio is a multi-threaded runtime, it also requires a `Send` bound.
 ---
 
 
-# The `Send` Bound Problem
+# The `Send` Bound Error
 
 If you see this error (or something similar):
 
@@ -1085,9 +1095,8 @@ This might not seem that impressive, but think about how much engineering it tak
 # What else can we do?
 
 * There are _many_ more things we can do to improve our client and server:
-    * Concurrent requests
-    * A better database
-    * Reducing contention and sharding
+    * Use a better database
+    * Reducing contention with sharding
     * Caching (in-memory buffer management)
     * Persistent storage (file I/O)
     * Multi-node servers (distributed system)
@@ -1103,7 +1112,7 @@ All of the things that we can improve on are the upper-level systems electives h
 
 # Summary: Tokio
 
-* Rust allows us to write highly performant concurrent asynchronous code similar to how we would write synchronous code
+* Rust allows us to write concurrent asynchronous code similar to how we would write synchronous code
 * Asynchronous code requires asynchronous runtimes to work
 * Tokio is a multi-threaded, work-stealing, high-performance `async` runtime
 * We can _easily_ engineer massively parallel and concurrent servers with Tokio
@@ -1163,7 +1172,7 @@ Hopefully by now, you actually believe these things to be true!
 ---
 
 
-# Rust's advantages
+# Rust's Advantages
 
 * Rust is fast
 * Rust is memory safe
@@ -1174,7 +1183,7 @@ Hopefully by now, you actually believe these things to be true!
 ---
 
 
-# Rust's pitfalls
+# Rust's Pitfalls
 
 * Rust is hard
 * Rust is young
@@ -1187,8 +1196,8 @@ Hopefully by now, you actually believe these things to be true!
 
 * Rust targets complex programs while providing stability and security
 * Rust is not a magic silver bullet
-* Rust is not for everyone
-* We believe that Rust is the future of computer systems
+* Rust is _not_ for everyone
+* Nevertheless, we believe that Rust is the future of computer systems
 
 <!--
 By future, we don't mean that people will _eventually_ start to pick up Rust in a decade and begrudgingly force themselves to write Rust code. This is happening _right now_. Companies of all sizes (startups to the tech giants including Microsoft and Google) are actively developing and pursuing Rust development.
