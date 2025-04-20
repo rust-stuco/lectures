@@ -147,16 +147,17 @@ What is Tokio?
 
 At a high level, Tokio provides a few major components:
 
-* A **multi-threaded runtime** for **executing** asynchronous code
-* An **asynchronous** version of the standard library
-* A **large ecosystem** of libraries
+* A **multi-threaded runtime** for **executing asynchronous** code
+* An asynchronous version of the standard library
+* A large ecosystem of libraries
 
 <!--
 Taken directly from https://tokio.rs/tokio/tutorial
 
 Bolded words are interesting words that people _shouldn't_ understand yet.
 
-A lot of words to break down! Hopefully by the end of this lecture everyone will understand what each of the words mean.
+A lot of words to break down! We'll only be talking about the first point today,
+but hopefully by the end of the lecture everyone will be able to figure out what the last two points really mean on their own
 -->
 
 
@@ -981,466 +982,158 @@ Attempting to spawn this non-`Send` `Future` will result in a compile-time error
 ---
 
 
-# Title
+# Shared State
 
+We still have a major flaw...
 
+```rust
+#[tokio::main]
+async fn main() {
+    let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+    let mut db = HashMap::new(); // <-- What do we do with this?
 
+    loop {
+        let (socket, _) = listener.accept().await.unwrap();
 
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+        tokio::spawn(async move {
+            process(socket).await; // How do we pass `db` to each task?
+        });
+    }
+}
+```
 
 
 ---
 
 
-# Title
+# Shared State
 
+```rust
+let listener = TcpListener::bind("127.0.0.1:6379").await.unwrap();
+let mut db = HashMap::new(); // <-- What do we do with this?
 
+loop {
+    let (socket, _) = listener.accept().await.unwrap();
 
+    tokio::spawn(async move {
+        process(socket).await; // How do we pass `db` to each task?
+    });
+}
+```
 
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+* When we process a request, we want to _share_ the database among tasks
+    * It's not super useful to reset the database for every connection
 
 
 ---
 
 
-# Title
+# Shared State: `Arc<Mutex<T>>`
 
+We can use an `Arc<Mutex<T>>` to allow shared ownership and mutual exclusion!
 
+```rust
+let db = Arc::new(Mutex::new(HashMap::new()));
 
+loop {
+    let (socket, _) = listener.accept().await.unwrap();
+    // Clone the handle to the hash map.
+    let db = db.clone();
 
----
+    println!("Accepted");
+    tokio::spawn(async move {
+        process(socket, db).await;
+    });
+}
+```
 
+* See the [tutorial](https://tokio.rs/tokio/tutorial/shared-state#update-process) for the `process` code
 
-# Title
+<!--
+Copied and pasted from the tutorial:
 
+# On using std::sync::Mutex and tokio::sync::Mutex
 
+Note that std::sync::Mutex and not tokio::sync::Mutex is used to guard the HashMap. A common error is to unconditionally use tokio::sync::Mutex from within async code. An async mutex is a mutex that is locked across calls to .await.
 
+A synchronous mutex will block the current thread when waiting to acquire the lock. This, in turn, will block other tasks from processing. However, switching to tokio::sync::Mutex usually does not help as the asynchronous mutex uses a synchronous mutex internally.
 
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+As a rule of thumb, using a synchronous mutex from within asynchronous code is fine as long as contention remains low and the lock is not held across calls to .await.
+-->
 
 
 ---
 
 
-# Title
+# Server Complete!
 
+Our server is essentially done!
 
+* Supports concurrent connections
+    - Spawns an asynchronous task for each connection
+* Supports concurrent requests and commands
+    - Backing database synchronized with a `Mutex`
 
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+<!--
+This might not seem that impressive, but think about how much engineering it takes to do this in other languages...
+-->
 
 
 ---
 
 
-# Title
+# What else can we do?
 
+* There are _many_ more things we can do to improve our client and server:
+    * Concurrent requests
+    * A better database
+    * Reducing contention and sharding
+    * Caching (in-memory buffer management)
+    * Persistent storage (file I/O)
+    * Multi-node servers (distributed system)
+* If you are interested in this sort of software engineering, make sure to read the rest of the [Tokio tutorial](https://tokio.rs/tokio/tutorial)!
 
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+<!--
+All of the things that we can improve on are the upper-level systems electives here at CMU!
+-->
 
 
 ---
 
 
-# Title
+# Summary: Tokio
 
-
-
-
----
-
-
-# Title
-
-
+* Rust allows us to write highly performant concurrent asynchronous code similar to how we would write synchronous code
+* Asynchronous code requires asynchronous runtimes to work
+* Tokio is a multi-threaded, work-stealing, high-performance `async` runtime
+* We can _easily_ engineer massively parallel and concurrent servers with Tokio
 
 
 ---
 
 
-# Title
+# The End!
 
+![bg right:50% 90%](../images/ferris_happy.svg)
 
-
-
----
-
-
-# Title
-
-
+We've reached the end of our prepared content!
 
 
 ---
 
 
-# Title
-
-
-
-
----
-
-
-# Title
-
-
+TODO Sendoff
 
 
 ---
 
 
-# Title
+# Thanks for taking Rust StuCo!
 
+![bg right:35% 90%](../images/ferris_happy.svg)
 
+<br>
 
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
-
-# Title
-
-
-
-
----
-
+_Rust StuCo (98-008) has been created by:_
+Connor Tsui, Benjamin Owad, David Rudo,
+Jessica Ruan, Fiona Fisher, Terrance Chen
