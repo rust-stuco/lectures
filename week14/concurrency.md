@@ -20,7 +20,7 @@ code {
 
 ## Intro to Rust Lang
 
-# Concurrency: Async/Await
+# Concurrency
 
 
 ---
@@ -72,7 +72,7 @@ Today, we'll be talking about concurrency in Rust.
 
 * When we say something is **asynchronous**, we generally also mean it is **concurrent**
 * Rust approaches concurrency differently than other languages
-* Rust provides keywords `async` and `.await` to help write asynchronous code
+* Rust provides the keywords `async` and `.await` to help write and reason about asynchronous code
 
 
 ---
@@ -82,8 +82,8 @@ Today, we'll be talking about concurrency in Rust.
 
 * Asynchronous execution in _any_ language is complicated
 * Asynchronicity and parallelism are not mutually exclusive
-    * This makes reasoning about concurrency **even harder**!
-    * _You can have both in Rust, and we'll see an example of this_
+    * This can make reasoning about concurrency **even harder**!
+    * _You can have concurrency and parallelism at the same time in Rust, and we'll see an example of this soon_
 
 
 ---
@@ -137,9 +137,7 @@ What is Tokio?
 
 > Tokio is an asynchronous runtime for the Rust programming language. It provides the building blocks needed for writing network applications. It gives the flexibility to target a wide range of systems, from large servers with dozens of cores to small embedded devices.
 
-<!--
-Taken directly from https://tokio.rs/
--->
+- https://tokio.rs/
 
 
 ---
@@ -207,13 +205,14 @@ See the landing page on https://tokio.rs/ for some of the companies who use Toki
 Tokio is useful for many projects, but there are some cases where this isn't true.
 
 * Tokio is designed for IO-bound applications, not CPU-bound
-* Reading many files is the same as a synchronous thread pool
+* Reading many files has similar performance to a synchronous thread pool
     * Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
 * Sequential applications / low-concurrency programs
 * It is important to note that Tokio is **NOT** the only asynchronous runtime
-    * Remember that today we are talking about Tokio idioms, which are not necessarily the same as Rust Async idioms
 
 <!--
+Please remember: today we are talking about Tokio idioms, which are not necessarily the same as Rust Async idioms
+
 "not stable" is somewhat of an oversimplification of io_uring. TLDR a very powerful idea in theory, but in practice lots of security vulnerabilities, unstable APIs, and generally a lot more work needed before it becomes production ready
 -->
 
@@ -226,9 +225,13 @@ Tokio is useful for many projects, but there are some cases where this isn't tru
 We are going to create a miniature [Redis](https://redis.io/) client and server.
 
 * Start with the basics of asynchronous programming in Rust
-* Implement a subset of Redis commands
+* Implement a subset of Redis commands (`GET` and `SET` key-value pairs)
 * Take a comprehensive tour of Tokio
 * If you want to do the actual tutorial, follow along [here](https://tokio.rs/tokio/tutorial)
+
+<!--
+We will be writing code for TWO programs
+-->
 
 
 ---
@@ -252,6 +255,11 @@ tokio = { version = "1", features = ["full"] }
 mini-redis = "0.4
 ```
 
+<!--
+We're just showing this code so everyone understands the setup
+(crate called `my_redis`, and we take a dependency on `mini-redis`)
+-->
+
 
 ---
 
@@ -267,10 +275,10 @@ async fn main() -> Result<()> {
     // Open a connection to the mini-redis address.
     let mut client = client::connect("127.0.0.1:6379").await?;
 
-    // Set the key "hello" with value "world"
+    // Set the key "hello" with value "world".
     client.set("hello", "world".into()).await?;
 
-    // Get key "hello"
+    // Get key "hello".
     let result = client.get("hello").await?;
 
     println!("got value from the server; result={:?}", result);
@@ -376,9 +384,9 @@ Notice how this looks basically the same as synchronous Rust code...
 # What is Synchronous Programming?
 
 * Most programs are executed in the same order in which they are written
-    * Execute first line of code, then second line, etc.
-* We call this _synchronous_ programming
-* When a program encounters an operation that cannot be completed immediately, it will _block_ until the operation completes
+    * _Execute first line of code, then second line, etc._
+* We call this **synchronous** programming
+* When a program encounters an operation that cannot be completed immediately, it will **block** until the operation completes
     * For example, establishing a TCP connection over the network
 
 <!--
@@ -394,8 +402,9 @@ In synchronous programming, the thread that executes this blocks / waits for it 
 # What is Asynchronous Programming?
 
 * In asynchronous programming, operations that cannot complete immediately are _suspended_
-* The thread executing is not blocked and can instead run other things
+* The thread executing is **not blocked** and can instead run other things
 * When the operation completes, it becomes _unsuspended_ and the thread continues processing it where it left off
+* Something needs to "remember" task state after pausing so it can resume
 
 
 ---
@@ -409,7 +418,7 @@ In synchronous programming, the thread that executes this blocks / waits for it 
     * Track all of the state necessary to suspend/resume work
 
 <!--
-This is essentially what the operating system is doing with synchronous threads, but at the kernel level. Asynchronous programs have to do this at the user level, which is significantly harder.
+This is essentially what the operating system is doing with synchronous threads, but at the kernel level. Asynchronous programs have to do this at the user level, which makes it significantly harder (not that kernel programming isn't hard -_-).
 
 Also note that we are using the word "task" here instead of "thread". This is intentional, and we'll explain this more in depth later.
 -->
@@ -420,7 +429,7 @@ Also note that we are using the word "task" here instead of "thread". This is in
 
 # `async`
 
-Functions that perform asynchronous operations are labeled with the `async` keyword.
+In Rust, functions that perform asynchronous operations are labeled with the `async` keyword.
 
 ```rust
 use mini_redis::Result;
@@ -441,12 +450,19 @@ pub async fn connect<T: ToSocketAddrs>(addr: T) -> Result<Client> {
 
 ```rust
 //  vvvvv
-pub async fn connect<T: ToSocketAddrs>(addr: T) -> Result<Client> {}
+pub async fn connect<T: ToSocketAddrs>(addr: T) -> Result<Client> { ... }
 ```
 
 * The `async fn` definition looks like a regular synchronous function!
 * The compiler transforms the `async fn` at **compile-time** into a routine
     * You can think of this routine as a low-level state machine
+
+<!--
+When you write an `async fn` or `async` block, the Rust compiler turns it into a state machine object that implements the `Future` trait.
+This `Future` object holds all of the necessary state (local variables) to pause at an `.await` point and resume later.
+You can think of this object as a compiler-intrinsic stack frame that isn't necessarily on the stack, and has self-referencing pointers into itself (similar to a stack pointer, but not really).
+Executors like Tokio manage these `Future` objects.
+-->
 
 
 ---
@@ -455,6 +471,7 @@ pub async fn connect<T: ToSocketAddrs>(addr: T) -> Result<Client> {}
 # `.await`
 
 ```rust
+//                                                vvvvvv
 let mut client = client::connect("127.0.0.1:6379").await?;
 ```
 
@@ -478,8 +495,7 @@ See https://docs.rs/futures/latest/futures/task/struct.Waker.html
 Async functions are similar to normal Rust functions. However, calling these functions does not result in the function body executing.
 
 ```rust
-/// An asynchronous function that prints "world".
-async fn say_world() {
+async fn say_world() { // An asynchronous function that prints "world".
     println!("world");
 }
 
@@ -511,11 +527,9 @@ async fn main() {
     // Calling `say_world()` does not execute the body of `say_world()`.
     let op = say_world();
 
-    // This println! comes first.
-    println!("hello");
+    println!("hello"); // This `println!` comes first.
 
-    // Calling `.await` on `op` starts executing `say_world`.
-    op.await;
+    op.await; // Calling `.await` on `op` starts executing `say_world`.
 }
 ```
 
@@ -532,6 +546,7 @@ world
 
 * Other languages implement `async/await` (notably JavaScript and C#)
 * However, Rust async operators are **lazy**
+    * Async code will not run without being `.await`ed
 * This results in dramatically different runtime semantics
 
 
@@ -558,11 +573,11 @@ async fn main() { ... }
 
 Asynchronous functions (`async fn`) must be **executed** by a **runtime**.
 
-* A runtime provides many components needed for running asynchronous programs
+* A runtime provides components needed for running asynchronous programs
     - Task scheduler
     - I/O event handlers
     - Timers
-* A runtime must be started by a real `main` function
+* A runtime must be started by an actual `fn main` function
 
 
 ---
@@ -587,13 +602,17 @@ fn main() {
 }
 ```
 
+<!--
+The `block_on` function is where the magic starts happening
+-->
+
 
 ---
 
 
 # Back to the Server
 
-Let's go back to implementing a Redis server. We want to:
+Let's go back to implementing the Redis server. We want to:
 
 * Accept inbound TCP sockets in a loop
 * Process each socket
@@ -630,6 +649,8 @@ async fn main() {
 
 # Process Sockets
 
+Now we can write the asynchronous `process` function:
+
 ```rust
 async fn process(socket: TcpStream) {
     // The `Connection` lets us read/write redis **frames** instead of
@@ -639,7 +660,7 @@ async fn process(socket: TcpStream) {
     if let Some(frame) = connection.read_frame().await.unwrap() {
         println!("GOT: {:?}", frame);
 
-        // Respond with an error
+        // Respond with an error.
         let response = Frame::Error("unimplemented".to_string());
         connection.write_frame(&response).await.unwrap();
     }
@@ -654,7 +675,7 @@ async fn process(socket: TcpStream) {
 
 If we run both the server and client programs:
 
-Server (example request):
+Server:
 
 ```
 GOT: Array([Bulk(b"set"), Bulk(b"hello"), Bulk(b"world")])
@@ -705,6 +726,7 @@ loop {
 * When a connection is accepted:
     * The server `process`es the `socket` until completion
     * Goes back to listening
+* We are `process`ing sequentially
 * Ideally, we want to process many requests concurrently
 
 
@@ -754,7 +776,7 @@ You may have noticed we have been using the word "Task".
     * Can spawn millions of tasks without much overhead!
 
 <!--
-A single tokio task requires only a single allocation an 64 bytes of memory
+A single tokio task requires only a single allocation an 64 bytes of memory!
 -->
 
 
@@ -763,10 +785,16 @@ A single tokio task requires only a single allocation an 64 bytes of memory
 
 # Tasks vs Threads
 
-* When we talk about Tokio, **tasks** lightweight units of execution managed by the Tokio scheduler
-* On the other hand, **threads** are heavyweight units of execution managed by the operating system's scheduler
+When we talk about Tokio:
+
+* **Tasks** are lightweight units of execution managed by the Tokio scheduler
+* **Threads** are heavyweight units of execution managed by the operating system's scheduler
     * You _cannot_ spawn millions of threads without any overhead
 * The tokio runtime (which manages tasks) run on top of OS threads
+
+<!--
+Each thread you spawn has a corresponding kernel stack that will be significantly larger than the amount of space needed for a task. A single tokio task requires only a single allocation an 64 bytes of memory!
+-->
 
 
 ---
@@ -781,7 +809,7 @@ Recall that Tokio is a **multi-threaded runtime** for **executing** asynchronous
 * **Important: Not all asynchronous runtimes do this!**
 
 <!--
-More on the implications of this later in the lecture
+More on the implications of this later in the lecture...
 -->
 
 
@@ -792,7 +820,7 @@ More on the implications of this later in the lecture
 
 ![bg right:30% 75%](../images/ferris_does_not_compile.svg)
 
-Recall that we often had to `move` things into `std::thread::spawn`.
+Recall that we usually had to `move` variables and values into closures for `std::thread::spawn`.
 
 
 ```rust
@@ -817,11 +845,11 @@ note: function requires argument type to outlive `'static`
 ---
 
 
-# `'static` Bound
+# `T: 'static` Bound
 
 * The closure that we pass to `thread::spawn` needs a `'static` bound
 * This is a more precise way of saying the closure cannot contain references to data owned elsewhere
-* Tasks require the exact same `'static` bound for the same reason
+* Tasks require the exact same `T: 'static` bound for the same reason
 
 
 ---
@@ -841,6 +869,8 @@ async fn main() {
     });
 }
 ```
+
+* Here is the asynchronous version of the same code, and we will get a similar error
 
 
 ---
@@ -896,7 +926,7 @@ async fn main() {
 }
 ```
 
-* Note that this is _not_ an asynchronous closure
+* Note that this is _not_ an asynchronous closure, rather it is an `async` block
 * `async` closures were stabilized in the Rust 2024 Edition (_2/20/2025_)!
 
 
@@ -927,11 +957,24 @@ error: future cannot be sent between threads safely
     |
 ```
 
-* RUN!!!
-* If you can't run, then that is a good time to dive deeper into how `async` and `Future`s work under the hood
+* RUN AWAY!!!
+* If you can't run away, then that is a good time to dive deeper into how `async` and `Future`s work under the hood
+    * _See the speaker notes for a high-level overview_
 
 <!--
-TODO: Write down why we're not going to talk about this
+Copied from a previous slide for context:
+When you write an `async fn` or `async` block, the Rust compiler turns it into a state machine object that implements the `Future` trait.
+This `Future` object holds all of the necessary state (local variables) to pause at an `.await` point and resume later.
+You can think of this object as a compiler-intrinsic stack frame that isn't necessarily on the stack, and has self-referencing pointers into itself (similar to a stack pointer, but not really).
+Executors like Tokio manage these `Future` objects.
+
+On a multi-threaded executor, if one thread is busy, an idle thread might "steal" a paused `Future` from the busy thread and resume it.
+This means the entire `Future` object itself is being sent **between** threads.
+This means all of the "local variables" stored inside the `Future` object need to be sent between threads.
+Because of this potential transfer, Rust requires that any `Future` spawned onto a multi-threaded executor must implement the `Send` trait to guarantee thread safety.
+
+If your `async` code captures or holds onto non-`Send` data (like `Rc` or `RefCell`) across an `.await` point, the compiler-generated `Future` object containing that data will not be `Send`.
+Attempting to spawn this non-`Send` `Future` will result in a compile-time error.
 -->
 
 
