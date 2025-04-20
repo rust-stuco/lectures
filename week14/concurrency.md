@@ -1122,13 +1122,108 @@ We've reached the end of our prepared content!
 ---
 
 
-TODO Sendoff
+# **Why Rust?**
+
+* Déjà vu?
 
 
 ---
 
 
-# Thanks for taking Rust StuCo!
+# Why Rust?
+
+Let's briefly go back to the very beginning of the semester.
+
+* What is Rust?
+* What are the biggest advantages of Rust?
+* What are some issues that Rust has?
+* Who is Rust for?
+
+<!--
+Keen observers will be aware that one bullet point is missing. I removed it because it overlaps quite a lot with the other points.
+-->
+
+
+---
+
+
+# What is Rust?
+
+* A language empowering everyone to build reliable and efficient software
+* From the official rust [website](https://www.rust-lang.org/), Rust is:
+    * Fast
+    * Reliable
+    * Productive
+
+<!--
+Hopefully by now, you actually believe these things to be true!
+-->
+
+
+---
+
+
+# Rust's advantages
+
+* Rust is fast
+* Rust is memory safe
+* Rust enables fearless concurrency
+* Rust is modern
+
+
+---
+
+
+# Rust's pitfalls
+
+* Rust is hard
+* Rust is young
+
+
+---
+
+
+# Who is Rust for?
+
+* Rust targets complex programs while providing stability and security
+* Rust is not a magic silver bullet
+* Rust is not for everyone
+* We believe that Rust is the future of computer systems
+
+<!--
+By future, we don't mean that people will _eventually_ start to pick up Rust in a decade and begrudgingly force themselves to write Rust code. This is happening _right now_. Companies of all sizes (startups to the tech giants including Microsoft and Google) are actively developing and pursuing Rust development.
+-->
+
+
+---
+
+
+# Course Goals
+
+We wanted all students to:
+
+* Be able to read, write, and reason about Rust code
+* Become an intermediate to advanced Rust developer
+* Be confident that you can use Rust going forward!
+* If you have achieved these, consider becoming a Rust StuCo instructor!
+
+<!--
+We hope that we were able to achieve our goals, enabling you to achieve your own goals more easily!
+-->
+
+
+---
+
+
+# Why Rust?
+
+We hope that you all can answer this question now!
+
+
+---
+
+
+# **Thanks for taking Rust StuCo!**
 
 ![bg right:35% 90%](../images/ferris_happy.svg)
 
