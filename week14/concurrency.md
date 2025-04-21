@@ -26,35 +26,13 @@ code {
 ---
 
 
-# Recap: Parallelism vs. Concurrency
+# Recap: Parallelism vs Concurrency
 
-<div class="columns">
-<div>
-
-## Parallelism
-
-- Do work on multiple tasks at the same time (in parallel)
-- Utilize multiple processors
-
-</div>
-<div>
-
-## Concurrency
-
-- Manage multiple tasks, but only do one thing at a time
-- Better utilizes a single processor
-
-</div>
-</div>
-
-<br>
-<br>
-
-<center>
-
-These terms tend to be used (_and abused_) interchangeably
-
-</center>
+* **Concurrency**
+    - A **problem** of handling many tasks at once
+* **Parallelism**
+    - A **solution** to working on multiple tasks at the same time
+* Today we're talking about how Rust handles concurrency with `async`
 
 
 ---
@@ -68,11 +46,16 @@ These terms tend to be used (_and abused_) interchangeably
 
 # Concurrency
 
-Today, we'll be talking about concurrency in Rust.
+Today, we'll be talking about asynchronous programming in Rust.
 
+* Asynchronous programming is a _solution_ to concurrency
 * When we say something is **asynchronous**, we generally also mean it is **concurrent**
-* Rust approaches concurrency differently than other languages
+* Rust approaches asynchronicity differently than other languages
 * Rust provides the keywords `async` and `.await` to help write and reason about asynchronous code
+
+<!--
+Remember that parallelism is a solution to concurrency. Async is yet another solution.
+-->
 
 
 ---
@@ -797,9 +780,11 @@ A single tokio task requires only a single allocation an 64 bytes of memory!
 When we talk about Tokio:
 
 * **Tasks** are lightweight units of execution managed by the Tokio scheduler
+    * Tasks can be paused and resumed
 * **Threads** are heavyweight units of execution managed by the operating system's scheduler
     * You _cannot_ spawn millions of threads without any overhead
-* The tokio runtime (which manages tasks) run on top of OS threads
+* The tokio runtime runs on top of OS threads
+    * Many tasks can exist on one thread
 
 <!--
 Each thread you spawn has a corresponding kernel stack that will be significantly larger than the amount of space needed for a task. A single tokio task requires only a single allocation an 64 bytes of memory!
@@ -815,9 +800,12 @@ Recall that Tokio is a **multi-threaded runtime** for **executing** asynchronous
 
 * When tasks are spawned, the Tokio scheduler will ensure that the task executes once it has work to do (when it needs to resume)
 * The scheduler might decide to execute the task on a different thread than the one it was originally spawned on
+* Tokio implements a **work-stealing** scheduler
 * **Important: Not all asynchronous runtimes do this!**
 
 <!--
+Work-stealing means that work can be stolen from one thread that has a lot of work and given to another thread that might not have that much work.
+
 More on the implications of this later in the lecture...
 -->
 
@@ -951,6 +939,11 @@ Since Tokio is a multi-threaded runtime, it also requires a `Send` bound.
 * Because tasks can execute on multiple threads, the runtime needs to be able to `Send` the task between threads
 * This is a huge (and almost controversial) topic that we won't get into
 
+<!--
+See speaker notes on next slide for more detail on what this problem is in the first place.
+The reason it is "controversial" is because many people believe that the default async runtime behavior shouldn't be multi-threaded as this can create a lot of complexity in code. The only reason this is really a problem is because Tokio happens to be the most used runtime (and there aren't really many other runtimes that can compete with respect to performance and ease of use right now).
+-->
+
 
 ---
 
@@ -973,6 +966,13 @@ error: future cannot be sent between threads safely
     * _See the speaker notes for a high-level overview_
 
 <!--
+If you're reading this on PDF, go to the HTML (or source code) to see everything!
+
+TLDR (this list is missing a bunch of stuff but you should get the idea):
+- Data in tasks must implement the Send trait
+- If you get this error, look for non-Send types held across `.await` points
+    - Usually, these would be Rc, RefCell, and references to thread-local data, or `MutexGuard`
+
 Copied from a previous slide for context:
 When you write an `async fn` or `async` block, the Rust compiler turns it into a state machine object that implements the `Future` trait.
 This `Future` object holds all of the necessary state (local variables) to pause at an `.await` point and resume later.
@@ -1200,6 +1200,8 @@ Hopefully by now, you actually believe these things to be true!
 * Nevertheless, we believe that Rust is the future of computer systems
 
 <!--
+Many people view Rust as an ideology, which is a huge problem. Rust is just a tool, and we have to be careful that we are not pushing the idea that Rust is the solution to everything.
+
 By future, we don't mean that people will _eventually_ start to pick up Rust in a decade and begrudgingly force themselves to write Rust code. This is happening _right now_. Companies of all sizes (startups to the tech giants including Microsoft and Google) are actively developing and pursuing Rust development.
 -->
 
