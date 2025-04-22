@@ -190,6 +190,7 @@ Tokio is useful for many projects, but there are some cases where this isn't tru
 
 * Tokio is designed for IO-bound applications, not CPU-bound
 * It is important to note that Tokio is **NOT** the only asynchronous runtime
+* We'll come back to this point later
 
 <!--
 We will come back to this slide later in the lecture! There are other reasons
@@ -312,6 +313,10 @@ _Slides created by:_
 Connor Tsui, Benjamin Owad, David Rudo,
 Jessica Ruan, Fiona Fisher, Terrance Chen
 
+<!--
+Not really...
+-->
+
 
 ---
 
@@ -419,7 +424,6 @@ This is an illustration of network latency
 
 
 ---
-
 
 
 # Asynchronous Programming in Practice
@@ -875,7 +879,7 @@ More precisely:
 
 * The closure that we pass to `thread::spawn` needs a `'static` bound
 * The closure cannot contain references to data owned elsewhere
-* Tasks require the exact same `T: 'static` bound for the same reason
+* Tokio tasks require the exact same `T: 'static` bound for the same reason
 
 
 ---
@@ -1141,11 +1145,11 @@ All of the things that we can improve on are the upper-level systems electives h
 
 Tokio is useful for many projects, but there are some cases where this isn't true.
 
-- Sequential applications / low-concurrency programs
-- Tokio is designed for IO-bound applications, not CPU-bound
-- Reading many files has similar performance to a synchronous thread pool
-    - Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
-- It is important to note that Tokio is **NOT** the only asynchronous runtime
+* Sequential applications / low-concurrency programs
+* Tokio is designed for IO-bound applications, not CPU-bound
+* Reading many files has similar performance to a synchronous thread pool
+    * Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
+* It is important to note that Tokio is **NOT** the only asynchronous runtime
 
 <!--
 This is a repeat of the slide earlier in the lecture.
@@ -1158,7 +1162,7 @@ This is a repeat of the slide earlier in the lecture.
 # Summary: Tokio
 
 * Rust allows us to write concurrent asynchronous code similar to how we would write synchronous code
-* Asynchronous code requires asynchronous runtimes to work
+* Asynchronous code requires an asynchronous runtime to work
 * Tokio is a multi-threaded, work-stealing, high-performance `async` runtime
 * We can _easily_ engineer massively parallel and concurrent servers with Tokio
 
@@ -1205,9 +1209,9 @@ Keen observers will be aware that one bullet point is missing. I removed it beca
 
 * A language empowering everyone to build reliable and efficient software
 * From the official rust [website](https://www.rust-lang.org/), Rust is:
-    * Fast
-    * Reliable
-    * Productive
+    - Fast
+    - Reliable
+    - Productive
 
 <!--
 Hopefully by now, you actually believe these things to be true!
@@ -1242,12 +1246,35 @@ Hopefully by now, you actually believe these things to be true!
 * Rust targets complex programs while providing stability and security
 * Rust is not a magic silver bullet
 * Rust is _not_ for everyone
-* Nevertheless, we believe that Rust is the future of computer systems
+* Rust is arguably the best tool for the specific problems it is trying to solve!
 
 <!--
 Many people view Rust as an ideology, which is a huge problem. Rust is just a tool, and we have to be careful that we are not pushing the idea that Rust is the solution to everything.
 
+That being said, it is a very, very good tool for what it tries to solve (complex computer systems). Really, we are comparing Rust to the existing tools that have been around for decades (cough cough C/C++).
+-->
+
+
+---
+
+
+# The Future of Rust
+
+We believe that Rust is the future of computer systems.
+
+* We _do not_ mean that people will _eventually_ start using Rust
+* Many companies (large and small) have _already_ placed their bets on Rust
+    * "Exponential growth" of Rust in big tech
+    * Many startups methodically choosing Rust to build their foundation
+* Rust will continue to grow, and many more people will continue to adopt it
+
+<!--
 By future, we don't mean that people will _eventually_ start to pick up Rust in a decade and begrudgingly force themselves to write Rust code. This is happening _right now_. Companies of all sizes (startups to the tech giants including Microsoft and Google) are actively developing and pursuing Rust development.
+
+Rust has had "exponential growth" at Microsoft: https://youtu.be/phvKOfk7keg?si=ry3Nr2IfaZFgF_wn&t=2967,
+and they have said that 2025 is the year of Rust at Microsoft.
+
+Also note that the linux project has adopted Rust (the first language other than C to be integrated into Linux). It has been a bumpy road, but there is real achievement there too.
 -->
 
 
@@ -1261,7 +1288,6 @@ We wanted all students to:
 * Be able to read, write, and reason about Rust code
 * Become an intermediate to advanced Rust developer
 * Be confident that you can use Rust going forward!
-* If you have achieved these, consider becoming a Rust StuCo instructor!
 
 <!--
 We hope that we were able to achieve our goals, enabling you to achieve your own goals more easily!
@@ -1288,3 +1314,15 @@ We hope that you all can answer this question now!
 _Rust StuCo (98-008) has been created by:_
 Connor Tsui, Benjamin Owad, David Rudo,
 Jessica Ruan, Fiona Fisher, Terrance Chen
+
+
+---
+
+
+# Looking for Instructors and TAs!
+
+- If you have achieved the course goals, you are qualified to teach this course!
+    - _This **just** means completing the homeworks, nothing more_
+- We will train you in whatever you are unsure of
+- 3-hour commitment every week
+- If you are interested in teaching this course, please let us know!
