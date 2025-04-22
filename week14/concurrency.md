@@ -189,12 +189,11 @@ See the landing page on https://tokio.rs/ for some of the companies who use Toki
 Tokio is useful for many projects, but there are some cases where this isn't true.
 
 * Tokio is designed for IO-bound applications, not CPU-bound
-* Reading many files has similar performance to a synchronous thread pool
-    * Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
-* Sequential applications / low-concurrency programs
 * It is important to note that Tokio is **NOT** the only asynchronous runtime
 
 <!--
+We will come back to this slide later in the lecture! There are other reasons
+
 Please remember: today we are talking about Tokio idioms, which are not necessarily the same as Rust Async idioms
 
 "not stable" is somewhat of an oversimplification of io_uring. TLDR a very powerful idea in theory, but in practice lots of security vulnerabilities, unstable APIs, and generally a lot more work needed before it becomes production ready
@@ -390,6 +389,32 @@ In synchronous programming, the thread that executes this blocks / waits for it 
 * The thread executing is **not blocked** and can instead run other things
 * When the operation completes, it becomes _unsuspended_ and the thread continues processing it where it left off
 * Something needs to "remember" task state after pausing so it can resume
+
+
+---
+
+
+![bg 80%](../images/client-server.jpg)
+
+<!--
+This is an illustration of network latency
+-->
+
+
+---
+
+
+# Network Latency
+
+![bg right:60% 100%](../images/client-server.jpg)
+
+* In synchronous programming, we **wait/block** on the response
+* In asynchronous programming, we can do other stuff _while_ we are waiting
+
+<!--
+Imagine that while you wait for the connection, you could't do anything else on your computer!
+For example, imagine while you are watching a youtube video you can't do anything else!
+-->
 
 
 ---
@@ -1104,6 +1129,24 @@ This might not seem that impressive, but think about how much engineering it tak
 
 <!--
 All of the things that we can improve on are the upper-level systems electives here at CMU!
+-->
+
+
+---
+
+
+# Recap: When not to use Tokio
+
+Tokio is useful for many projects, but there are some cases where this isn't true.
+
+- Sequential applications / low-concurrency programs
+- Tokio is designed for IO-bound applications, not CPU-bound
+- Reading many files has similar performance to a synchronous thread pool
+    - Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
+- It is important to note that Tokio is **NOT** the only asynchronous runtime
+
+<!--
+This is a repeat of the slide earlier in the lecture.
 -->
 
 
