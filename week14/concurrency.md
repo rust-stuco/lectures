@@ -390,6 +390,23 @@ In synchronous programming, the thread that executes this blocks / waits for it 
 * When the operation completes, it becomes _unsuspended_ and the thread continues processing it where it left off
 * Something needs to "remember" task state after pausing so it can resume
 
+---
+
+
+# Sync vs Async
+
+![bg right:50% 100%](../images/sync-vs-async.avif)
+
+* In synchronous programming, we **wait/block** on the response
+* In asynchronous programming, we can do other stuff _while_ we are waiting
+
+<!--
+In this illustration, we are talking about asynchronous execution with respect to process A, not BOTH processes. Also note that process A only needs 1 processor/core to execute in both the synchronous and asynchronous models.
+
+Imagine that while you wait for the connection, you could't do anything else on your computer!
+For example, imagine while you are watching a youtube video you can't do anything else!
+-->
+
 
 ---
 
@@ -403,21 +420,6 @@ This is an illustration of network latency
 
 ---
 
-
-# Network Latency
-
-![bg right:60% 100%](../images/client-server.jpg)
-
-* In synchronous programming, we **wait/block** on the response
-* In asynchronous programming, we can do other stuff _while_ we are waiting
-
-<!--
-Imagine that while you wait for the connection, you could't do anything else on your computer!
-For example, imagine while you are watching a youtube video you can't do anything else!
--->
-
-
----
 
 
 # Asynchronous Programming in Practice
