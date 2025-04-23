@@ -1124,10 +1124,9 @@ This might not seem that impressive, but think about how much engineering it tak
 * There are _many_ more things we can do to improve our client and server:
     * Use a better database
         * Reducing contention with sharding
-        * Caching (in-memory buffer management)
         * Persistent storage (file I/O)
     * Multi-node servers (distributed systems)
-    * Different network protocols (UDP)
+    * Proxy caching
 * If you are interested in this kind of software engineering, make sure to read the rest of the [Tokio tutorial](https://tokio.rs/tokio/tutorial)!
 
 <!--
