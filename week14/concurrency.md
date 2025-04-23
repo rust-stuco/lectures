@@ -393,7 +393,7 @@ In synchronous programming, the thread that executes this blocks / waits for it 
 * In asynchronous programming, operations that cannot complete immediately are _suspended_
 * The thread executing is **not blocked** and can instead run other things
 * When the operation completes, it becomes _unsuspended_ and the thread continues processing it where it left off
-* Something needs to "remember" task state after pausing so it can resume
+* _Note that something will need to "remember" the task's state after pausing so it can resume later_
 
 ---
 
@@ -1081,18 +1081,14 @@ loop {
     // Clone the handle to the hash map.
     let db = db.clone();
 
-    println!("Accepted");
-    tokio::spawn(async move {
-        process(socket, db).await;
-    });
+    tokio::spawn(async move { process(socket, db).await; });
 }
 ```
 
+* This `Mutex` is the standard library synchronous (blocking) mutex
 * See the [tutorial](https://tokio.rs/tokio/tutorial/shared-state#update-process) for the `process` code
 
 <!--
-Copied and pasted from the tutorial:
-
 # On using std::sync::Mutex and tokio::sync::Mutex
 
 Note that std::sync::Mutex and not tokio::sync::Mutex is used to guard the HashMap. A common error is to unconditionally use tokio::sync::Mutex from within async code. An async mutex is a mutex that is locked across calls to .await.
@@ -1127,11 +1123,12 @@ This might not seem that impressive, but think about how much engineering it tak
 
 * There are _many_ more things we can do to improve our client and server:
     * Use a better database
-    * Reducing contention with sharding
-    * Caching (in-memory buffer management)
-    * Persistent storage (file I/O)
-    * Multi-node servers (distributed system)
-* If you are interested in this sort of software engineering, make sure to read the rest of the [Tokio tutorial](https://tokio.rs/tokio/tutorial)!
+        * Reducing contention with sharding
+        * Caching (in-memory buffer management)
+        * Persistent storage (file I/O)
+    * Multi-node servers (distributed systems)
+    * Different network protocols (UDP)
+* If you are interested in this kind of software engineering, make sure to read the rest of the [Tokio tutorial](https://tokio.rs/tokio/tutorial)!
 
 <!--
 All of the things that we can improve on are the upper-level systems electives here at CMU!
