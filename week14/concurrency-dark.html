@@ -244,7 +244,7 @@ Jessica Ruan, Fiona Fisher, Terrance Chen</p>
 <li data-marpit-fragment="1">In asynchronous programming, operations that cannot complete immediately are <em>suspended</em></li>
 <li data-marpit-fragment="2">The thread executing is <strong>not blocked</strong> and can instead run other things</li>
 <li data-marpit-fragment="3">When the operation completes, it becomes <em>unsuspended</em> and the thread continues processing it where it left off</li>
-<li data-marpit-fragment="4">Something needs to &quot;remember&quot; task state after pausing so it can resume</li>
+<li data-marpit-fragment="4"><em>Note that something will need to &quot;remember&quot; the task's state after pausing so it can resume later</em></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section data-marpit-fragments="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="23" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:50%;" data-marpit-pagination-total="71" data-marpit-advanced-background="background" data-marpit-advanced-background-split="right"><div data-marpit-advanced-background-container="true" data-marpit-advanced-background-direction="horizontal"><figure style="background-image:url(&quot;../images/sync-vs-async.avif&quot;);background-size:100%;"></figure></div></section></foreignObject><foreignObject width="50%" height="720"><section id="23" data-marpit-fragments="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="23" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:50%;" data-marpit-pagination-total="71" data-marpit-advanced-background="content" data-marpit-advanced-background-split="right">
@@ -716,7 +716,7 @@ help: to force the async block to take ownership of `v` (and any other
 </li>
 </ul>
 </section>
-</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="55" data-marpit-fragments="1" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="55" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
+</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="55" data-marpit-fragments="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="55" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
 <h1 id="shared-state-arcmutext">Shared State: <code>Arc&lt;Mutex&lt;T&gt;&gt;</code></h1>
 <p>We can use an <code>Arc&lt;Mutex&lt;T&gt;&gt;</code> to allow shared ownership and mutual exclusion!</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">db</span> = Arc::<span class="hljs-title function_ invoke__">new</span>(Mutex::<span class="hljs-title function_ invoke__">new</span>(HashMap::<span class="hljs-title function_ invoke__">new</span>()));
@@ -726,14 +726,12 @@ help: to force the async block to take ownership of `v` (and any other
     <span class="hljs-comment">// Clone the handle to the hash map.</span>
     <span class="hljs-keyword">let</span> <span class="hljs-variable">db</span> = db.<span class="hljs-title function_ invoke__">clone</span>();
 
-    <span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;Accepted&quot;</span>);
-    tokio::<span class="hljs-title function_ invoke__">spawn</span>(<span class="hljs-keyword">async</span> <span class="hljs-keyword">move</span> {
-        <span class="hljs-title function_ invoke__">process</span>(socket, db).<span class="hljs-keyword">await</span>;
-    });
+    tokio::<span class="hljs-title function_ invoke__">spawn</span>(<span class="hljs-keyword">async</span> <span class="hljs-keyword">move</span> { <span class="hljs-title function_ invoke__">process</span>(socket, db).<span class="hljs-keyword">await</span>; });
 }
 </code></pre>
 <ul>
-<li data-marpit-fragment="1">See the <a href="https://tokio.rs/tokio/tutorial/shared-state#update-process">tutorial</a> for the <code>process</code> code</li>
+<li data-marpit-fragment="1">This <code>Mutex</code> is the standard library synchronous (blocking) mutex</li>
+<li data-marpit-fragment="2">See the <a href="https://tokio.rs/tokio/tutorial/shared-state#update-process">tutorial</a> for the <code>process</code> code</li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="56" data-marpit-fragments="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="56" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
@@ -752,30 +750,34 @@ help: to force the async block to take ownership of `v` (and any other
 </li>
 </ul>
 </section>
-</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="57" data-marpit-fragments="7" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="57" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
+</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="57" data-marpit-fragments="8" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="57" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
 <h1 id="what-else-can-we-do">What else can we do?</h1>
 <ul>
 <li data-marpit-fragment="1">There are <em>many</em> more things we can do to improve our client and server:
 <ul>
-<li data-marpit-fragment="2">Use a better database</li>
+<li data-marpit-fragment="2">Use a better database
+<ul>
 <li data-marpit-fragment="3">Reducing contention with sharding</li>
-<li data-marpit-fragment="4">Caching (in-memory buffer management)</li>
-<li data-marpit-fragment="5">Persistent storage (file I/O)</li>
-<li data-marpit-fragment="6">Multi-node servers (distributed system)</li>
+<li data-marpit-fragment="4">Persistent storage (file I/O)</li>
 </ul>
 </li>
-<li data-marpit-fragment="7">If you are interested in this sort of software engineering, make sure to read the rest of the <a href="https://tokio.rs/tokio/tutorial">Tokio tutorial</a>!</li>
+<li data-marpit-fragment="5">Multi-node servers (distributed systems)</li>
+<li data-marpit-fragment="6">Proxy caching</li>
+<li data-marpit-fragment="7">Connection Pooling</li>
+</ul>
+</li>
+<li data-marpit-fragment="8">If you are interested in this kind of software engineering, make sure to read the rest of the <a href="https://tokio.rs/tokio/tutorial">Tokio tutorial</a>!</li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="58" data-marpit-fragments="5" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="58" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="71">
 <h1 id="recap-when-not-to-use-tokio">Recap: When not to use Tokio</h1>
 <p>Tokio is useful for many projects, but there are some cases where this isn't true.</p>
 <ul>
-<li data-marpit-fragment="1">Sequential applications / low-concurrency programs</li>
-<li data-marpit-fragment="2">Tokio is designed for IO-bound applications, not CPU-bound</li>
-<li data-marpit-fragment="3">Reading many files has similar performance to a synchronous thread pool
+<li data-marpit-fragment="1">Tokio is designed for IO-bound applications, not CPU-bound</li>
+<li data-marpit-fragment="2">No benefit in sequential / low-concurrency programs</li>
+<li data-marpit-fragment="3">Reading <em>many</em> files can also have degrading performance
 <ul>
-<li data-marpit-fragment="4">Operating systems do not provide <a href="https://unixism.net/loti/index.html">stable</a> asynchronous file APIs</li>
+<li data-marpit-fragment="4"><em>Operating systems do not provide <a href="https://unixism.net/loti/index.html">stable</a> asynchronous file APIs</em></li>
 </ul>
 </li>
 <li data-marpit-fragment="5">It is important to note that Tokio is <strong>NOT</strong> the only asynchronous runtime</li>
@@ -959,15 +961,13 @@ This means all of the &quot;local variables&quot; stored inside the `Future` obj
 Because of this potential transfer, Rust requires that any `Future` spawned onto a multi-threaded executor must implement the `Send` trait to guarantee thread safety.
 
 If your `async` code captures or holds onto non-`Send` data (like `Rc` or `RefCell`) across an `.await` point, the compiler-generated `Future` object containing that data will not be `Send`.
-Attempting to spawn this non-`Send` `Future` will result in a compile-time error.</p></div><div class="bespoke-marp-note" data-index="54" tabindex="0"><p>Copied and pasted from the tutorial:
-
-# On using std::sync::Mutex and tokio::sync::Mutex
+Attempting to spawn this non-`Send` `Future` will result in a compile-time error.</p></div><div class="bespoke-marp-note" data-index="54" tabindex="0"><p># On using std::sync::Mutex and tokio::sync::Mutex
 
 Note that std::sync::Mutex and not tokio::sync::Mutex is used to guard the HashMap. A common error is to unconditionally use tokio::sync::Mutex from within async code. An async mutex is a mutex that is locked across calls to .await.
 
 A synchronous mutex will block the current thread when waiting to acquire the lock. This, in turn, will block other tasks from processing. However, switching to tokio::sync::Mutex usually does not help as the asynchronous mutex uses a synchronous mutex internally.
 
-As a rule of thumb, using a synchronous mutex from within asynchronous code is fine as long as contention remains low and the lock is not held across calls to .await.</p></div><div class="bespoke-marp-note" data-index="55" tabindex="0"><p>This might not seem that impressive, but think about how much engineering it takes to do this in other languages...</p></div><div class="bespoke-marp-note" data-index="56" tabindex="0"><p>All of the things that we can improve on are the upper-level systems electives here at CMU!</p></div><div class="bespoke-marp-note" data-index="57" tabindex="0"><p>This is a repeat of the slide earlier in the lecture.</p></div><div class="bespoke-marp-note" data-index="61" tabindex="0"><p>Keen observers will be aware that one bullet point is missing. I removed it because it overlaps quite a lot with the other points.</p></div><div class="bespoke-marp-note" data-index="62" tabindex="0"><p>Hopefully by now, you actually believe these things to be true!</p></div><div class="bespoke-marp-note" data-index="65" tabindex="0"><p>Many people view Rust as an ideology, which is a huge problem. Rust is just a tool, and we have to be careful that we are not pushing the idea that Rust is the solution to everything.
+As a rule of thumb, using a synchronous mutex from within asynchronous code is fine as long as contention remains low and the lock is not held across calls to .await.</p></div><div class="bespoke-marp-note" data-index="55" tabindex="0"><p>This might not seem that impressive, but think about how much engineering it takes to do this in other languages...</p></div><div class="bespoke-marp-note" data-index="56" tabindex="0"><p>All of the things that we can improve on are the upper-level systems electives here at CMU!</p></div><div class="bespoke-marp-note" data-index="57" tabindex="0"><p>This is a more detailed repeat of the slide earlier in the lecture.</p></div><div class="bespoke-marp-note" data-index="61" tabindex="0"><p>Keen observers will be aware that one bullet point is missing. I removed it because it overlaps quite a lot with the other points.</p></div><div class="bespoke-marp-note" data-index="62" tabindex="0"><p>Hopefully by now, you actually believe these things to be true!</p></div><div class="bespoke-marp-note" data-index="65" tabindex="0"><p>Many people view Rust as an ideology, which is a huge problem. Rust is just a tool, and we have to be careful that we are not pushing the idea that Rust is the solution to everything.
 
 That being said, it is a very, very good tool for what it tries to solve (complex computer systems). Really, we are comparing Rust to the existing tools that have been around for decades (cough cough C/C++).</p></div><div class="bespoke-marp-note" data-index="66" tabindex="0"><p>By future, we don't mean that people will _eventually_ start to pick up Rust in a decade and begrudgingly force themselves to write Rust code. This is happening _right now_. Companies of all sizes (startups to the tech giants including Microsoft and Google) are actively developing and pursuing Rust development.
 
