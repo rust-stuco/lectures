@@ -1127,6 +1127,7 @@ This might not seem that impressive, but think about how much engineering it tak
         * Persistent storage (file I/O)
     * Multi-node servers (distributed systems)
     * Proxy caching
+    * Connection Pooling
 * If you are interested in this kind of software engineering, make sure to read the rest of the [Tokio tutorial](https://tokio.rs/tokio/tutorial)!
 
 <!--
