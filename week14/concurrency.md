@@ -1142,14 +1142,14 @@ All of the things that we can improve on are the upper-level systems electives h
 
 Tokio is useful for many projects, but there are some cases where this isn't true.
 
-* Sequential applications / low-concurrency programs
+* No benefit in sequential / low-concurrency programs
 * Tokio is designed for IO-bound applications, not CPU-bound
-* Reading many files has similar performance to a synchronous thread pool
-    * Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs
+    * Reading many files has similar performance to a synchronous thread pool
+    * _Operating systems do not provide [stable](https://unixism.net/loti/index.html) asynchronous file APIs_
 * It is important to note that Tokio is **NOT** the only asynchronous runtime
 
 <!--
-This is a repeat of the slide earlier in the lecture.
+This is a more detailed repeat of the slide earlier in the lecture.
 -->
 
 
