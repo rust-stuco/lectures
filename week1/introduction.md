@@ -39,13 +39,21 @@ code {
 * Ferris is Rust's mascot,
 and ours too!
 
+<!--
+Ferris will be our friend this semester, and hopefully much longer!
+-->
+
 
 ---
 
 
 # **Why Rust?**
 
-<!-- Why are you all here? -->
+<!--
+Some questions to consider:
+- Why are you all here?
+- Why do we have an entire course dedicating to learning a single programming language?
+-->
 
 
 ---
@@ -70,6 +78,10 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 # What is Rust?
 
+<!--
+What is Rust at a high-level view?
+-->
+
 * Rust started as a personal project of Graydon Hoare, a Mozilla Research employee, in 2006
 * Mozilla sponsored the project in 2009, and released the source code in 2010
 * The first stable release, Rust 1.0, was announced in May 2015
@@ -78,8 +90,9 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
     * Reliable
     * Productive
 
-<!-- There is a saying: Fast, reliable, or productive - pick three! -->
-
+<!--
+There is a saying for Rust: Fast, reliable, or productive - pick three!
+-->
 
 <!-- * "is blazingly fast and memory-efficient" (**_fast_**)
 * "enabl[es] you to eliminate many classes of bugs at compile-time" (**_reliable_**)
@@ -91,6 +104,10 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 
 # What is Rust?
+
+<!--
+What is Rust at a more technical view?
+-->
 
 * Compiled language
 * No runtime (no garbage collector)
@@ -105,8 +122,8 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 
 * Significantly faster
 * Much lower memory use
-* Multi-threaded
 * Comprehensive type system
+* Explicit error handling
 
 
 ---
@@ -145,8 +162,13 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Memory accesses checked at compile-time
 * Powerful type system supports thread safety
 
+<!--
+Compile-time rather than runtime or even customer-time, which is when you push code to production and a customer tells you that your code crashed!
+-->
+
 
 ---
+
 
 # Rust Is Low-Level
 
@@ -157,13 +179,19 @@ https://www.youtube.com/watch?v=DnT-LUQgc7s
 * Support for inline assembly
 * Zero-overhead FFI
 
+<!--
+More specifically it compiles to LLVM, which then compiles to machine code.
+
+Basically, even though Rust has all these higher-level features, it still provides the same low-level control that C/C++ gives you.
+-->
+
 
 ---
 
 
 # Rust Is Modern
 
-* Rust is only 9 years old
+* Rust is only 10 years old
 * Algebraic and generic data types
 * Modern developer tooling
 * Included build system and dependency management
@@ -194,9 +222,9 @@ Requires thinking a lot up front before you write down code
 
 # Issue: Ecosystem
 
-* Rust is only 9 years old
+* Rust is only 10 years old...
 * Smaller and less mature ecosystem compared to some older languages
-    * _There is a lot of momentum here_
+* However, adoption among a wide range of companies is rapid!
 
 
 ---
@@ -216,9 +244,59 @@ Requires thinking a lot up front before you write down code
 
 * Rust targets complex programs while providing stability and security
 * Rust is intended to be fast, reliable, and productive
-* **Which means Rust is _not_ for everyone**
+* Rust is a language for building **Foundational Software**
 
-<!-- Rust is not a magic bullet to solve everyone's problems! -->
+
+
+---
+
+
+# Rust for Foundational Software
+
+> Rust is a language for building foundational software.
+
+- Niko Matsakis
+    - Co-lead of the Rust language design team
+    - Senior Principal Engineer at AWS
+
+<!--
+This is taken from his talk:
+https://www.youtube.com/watch?v=LvvHzuQYuNI
+-->
+
+
+---
+
+
+# Foundational Software
+
+What is Foundational Software?
+
+* Not exactly "systems" software
+* It is software that systems _rely_ on
+    * _Software that other systems are built on top of_
+* Software that is:
+    * Reliable and secure; **absolutely cannot fail**
+    * Performant (zero-cost abstractions, fearless concurrency)
+    * Stable (without stagnation)
+
+<!--
+Systems software is a bit more general than foundational software...
+
+Reliability is super, super, super important! When our code fails, people can die!
+-->
+
+
+---
+
+
+# Why Rust?
+
+* Rust is an exceptional tool with many great features
+* However, Rust is **not** a magic silver bullet
+* In this course, we will teach you both the strengths of weaknesses of the Rust programming language
+
+<!-- Rust cannot solve everyone's problems! -->
 
 
 ---
