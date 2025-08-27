@@ -1,4 +1,4 @@
-# Rust StuCo S24 Outline
+# Rust StuCo F25 Outline
 
 _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we might have extra content planned for after lecture under **After Dark**, but we'll only do it if people want to stay and hang out since it won't be required material.
 

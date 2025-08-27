@@ -294,7 +294,7 @@ Reliability is super, super, super important! When our code fails, people can di
 
 * Rust is an exceptional tool with many great features
 * However, Rust is **not** a magic silver bullet
-* In this course, we will teach you both the strengths of weaknesses of the Rust programming language
+* In this course, we will teach you both the strengths and weaknesses of the Rust programming language
 
 <!-- Rust cannot solve everyone's problems! -->
 
