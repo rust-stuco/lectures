@@ -454,7 +454,7 @@ let s2 = s1; // s1 is no longer valid
 ---
 
 
-What happens if we try to use `s1` after it is in invalid?
+What happens if we try to use `s1` after it is invalid?
 
 ```rust
 let s1 = String::from("hello");
@@ -1317,7 +1317,7 @@ The above is technically incorrect, it should be `&'static str`, but we're going
 
 A _vector_ allows you to store a collection of values contiguously in memory.
 
-You can create an vector with the method `new`:
+You can create a vector with the method `new`:
 
 ```rust
 let v: Vec<i32> = Vec::new();
