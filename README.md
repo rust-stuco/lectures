@@ -17,6 +17,12 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 
 </br>
 
+# Render Slides
+
+```bash
+python3 render_slides.py --topics <topic_name>
+```
+
 # **Schedule**
 
 ## Week 1: Introduction

@@ -374,7 +374,7 @@ fn relax_student(prev_student: Student) -> Student {
 }
 ```
 
-* Note that this moves the data of the old struct
+* Note that this moves the data out of the old struct
     * `prev_student` is moved, so we can't use it again (_unless..._)
 
 <!--
@@ -1079,13 +1079,11 @@ enum Message {
     Write(String),
     // <-- snip -->
 }
-
 impl Message {
     fn call(&self) {
         // <-- snip -->
     }
 }
-
 let m = Message::Write(String::from("hello"));
 m.call();
 ```
