@@ -126,6 +126,10 @@ let third: i32 = v[2]; // This is only possible because `i32` is `Copy`
 println!("The third element is {}", third);
 ```
 
+<!--
+Might be a good idea to quickly check that students remember what `Copy` means.
+-->
+
 
 ---
 
@@ -285,6 +289,11 @@ for elem in &v { // `elem` is a reference to an `i32` (aka `&i32`)
 57
 ```
 
+<!--
+Advanced comment: note that `IntoIterator` is directly implemented for `&Vec<T>` (where `Target = &T`),
+IN ADDITION to implementing `Deref<Target = [T]>` which means we can call `.iter()` for the same effect.
+-->
+
 
 ---
 
@@ -363,6 +372,8 @@ error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immuta
 
 <!--
 When iterating over the vector, what is supposed to happen when all of the elements shift?
+
+Also ask: what happens if you do this in Python? We don't know either!
 -->
 
 
@@ -387,6 +398,8 @@ for i in v {
 
 <!--
 It calls `into_iter` instead of `iter`, "consuming" the vec
+
+Note that this ^ is slightly inaccurate (see speaker note from a few slides ago)
 -->
 
 
@@ -408,6 +421,10 @@ fn largest(list: &[i32]) -> &i32
 * We can do this because of _deref coercion_
     * This basically means you can turn a `&Vec<T>` into a `&[T]`
 * We'll talk more about this in a future week!
+
+<!--
+Don't worry about our notation of `T` here, it'll make more sense soon.
+-->
 
 
 ---
@@ -499,7 +516,7 @@ Like any other struct, a vector is dropped when it goes out of scope.
 
 Rust "only" has one string type in the core language, `str`.
 
-* We almost always see it in its borrowed form, `&str`
+* We always* see it in its borrowed form, `&str`
 * String slices are `&str`
 * String literals are _also_ `&str`
     * They reference data stored in the program's binary
@@ -514,6 +531,8 @@ Slices and literals are both actual references to existing data!
 
 Main idea: `&str` is a primitive more akin to a C array, while String is a managed alternative
 (std::string or Java String).
+
+Generally the only other times you will see `str` not in its borrowed form is when using `Arc<str>` or `Rc<str>`, or in dynamically-sized types.
 -->
 
 
@@ -528,11 +547,9 @@ You can create a `String` with the methods `new`, `to_string`, or `from`.
 let mut s = String::new(); // empty mutable string
 
 let data = "initial contents"; // string literal
-
 let s = data.to_string(); // string literal into `String`
 
-// the method also works on a literal directly:
-let s = "initial contents".to_string();
+let s = "initial contents".to_string(); // method directly on a literal
 
 let s = String::from("initial contents"); // string literal into `String`
 ```
@@ -578,6 +595,12 @@ println!("{}", s);
 ```
 foobar
 ```
+
+<!--
+Unless you are "building" strings from an empty string, usage of these methods is pretty rare.
+
+Generally you want to use the `format!()` macro if you already know the different parts of your string.
+-->
 
 
 ---
@@ -647,8 +670,12 @@ Or you can use the `format!` macro:
 ```rust
 let s = format!("{}-{}-{}", s1, s2, s3);
 
-let s = format!("{s1}-{s2}-{s3}"); // relatively new shorthand!
+let s = format!("{s1}-{s2}-{s3}"); // now considered more idiomatic
 ```
+
+<!--
+When we first created this lecture, the last example was very new. Now, it is considered more idiomatic to place things that implement `Display` directly in the format string!
+-->
 
 
 ---
@@ -674,7 +701,6 @@ let h = s1[0];
 
 
 # Indexing into Strings
-
 
 ```rust
 let s1 = String::from("hello");
@@ -761,7 +787,6 @@ let answer = &hello[0]; // BAD!
 * The philosophy of Rust is to _not compile this code at all_
     * Prevents misunderstandings early in the development process
 * Further reading on UTF-8: [Rust Book Chapter 8.2](https://doc.rust-lang.org/book/ch08-02-strings.html#bytes-and-scalar-values-and-grapheme-clusters-oh-my)
-
 
 
 ---
@@ -1055,6 +1080,11 @@ println!("{:?}", map);
 {"world": 2, "hello": 1, "wonderful": 1}
 ```
 
+<!--
+Typically, you would just do:
+*map.entry(word).or_insert(0) += 1
+-->
+
 
 ---
 
@@ -1168,11 +1198,11 @@ Instead, we can make a function called `largest`.
 // Assume that the `list` is non-empty :D
 fn largest(list: &[i32]) -> &i32 {
     let mut largest = &list[0];
+
     for item in list {
-        if item > largest {
-            largest = item;
-        }
+        if item > largest { largest = item; }
     }
+
     largest
 }
 
@@ -1180,7 +1210,9 @@ let number_list = vec![34, 50, 25, 100, 65];
 println!("The largest number is {}", largest(&number_list));
 ```
 
-<!-- For now we'll ignore the fact that this requires there to be at least 1 element in the vector -->
+<!--
+For now we'll ignore the fact that this requires there to be at least 1 element in the vector
+-->
 
 
 ---
@@ -1191,12 +1223,11 @@ println!("The largest number is {}", largest(&number_list));
 What if we also wanted to find the largest character in a slice?
 
 ```rust
+//        +++++         ++++       ++++
 fn largest_char(list: &[char]) -> &char {
     let mut largest = &list[0];
     for item in list {
-        if item > largest {
-            largest = item;
-        }
+        if item > largest { largest = item; }
     }
     largest
 }
@@ -1222,6 +1253,7 @@ fn largest<T>(list: &[T]) -> &T
 * This function takes in a slice of `T` as input
 * This function returns a reference to `T`
 * `T` can be _any_* type!
+    * _Not actually **any** type_...
 
 
 ---
@@ -1265,9 +1297,7 @@ Let's try to modify our old function directly:
 fn largest<T>(list: &[T]) -> &T {
     let mut largest = &list[0];
     for item in list {
-        if item > largest {
-            largest = item;
-        }
+        if item > largest { largest = item; }
     }
     largest
 }
@@ -1331,13 +1361,14 @@ help: consider restricting type parameter `T`
 Once we make that change, this works!
 
 ```rust
+//            ++++++++++++++++++++
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
+
     for item in list {
-        if item > largest {
-            largest = item;
-        }
+        if item > largest { largest = item; }
     }
+
     largest
 }
 ```
@@ -1356,17 +1387,17 @@ The largest char is y
 ```rust
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     let mut largest = &list[0];
+
     for item in list {
-        if item > largest {
-            largest = item;
-        }
+        if item > largest { largest = item; }
     }
+
     largest
 }
 ```
 
 * We'll talk about type restrictions with _traits_ next week!
-* For now, all you need to know is that we need the `PartialOrd` trait to enable comparisons
+* For now, all you need to know is that we need the `PartialOrd` trait to enable comparisons between values (establish an `Ord`ering)
 
 
 ---
@@ -1547,6 +1578,8 @@ impl Point<f32> {
 <!--
 Specialization still not implemented:
 https://rust-lang.github.io/rfcs/1210-impl-specialization.html
+
+This means that the blanket `impl<T>` cannot also have a `distance_from_origin` method if the one on `Point<f32>` exists.
 -->
 
 
@@ -1635,10 +1668,7 @@ struct Point<X1, Y1> {
 
 impl<X1, Y1> Point<X1, Y1> {
     fn mixup<X2, Y2>(self, other: Point<X2, Y2>) -> Point<X1, Y2> {
-        Point {
-            x: self.x,
-            y: other.y,
-        }
+        Point { x: self.x, y: other.y }
     }
 }
 
