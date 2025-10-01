@@ -419,6 +419,8 @@ There are other useful macros that panic:
 
 <!--
 `unreachable` won't actually help in optimization, unless you use the `unsafe` variant.
+
+If you use the `unsafe` invariant and your assumption is wrong and the code does execute, the program causes undefined behavior rather than a safe panic.
 -->
 
 

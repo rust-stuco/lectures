@@ -166,7 +166,7 @@ Let's take a look inside the `Cargo.toml`.
 [package]
 name = "my-project"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 ```
@@ -450,7 +450,7 @@ src
     * Ask at your own peril...
 
 <!--
-Connor prefers `mod.rs`
+Connor and also Terrance prefers `mod.rs`
 Ben prefers named modules files
 David is partial to both based on the project
 
