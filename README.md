@@ -19,8 +19,25 @@ _Each lecture is 50 minutes on Tuesdays from 7:00-7:50pm._ On some weeks, we mig
 
 # Render Slides
 
+The lecture slides are organized in directories with the format `NN_topic_name` (e.g., `01_introduction`, `02_ownership_p1`).
+
+To render slides:
+
 ```bash
-python3 render_slides.py --topics <topic_name>
+# Render all slides
+python3 render_slides.py --all
+
+# Render only modified slides (default behavior)
+python3 render_slides.py
+
+# Render specific topics by name
+python3 render_slides.py --topics introduction ownership_p1
+
+# Preview what would be rendered without actually rendering
+python3 render_slides.py --dry-run --all
+
+# Force render all slides
+python3 render_slides.py --force
 ```
 
 # **Schedule**
