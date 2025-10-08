@@ -15,14 +15,14 @@ TOPICS = {
     4: ("04_collections_generics", "collections_generics"),
     5: ("05_errors_traits", "errors_traits"),
     6: ("06_modules_testing", "modules_testing"),
-    7: ("07_closures_iterators", "closures_iterators"),
-    8: ("08_ownership_p2", "ownership_p2"),
+    7: ("07_ecosystem", "ecosystem"),
+    8: ("08_closures_iterators", "closures_iterators"),
     9: ("09_lifetimes", "lifetimes"),
     10: ("10_smart_pointers", "smart_pointers"),
     11: ("11_unsafe", "unsafe"),
     12: ("12_parallelism", "parallelism"),
-    13: ("13_ecosystem", "ecosystem"),
-    14: ("14_concurrency", "concurrency"),
+    13: ("13_concurrency", "concurrency"),
+    # ??: ("temp_ownership_p2", "ownership_p2"),
 }
 
 # Global event to signal workers to stop.
