@@ -1246,10 +1246,16 @@ pub struct MyError {
 
 ---
 
+# Homework - Ownership Quiz
 
-# Next Lecture: ISD
+* On Gradescope
+* From chapter 4 of the experimental Brown Rust Book
+* Make sure to read the book! 
 
-_Instructors Still Debating_
+--- 
+
+
+# Next Lecture: Closures and Iterators
 
 ![bg right:30% 80%](../images/ferris_happy.svg)
 
