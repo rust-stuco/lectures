@@ -1248,9 +1248,17 @@ pub struct MyError {
 
 # Homework - Ownership Quiz
 
-* On Gradescope
-* From chapter 4 of the experimental Brown Rust Book
-* Make sure to read the book! 
+* This homework is a Gradescope Quiz!
+* 30 questions from the [Brown Rust Book](https://rust-book.cs.brown.edu/)
+* Read through chapter 4 on ownership
+    * Answer the quiz questions on the web page as you go through it
+    * All answers will be revealed after you attempt!
+* Each question is worth 5 points, so you don't need to do everything
+* Focus on _understanding_ rather than the questions themselves
+
+<!--
+It is hard, the editor got 3/15 for his own quiz when he was taking the course ;(
+-->
 
 --- 
 
