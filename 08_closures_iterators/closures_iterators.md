@@ -495,7 +495,7 @@ The `Fn` trait indicates ... everything else!
 
 # The `Fn` traits: Visualized
 
-![bg right:45% 125%](../images/closure_traits.svg)
+![bg right:45% 100%](../images/closure_traits.svg)
 
 Trait behavior is inherited by hierarcy
 
@@ -525,6 +525,7 @@ let consume_and_return = move || my_str;
 * Why can this closure only be called once?
   * It takes ownership of `my_str`, then gives ownership back to the caller
   * `my_str` is no longer accessible to our closure after it's called!
+* A closure that takes ownership does so when it's _created_, not _called_
 
 <!--
 Rust never implicitly clones `my_str`, cannot be reused after move
@@ -571,7 +572,7 @@ assert_eq!(Err("foobar").unwrap_or_else(count), 6);
 
 # `unwrap_or_else`
 
-Let's look at the definition of the `unwrap_or_else` method on `Result<T>`.
+Let's look at the definition of the `unwrap_or_else` method on `Result<T, E>`.
 
 ```rust
 impl<T, E> Result<T, E> {
