@@ -460,59 +460,60 @@ It is super easy to make this mistake in other languages!
 # The `Fn` traits
 
 What do you mean, function _**trait**_???
-
-* Rust has 3 special traits that define the _kind_ of closure we want to use
-* The 3 traits are:
-  * `FnOnce`
-  * `FnMut`
-  * `Fn`
-* Rust auto-implements these for closures and functions
-
+* Used to describe how a closure captures and handles its environment
+  * And by functions & traits to specify what types of closures they can use
+* Rust has three special function traits for this reason
+  * `FnOnce`, `FnMut`, and `Fn`
+  * Rust auto-implements one, two, or three of these for each closure
+    * Depending on how it deals with the environment
 
 ---
 
+# `FnOnce`
 
-# The `Fn` Traits: Visualized
+The `FnOnce` trait indicates closures that can be called once
+- All closures and functions implement this, since all closures can be called _at least_ once
+- Closures that are exclusively `FnOnce` can _only_ be called once
+  * E.g., A closure that moves captured values out of its body
 
-![bg right:50% 120%](../images/closure_traits.svg)
+---
+
+# `FnMut`
+
+The `FnMut` trait indicates a closure that _can_ mutate the captured values because it does not move them outside the body
+- Can be called more than once
+
+---
+
+# `Fn`
+The `Fn` trait indicates ... everything else!
+  * Closures that don't move captured values out
+  * Closures that don't mutate captured values
+  * Closures that don't capture any values at all
+
+---
+
+# The `Fn` traits: Visualized
+
+![bg right:45% 125%](../images/closure_traits.svg)
+
+Trait behavior is inherited by hierarcy
 
 * `FnMut` is also `FnOnce`
+  * If `FnMut` is implemented, so is `FnOnce`
 * `Fn` is also `FnMut` _and_ `FnOnce`
+  * If `Fn` is implemented, so is `FnMut` and `FnOnce`
 
-
----
-
-
-# The `Fn` traits
-
-![bg right:35% 130%](../images/closure_traits.svg)
-
-* `FnOnce`: Closures that can be called once
-* `FnMut`: Closures that can mutate the captured values
-* `Fn`: Everything else!
-
-
----
-
-
-# The `Fn` traits
-
-- `FnOnce`: Closures that can be called once
-  * All closures and functions implement this, since all closures can be called _at least_ once
-  * However, closures that are exclusively `FnOnce` can _only_ be called once
-    * e.g. A closure that moves captured values out of its body
-- `FnMut`: Closures that can mutate the captured values
-  * Can be called more than once
-- `Fn`: Everything else!
-  * Don't move values out, don't mutate, don't capture anything
-
+<!--
+We can reason about why this is true... 
+-->
 
 ---
 
 
 # `FnOnce`
 
-A closure that moves captured values **out** of its body will _only_ implement `FnOnce`, and not `FnMut` or `Fn`:
+A closure that moves captured values **out** of its body will _only_ implement `FnOnce`
 
 ```rust
 let my_str = String::from("x");
@@ -524,7 +525,7 @@ let consume_and_return = move || my_str;
 * Why can this closure only be called once?
   * It takes ownership of `my_str`, then gives ownership back to the caller
   * `my_str` is no longer accessible to our closure after it's called!
-* `move` keyword specifies that the closure takes ownership when it's created, _not_ when it's called
+* `move` specifies that the closure takes ownership when it's _created_, not _called_
 
 <!--
 Rust never implicitly clones `my_str`, cannot be reused after move
@@ -609,7 +610,7 @@ where
 
 * This method is generic over `F`
 * `F` is the type of the closure we provide when calling `unwrap_or_else`
-* `F` must be able to be called once, take no arguments, and return a `T` for `Option<T>`
+  * `F` must be able to be called once, take one argument, and return a `T` for `Option<T>`
 
 <!--
 Requiring `F: FnOnce(E) -> T` is **MORE GENERAL** than requiring one of the other function traits
@@ -643,7 +644,7 @@ Now let's observe the function body.
 
 # `FnMut`
 
-`FnMut` applies to closures that might mutate the captured values.
+`FnMut` applies to closures that _might_ mutate the captured values.
 
 ```rust
 let mut x: usize = 1;
@@ -718,9 +719,9 @@ where
 The `Fn` trait is a superset of `FnOnce` and `FnMut`.
 
 * `Fn` applies to closures that:
-  * Don't move captured values out of their body
-  * Don't mutate captured values
-  * Don't capture anything from their environment
+  * don't move captured values out of their body, 
+  * don't mutate captured values,
+  * or don't capture anything from their environment at all
 * Can be called more than once without mutating the environment
 * Use cases:
   * Stateless operations without side effects
