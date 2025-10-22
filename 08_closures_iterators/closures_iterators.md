@@ -495,7 +495,7 @@ The `Fn` trait indicates ... everything else!
 
 # The `Fn` traits: Visualized
 
-![bg right:45% 125%](../images/closure_traits.svg)
+![bg right:45% 100%](../images/closure_traits.svg)
 
 Trait behavior is inherited by hierarcy
 
