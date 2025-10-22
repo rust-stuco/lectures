@@ -393,7 +393,7 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
 <li data-marpit-fragment="3">Closures that don't capture any values at all</li>
 </ul>
 </section>
-</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:45%;" data-marpit-pagination-total="67" data-marpit-advanced-background="background" data-marpit-advanced-background-split="right"><div data-marpit-advanced-background-container="true" data-marpit-advanced-background-direction="horizontal"><figure style="background-image:url(&quot;../images/closure_traits.svg&quot;);background-size:125%;"></figure></div></section></foreignObject><foreignObject width="55%" height="720"><section id="29" data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:45%;" data-marpit-pagination-total="67" data-marpit-advanced-background="content" data-marpit-advanced-background-split="right">
+</foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:45%;" data-marpit-pagination-total="67" data-marpit-advanced-background="background" data-marpit-advanced-background-split="right"><div data-marpit-advanced-background-container="true" data-marpit-advanced-background-direction="horizontal"><figure style="background-image:url(&quot;../images/closure_traits.svg&quot;);background-size:100%;"></figure></div></section></foreignObject><foreignObject width="55%" height="720"><section id="29" data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="--paginate:true;--class:invert;--theme:rust;--marpit-advanced-background-split:45%;" data-marpit-pagination-total="67" data-marpit-advanced-background="content" data-marpit-advanced-background-split="right">
 <h1 id="the-fn-traits-visualized">The <code>Fn</code> traits: Visualized</h1>
 
 <p>Trait behavior is inherited by hierarcy</p>
@@ -410,7 +410,7 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
 </li>
 </ul>
 </section>
-</foreignObject><foreignObject width="1280" height="720" data-marpit-advanced-background="pseudo"><section data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="" data-marpit-pagination-total="67" data-marpit-advanced-background="pseudo" data-marpit-advanced-background-split="right"></section></foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="30" data-marpit-fragments="3" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="30" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="67">
+</foreignObject><foreignObject width="1280" height="720" data-marpit-advanced-background="pseudo"><section data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="29" style="" data-marpit-pagination-total="67" data-marpit-advanced-background="pseudo" data-marpit-advanced-background-split="right"></section></foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="30" data-marpit-fragments="4" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="30" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="67">
 <h1 id="fnonce-1"><code>FnOnce</code></h1>
 <p>A closure that moves captured values <strong>out</strong> of its body will <em>only</em> implement <code>FnOnce</code></p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">let</span> <span class="hljs-variable">my_str</span> = <span class="hljs-type">String</span>::<span class="hljs-title function_ invoke__">from</span>(<span class="hljs-string">&quot;x&quot;</span>);
@@ -425,6 +425,7 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
 <li data-marpit-fragment="3"><code>my_str</code> is no longer accessible to our closure after it's called!</li>
 </ul>
 </li>
+<li data-marpit-fragment="4">A closure that takes ownership does so when it's <em>created</em>, not <em>called</em></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="31" data-marpit-fragments="2" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="31" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="67">
@@ -450,7 +451,7 @@ help: to force the closure to take ownership of `x`, use the `move` keyword
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="33" data-paginate="true" data-class="invert" data-theme="rust" lang="en-US" class="invert" data-marpit-pagination="33" style="--paginate:true;--class:invert;--theme:rust;" data-marpit-pagination-total="67">
 <h1 id="unwrap_or_else-2"><code>unwrap_or_else</code></h1>
-<p>Let's look at the definition of the <code>unwrap_or_else</code> method on <code>Result&lt;T&gt;</code>.</p>
+<p>Let's look at the definition of the <code>unwrap_or_else</code> method on <code>Result&lt;T, E&gt;</code>.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">impl</span>&lt;T, E&gt; <span class="hljs-type">Result</span>&lt;T, E&gt; {
     <span class="hljs-keyword">pub</span> <span class="hljs-keyword">fn</span> <span class="hljs-title function_">unwrap_or_else</span>&lt;F&gt;(<span class="hljs-keyword">self</span>, f: F) <span class="hljs-punctuation">-&gt;</span> T
     <span class="hljs-keyword">where</span>
