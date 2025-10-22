@@ -525,7 +525,7 @@ let consume_and_return = move || my_str;
 * Why can this closure only be called once?
   * It takes ownership of `my_str`, then gives ownership back to the caller
   * `my_str` is no longer accessible to our closure after it's called!
-* `move` specifies that the closure takes ownership when it's _created_, not _called_
+* A closure that takes ownership does so when it's _created_, not _called_
 
 <!--
 Rust never implicitly clones `my_str`, cannot be reused after move
@@ -572,7 +572,7 @@ assert_eq!(Err("foobar").unwrap_or_else(count), 6);
 
 # `unwrap_or_else`
 
-Let's look at the definition of the `unwrap_or_else` method on `Result<T>`.
+Let's look at the definition of the `unwrap_or_else` method on `Result<T, E>`.
 
 ```rust
 impl<T, E> Result<T, E> {
