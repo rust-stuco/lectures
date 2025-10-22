@@ -525,7 +525,6 @@ let consume_and_return = move || my_str;
 * Why can this closure only be called once?
   * It takes ownership of `my_str`, then gives ownership back to the caller
   * `my_str` is no longer accessible to our closure after it's called!
-* `move` specifies that the closure takes ownership when it's _created_, not _called_
 
 <!--
 Rust never implicitly clones `my_str`, cannot be reused after move
