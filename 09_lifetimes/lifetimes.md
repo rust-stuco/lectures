@@ -71,7 +71,7 @@ Lifetimes are similar to trait bounds on generic types.
 
 ![bg right:25% 75%](../images/ferris_does_not_compile.svg)
 
-The main goal of lifetimes it to prevent _dangling references_.
+The main goal of lifetimes is to prevent _dangling references_.
 
 ```rust
 fn main() {
@@ -171,9 +171,10 @@ We can fix this code by removing the scope.
 
 ```rust
 fn main() {
-    let x = 5;            // ----------+-- 'b
-                          //           |
-    let r = &x;           // --+-- 'a  |
+    let r;                // --+-- 'a
+                          //   |
+    let x = 5;            // ----------+- 'b 
+    r = &x;               //   |       |
                           //   |       |
     println!("r: {}", r); //   |       |
                           // --+       |

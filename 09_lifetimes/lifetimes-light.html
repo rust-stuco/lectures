@@ -50,7 +50,7 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section data-marpit-fragments="1" data-paginate="true" data-theme="rust" lang="en-US" data-marpit-pagination="5" style="--paginate:true;--theme:rust;--marpit-advanced-background-split:25%;" data-marpit-pagination-total="64" data-marpit-advanced-background="background" data-marpit-advanced-background-split="right"><div data-marpit-advanced-background-container="true" data-marpit-advanced-background-direction="horizontal"><figure style="background-image:url(&quot;../images/ferris_does_not_compile.svg&quot;);background-size:75%;"></figure></div></section></foreignObject><foreignObject width="75%" height="720"><section id="5" data-marpit-fragments="1" data-paginate="true" data-theme="rust" lang="en-US" data-marpit-pagination="5" style="--paginate:true;--theme:rust;--marpit-advanced-background-split:25%;" data-marpit-pagination-total="64" data-marpit-advanced-background="content" data-marpit-advanced-background-split="right">
 <h1 id="validating-references">Validating References</h1>
 
-<p>The main goal of lifetimes it to prevent <em>dangling references</em>.</p>
+<p>The main goal of lifetimes is to prevent <em>dangling references</em>.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">fn</span> <span class="hljs-title function_">main</span>() {
     <span class="hljs-keyword">let</span> <span class="hljs-variable">r</span>;
 
@@ -125,9 +125,10 @@
 
 <p>We can fix this code by removing the scope.</p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-rust"><span class="hljs-keyword">fn</span> <span class="hljs-title function_">main</span>() {
-    <span class="hljs-keyword">let</span> <span class="hljs-variable">x</span> = <span class="hljs-number">5</span>;            <span class="hljs-comment">// ----------+-- &#x27;b</span>
-                          <span class="hljs-comment">//           |</span>
-    <span class="hljs-keyword">let</span> <span class="hljs-variable">r</span> = &amp;x;           <span class="hljs-comment">// --+-- &#x27;a  |</span>
+    <span class="hljs-keyword">let</span> <span class="hljs-variable">r</span>;                <span class="hljs-comment">// --+-- &#x27;a</span>
+                          <span class="hljs-comment">//   |</span>
+    <span class="hljs-keyword">let</span> <span class="hljs-variable">x</span> = <span class="hljs-number">5</span>;            <span class="hljs-comment">// ----------+- &#x27;b </span>
+    r = &amp;x;               <span class="hljs-comment">//   |       |</span>
                           <span class="hljs-comment">//   |       |</span>
     <span class="hljs-built_in">println!</span>(<span class="hljs-string">&quot;r: {}&quot;</span>, r); <span class="hljs-comment">//   |       |</span>
                           <span class="hljs-comment">// --+       |</span>
