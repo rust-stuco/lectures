@@ -864,7 +864,7 @@ Here are some even more requirements:
 
 * Owned Pointer Types (like `Box` and `Vec`) are subject to optimizations assuming the pointer to memory is not shared or aliased anywhere
 * You can never assume the layout of a type when casting
-* All code must prepared to handle `panic!`s and _stack unwinding_
+* All code must be  prepared to handle `panic!`s and _stack unwinding_
 * Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...
 * All variables are subject to something called the _Drop Check_, and if you drop something incorrectly, you might cause undefined behavior
 
