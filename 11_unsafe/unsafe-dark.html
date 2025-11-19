@@ -628,7 +628,7 @@ v.<span class="hljs-title function_ invoke__">push</span>(<span class="hljs-numb
 <ul>
 <li data-marpit-fragment="1">Owned Pointer Types (like <code>Box</code> and <code>Vec</code>) are subject to optimizations assuming the pointer to memory is not shared or aliased anywhere</li>
 <li data-marpit-fragment="2">You can never assume the layout of a type when casting</li>
-<li data-marpit-fragment="3">All code must prepared to handle <code>panic!</code>s and <em>stack unwinding</em></li>
+<li data-marpit-fragment="3">All code must be  prepared to handle <code>panic!</code>s and <em>stack unwinding</em></li>
 <li data-marpit-fragment="4">Stack unwinding drops everything in the current scope, returns from that scope, drops everything in that scope, returns, etc...</li>
 <li data-marpit-fragment="5">All variables are subject to something called the <em>Drop Check</em>, and if you drop something incorrectly, you might cause undefined behavior</li>
 </ul>

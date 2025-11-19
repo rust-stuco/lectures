@@ -1133,6 +1133,7 @@ Rust uniquely provides some nice guarantees for parallel code, and at the same t
 
 <!--
 The absence of data races alone should be enough of a reason to use this language!
+Data races lead to undefined behavior in languages like C/C++, becuase the compiler may reorder instructions or optimize aggressively.
 -->
 
 
@@ -1163,6 +1164,10 @@ A TLDR of `Send` is that it is an unsafe trait but auto-implemented trait. If yo
 that has only `Send` fields, then Rust will auto-implement `Send` for your struct. However, there
 are non-`Send` types that you know about already: raw pointers are not `Send` and neither are
 `MutexGuard`s: you can't send a lock you are holding to a different thread.
+
+Most of the primitive types are Send and Sync, and as a consequence, pretty much all types that you would interact with are Send and Sync.
+
+Major exceptions: Raw pointers, UnsafeCell, Rc
 
 However, a common use case for interacting with the `Send` trait yourself is creating your own
 type that does not have safe fields (for example, a raw pointer), and `unsafe impl Send`ing your
@@ -1563,6 +1568,10 @@ for i in 0..10 {
 [1, 0, 3, 6, 5, 4, 2, 7, 9, 8]
 ```
 
+<!--
+A lock being poisoned implies that the thread panicked while holding it
+-->
+
 
 ---
 
@@ -1599,6 +1608,18 @@ Today's content is referred to as "fearless concurrency" in the Rust community:
 * Rather than choosing a restrictive "dogmatic" approach to concurrency, Rust supports many different approaches, all of which are completely safe
 * Some people believe that this may be the  _best reason_ to use Rust
 
+<!--
+For simplicity’s sake, concurrent means concurrent and/or parallel. Please mentally substitute concurrent and/or parallel whenever we use concurrent.
+-->
+
+---
+
+# Final Homework: The Billion Row Challenge
+
+* Process a billion rows as fast as possible!
+* The key objective is to learn to optimize a program by applying parallelism in Rust
+* Feel free to use 3rd-party crates ([Rayon](https://github.com/rayon-rs/rayon) should be a useful one)
+* Have fun 😁
 
 ---
 
