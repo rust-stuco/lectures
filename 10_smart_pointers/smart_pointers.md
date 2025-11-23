@@ -423,7 +423,7 @@ hello(&m);
 
 * Deref Coercion converts a `&Box<String>` into a `&String`
 * Deref Coercion converts a `&String` into `&str`
-  * `String` implements the `Deref` trait such that `Deref::Target = &str`
+  * `String` implements the `Deref` trait such that `Deref::Target = str`
 
 
 ---
