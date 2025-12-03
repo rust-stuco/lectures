@@ -565,6 +565,9 @@ world
     * Async code will not run without being `.await`ed
 * This results in dramatically different runtime semantics
 
+<!-- 
+In comparison, async in Javascript is not lazy. Async functions begin executing the moment they are called until they reach the first await. 
+-->
 
 ---
 
@@ -730,6 +733,8 @@ async fn main() {
 * Sockets are processed one at a time!
 
 <!--
+Ask if students can see the problem?
+
 In our example, we have very simple GET and SET requests, but imagine if we got a request to run `very_expensive_computation()`: then the entire server would halt because of this one connection!
 -->
 
@@ -799,6 +804,8 @@ You may have noticed we have been using the word "Task".
     * Can spawn millions of tasks without much overhead!
 
 <!--
+Green thread: user-space thread
+
 A single tokio task requires only a single allocation an 64 bytes of memory!
 -->
 
@@ -955,9 +962,6 @@ async fn main() {
     });
 }
 ```
-
-* Note that this is _not_ an asynchronous closure, rather it is an `async` block
-* `async` closures were stabilized in the Rust 2024 Edition (_2/20/2025_)!
 
 
 ---
@@ -1274,6 +1278,31 @@ and they have said that 2025 is the year of Rust at Microsoft.
 Also note that the linux project has adopted Rust (the first language other than C to be integrated into Linux). It has been a bumpy road, but there is real achievement there too.
 -->
 
+---
+
+# Fish 4.0
+
+* Completely rewritten in Rust by [Feb 27, 2025](https://fishshell.com/blog/new-in-40/)
+
+![bg right](<fish-rewrite-in-rust.png>)
+
+
+<!-- 
+The reason that the team decide to port to Rust. (excerpted from https://github.com/fish-shell/fish-shell/pull/9512)
+
+- Nobody really likes C++ or CMake, and there's no clear path for getting off old toolchains. Every year the pain will get worse.
+- C++ is becoming a legacy language and finding contributors in the future will become difficult, while Rust has an active and growing community.
+- Rust is what we need to turn on concurrent function execution.
+- Being written in Rust will help fish continue to be perceived as modern and relevant. 
+-->
+
+---
+
+# Zed
+
+* A code editor built from scratch in Rust. (not a ... Vscode fork ...)
+
+![bg right](zed-homepage.png)
 
 ---
 
@@ -1288,6 +1317,9 @@ We wanted all students to:
 
 <!--
 We hope that we were able to achieve our goals, enabling you to achieve your own goals more easily!
+
+Terrance: When I took this course
+
 -->
 
 
@@ -1312,7 +1344,9 @@ _Rust StuCo (98-008) has been created by:_
 Connor Tsui, Benjamin Owad, David Rudo,
 Jessica Ruan, Fiona Fisher, Terrance Chen
 
+<!-- Include this section if still missing instructor candidates -->
 
+<!-- 
 ---
 
 
@@ -1322,4 +1356,4 @@ Jessica Ruan, Fiona Fisher, Terrance Chen
     - _This **just** means completing the homeworks, nothing more_
 - We will train you in whatever you are unsure of
 - 3-hour commitment every week
-- If you are interested in teaching this course, please let us know!
+- If you are interested in teaching this course, please let us know! -->
